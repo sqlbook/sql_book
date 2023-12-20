@@ -1,0 +1,56 @@
+h1 {
+  color: var(--cream-250);
+  font-size: 3rem;
+  line-height: 3.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+  line-height: 3rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+h4 {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+h5 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.link.primary {
+  color: var(--red-500);
+  text-decoration: none;
+}
+
+.link.primary:hover {
+  color: var(--red-300);
+}
+
+.link.primary:active {
+  color: var(--red-600);
+}
+
+.link.secondary {
+  color: var(--gray-250);
+  text-decoration: underline;
+}
+
+.link.secondary:hover {
+  color: var(--gray-200);
+}
+
+.link.secondary:active {
+  color: var(--gray-300);
+}
+
+.text.small {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}

@@ -1,0 +1,10 @@
+<header class="header">
+  <%= link_to root_path do %>
+    <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo" %>
+  <% end %>
+
+  <menu>
+    <%= link_to "[Sign up]", auth_login_index_path, class: "link primary" %>
+    <%= link_to "Log in", auth_signup_index_path, class: "link secondary" %>
+  </menu>
+</header>
