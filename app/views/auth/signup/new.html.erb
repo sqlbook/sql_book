@@ -1,0 +1,18 @@
+<h1>Sign up</h1>
+
+<div class="container medium">
+  <%= form_with url: auth_signup_index_path, method: :post, class: "signup-form" do |form| %>
+    <p>We&apos;ve sent you a temporary sign-up code to <span><%= request.params['email'] %></span>. Please check your inbox to sign up.</p>
+
+    <%= form.label :one_time_code_1, "Sign-up code", class: "label block" %>
+    <div class="otp-code">
+      <%= form.text_field :one_time_code_1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_code_2, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_code_3, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_code_4, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_code_5, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_code_6, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+    </div>
+    <%= form.submit "[Sign Up]", class: "link primary" %>
+  <% end %>
+</div>

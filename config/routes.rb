@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   root 'home#index'
 
   namespace :auth do
-    resources :login, only: %i[index create]
-    resources :signup, only: %i[index create]
+    resources :login, only: %i[index new create]
+    resources :signup, only: %i[index new create]
   end
 end
