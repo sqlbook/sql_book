@@ -6,14 +6,14 @@
 
     <p>We&apos;ve sent you a temporary sign-up code to <span><%= request.params['email'] %></span>. Please check your inbox to sign up.</p>
 
-    <%= form.label :one_time_token_1, "Sign-up code", class: "label block" %>
+    <%= form.label :one_time_password_1, "Sign-up code", class: "label block" %>
     <div class="otp-code">
-      <%= form.text_field :one_time_token_1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_token_2, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_token_3, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_token_4, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_token_5, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_token_6, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_password_1, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_password_2, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_password_3, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_password_4, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_password_5, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_password_6, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
     </div>
 
     <%= render "shared/flash" %>

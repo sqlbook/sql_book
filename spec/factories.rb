@@ -5,7 +5,7 @@ FactoryBot.define do
     email { "#{SecureRandom.base36}@email.com" }
   end
 
-  factory :one_time_token do
+  factory :one_time_password do
     email { "#{SecureRandom.base36}@email.com" }
     token { '123456' }
   end

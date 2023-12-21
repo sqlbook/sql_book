@@ -30,10 +30,7 @@ export function onOtpInputKeyPress(event) {
  * @returns {void}
  */
 export function onOtpPaste(event) {
-  console.log('!!')
   const code = event.clipboardData.getData('text');
-
-  console.log(code);
 
   if (code.length === 6) {
     document.querySelectorAll('.otp-code .input').forEach((element, index) => {

@@ -35,7 +35,7 @@ en:
     invalid_signup_code: Invalid sign-up code. Please try again or click here for a replacement code.
 
   mailers:
-    one_time_token:
+    one_time_password:
       subjects:
         login: Your log-in code for sql_book
         signup: Your sign-up code for sql_book

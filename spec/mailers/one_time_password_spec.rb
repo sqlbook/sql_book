@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe OneTimeTokenMailer, type: :mailer do
+RSpec.describe OneTimePasswordMailer, type: :mailer do
   let(:email) { "#{SecureRandom.base36}@email.com" }
   let(:token) { '123456' }
 

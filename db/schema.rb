@@ -14,12 +14,12 @@ ActiveRecord::Schema[7.1].define(version: 2023_12_21_122435) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "one_time_tokens", force: :cascade do |t|
+  create_table "one_time_passwords", force: :cascade do |t|
     t.string "email"
     t.string "token"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["email"], name: "index_one_time_tokens_on_email", unique: true
+    t.index ["email"], name: "index_one_time_passwords_on_email", unique: true
   end
 
   create_table "users", force: :cascade do |t|

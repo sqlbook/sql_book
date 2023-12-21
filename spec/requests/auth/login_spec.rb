@@ -38,27 +38,27 @@ RSpec.describe 'Auth::Logins', type: :request do
 
     context 'when there is an account for this email' do
       let(:user) { create(:user) }
-      let(:one_time_token_service) { instance_double(OneTimeTokenService, create!: nil) }
+      let(:one_time_password_service) { instance_double(OneTimePasswordService, create!: nil) }
 
       before do
-        allow(OneTimeTokenService).to receive(:new).and_return(one_time_token_service)
+        allow(OneTimePasswordService).to receive(:new).and_return(one_time_password_service)
       end
 
       it 'creates a one time token' do
         get '/auth/login/new', params: { email: user.email }
 
-        expect(one_time_token_service).to have_received(:create!)
+        expect(one_time_password_service).to have_received(:create!)
       end
 
       it 'renders the one time token inputs' do
         get '/auth/login/new', params: { email: user.email }
 
-        expect(response.body).to include('type="text" name="one_time_token_1"')
-        expect(response.body).to include('type="text" name="one_time_token_2"')
-        expect(response.body).to include('type="text" name="one_time_token_3"')
-        expect(response.body).to include('type="text" name="one_time_token_4"')
-        expect(response.body).to include('type="text" name="one_time_token_5"')
-        expect(response.body).to include('type="text" name="one_time_token_6"')
+        expect(response.body).to include('type="text" name="one_time_password_1"')
+        expect(response.body).to include('type="text" name="one_time_password_2"')
+        expect(response.body).to include('type="text" name="one_time_password_3"')
+        expect(response.body).to include('type="text" name="one_time_password_4"')
+        expect(response.body).to include('type="text" name="one_time_password_5"')
+        expect(response.body).to include('type="text" name="one_time_password_6"')
       end
     end
   end
@@ -87,12 +87,12 @@ RSpec.describe 'Auth::Logins', type: :request do
 
       let(:tokens) do
         {
-          one_time_token_1: '1',
-          one_time_token_2: '2',
-          one_time_token_3: '3',
-          one_time_token_4: '4',
-          one_time_token_5: '5',
-          one_time_token_6: '6'
+          one_time_password_1: '1',
+          one_time_password_2: '2',
+          one_time_password_3: '3',
+          one_time_password_4: '4',
+          one_time_password_5: '5',
+          one_time_password_6: '6'
         }
       end
 
@@ -111,16 +111,16 @@ RSpec.describe 'Auth::Logins', type: :request do
 
     context 'when there is an email and token and it has a matching One Time Token' do
       let(:user) { create(:user) }
-      let(:one_time_token) { OneTimeTokenService.new(email: user.email, auth_type: :login).create! }
+      let(:one_time_password) { OneTimePasswordService.new(email: user.email, auth_type: :login).create! }
 
       let(:tokens) do
         {
-          one_time_token_1: one_time_token.token[0],
-          one_time_token_2: one_time_token.token[1],
-          one_time_token_3: one_time_token.token[2],
-          one_time_token_4: one_time_token.token[3],
-          one_time_token_5: one_time_token.token[4],
-          one_time_token_6: one_time_token.token[5]
+          one_time_password_1: one_time_password.token[0],
+          one_time_password_2: one_time_password.token[1],
+          one_time_password_3: one_time_password.token[2],
+          one_time_password_4: one_time_password.token[3],
+          one_time_password_5: one_time_password.token[4],
+          one_time_password_6: one_time_password.token[5]
         }
       end
 

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe OneTimeTokenService do
+RSpec.describe OneTimePasswordService do
   let(:email) { "#{SecureRandom.base36}@email.com" }
   let(:auth_type) { :login }
 
@@ -12,8 +12,8 @@ RSpec.describe OneTimeTokenService do
   let(:instance) { described_class.new(email:, auth_type:) }
 
   before do
-    allow(OneTimeTokenMailer).to receive(:login).and_call_original
-    allow(OneTimeTokenMailer).to receive(:signup).and_call_original
+    allow(OneTimePasswordMailer).to receive(:login).and_call_original
+    allow(OneTimePasswordMailer).to receive(:signup).and_call_original
 
     allow(instance).to receive(:token).and_return(token_stub)
   end
@@ -24,26 +24,26 @@ RSpec.describe OneTimeTokenService do
     context 'when the token does not exist' do
       it 'sends an email to the email with the token' do
         subject
-        expect(OneTimeTokenMailer).to have_received(:login).with(email:, token: token_stub)
+        expect(OneTimePasswordMailer).to have_received(:login).with(email:, token: token_stub)
       end
 
-      it 'creates the OneTimeToken record' do
-        expect { subject }.to change { OneTimeToken.exists?(email:) }.from(false).to(true)
+      it 'creates the OneTimePassword record' do
+        expect { subject }.to change { OneTimePassword.exists?(email:) }.from(false).to(true)
       end
     end
 
     context 'when the token exists' do
       before do
-        create(:one_time_token, email:)
+        create(:one_time_password, email:)
       end
 
       it 'does not send another email' do
         subject
-        expect(OneTimeTokenMailer).not_to have_received(:login)
+        expect(OneTimePasswordMailer).not_to have_received(:login)
       end
 
-      it 'does not create another OneTimeToken record' do
-        expect { subject }.not_to change { OneTimeToken.count }
+      it 'does not create another OneTimePassword record' do
+        expect { subject }.not_to change { OneTimePassword.count }
       end
     end
 
@@ -52,7 +52,7 @@ RSpec.describe OneTimeTokenService do
 
       it 'sends a signup email' do
         subject
-        expect(OneTimeTokenMailer).to have_received(:signup).with(email:, token: token_stub)
+        expect(OneTimePasswordMailer).to have_received(:signup).with(email:, token: token_stub)
       end
     end
   end
@@ -80,7 +80,7 @@ RSpec.describe OneTimeTokenService do
       end
 
       it 'does not delete the record' do
-        expect { subject }.not_to change { OneTimeToken.exists?(email:) }
+        expect { subject }.not_to change { OneTimePassword.exists?(email:) }
       end
     end
 
@@ -96,7 +96,7 @@ RSpec.describe OneTimeTokenService do
       end
 
       it 'deletes the record' do
-        expect { subject }.to change { OneTimeToken.exists?(email:) }.from(true).to(false)
+        expect { subject }.to change { OneTimePassword.exists?(email:) }.from(true).to(false)
       end
     end
   end
