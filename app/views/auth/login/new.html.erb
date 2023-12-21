@@ -2,17 +2,24 @@
 
 <div class="container medium">
   <%= form_with url: auth_login_index_path, method: :post, class: "login-form" do |form| %>
+    <%= form.hidden_field :email, value: request.params['email'] %>
+
     <p>We&apos;ve sent you a temporary log-in code to <span><%= request.params['email'] %></span>. Please check your inbox to log in.</p>
 
-    <%= form.label :one_time_code_1, "Log-in code", class: "label block" %>
+    <%= form.label :one_time_token_1, "Log-in code", class: "label block" %>
     <div class="otp-code">
-      <%= form.text_field :one_time_code_1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_code_2, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_code_3, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_code_4, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_code_5, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
-      <%= form.text_field :one_time_code_6, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_token_1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_token_2, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_token_3, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_token_4, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_token_5, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
+      <%= form.text_field :one_time_token_6, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
     </div>
-    <%= form.submit "[Log In]", class: "link primary" %>
+
+    <%= render "shared/flash" %>
+
+    <div class="submit">
+      <%= form.submit "[Log In]", class: "link primary" %>
+    </div>
   <% end %>
 </div>

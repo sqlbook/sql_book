@@ -4,6 +4,11 @@
   <%= form_with url: new_auth_login_path, method: :get, class: "login-form" do |form| %>
     <%= form.label :email, "Email", class: "label block" %>
     <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
-    <%= form.submit "[Log In]", class: "link primary" %>
+
+    <%= render "shared/flash" %>
+
+    <div class="submit">
+      <%= form.submit "[Log In]", class: "link primary" %>
+    </div>
   <% end %>
 </div>

@@ -1,3 +1,7 @@
+.auth-login-index .login-form .submit {
+  margin: 2rem 0 0 0;
+}
+
 .auth-login-new .login-form p {
   margin: 0 0 2rem 0;
 }
