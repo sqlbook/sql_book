@@ -31,8 +31,12 @@ begin
 rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
+
+require './spec/support/authentication_helpers'
+
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
+  config.include AuthenticationHelpers
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [

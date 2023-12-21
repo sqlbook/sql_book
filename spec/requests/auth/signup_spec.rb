@@ -82,7 +82,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
     end
 
-    context 'when there is an email and token but there is no matching One Time Token' do
+    context 'when there is an email and token but there is no matching One Time Password' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
 
       let(:tokens) do
@@ -109,7 +109,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
     end
 
-    context 'when there is an email and token and it has a matching One Time Token' do
+    context 'when there is an email and token and it has a matching One Time Password' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
       let(:one_time_password) { OneTimePasswordService.new(email:, auth_type: :signup).create! }
 

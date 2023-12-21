@@ -52,7 +52,7 @@ module Auth
     end
 
     def token
-      6.times.map { |i| login_params[:"one_time_password#{i + 1}"] }.join.presence
+      6.times.map { |i| login_params[:"one_time_password_#{i + 1}"] }.join.presence
     end
 
     def one_time_password_service

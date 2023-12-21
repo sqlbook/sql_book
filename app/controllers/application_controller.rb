@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
-  def authenticate_user!
+  protected
+
+  def require_authentication!
     redirect_to auth_login_index_path unless current_user
+  end
+
+  def redirect_authenticated_users_to_app!
+    redirect_to app_dashboard_index_path if current_user
   end
 
   private
