@@ -19,4 +19,9 @@
   --cream-250: #ECE9E1;
   --cream-200: #F5F2E7;
   --cream-100: #FAF9F6;
+
+  --font-weight-normal: 400;
+  --font-weight-bold: 700; 
+
+  --border-radius-sm: 0.125rem;
 }

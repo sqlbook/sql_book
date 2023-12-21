@@ -1,27 +1,42 @@
 h1 {
   color: var(--cream-250);
   font-size: 3rem;
+  font-weight: var(--font-weight-bold);
   line-height: 3.5rem;
 }
 
 h2 {
   font-size: 2rem;
+  font-weight: var(--font-weight-bold);
   line-height: 3rem;
 }
 
 h3 {
   font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
   line-height: 2rem;
 }
 
 h4 {
   font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
   line-height: 1.5rem;
 }
 
 h5 {
   font-size: 1rem;
+  font-weight: var(--font-weight-bold);
   line-height: 1.5rem;
+}
+
+.link {
+  appearance: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  margin: 0;
+  padding: 0;
 }
 
 .link.primary {

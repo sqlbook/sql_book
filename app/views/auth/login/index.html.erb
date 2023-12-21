@@ -1,1 +1,9 @@
-<h1>Login</h1>
+<h1>Log in</h1>
+
+<div class="container medium">
+  <%= form_with url: auth_login_index_path, method: :post, class: "login-form" do |form| %>
+    <%= form.label :email, "Email", class: "label block" %>
+    <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com" %>
+    <%= form.submit "[Log in]", class: "link primary" %>
+  <% end %>
+</div>

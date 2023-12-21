@@ -1,1 +1,16 @@
-<h1>Signup</h1>
+<h1>Sign up</h1>
+
+<div class="container medium">
+  <%= form_with url: auth_signup_index_path, method: :post, class: "signup-form" do |form| %>
+    <%= form.label :email, "Email", class: "label block" %>
+    <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com" %>
+    <%= form.label :accept_terms, class: "checkbox" do %>
+    <%= form.check_box :accept_terms %>
+      <div class="check">
+        <i class="ri-check-line"></i>
+      </div>
+      I have read and accept the <%= link_to "Terms Of Service", "#", class: "link secondary" %>.
+    <% end %>
+    <%= form.submit "[Continue]", class: "link primary" %>
+  <% end %>
+</div>

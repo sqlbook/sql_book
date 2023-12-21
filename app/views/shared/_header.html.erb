@@ -4,7 +4,13 @@
   <% end %>
 
   <menu>
-    <%= link_to "[Sign up]", auth_login_index_path, class: "link primary" %>
-    <%= link_to "Log in", auth_signup_index_path, class: "link secondary" %>
+    <% if signup_page? %>
+      <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+    <% elsif login_page? %>
+      <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
+    <% else %>
+      <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
+      <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+    <% end %>
   </menu>
 </header>
