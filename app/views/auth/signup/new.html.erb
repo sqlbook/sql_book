@@ -1,6 +1,6 @@
 <h1>Sign up</h1>
 
-<div class="container medium">
+<div class="container medium" data-controller="auth--signup">
   <%= form_with url: auth_signup_index_path, method: :post, class: "signup-form" do |form| %>
     <%= form.hidden_field :email, value: request.params['email'] %>
 

@@ -1,6 +1,6 @@
 <h1>Log in</h1>
 
-<div class="container medium">
+<div class="container medium" data-controller="auth--login">
   <%= form_with url: new_auth_login_path, method: :get, class: "login-form" do |form| %>
     <%= form.label :email, "Email", class: "label block" %>
     <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>

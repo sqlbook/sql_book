@@ -1,9 +1,9 @@
 .input {
   appearance: none;
-  background: var(--gray-700);
+  background: var(--gray-800);
   border: 1px solid var(--gray-500);
   border-radius: var(--border-radius-sm);
-  color: var(--cream-100);
+  color: var(--cream-250);
   font: inherit;
   font-weight: var(--font-weight-normal);
   height: 2rem;
@@ -13,7 +13,8 @@
 
 .input:hover,
 .input:focus {
-  border-color: var(--cream-100);
+  background: var(--black);
+  border-color: var(--red-500);
   outline: none;
 }
 
