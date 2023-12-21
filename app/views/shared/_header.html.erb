@@ -1,16 +1,26 @@
 <header class="header">
-  <%= link_to root_path do %>
-    <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo" %>
-  <% end %>
-
-  <menu>
-    <% if signup_page? %>
-      <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
-    <% elsif login_page? %>
-      <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
-    <% else %>
-      <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
-      <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+  <% if signed_in? %>
+    <%= link_to app_dashboard_index_path do %>
+      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo" %>
     <% end %>
-  </menu>
+
+    <menu>
+      <%= link_to "Log out", auth_signout_index_path, class: "link secondary" %>
+    </menu>
+  <% else %>
+    <%= link_to root_path do %>
+      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo" %>
+    <% end %>
+
+    <menu>
+      <% if signup_page? %>
+        <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+      <% elsif login_page? %>
+        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
+      <% else %>
+        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
+        <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+      <% end %>
+    </menu>
+  <% end %>
 </header>

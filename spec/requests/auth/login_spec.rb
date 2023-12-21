@@ -127,7 +127,7 @@ RSpec.describe 'Auth::Logins', type: :request do
       it 'directs to the app page' do
         post '/auth/login', params: { email: user.email, **tokens }
 
-        expect(response).to redirect_to(root_path) # TODO
+        expect(response).to redirect_to(app_dashboard_index_path)
       end
 
       it 'sets a session cookie' do

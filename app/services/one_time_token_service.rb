@@ -7,7 +7,8 @@ class OneTimeTokenService
   end
 
   def create!
-    destoy!
+    return if exists?
+
     one_time_token = OneTimeToken.create!(email:, token:)
     send_token_email!(token: one_time_token.token)
     one_time_token
@@ -34,6 +35,10 @@ class OneTimeTokenService
 
   def token
     rand(100_000...999_999)
+  end
+
+  def exists?
+    OneTimeToken.exists?(email:)
   end
 
   def send_token_email!(token:)

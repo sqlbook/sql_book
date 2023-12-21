@@ -16,6 +16,8 @@
       <%= form.text_field :one_time_token_6, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
     </div>
 
+    <%= render "shared/flash" %>
+
     <div class="submit">
       <%= form.submit "[Sign Up]", class: "link primary" %>
     </div>

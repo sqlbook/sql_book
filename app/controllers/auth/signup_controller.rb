@@ -30,12 +30,13 @@ module Auth
     def create_and_authenticate_user!
       user = User.create!(email:)
       session[:current_user_id] = user.id
-      redirect_to root_path
+      redirect_to app_dashboard_index_path
     end
 
     def signup_params # rubocop:disable Metrics/MethodLength
       params.permit(
         :email,
+        :accept_terms,
         :one_time_token_1,
         :one_time_token_2,
         :one_time_token_3,

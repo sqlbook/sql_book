@@ -30,7 +30,7 @@ module Auth
     def find_and_authenticate_user!
       user = User.find_by!(email:)
       session[:current_user_id] = user.id
-      redirect_to root_path
+      redirect_to app_dashboard_index_path
     end
 
     def login_params # rubocop:disable Metrics/MethodLength

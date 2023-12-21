@@ -33,22 +33,17 @@ RSpec.describe OneTimeTokenService do
     end
 
     context 'when the token exists' do
-      let(:old_token_stub) { '123456' }
-      let(:new_token_stub) { '654321' }
-
       before do
-        allow(instance).to receive(:token).and_return(old_token_stub, new_token_stub)
-
-        instance.create!
+        create(:one_time_token, email:)
       end
 
-      it 'sends an email to the email with the token' do
+      it 'does not send another email' do
         subject
-        expect(OneTimeTokenMailer).to have_received(:login).with(email:, token: token_stub)
+        expect(OneTimeTokenMailer).not_to have_received(:login)
       end
 
-      it 'recreates the OneTimeToken record' do
-        expect { subject }.to change { OneTimeToken.find_by(email:).token }.from(old_token_stub).to(new_token_stub)
+      it 'does not create another OneTimeToken record' do
+        expect { subject }.not_to change { OneTimeToken.count }
       end
     end
 

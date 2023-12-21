@@ -12,6 +12,8 @@
       I have read and accept the <%= link_to "Terms Of Service", "#", class: "link secondary" %>.
     <% end %>
 
+    <%= render "shared/flash" %>
+
     <div class="submit">
       <%= form.submit "[Continue]", class: "link primary" %>
     </div>

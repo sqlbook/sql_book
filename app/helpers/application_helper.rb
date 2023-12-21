@@ -15,4 +15,8 @@ module ApplicationHelper
   def login_page?
     request.path == auth_login_index_path
   end
+
+  def signed_in?
+    session[:current_user_id].present?
+  end
 end
