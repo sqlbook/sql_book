@@ -52,6 +52,11 @@ h5 {
   color: var(--red-600);
 }
 
+.link.primary:disabled, .link.primary.disabled {
+  opacity: .3;
+  pointer-events: none;
+}
+
 .link.secondary {
   color: var(--gray-250);
   text-decoration: underline;
@@ -63,6 +68,11 @@ h5 {
 
 .link.secondary:active {
   color: var(--gray-300);
+}
+
+.link.secondary:disabled, .link.secondary.disabled {
+  opacity: .3;
+  pointer-events: none;
 }
 
 .text.small {

@@ -1,5 +1,5 @@
 <% if flash[:alert] %>
   <p class="flash text small alert">
-    <%= flash[:alert] %>
+    <%= flash[:alert].html_safe %>
   </p>
 <% end %>

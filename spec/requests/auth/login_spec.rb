@@ -63,6 +63,29 @@ RSpec.describe 'Auth::Logins', type: :request do
     end
   end
 
+  describe 'GET /auth/login/resend' do
+    context 'when there is no email provided' do
+      it 'redirects back to the index page' do
+        get '/auth/login/resend'
+
+        expect(response).to redirect_to(auth_login_index_path)
+      end
+    end
+
+    context 'when there is an email provided' do
+      let(:email) { "#{SecureRandom.base36}@email.com" }
+
+      before do
+        create(:one_time_password, email:)
+      end
+
+      it 'redirects to the new auth page' do
+        get '/auth/login/resend', params: { email: }
+        expect(response).to redirect_to(new_auth_login_path(email:))
+      end
+    end
+  end
+
   describe 'POST /auth/login' do
     context 'when there is no email submitted' do
       it 'redirects back to the index page' do
@@ -105,7 +128,7 @@ RSpec.describe 'Auth::Logins', type: :request do
       it 'displays a flash message' do
         post '/auth/login', params: { email:, **tokens }
 
-        expect(flash[:alert]).to eq('Invalid log-in code. Please try again or click here for a replacement code.')
+        expect(flash[:alert]).to include('Invalid log-in code. Please try again or')
       end
     end
 

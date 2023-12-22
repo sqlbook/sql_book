@@ -8,9 +8,13 @@ Rails.application.routes.draw do
   root 'home#index'
 
   namespace :auth do
-    resources :login, only: %i[index new create]
     resources :signout, only: %i[index]
-    resources :signup, only: %i[index new create]
+    resources :login, only: %i[index new create] do
+      collection { get 'resend' }
+    end
+    resources :signup, only: %i[index new create] do
+      collection { get 'resend' }
+    end
   end
 
   namespace :app do

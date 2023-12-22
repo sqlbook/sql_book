@@ -22,3 +22,11 @@
   color: var(--gray-300);
   font-style: italic;
 }
+
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  transition: background 5000s ease-in-out 0s;
+  -webkit-text-fill-color: var(--cream-250);
+}

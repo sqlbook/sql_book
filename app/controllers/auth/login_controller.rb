@@ -21,7 +21,13 @@ module Auth
 
       return find_and_authenticate_user! if one_time_password_service.verify(token:)
 
-      flash.alert = I18n.t('auth.invalid_login_code')
+      handle_invalid_login_code
+    end
+
+    def resend
+      return redirect_to auth_login_index_path unless email
+
+      one_time_password_service.resend!
       redirect_to new_auth_login_path(email:)
     end
 
@@ -31,6 +37,11 @@ module Auth
       user = User.find_by!(email:)
       session[:current_user_id] = user.id
       redirect_to app_dashboard_index_path
+    end
+
+    def handle_invalid_login_code
+      flash.alert = I18n.t('auth.invalid_login_code', link: resend_auth_login_index_path(email:))
+      redirect_to new_auth_login_path(email:)
     end
 
     def login_params # rubocop:disable Metrics/MethodLength

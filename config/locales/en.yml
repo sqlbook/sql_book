@@ -31,8 +31,8 @@ en:
   auth:
     account_already_exists: An account with this email already exists
     account_does_not_exist: An account with this email does not exist
-    invalid_login_code: Invalid log-in code. Please try again or click here for a replacement code.
-    invalid_signup_code: Invalid sign-up code. Please try again or click here for a replacement code.
+    invalid_login_code: Invalid log-in code. Please try again or <a class="link primary" href="%{link}">click here</a> for a replacement code.
+    invalid_signup_code: Invalid sign-up code. Please try again or <a class="link primary" href="%{link}">click here</a> for a replacement code.
 
   mailers:
     one_time_password:

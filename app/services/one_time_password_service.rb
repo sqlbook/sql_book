@@ -14,6 +14,12 @@ class OneTimePasswordService
     one_time_password
   end
 
+  def resend!
+    one_time_password = OneTimePassword.find_by!(email:)
+    send_token_email!(token: one_time_password.token)
+    one_time_password
+  end
+
   def verify(token:)
     one_time_password = OneTimePassword.find_by(email:)
 

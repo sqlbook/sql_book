@@ -1,11 +1,23 @@
 const ALLOWED_CHARACTERS = /[0-9]/;
 
 /**
+ * Add event listeners to make the otp input nicer
+ * @returns {void}
+ */
+export function addOtpHelperEventListeners() {
+  document.querySelectorAll('.otp-code .input').forEach(element => {
+    element.addEventListener('keyup', onOtpInputKeyUp);
+    element.addEventListener('keypress', onOtpInputKeyPress);
+    element.addEventListener('paste', onOtpPaste);
+  });
+}
+
+/**
  * Skip to the next input when a valid character is entered
  * @param {Event} event 
  * @returns {void}
  */
-export function onOtpInputKeyUp(event) {
+function onOtpInputKeyUp(event) {
   const next = event.target.nextElementSibling;
 
   if (ALLOWED_CHARACTERS.test(event.key) && next) {
@@ -18,7 +30,7 @@ export function onOtpInputKeyUp(event) {
  * @param {Event} event 
  * @returns {void}
  */
-export function onOtpInputKeyPress(event) {
+function onOtpInputKeyPress(event) {
   if (!ALLOWED_CHARACTERS.test(event.key)) {
     event.preventDefault();
   }
@@ -29,7 +41,7 @@ export function onOtpInputKeyPress(event) {
  * @param {ClipboardEvent} event 
  * @returns {void}
  */
-export function onOtpPaste(event) {
+function onOtpPaste(event) {
   const code = event.clipboardData.getData('text');
 
   if (code.length === 6) {

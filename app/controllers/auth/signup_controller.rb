@@ -21,11 +21,22 @@ module Auth
 
       return create_and_authenticate_user! if one_time_password_service.verify(token:)
 
-      flash.alert = I18n.t('auth.invalid_signup_code')
+      handle_invalid_signup_code
+    end
+
+    def resend
+      return redirect_to auth_signup_index_path unless email
+
+      one_time_password_service.resend!
       redirect_to new_auth_signup_path(email:)
     end
 
     private
+
+    def handle_invalid_signup_code
+      flash.alert = I18n.t('auth.invalid_signup_code', link: resend_auth_signup_index_path(email:))
+      redirect_to new_auth_signup_path(email:)
+    end
 
     def create_and_authenticate_user!
       user = User.create!(email:)

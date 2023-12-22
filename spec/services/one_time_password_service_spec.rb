@@ -57,6 +57,31 @@ RSpec.describe OneTimePasswordService do
     end
   end
 
+  describe '#resend!' do
+    subject { instance.resend! }
+
+    context 'when the token does not exist' do
+      it 'raises a RecordNotFound exception' do
+        expect { subject }.to raise_error { ActiveRecord::RecordNotFound }
+      end
+    end
+
+    context 'when the token does exist' do
+      before do
+        create(:one_time_password, email:, token: token_stub)
+      end
+
+      it 'does not create a new token' do
+        expect { subject }.not_to change { OneTimePassword.count }
+      end
+
+      it 'resends the existing code' do
+        subject
+        expect(OneTimePasswordMailer).to have_received(:login).with(email:, token: token_stub)
+      end
+    end
+  end
+
   describe '#verify' do
     let(:token) { '123456' }
 
