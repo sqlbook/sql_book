@@ -24,3 +24,6 @@ Layout/FirstArrayElementIndentation:
 
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
+
+Metrics/MethodLength:
+  CountAsOne: ['hash', 'array', 'heredoc']

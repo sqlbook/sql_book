@@ -13,10 +13,18 @@ module App
 
       return handle_invalid_data_source_create(data_source) unless data_source.save
 
-      redirect_to app_dashboard_index_path
+      redirect_to set_up_app_data_source_path(data_source)
+    end
+
+    def set_up
+      @data_source = data_source
     end
 
     private
+
+    def data_source
+      @data_source ||= DataSource.find(params[:id])
+    end
 
     def create_params
       params.permit(

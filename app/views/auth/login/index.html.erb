@@ -1,14 +1,16 @@
-<h1>Log in</h1>
+<main>
+  <h1>Log in</h1>
 
-<div class="container medium" data-controller="auth--login">
-  <%= form_with url: new_auth_login_path, method: :get, class: "login-form" do |form| %>
-    <%= form.label :email, "Email", class: "label block" %>
-    <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
+  <div class="container medium" data-controller="auth--login">
+    <%= form_with url: new_auth_login_path, method: :get, class: "login-form" do |form| %>
+      <%= form.label :email, "Email", class: "label block" %>
+      <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
 
-    <%= render "shared/flash" %>
+      <%= render "shared/flash" %>
 
-    <div class="submit">
-      <%= form.submit "[Log In]", class: "link primary" %>
-    </div>
-  <% end %>
-</div>
+      <div class="submit">
+        <%= form.submit "[Log In]", class: "link primary" %>
+      </div>
+    <% end %>
+  </div>
+</main>

@@ -1,0 +1,4 @@
+<%= link_to({ tab: }, { class: class_names("nav-item", active: active_tab?(tab:, default_selected: local_assigns[:default_selected])) }) do %>
+  <i class="<%= icon_class %>"></i>
+  <span><%= name %></span>
+<% end %>

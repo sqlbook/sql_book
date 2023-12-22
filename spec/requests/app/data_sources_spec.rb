@@ -61,7 +61,7 @@ RSpec.describe 'App::DataSources', type: :request do
 
       it 'redirects back to the new page' do
         post '/app/data_sources', params: { url: }
-        expect(response).to redirect_to(app_dashboard_index_path)
+        expect(response).to redirect_to(set_up_app_data_source_path(DataSource.last.id))
       end
     end
   end

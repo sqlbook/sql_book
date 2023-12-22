@@ -1,0 +1,29 @@
+.tabs .nav-item {
+  align-items: center;
+  color: var(--gray-300);
+  display: flex;
+  margin: 0 1.5rem 0 0;
+  text-decoration: none;
+}
+
+.tabs .nav-item span {
+  border-bottom: 1px solid transparent;
+  font-weight: var(--font-weight-bold);
+}
+
+.tabs .nav-item i {
+  color: var(--gray-500);
+  margin: 0 .25rem 0 0;
+}
+
+.tabs .nav-item.active {
+  color: var(--cream-250);
+}
+
+.tabs .nav-item.active i {
+  color: var(--red-500);
+}
+
+.tabs .nav-item.active span {
+  border-color: var(--red-500);
+}

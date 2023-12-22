@@ -6,7 +6,7 @@
     <% end %>
 
     <menu>
-      <%= link_to "Log out", auth_signout_index_path, class: "link secondary" %>
+      <%= link_to "Log out", auth_signout_index_path, class: "link secondary text-large" %>
     </menu>
   <% else %>
     <%= link_to root_path do %>
@@ -16,12 +16,12 @@
 
     <menu>
       <% if signup_page? %>
-        <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+        <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
       <% elsif login_page? %>
-        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
+        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large" %>
       <% else %>
-        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary" %>
-        <%= link_to "Log in", auth_login_index_path, class: "link secondary" %>
+        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large" %>
+        <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
       <% end %>
     </menu>
   <% end %>

@@ -1,22 +1,24 @@
-<h1>Sign up</h1>
+<main>
+  <h1>Sign up</h1>
 
-<div class="container medium" data-controller="auth--signup">
-  <%= form_with url: new_auth_signup_path, method: :get, class: "signup-form" do |form| %>
-    <%= form.label :email, "Email", class: "label block" %>
-    <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
+  <div class="container medium" data-controller="auth--signup">
+    <%= form_with url: new_auth_signup_path, method: :get, class: "signup-form" do |form| %>
+      <%= form.label :email, "Email", class: "label block" %>
+      <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
 
-    <%= render "shared/flash" %>
+      <%= render "shared/flash" %>
 
-    <%= form.label :accept_terms, class: "checkbox" do %>
-    <%= form.check_box :accept_terms, required: true %>
-      <div class="check">
-        <i class="ri-check-line"></i>
+      <%= form.label :accept_terms, class: "checkbox" do %>
+      <%= form.check_box :accept_terms, required: true %>
+        <div class="check">
+          <i class="ri-check-line"></i>
+        </div>
+        I have read and accept the <%= link_to "Terms Of Service", "#", class: "link secondary" %>.
+      <% end %>
+
+      <div class="submit">
+        <%= form.submit "[Continue]", class: "link primary" %>
       </div>
-      I have read and accept the <%= link_to "Terms Of Service", "#", class: "link secondary" %>.
     <% end %>
-
-    <div class="submit">
-      <%= form.submit "[Continue]", class: "link primary" %>
-    </div>
-  <% end %>
-</div>
+  </div>
+</main>
