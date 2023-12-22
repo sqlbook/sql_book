@@ -2,12 +2,104 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-      /* Email styles need to be inline */
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        color: #1C1C1C;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 16px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .wrapper {
+        margin: 0 auto;
+        max-width: 664px;
+        padding: 0 2rem;
+        width: 100%;
+      }
+
+      .header {
+        border-bottom: 1px solid #CCCCCC;
+        margin: 0 0 3rem 0;
+        padding: 1.5rem 0 1rem 0;
+      }
+
+      .header img {
+        display: block;
+      }
+
+      .footer {
+        background: #F2F2F2;
+        font-size: 13px;
+        margin: 4rem 0 0 0;
+        padding: 2rem;
+      }
+
+      .footer .divider {
+        color: #707070;
+      }
+
+      .footer .wrapper {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .footer p {
+        font-size: 12px;
+        line-height: 16px;
+        margin: 0;
+      }
+
+      a {
+        color: #FF6A64;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 2rem;
+        margin: 0 0 1.5rem 0;
+      }
+
+      p {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5rem;
+        margin: 0 0 1.5rem 0;
+      }
     </style>
   </head>
 
   <body>
-    <%= yield %>
+    <div class="wrapper">
+      <div class="header">
+        <%= link_to root_url do %>
+          Logo
+        <% end %>
+      </div>
+        <%= yield %>
+    </div>
+      <div class="footer">
+        <div class="wrapper">
+          <p>
+            <%= link_to "sqlbook.com", root_url %>
+            <span class="divider"> | </span>
+            <span>Web analytics for data pros</span>
+          </p>
+          <p>
+            <% if @unsubscribable %>
+              <%= link_to "Unsubscribe", root_url %>
+            <% end %>
+          </p>
+        </div>
+      </div>
   </body>
 </html>
