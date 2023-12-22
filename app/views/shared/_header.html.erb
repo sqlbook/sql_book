@@ -1,7 +1,8 @@
 <header class="header">
   <% if signed_in? %>
     <%= link_to app_dashboard_index_path do %>
-      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo" %>
+      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
+      <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
     <% end %>
 
     <menu>
@@ -9,7 +10,8 @@
     </menu>
   <% else %>
     <%= link_to root_path do %>
-      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo" %>
+      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
+      <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
     <% end %>
 
     <menu>

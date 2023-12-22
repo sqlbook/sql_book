@@ -13,3 +13,21 @@
 .header p {
   margin: 0;
 }
+
+.header .logo-dark {
+  display: block;
+}
+
+.header .logo-light {
+  display: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .header .logo-dark {
+    display: none;
+  }
+
+  .header .logo-light {
+    display: block;
+  }
+}

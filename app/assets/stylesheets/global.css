@@ -1,5 +1,5 @@
 html, body {
-  background: var(--gray-850);
+  background: var(--background-color);
   color: var(--gray-250);
   font-family: 'Roboto Mono', monospace;
   font-size: 1rem;
