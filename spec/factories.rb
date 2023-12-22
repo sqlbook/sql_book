@@ -9,4 +9,8 @@ FactoryBot.define do
     email { "#{SecureRandom.base36}@email.com" }
     token { '123456' }
   end
+
+  factory :data_source do
+    url { 'https://sqlbook.com' }
+  end
 end

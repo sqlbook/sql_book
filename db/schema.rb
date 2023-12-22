@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2023_12_21_122435) do
+ActiveRecord::Schema[7.1].define(version: 2023_12_22_144500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "data_sources", force: :cascade do |t|
+    t.string "url", null: false
+    t.datetime "verified_at"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["url"], name: "index_data_sources_on_url", unique: true
+    t.index ["user_id"], name: "index_data_sources_on_user_id"
+  end
 
   create_table "one_time_passwords", force: :cascade do |t|
     t.string "email"

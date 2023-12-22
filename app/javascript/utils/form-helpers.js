@@ -7,11 +7,23 @@ export function addFormHelperEventListeners() {
   const form = document.querySelector('form');
   const button = form.querySelector('input[type="submit"]');
 
+  // Set the initial value
+  setButtonDisabled(form, button);
+
   form.addEventListener('input', () => {
-    if (form.checkValidity()) {
-      button.removeAttribute('disabled');
-    } else {
-      button.setAttribute('disabled', 'true');
-    }
+    setButtonDisabled(form, button)
   });
+}
+
+/**
+ * @param {HTMLFormElement} form 
+ * @param {HTMLInputElement} button 
+ * @returns {void}
+ */
+function setButtonDisabled(form, button) {
+  if (form.checkValidity()) {
+    button.removeAttribute('disabled');
+  } else {
+    button.setAttribute('disabled', 'true');
+  }
 }

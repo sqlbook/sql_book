@@ -39,3 +39,7 @@ en:
       subjects:
         login: Your log-in code for sql_book
         signup: Your sign-up code for sql_book
+
+  models:
+    data_source:
+      is_not_valid: is not valid
