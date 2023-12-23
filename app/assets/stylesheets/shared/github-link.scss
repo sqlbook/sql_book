@@ -1,0 +1,26 @@
+.github-link {
+  align-items: center;
+  background: var(--gray-800);
+  color: var(--cream-250);
+  display: inline-flex;
+  margin: 1.5rem 0 0 0;
+  padding: .5rem;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--gray-850);
+  }
+
+  span {
+    margin: 0 .5rem;
+  }
+
+  i {
+    color: var(--gray-500);
+    font-size: 1rem;
+  }
+
+  .github-logo {
+    color: var(--red-500);
+  }  
+}

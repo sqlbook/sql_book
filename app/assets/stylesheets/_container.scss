@@ -1,0 +1,17 @@
+.container {
+  &.large {
+    max-width: 60rem;
+  }
+  
+  &.medium {
+    max-width: 29rem;
+  }
+  
+  &.small {
+    max-width: 18.625rem;
+  }
+  
+  &.x-small {
+    max-width: 13.5rem;
+  }
+}

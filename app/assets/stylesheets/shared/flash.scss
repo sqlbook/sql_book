@@ -1,0 +1,10 @@
+.flash {
+  &.alert {
+    color: var(--red-500);
+    margin: 0;
+  }
+
+  .link.primary {
+    text-decoration: underline;
+  }  
+}

@@ -1,0 +1,32 @@
+.input {
+  appearance: none;
+  background: var(--gray-800);
+  border: 1px solid var(--gray-500);
+  border-radius: var(--border-radius-sm);
+  color: var(--cream-250);
+  font: inherit;
+  font-weight: var(--font-weight-normal);
+  height: 2rem;
+  margin: 0;
+  padding: 0 .5rem;
+
+  &:hover,
+  &:focus {
+    background: var(--black);
+    border-color: var(--red-500);
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--gray-300);
+    font-style: italic;
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    transition: background 5000s ease-in-out 0s;
+    -webkit-text-fill-color: var(--cream-250);
+  }
+}

@@ -1,0 +1,31 @@
+.app-data_sources-set_up {
+  display: grid;
+  grid-template-areas: 'header aside'
+                       'main aside';
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
+
+  aside {
+    p {
+      span {
+        color: var(--cream-100);
+      }
+
+      .link.primary {
+        text-decoration: underline;
+      }
+    }
+  }
+  
+  .comment {
+    color: var(--gray-300);
+  }
+
+  .tracking-code {
+    color: var(--cream-250);
+  }
+
+  pre {
+    margin: 0 0 1.5rem 0;
+  }
+}

@@ -46,42 +46,44 @@ code {
   font: inherit;
   margin: 0;
   padding: 0;
-}
 
-.link.primary {
-  color: var(--red-500);
-  text-decoration: none;
-}
+  &.primary {
+    color: var(--red-500);
+    text-decoration: none;
+  
+    &:hover {
+      color: var(--red-300);
+    }
+  
+    &:active {
+      color: var(--red-600);
+    }
 
-.link.primary:hover {
-  color: var(--red-300);
-}
+    &:disabled,
+    &.disabled {
+      opacity: .3;
+      pointer-events: none;
+    }
+  }
 
-.link.primary:active {
-  color: var(--red-600);
-}
+  &.secondary {
+    color: var(--gray-250);
+    text-decoration: underline;
 
-.link.primary:disabled, .link.primary.disabled {
-  opacity: .3;
-  pointer-events: none;
-}
-
-.link.secondary {
-  color: var(--gray-250);
-  text-decoration: underline;
-}
-
-.link.secondary:hover {
-  color: var(--gray-200);
-}
-
-.link.secondary:active {
-  color: var(--gray-300);
-}
-
-.link.secondary:disabled, .link.secondary.disabled {
-  opacity: .3;
-  pointer-events: none;
+    &:hover {
+      color: var(--gray-200);
+    }
+    
+    &:active {
+      color: var(--gray-300);
+    }
+    
+    &:disabled,
+    &.disabled {
+      opacity: .3;
+      pointer-events: none;
+    }
+  }
 }
 
 .text-small {
