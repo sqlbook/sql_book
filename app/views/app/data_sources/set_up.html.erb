@@ -1,8 +1,12 @@
 <main>
   <h1>Welcome to sqlbook</h1>
-  <div class="container large">
-    <p>Awesome, please add the tracking code opposite to the <head> section of the HTML of <%= @data_source.url %>.
-    <p>When you&apos;ve added the code and published the changes <%= link_to "[Press 1]", "#", class: "link primary" %></p>
+  <div class="container large" data-controller="app--data-sources">
+    <% if verifying? %>
+      <p>Verifying installation...</p>
+    <% else %>
+      <p>Awesome, please add the tracking code opposite to the &lt;head&gt; section of the HTML of <%= @data_source.url %>.
+      <p>When you&apos;ve added the code and published the changes <%= link_to "[Press 1]", add_params(verifying: 'true'), { class: "link primary" } %></p>
+    <% end %>
   </div>
 </main>
 <aside>

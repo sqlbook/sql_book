@@ -9,5 +9,9 @@ module App
         </script>
       HTML
     end
+
+    def verifying?
+      params['verifying'].present?
+    end
   end
 end

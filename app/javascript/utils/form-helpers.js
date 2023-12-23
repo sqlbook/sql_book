@@ -5,6 +5,9 @@
  */
 export function addFormHelperEventListeners() {
   const form = document.querySelector('form');
+
+  if (!form) return;
+
   const button = form.querySelector('input[type="submit"]');
 
   // Set the initial value
