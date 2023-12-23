@@ -12,5 +12,6 @@ FactoryBot.define do
 
   factory :data_source do
     url { 'https://sqlbook.com' }
+    user { create(:user) }
   end
 end

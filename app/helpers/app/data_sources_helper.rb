@@ -2,10 +2,16 @@
 
 module App
   module DataSourcesHelper
-    def tracking_code
+    def tracking_code(data_source:)
       <<~HTML
         <script>
-          console.log('Tracking code goes here');
+          (function(s,q,l,b,o,o,k){
+            s._sbSettings={uuid:'#{data_source.external_uuid}'};
+            e=q.getElementsByTagName('head')[0];
+            a=q.createElement('script');
+            a.src=u+s._sbSettings.uuid;
+            e.appendChild(a);
+          })(window,document,'https://cdn.sqlbook.com/1.0.0/script.js?');
         </script>
       HTML
     end

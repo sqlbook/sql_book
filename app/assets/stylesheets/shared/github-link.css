@@ -1,0 +1,26 @@
+.app-data_sources-set_up .github-link {
+  align-items: center;
+  background: var(--gray-800);
+  color: var(--cream-250);
+  display: inline-flex;
+  margin: 1.5rem 0 0 0;
+  padding: .5rem;
+  text-decoration: none;
+}
+
+.app-data_sources-set_up .github-link:hover {
+  background: var(--gray-850);
+}
+
+.app-data_sources-set_up .github-link span {
+  margin: 0 .5rem;
+}
+
+.app-data_sources-set_up .github-link i {
+  color: var(--gray-500);
+  font-size: 1rem;
+}
+
+.app-data_sources-set_up .github-link .github-logo {
+  color: var(--red-500);
+}

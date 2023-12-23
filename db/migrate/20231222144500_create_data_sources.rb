@@ -4,6 +4,7 @@ class CreateDataSources < ActiveRecord::Migration[7.1]
   def change
     create_table :data_sources do |t|
       t.string :url, null: false
+      t.uuid :external_uuid, null: false, default: SecureRandom.uuid
       t.datetime :verified_at
 
       t.belongs_to :user
@@ -12,5 +13,6 @@ class CreateDataSources < ActiveRecord::Migration[7.1]
     end
 
     add_index :data_sources, :url, unique: true
+    add_index :data_sources, :external_uuid, unique: true
   end
 end

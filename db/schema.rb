@@ -16,10 +16,12 @@ ActiveRecord::Schema[7.1].define(version: 2023_12_22_144500) do
 
   create_table "data_sources", force: :cascade do |t|
     t.string "url", null: false
+    t.uuid "external_uuid", default: "55b00049-c17a-4270-8d51-9a6c4fbc4c41", null: false
     t.datetime "verified_at"
     t.bigint "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["external_uuid"], name: "index_data_sources_on_external_uuid", unique: true
     t.index ["url"], name: "index_data_sources_on_url", unique: true
     t.index ["user_id"], name: "index_data_sources_on_user_id"
   end

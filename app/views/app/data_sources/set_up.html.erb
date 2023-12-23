@@ -16,7 +16,9 @@
   </div>
 
   <% if active_tab?(tab: "tracking_code", default_selected: true) %>
-    <pre><code><%= tracking_code %></code></pre>
+    <pre><code class="comment"><%= "<!-- SQL_Book Tracking Code for #{@data_source.url} -->" %></code></pre>
+    <pre><code class="tracking-code" data-clipboard="tracking-code"><%= tracking_code(data_source: @data_source) %></code></pre>
+    <%= render "shared/copy_to_clipboard", source: "tracking-code" %>
   <% end %>
 
   <% if active_tab?(tab: "learn_more") %>
@@ -24,10 +26,6 @@
     <p>Our code is <span>privacy-friendly</span> and <span>cookieless</span>, meaning you won&apos;t need to bug your visitors with consent or cookie banners unless you plan to capture their personal data.</p>
     <p>Not only that, but <span>our script is fully</span> <%= link_to "open source", "#", class: "link primary" %> under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. This means you can review it yourself to ensure it meets your business requirements, contribute improvements for the community, or even fork it for use in your own projects, subject to the stated <%= link_to "licensing terms", "#", class: "link primary" %>.</p>
 
-    <%= link_to "https://github.com/sqlbook/sql_book", class: "github-link", target: "blank" do %>
-      <i class="ri-github-fill github-logo"></i>
-      <span>GitHub</span>
-      <i class="ri-external-link-line"></i>
-    <% end %>
+    <%= render "shared/github_link" %>
   <% end %>
 </aside>
