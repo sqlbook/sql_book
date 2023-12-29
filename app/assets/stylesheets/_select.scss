@@ -1,0 +1,43 @@
+.select {
+  background: var(--gray-800);
+  border: 1px solid var(--gray-500);
+  border-radius: var(--border-radius-sm);
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  position: relative;
+
+  &:hover,
+  &:focus {
+    background: var(--black);
+    border-color: var(--red-500);
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--gray-300);
+    font-style: italic;
+  }
+
+  select {
+    appearance: none;
+    background: none;
+    border: none;
+    color: var(--cream-250);
+    cursor: pointer;
+    font: inherit;
+    font-weight: var(--font-weight-normal);
+    height: 2rem;
+    margin: 0;
+    padding: 0 1.75rem 0 .5rem;
+    width: 100%;
+  }
+
+  i {
+    pointer-events: none;
+    position: absolute;
+    right: .75rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}

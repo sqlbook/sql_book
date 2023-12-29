@@ -3,6 +3,19 @@
 require 'rails_helper'
 
 RSpec.describe 'App::DataSources', type: :request do
+  describe 'GET /app/data_sources' do
+    let(:user) { create(:user) }
+
+    before { sign_in(user) }
+
+    context 'when there are no data sources' do
+      it 'redirects to the new page' do
+        get '/app/data_sources'
+        expect(response).to redirect_to(new_app_data_source_path)
+      end
+    end
+  end
+
   describe 'GET /app/data_sources/new' do
     let(:user) { create(:user) }
 

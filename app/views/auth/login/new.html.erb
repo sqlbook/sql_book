@@ -1,7 +1,7 @@
 <main>
   <h1>Log in</h1>
 
-  <div class="container medium" data-controller="form">
+  <div class="container md" data-controller="form">
     <%= form_with url: auth_login_index_path, method: :post, class: "login-form", html: { "data-form-target": "form" } do |form| %>
       <%= form.hidden_field :email, value: request.params['email'] %>
 

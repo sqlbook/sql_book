@@ -55,6 +55,7 @@
     position: absolute;
     top: 1.5rem;
     width: 11.25rem;
+    z-index: 1;
 
     .category {
       color: var(--gray-500);
@@ -86,6 +87,7 @@
   }
 
   .toggle-menu {
+    cursor: pointer;
     font-size: 1rem;
     margin: 0 0 0 2rem;
     text-decoration: none;

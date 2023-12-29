@@ -1,7 +1,7 @@
 <main>
   <h1>Welcome to sqlbook</h1>
 
-  <div class="container medium" data-controller="form">
+  <div class="container md" data-controller="form">
     <%= form_with url: app_data_sources_path, method: :post, class: "new-site-form", html: { "data-form-target": "form" } do |form| %>
       <p>Let&apos;s get started by adding your first data source.</p>
       <%= form.label :url, "Please enter the URL you would like to capture data on:", class: "label block" %>

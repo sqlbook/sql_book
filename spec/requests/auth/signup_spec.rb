@@ -150,7 +150,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       it 'directs to the app page' do
         post '/auth/signup', params: { email:, **tokens }
 
-        expect(response).to redirect_to(app_data_sources_path)
+        expect(response).to redirect_to(new_app_data_source_path)
       end
 
       it 'creates the user' do

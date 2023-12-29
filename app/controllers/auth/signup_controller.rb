@@ -41,7 +41,7 @@ module Auth
     def create_and_authenticate_user!
       user = User.create!(email:)
       session[:current_user_id] = user.id
-      redirect_to app_data_sources_path
+      redirect_to new_app_data_source_path
     end
 
     def signup_params # rubocop:disable Metrics/MethodLength

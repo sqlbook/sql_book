@@ -1,17 +1,21 @@
 .container {
-  &.large {
+  &.lg {
     max-width: 60rem;
   }
+
+  &.md-lg {
+    max-width: 39rem;
+  }
   
-  &.medium {
+  &.md {
     max-width: 29rem;
   }
   
-  &.small {
+  &.sm {
     max-width: 18.625rem;
   }
   
-  &.x-small {
+  &.x-sm {
     max-width: 13.5rem;
   }
 }

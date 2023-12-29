@@ -6,6 +6,7 @@ module App
 
     def index
       @data_sources = current_user.data_sources
+      redirect_to new_app_data_source_path if @data_sources.empty?
     end
 
     def show

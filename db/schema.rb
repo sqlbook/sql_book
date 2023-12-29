@@ -16,7 +16,7 @@ ActiveRecord::Schema[7.1].define(version: 2023_12_22_144500) do
 
   create_table "data_sources", force: :cascade do |t|
     t.string "url", null: false
-    t.uuid "external_uuid", default: "55b00049-c17a-4270-8d51-9a6c4fbc4c41", null: false
+    t.uuid "external_uuid", default: -> { "gen_random_uuid()" }, null: false
     t.datetime "verified_at"
     t.bigint "user_id"
     t.datetime "created_at", null: false
