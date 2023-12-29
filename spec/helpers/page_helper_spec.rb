@@ -96,7 +96,7 @@ RSpec.describe 'PageHelper', type: :helper do
     end
 
     context 'when the page is an app page' do
-      let(:path) { '/app/dashboard' }
+      let(:path) { '/app/data_sources' }
 
       it 'returns true' do
         expect(subject).to eq(true)

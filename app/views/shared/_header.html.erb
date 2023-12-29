@@ -1,6 +1,6 @@
 <% if signed_in? %>
   <header class="header">
-    <%= link_to app_dashboard_index_path do %>
+    <%= link_to app_data_sources_path do %>
       <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
       <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
     <% end %>
@@ -13,7 +13,7 @@
 
       <div class="dropdown" data-menu-target="dropdown">
         <label class="text-small category">App</label>
-        <%= link_to "#", class: "link secondary menu-item" do %>
+        <%= link_to app_data_sources_path, class: "link secondary menu-item" do %>
           <i class="ri-database-2-line"></i> Data Sources
         <% end %>
         <%= link_to "#", class: "link secondary menu-item" do %>

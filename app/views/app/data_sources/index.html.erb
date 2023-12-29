@@ -1,0 +1,9 @@
+<main>
+  <h1>Data Sources</h1>
+  
+  <% @data_sources.each do |data_source| %>
+    <p>ID: <%= link_to data_source.id, app_data_source_path(data_source) %></p>
+    <p>URL: <%= data_source.url %></p>
+    <p>Verified At: <%= data_source.verified_at %></p>
+  <% end %>
+</main>
