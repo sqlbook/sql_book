@@ -16,9 +16,11 @@
   </div>
 
   <% if active_tab?(tab: "tracking_code", default_selected: true) %>
-    <pre><code class="comment"><%= "<!-- SQL_Book Tracking Code for #{@data_source.url} -->" %></code></pre>
-    <pre><code class="tracking-code" data-clipboard="tracking-code"><%= tracking_code(data_source: @data_source) %></code></pre>
-    <%= render "shared/copy_to_clipboard", source: "tracking-code" %>
+    <div data-controller="clipboard">
+      <pre><code class="comment"><%= "<!-- SQL_Book Tracking Code for #{@data_source.url} -->" %></code></pre>
+      <pre><code class="tracking-code" data-clipboard-target="source"><%= tracking_code(data_source: @data_source) %></code></pre>
+      <%= render "shared/copy_to_clipboard" %>
+    </div>
   <% end %>
 
   <% if active_tab?(tab: "learn_more") %>

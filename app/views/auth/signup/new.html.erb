@@ -1,14 +1,14 @@
 <main>
   <h1>Sign up</h1>
 
-  <div class="container medium" data-controller="auth--signup">
-    <%= form_with url: auth_signup_index_path, method: :post, class: "signup-form" do |form| %>
+  <div class="container medium" data-controller="form">
+    <%= form_with url: auth_signup_index_path, method: :post, class: "signup-form", html: { "data-form-target": "form" } do |form| %>
       <%= form.hidden_field :email, value: request.params['email'] %>
 
       <p>We&apos;ve sent you a temporary sign-up code to <span><%= request.params['email'] %></span>. Please check your inbox to sign up.</p>
 
       <%= form.label :one_time_password_1, "Sign-up code", class: "label block" %>
-      <div class="otp-code">
+      <div class="otp-code" data-controller="otp">
         <%= form.text_field :one_time_password_1, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
         <%= form.text_field :one_time_password_2, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
         <%= form.text_field :one_time_password_3, minlength: 1, maxlength: 1, class: "input block", inputmode: "numeric", pattern: "[0-9]", autocomplete: "one-time-code", required: true %>
@@ -20,7 +20,7 @@
       <%= render "shared/flash" %>
 
       <div class="submit">
-        <%= form.submit "[Sign Up]", class: "link primary" %>
+        <%= form.submit "[Sign Up]", class: "link primary", "data-form-target": "submit" %>
       </div>
     <% end %>
   </div>
