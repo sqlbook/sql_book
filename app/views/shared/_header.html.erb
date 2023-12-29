@@ -1,14 +1,39 @@
-<header class="header">
-  <% if signed_in? %>
+<% if signed_in? %>
+  <header class="header">
     <%= link_to app_dashboard_index_path do %>
       <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
       <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
     <% end %>
 
-    <menu>
-      <%= link_to "Log out", auth_signout_index_path, class: "link secondary text-large" %>
+    <menu data-controller="menu">
+      <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle">
+        <i class="ri-menu-line"></i>
+        <i class="ri-close-line"></i>
+      </button>
+
+      <div class="dropdown" data-menu-target="dropdown">
+        <label class="text-small category">App</label>
+        <%= link_to "#", class: "link secondary menu-item" do %>
+          <i class="ri-database-2-line"></i> Data Sources
+        <% end %>
+        <%= link_to "#", class: "link secondary menu-item" do %>
+          <i class="ri-book-open-line"></i> Query Library
+        <% end %>
+        <%= link_to "#", class: "link secondary menu-item" do %>
+          <i class="ri-dashboard-line"></i> Dashboards
+        <% end %>
+        <label class="text-small category">Account</label>
+        <%= link_to "#", class: "link secondary menu-item" do %>
+          <i class="ri-settings-3-line"></i> Settings
+        <% end %>
+        <%= link_to auth_signout_index_path, class: "link secondary menu-item" do %>
+          <i class="ri-logout-box-r-line"></i> Log out
+        <% end %>
+      </div>
     </menu>
-  <% else %>
+  </header>
+<% else %>
+  <header class="header split">
     <%= link_to root_path do %>
       <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
       <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
@@ -24,5 +49,5 @@
         <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
       <% end %>
     </menu>
-  <% end %>
-</header>
+  </header>
+<% end %>

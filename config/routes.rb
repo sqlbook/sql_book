@@ -19,7 +19,7 @@ Rails.application.routes.draw do
 
   namespace :app do
     resources :dashboard, only: %i[index]
-    resources :data_sources, only: %i[new create] do
+    resources :data_sources, only: %i[show new create] do
       member { get 'set_up' }
     end
   end

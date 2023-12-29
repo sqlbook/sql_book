@@ -4,6 +4,10 @@ module App
   class DataSourcesController < ApplicationController
     before_action :require_authentication!
 
+    def show
+      @data_source = data_source
+    end
+
     def new; end
 
     def create
