@@ -25,6 +25,14 @@
     color: var(--cream-250);
   }
 
+  .verification-failed {
+    color: var(--cream-250);
+
+    i {
+      color: var(--red-600);
+    }
+  }
+
   pre {
     margin: 0 0 1.5rem 0;
   }

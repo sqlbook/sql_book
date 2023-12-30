@@ -27,6 +27,8 @@ module App
 
     def set_up
       @data_source = data_source
+
+      redirect_to app_data_sources_path if data_source.verified?
     end
 
     private

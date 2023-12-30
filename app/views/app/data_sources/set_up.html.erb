@@ -2,7 +2,17 @@
   <h1>Welcome to sqlbook</h1>
   <div class="container lg">
     <% if verifying? %>
-      <p>Verifying installation...</p>
+      <div data-controller="data-source-verification">
+        <% if verification_failed? %>
+          <p class="verification-failed"><i class="ri-lg ri-error-warning-line"></i> We were unable to verify your installation.</p>
+          <p>Please ensure you&apos;ve correctly copied the code opposite into the &lt;head&gt; section of your sites HTML and that you&apos;ve published the changes.</p>
+          <p>Providing you&apos;ve successfully completed the step above, we will automatically verify your installation the moment your website&apos;s first session data is captured. You can speed-up auto-verification by visiting your site yourself.</p>
+          <p>If you&apos;re stuck, please contact us via <a href="mailto:support@sqlbook.com" class="link secondary">support@sqlbook.com</a></p>
+          <%= link_to "[Verify Installation]", add_params(verification_attempt: 0), class: "link primary text-large" %>
+        <% else %>
+          <p>Verifying installation...</p>
+        <% end %>
+      </div>
     <% else %>
       <p>Awesome, please add the tracking code opposite to the &lt;head&gt; section of the HTML of <%= @data_source.url %>.
       <p>When you&apos;ve added the code and published the changes <%= link_to "[Press 1]", add_params(verifying: 'true'), { class: "link primary" } %></p>

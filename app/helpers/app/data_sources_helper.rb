@@ -19,5 +19,9 @@ module App
     def verifying?
       params['verifying'].present?
     end
+
+    def verification_failed?
+      params[:verification_attempt].to_i >= 5
+    end
   end
 end

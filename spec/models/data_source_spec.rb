@@ -45,4 +45,22 @@ RSpec.describe DataSource, type: :model do
       end
     end
   end
+
+  describe '#verified?' do
+    context 'when the data source is not verified' do
+      let(:instance) { create(:data_source) }
+
+      it 'returns false' do
+        expect(instance.verified?).to eq(false)
+      end
+    end
+
+    context 'when the data source is verified' do
+      let(:instance) { create(:data_source, verified_at: Time.current) }
+
+      it 'returns true' do
+        expect(instance.verified?).to eq(true)
+      end
+    end
+  end
 end

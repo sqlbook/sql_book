@@ -11,6 +11,10 @@ class DataSource < ApplicationRecord
 
   normalizes :url, with: ->(url) { format_as_url_origin(url) }
 
+  def verified?
+    !verified_at.nil?
+  end
+
   def self.format_as_url_origin(url)
     uri = URI(url)
 
