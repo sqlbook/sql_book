@@ -27,4 +27,41 @@
       text-decoration: none;
     }
   }
+
+  .query-form {
+    textarea {
+      appearance: none;
+      background: none;
+      border-color: transparent;
+      border-style: solid;
+      border-width: 0 0 0 .125rem;
+      caret-color: var(--red-500);
+      color: var(--gray-250);
+      font: inherit;
+      resize: none;
+      margin: 0;
+      overflow: hidden;
+      padding: 0 0 0 .5rem;
+      width: 100%;
+
+      &:placeholder-shown {
+        border-color: var(--red-500);
+      }
+
+      &:hover,
+      &:focus {
+        outline: none;
+      }
+    }
+
+    .submit {
+      color: var(--gray-300);
+      margin: 2rem 0 0 0;
+      text-decoration: none;
+
+      &:disabled {
+        display: none;
+      }
+    }
+  }
 }

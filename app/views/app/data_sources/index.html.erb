@@ -18,5 +18,13 @@
         <% end %>
       </div>
     <% end %>
+
+    <div data-controller="data-source-query">
+      <%= form_with url: app_data_sources_path, method: :get, class: "query-form", html: { "data-data-source-query-target": "form" } do |form| %>
+        <%= form.hidden_field :data_source_id, value: params[:data_source_id] %>
+        <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, "data-action": "data-source-query#change" %>
+        <%= form.submit "Press CMD+Enter to run...", class: "link secondary submit", "data-data-source-query-target": "submit" %>
+      <% end %>
+    </div>
   </div>
 </main>
