@@ -1,24 +1,44 @@
-# README
+# sqlbook!
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+sqlbook is an open source alaytics tool for data nerds. It captures analytics events and provides a SQL interface and visualisation framework.
 
-Things you may want to cover:
+It is made up of two main parts: the Ruby on Rails application, and a script that is loaded on users' websites to capture the data.
 
-* Ruby version
+## Using the hosted version of sqlbook
 
-* System dependencies
+sqlbook has a free tier, and charges per event after the free tier has been exceeded. No credit card is required, and you can sign up now at [https://sqlbook.com/auth/signup](https://sqlbook.com/auth/signup)
 
-* Configuration
 
-* Database creation
+## Self-hosting sqlbook
 
-* Database initialization
+sqlbook is open source and can be self hosted, however it is only for personal use and cannot be resold. Please check the licence for more information.
 
-* How to run the test suite
+### Requirements
 
-* Services (job queues, cache servers, search engines, etc.)
+- Ruby (see `/.ruby-version`)
+- Node.js (see `/script/.node-version`)
+- Postgres
+- ClickHouse
 
-* Deployment instructions
+### Installation
 
-* ...
+This assumes you already have Ruby, Node.js, Postgres and ClickHouse already installed.
+
+```
+$ git clone git@github.com:sqlbook/sql_book.git
+$ bundle install
+$ bundle exec rails db:create
+$ bundle exec rails db:migrate
+```
+
+### Running the tests
+
+```
+$ bundle exec rspec
+```
+
+### Running the linter
+
+```
+$ bundle exec rubocop
+```
