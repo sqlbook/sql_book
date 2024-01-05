@@ -7,6 +7,8 @@ Rails.application.routes.draw do
 
   root 'home#index'
 
+  resources :about, only: %i[index]
+
   namespace :auth do
     resources :signout, only: %i[index]
     resources :login, only: %i[index new create] do

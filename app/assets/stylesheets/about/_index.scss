@@ -1,0 +1,30 @@
+.about-index {
+  .features {
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(14.25rem, 1fr));
+    margin: 0 0 1.5rem 0;
+
+    .card {
+      background: var(--gray-800);
+      padding: 1.5rem;
+
+      i {
+        color: var(--red-500);
+      }
+
+      p {
+        color: var(--gray-300);
+        margin: 0;
+      }
+
+      b {
+        color: var(--cream-250);
+      }
+
+      .title {
+        margin: 1rem 0 .5rem 0;
+      }
+    }
+  }
+}

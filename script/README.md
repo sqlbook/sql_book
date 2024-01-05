@@ -1,1 +1,0 @@
-# sqlbook script
