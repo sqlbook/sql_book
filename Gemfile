@@ -5,7 +5,7 @@ source 'https://rubygems.org'
 ruby '3.2.2'
 
 gem 'bootsnap', require: false
-gem 'click_house'
+gem 'clickhouse-activerecord'
 gem 'importmap-rails'
 gem 'jbuilder'
 gem 'pg'

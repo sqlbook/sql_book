@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module ClickHouse
-  class Session < Base
+  class Session < ClickHouseRecord
+    self.table_name = 'sessions'
   end
 end
