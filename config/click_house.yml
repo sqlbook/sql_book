@@ -1,0 +1,16 @@
+default: &default
+  url: http://localhost:8123
+  timeout: 60
+  open_timeout: 3
+
+development:
+  database: sqlbook_development
+  <<: *default
+
+test:
+  database: sqlbook_test
+  <<: *default
+
+production:
+  <<: *default
+  database: sqlbook_production
