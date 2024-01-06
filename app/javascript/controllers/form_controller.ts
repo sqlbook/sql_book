@@ -1,7 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
 
-export default class extends Controller {
+export default class extends Controller<HTMLDivElement> {
   static targets = ['form', 'submit'];
+
+  declare readonly formTarget: HTMLFormElement;
+  declare readonly submitTarget: HTMLButtonElement;
 
   connect() {
     this.setButtonDisabled();

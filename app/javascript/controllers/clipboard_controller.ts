@@ -1,9 +1,12 @@
 import { Controller } from '@hotwired/stimulus';
 
-export default class extends Controller {
+export default class extends Controller<HTMLDivElement> {
   static targets = ['button', 'source'];
 
-  copy() {
+  declare readonly buttonTarget: HTMLButtonElement;
+  declare readonly sourceTarget: HTMLElement;
+
+  copy(): void {
     const originalText = this.buttonTarget.innerText;
 
     this.buttonTarget.innerText = '[Copied!]';

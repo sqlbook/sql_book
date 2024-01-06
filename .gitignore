@@ -37,4 +37,6 @@
 coverage
 
 /node_modules
+/app/assets/builds/application.*
 .DS_Store
+yarn-error.log
