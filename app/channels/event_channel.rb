@@ -10,7 +10,7 @@ class EventChannel < ApplicationCable::Channel
   end
 
   def event(data)
-    puts session_key, compress_payload(data)
+    EventSaveJob.perform_later(data)
   end
 
   private

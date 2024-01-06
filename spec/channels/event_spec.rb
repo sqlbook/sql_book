@@ -6,6 +6,7 @@ RSpec.describe EventChannel, type: :channel do
   let(:data_source_uuid) { SecureRandom.uuid }
   let(:visitor_uuid) { SecureRandom.uuid }
   let(:session_uuid) { SecureRandom.uuid }
+  let(:event) { { type: 'click' } }
 
   let(:current_visitor) do
     "#{data_source_uuid}::#{visitor_uuid}::#{session_uuid}"
@@ -17,7 +18,10 @@ RSpec.describe EventChannel, type: :channel do
 
       subscribe
 
-      expect(true).to eq(true) # TODO
+      expect { perform :event, event }.to have_enqueued_job(EventSaveJob).with(
+        'type' => 'click',
+        'action' => 'event'
+      )
     end
   end
 end

@@ -5,6 +5,8 @@ require 'active_support/core_ext/integer/time'
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  config.active_job.queue_adapter = :amazon_sqs
+
   # Code is not reloaded between requests.
   config.enable_reloading = false
 
@@ -72,6 +74,8 @@ Rails.application.configure do
   # Use a real queuing backend for Active Job (and separate queues per environment).
   # config.active_job.queue_adapter     = :resque
   # config.active_job.queue_name_prefix = "sql_book_production"
+
+  config.action_mailer.delivery_method = :ses
 
   config.action_mailer.perform_caching = false
 
