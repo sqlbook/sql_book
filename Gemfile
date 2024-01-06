@@ -6,7 +6,6 @@ ruby '3.2.2'
 
 gem 'bootsnap', require: false
 gem 'clickhouse-activerecord'
-gem 'importmap-rails'
 gem 'jbuilder'
 gem 'pg'
 gem 'puma'

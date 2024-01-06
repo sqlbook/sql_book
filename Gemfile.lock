@@ -118,10 +118,6 @@ GEM
       activesupport (>= 6.1)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
-    importmap-rails (1.2.3)
-      actionpack (>= 6.0.0)
-      activesupport (>= 6.0.0)
-      railties (>= 6.0.0)
     io-console (0.7.1)
     irb (1.11.0)
       rdoc
@@ -318,7 +314,6 @@ DEPENDENCIES
   clickhouse-activerecord
   debug
   factory_bot_rails
-  importmap-rails
   jbuilder
   pg
   puma
