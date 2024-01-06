@@ -25,7 +25,7 @@ export class Visitor {
     this.newSession = newSession;
   }
 
-  public params() {
+  public get params() {
     return new URLSearchParams({
       visitor_uuid: this.visitorUuid,
       session_uuid: this.sessionUuid,

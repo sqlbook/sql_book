@@ -9,7 +9,7 @@ module App
             s._sbSettings={uuid:'#{data_source.external_uuid}'};
             e=q.getElementsByTagName('head')[0];
             a=q.createElement('script');
-            a.src=u+s._sbSettings.uuid;
+            a.src=l+s._sbSettings.uuid;
             e.appendChild(a);
           })(window,document,'https://cdn.sqlbook.com/1.0.0/script.js?');
         </script>

@@ -16,6 +16,7 @@ gem 'sprockets-rails'
 gem 'stimulus-rails'
 gem 'turbo-rails'
 gem 'tzinfo-data', platforms: %i[windows jruby]
+gem 'useragent'
 
 group :development, :test do
   gem 'debug', platforms: %i[mri windows]

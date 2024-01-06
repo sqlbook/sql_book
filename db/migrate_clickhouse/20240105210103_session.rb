@@ -16,7 +16,6 @@ class Session < ActiveRecord::Migration[7.1]
       t.string  :locale,           null: true
       t.string  :useragent,        null: true
       t.string  :browser,          null: true
-      t.string  :device_type,      null: true
       t.string  :timezone,         null: true
       t.string  :country_code,     null: true
       t.string  :utm_source,       null: true
