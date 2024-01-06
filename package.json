@@ -8,6 +8,7 @@
     "remixicon": "^4.0.1"
   },
   "scripts": {
-    "build": "esbuild app/javascript/*.* --bundle --sourcemap --outdir=app/assets/builds --public-path=/assets"
+    "build": "esbuild app/javascript/*.* --bundle --sourcemap --outdir=app/assets/builds --public-path=/assets",
+    "build_script": "esbuild script/src/index.ts --bundle --outfile=app/assets/builds/script.js --public-path=/assets --minify"
   }
 }
