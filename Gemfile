@@ -2,14 +2,14 @@
 
 source 'https://rubygems.org'
 
-ruby '3.2.2'
+ruby '3.3.0'
 
 gem 'bootsnap', require: false
 gem 'clickhouse-activerecord'
 gem 'jbuilder'
 gem 'pg'
 gem 'puma'
-gem 'rails', '~> 7.1.1'
+gem 'rails', '~> 7.1.2'
 gem 'sassc-rails'
 gem 'sprockets-rails'
 gem 'stimulus-rails'

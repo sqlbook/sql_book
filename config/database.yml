@@ -7,6 +7,7 @@ default_clickhouse: &default_clickhouse
   adapter: clickhouse
   encoding: unicode
   username: sql_book
+  database: sql_book
   migrations_paths: db/migrate_clickhouse
 
 development:
@@ -15,7 +16,6 @@ development:
     database: sql_book_development
   clickhouse:
     <<: *default_clickhouse
-    database: sql_book_development
     password: password
 
 test:
@@ -24,7 +24,6 @@ test:
     database: sql_book_test
   clickhouse:
     <<: *default_clickhouse
-    database: sql_book_test
     password: password
 
 production:
@@ -35,5 +34,4 @@ production:
     password: <%= ENV["SQL_BOOK_DATABASE_PASSWORD"] %>
   clickhouse:
     <<: *default_clickhouse
-    database: sql_book_production
     password: <%= ENV["SQL_BOOK_CLICKHOUSE_DATABASE_PASSWORD"] %>
