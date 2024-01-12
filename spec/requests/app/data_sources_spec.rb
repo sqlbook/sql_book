@@ -14,6 +14,15 @@ RSpec.describe 'App::DataSources', type: :request do
         expect(response).to redirect_to(new_app_data_source_path)
       end
     end
+
+    context 'when there are data sources' do
+      let!(:data_source) { create(:data_source, user:) }
+
+      it 'redirecets to the first data source query page' do
+        get '/app/data_sources'
+        expect(response).to redirect_to(app_data_source_queries_path(data_source))
+      end
+    end
   end
 
   describe 'GET /app/data_sources/new' do

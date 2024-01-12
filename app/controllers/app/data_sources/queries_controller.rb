@@ -29,7 +29,7 @@ module App
       end
 
       def query
-        Query.find_by(id: params[:id], data_source_id: data_source.id)
+        Query.find_by!(id: params[:id], data_source_id: data_source.id)
       end
 
       def query_params

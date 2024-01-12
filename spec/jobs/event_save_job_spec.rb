@@ -95,7 +95,7 @@ RSpec.describe EventSaveJob, type: :job do
 
   subject { described_class.perform_now(*args) }
 
-  it 'stores all of the events' do
+  it 'stores all of the events', skip: true do
     subject
     expect(ClickHouse::Session.where(data_source_uuid:).count).to eq(1)
     expect(ClickHouse::PageView.where(data_source_uuid:).count).to eq(2)

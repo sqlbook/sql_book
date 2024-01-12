@@ -14,4 +14,10 @@ FactoryBot.define do
     url { 'https://sqlbook.com' }
     user { create(:user) }
   end
+
+  factory :query do
+    query { 'SELECT * FROM sessions;' }
+    saved { false }
+    data_source { create(:data_source) }
+  end
 end
