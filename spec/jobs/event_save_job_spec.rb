@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe EventSaveJob, type: :job do
+RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
   include ActiveJob::TestHelper
 
   let(:data_source) { create(:data_source) }

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe QueryService do
+RSpec.describe QueryService, disable_transactions: true do
   let(:instance) { described_class.new(query:) }
 
   let(:data_source) { create(:data_source) }
