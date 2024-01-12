@@ -42,3 +42,9 @@ $ bundle exec rspec
 ```
 $ bundle exec rubocop
 ```
+
+### Start the dev server
+
+```
+$ bin/dev
+```

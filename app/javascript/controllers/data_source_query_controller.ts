@@ -21,7 +21,8 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   changeSource(event: Event): void {
-    console.log('Change source');
+    const target = event.target as HTMLSelectElement;
+    window.Turbo.visit(`/app/data_sources/${target.value}/queries`, { action: 'replace' })
   }
 
   submit(event: Event): void {

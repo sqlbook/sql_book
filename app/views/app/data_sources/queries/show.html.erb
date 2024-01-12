@@ -1,4 +1,18 @@
 <main>
   <%= render "shared/data_source_query" %>
-  <p>Show!</p>
 </main>
+
+<aside>
+  <div class="tabs">
+    <%= render "shared/tabs/nav_item", tab: "query_results", name: "Query Results", icon_class: "ri-table-2", default_selected: true %>
+    <%= render "shared/tabs/nav_item", tab: "visualization", name: "Visualization", icon_class: "ri-bar-chart-box-line" %>
+  </div>
+
+  <% if active_tab?(tab: "query_results", default_selected: true) %>
+    <p>Query Results</p>
+  <% end %>
+
+  <% if active_tab?(tab: "visualization") %>
+    <p>Visualization</p>
+  <% end %>
+</aside>
