@@ -1,0 +1,51 @@
+.query-results-table {
+  overflow: auto;
+  padding-bottom: 1rem;
+  scrollbar-color: var(--gray-250) transparent;
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--gray-250);
+    border-radius: var(--border-radius-md);
+  }
+
+  &::-webkit-scrollbar {
+    background: transparent;
+    height: .5rem;
+    width: .5rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  th {
+    color: var(--cream-250);
+  }
+
+  td {
+    color: var(--gray-250);
+  }
+
+  th, td {
+    padding: .5rem 1.5rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  table {
+    background: var(--gray-850);
+  }
+
+  table, th, td {
+    border: 1px solid var(--gray-900);
+    border-collapse: collapse;
+  }
+
+  tr:hover {
+    background: var(--gray-800);
+  }
+
+  .null {
+    color: var(--gray-500);
+  }
+}

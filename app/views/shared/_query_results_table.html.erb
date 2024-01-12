@@ -1,0 +1,22 @@
+<div class="query-results-table">
+  <table>
+    <tr>
+      <% query_result.columns.each do |col| %>
+        <th><%= col %></th>
+      <% end %>
+    </tr>
+    <% query_result.rows.each do |row| %>
+      <tr>
+        <% query_result.columns.each_with_index do |_, index| %>
+          <td>
+            <% if row[index] %>
+              <%= row[index] %>
+            <% else %>
+              <span class="null">NULL</span>
+            <% end %>
+          </td>
+        <% end %>
+      </tr>
+    <% end %>
+  </table>
+</div>

@@ -9,7 +9,11 @@
   </div>
 
   <% if active_tab?(tab: "query_results", default_selected: true) %>
-    <p>Query Results</p>
+    <% if @query.query_result.error %>
+      <p class="red-500"><%= @query.query_result.error_message %></p>
+    <% else %>
+      <%= render "shared/query_results_table", query_result: @query.query_result %>
+    <% end %>
   <% end %>
 
   <% if active_tab?(tab: "visualization") %>
