@@ -1,0 +1,25 @@
+<div class="container md-lg data-source-query" data-controller="data-source-query">
+  <%= form_with url: app_data_source_queries_path(@data_source), method: :post, html: { "data-data-source-query-target": "form" } do |form| %>
+    <div class="data-sources-select">
+      <%= form.label :data_source_id, class: "label" do %>
+        <i class="ri-lg ri-database-2-line"></i>
+        Data source
+      <% end %>
+      <div class="select">
+        <%= form.select :data_source_id, options_from_collection_for_select(@data_sources, :id, :url, selected: params[:data_source_id]), {}, { "data-action": "data-source-query#changeSource" } %>
+        <i class="ri-arrow-drop-down-line"></i>
+      </div>
+      <%= link_to "#", class: "link secondary" do %>
+        <i class="ri-settings-3-line"></i>
+      <% end %>
+      <%= link_to "#", class: "link secondary" do %>
+        <i class="ri-node-tree"></i>
+      <% end %>
+    </div>
+
+    <div class="query-form">
+      <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit" %>
+      <%= form.submit "Press CMD+Enter to run...", class: "link secondary submit", "data-data-source-query-target": "submit" %>
+    </div>
+  <% end %>
+</div>

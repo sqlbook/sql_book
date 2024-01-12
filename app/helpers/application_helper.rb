@@ -8,6 +8,7 @@ module ApplicationHelper
   include ViewHelper
 
   def sqlbook_tracking_script
+    return ''
     return '' unless Rails.env.development?
 
     <<~HTML

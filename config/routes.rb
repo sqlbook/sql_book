@@ -20,8 +20,9 @@ Rails.application.routes.draw do
   end
 
   namespace :app do
-    resources :data_sources, only: %i[index show new create] do
+    resources :data_sources, only: %i[index new create] do
       member { get 'set_up' }
+      resources :queries, only: %i[index show create update], controller: 'data_sources/queries'
     end
   end
 end

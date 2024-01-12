@@ -14,25 +14,39 @@ export default class extends Controller<HTMLDivElement> {
     if (!event.target) return;
 
     const target = event.target as HTMLTextAreaElement;
-    const value = target.value.toLowerCase();
+    const query = target.value;
 
-    target.rows = value.split('\n').length;
-
-    this.setButtonDisabled(value);
+    target.rows = query.split('\n').length;
+    this.setButtonDisabled(query);
   }
 
-  setButtonDisabled(value: string): void {
-    const maybeValidQuery = value.includes('select') && value.includes('from');
+  changeSource(event: Event): void {
+    console.log('Change source');
+  }
+
+  submit(event: Event): void {
+    if (!event.target) return;
+
+    const target = event.target as HTMLTextAreaElement;
     
-    if (this.formTarget.checkValidity() && maybeValidQuery) {
+    if (this.isMaybeValidForm(target.value)) {
+      this.formTarget.requestSubmit();
+    }
+  }
+
+  setButtonDisabled(value: string): void {    
+    if (this.isMaybeValidForm(value)) {
       this.submitTarget.removeAttribute('disabled');
     } else {
       this.submitTarget.setAttribute('disabled', 'true');
     }
   }
+
+  isMaybeValidForm(value: string): boolean {
+    if (!this.formTarget.checkValidity()) return false;
+
+    const query = value.toLowerCase();
+
+    return query.includes('select') && query.includes('from');
+  }
 }
-
-
-const element = document.querySelector('select');
-
-element?.addEventListener('change', event => event)

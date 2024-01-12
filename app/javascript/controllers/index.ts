@@ -6,7 +6,6 @@ import { application } from './application';
 
 import ClipboardController from './clipboard_controller';
 import DataSourceQueryController from './data_source_query_controller';
-import DataSourceSelectController from './data_source_select_controller';
 import DataSourceVerificationController from './data_source_verification_controller';
 import FormController from './form_controller';
 import MenuController from './menu_controller';
@@ -14,7 +13,6 @@ import OtpController from './otp_controller';
 
 application.register('clipboard', ClipboardController);
 application.register('data-source-query', DataSourceQueryController);
-application.register('data-source-select', DataSourceSelectController);
 application.register('data-source-verification', DataSourceVerificationController);
 application.register('form', FormController);
 application.register('menu', MenuController);

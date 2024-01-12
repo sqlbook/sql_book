@@ -5,12 +5,8 @@ module App
     before_action :require_authentication!
 
     def index
-      @data_sources = current_user.data_sources
-      redirect_to new_app_data_source_path if @data_sources.empty?
-    end
-
-    def show
-      @data_source = data_source
+      redirect_to new_app_data_source_path if data_sources.empty?
+      redirect_to app_data_source_queries_path(data_sources.first)
     end
 
     def new; end
@@ -26,15 +22,17 @@ module App
     end
 
     def set_up
-      @data_source = data_source
-
       redirect_to app_data_sources_path if data_source.verified?
     end
 
     private
 
     def data_source
-      @data_source ||= DataSource.find(params[:id])
+      @data_source ||= data_sources.find(params[:id])
+    end
+
+    def data_sources
+      @data_sources ||= current_user.data_sources
     end
 
     def create_params

@@ -51,14 +51,14 @@ class EventSaveJob < ApplicationJob
       referrer: event['referrer'],
       locale: event['locale'],
       useragent: event['useragent'],
+      browser: UserAgent.parse(event['useragent']).browser,
       timezone: event['timezone'],
+      country_code: Rails.configuration.timezones[event['timezone'].to_s],
       utm_source: event['utm_source'],
       utm_medium: event['utm_medium'],
       utm_campaign: event['utm_campaign'],
       utm_content: event['utm_content'],
-      utm_term: event['utm_term'],
-      browser: UserAgent.parse(event['useragent']).browser,
-      country_code: Rails.configuration.timezones[event['timezone'].to_s]
+      utm_term: event['utm_term']
     )
   end
 end
