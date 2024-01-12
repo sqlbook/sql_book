@@ -11,7 +11,7 @@ class EventSaveJob < ApplicationJob
   private
 
   def store_click(event)
-    ClickHouse::Click.create(
+    Click.create(
       uuid: SecureRandom.uuid,
       data_source_uuid: event['data_source_uuid'],
       session_uuid: event['session_uuid'],
@@ -27,7 +27,7 @@ class EventSaveJob < ApplicationJob
   end
 
   def store_page_view(event)
-    ClickHouse::PageView.create(
+    PageView.create(
       uuid: SecureRandom.uuid,
       data_source_uuid: event['data_source_uuid'],
       session_uuid: event['session_uuid'],
@@ -38,7 +38,7 @@ class EventSaveJob < ApplicationJob
   end
 
   def store_session(event) # rubocop:disable Metrics/AbcSize
-    ClickHouse::Session.create(
+    Session.create(
       uuid: SecureRandom.uuid,
       data_source_uuid: event['data_source_uuid'],
       session_uuid: event['session_uuid'],

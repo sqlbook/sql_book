@@ -18,8 +18,12 @@ RSpec.describe ApplicationCable::Connection, type: :channel do
   end
 
   describe 'when all of the params exist but the data source does not' do
+    let(:data_source_uuid) { SecureRandom.uuid }
+    let(:visitor_uuid) { SecureRandom.uuid }
+    let(:session_uuid) { SecureRandom.uuid }
+
     let(:params) do
-      "?data_source_uuid=#{SecureRandom.uuid}&visitor_uuid=#{SecureRandom.uuid}&session_uuid=#{SecureRandom.uuid}"
+      "?data_source_uuid=#{data_source_uuid}&visitor_uuid=#{visitor_uuid}&session_uuid=#{session_uuid}"
     end
 
     it 'rejects the connection' do
@@ -29,8 +33,11 @@ RSpec.describe ApplicationCable::Connection, type: :channel do
 
   describe 'when all of the params exist, so does the data source, but the origin does not match' do
     let(:data_source) { create(:data_source, url: 'https://not-my-domain.com') }
+    let(:visitor_uuid) { SecureRandom.uuid }
+    let(:session_uuid) { SecureRandom.uuid }
+
     let(:params) do
-      "?data_source_uuid=#{data_source.external_uuid}&visitor_uuid=#{SecureRandom.uuid}&session_uuid=#{SecureRandom.uuid}"
+      "?data_source_uuid=#{data_source.external_uuid}&visitor_uuid=#{visitor_uuid}&session_uuid=#{session_uuid}"
     end
 
     it 'rejects the connection' do
@@ -41,8 +48,11 @@ RSpec.describe ApplicationCable::Connection, type: :channel do
   describe 'when all the params exist, so does the data source, and the origin is correct' do
     let(:origin) { 'https://my-domain.com' }
     let(:data_source) { create(:data_source, url: origin) }
+    let(:visitor_uuid) { SecureRandom.uuid }
+    let(:session_uuid) { SecureRandom.uuid }
+
     let(:params) do
-      "?data_source_uuid=#{data_source.external_uuid}&visitor_uuid=#{SecureRandom.uuid}&session_uuid=#{SecureRandom.uuid}"
+      "?data_source_uuid=#{data_source.external_uuid}&visitor_uuid=#{visitor_uuid}&session_uuid=#{session_uuid}"
     end
 
     it 'successfully connects' do

@@ -27,7 +27,8 @@ RSpec.describe EventSaveJob, type: :job do
         'viewport_x' => 1920,
         'viewport_y' => 1080,
         'referrer' => 'https://google.com',
-        'useragent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15',
+        'useragent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)\
+         Version/17.2.1 Safari/605.1.15',
         'timezone' => 'Europe/London',
         'utm_campaign' => nil,
         'utm_content' => nil,
@@ -97,8 +98,8 @@ RSpec.describe EventSaveJob, type: :job do
 
   it 'stores all of the events', skip: true do
     subject
-    expect(ClickHouse::Session.where(data_source_uuid:).count).to eq(1)
-    expect(ClickHouse::PageView.where(data_source_uuid:).count).to eq(2)
-    expect(ClickHouse::Click.where(data_source_uuid:).count).to eq(5)
+    expect(Session.where(data_source_uuid:).count).to eq(1)
+    expect(PageView.where(data_source_uuid:).count).to eq(2)
+    expect(Click.where(data_source_uuid:).count).to eq(5)
   end
 end
