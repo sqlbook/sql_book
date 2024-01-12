@@ -10,10 +10,14 @@ module App
         @data_source = data_source
       end
 
-      def show; end
+      def show
+        @data_sources = current_user.data_sources
+        @query = query
+      end
 
       def create
-        redirect_to app_data_source_queries_path(data_source)
+        query = Query.create(query: query_params[:query], data_source:)
+        redirect_to app_data_source_query_path(data_source, query)
       end
 
       def update; end
@@ -22,6 +26,10 @@ module App
 
       def data_source
         @data_source ||= current_user.data_sources.find(params[:data_source_id])
+      end
+
+      def query
+        Query.find_by(id: params[:id], data_source_id: data_source.id)
       end
 
       def query_params

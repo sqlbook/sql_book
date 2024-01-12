@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2023_12_22_144500) do
+ActiveRecord::Schema[7.1].define(version: 2024_01_12_090044) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -32,6 +32,15 @@ ActiveRecord::Schema[7.1].define(version: 2023_12_22_144500) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_one_time_passwords_on_email", unique: true
+  end
+
+  create_table "queries", force: :cascade do |t|
+    t.string "query", null: false
+    t.boolean "saved", default: false, null: false
+    t.bigint "data_source_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["data_source_id"], name: "index_queries_on_data_source_id"
   end
 
   create_table "users", force: :cascade do |t|

@@ -11,6 +11,8 @@ class DataSource < ApplicationRecord
 
   normalizes :url, with: ->(url) { format_as_url_origin(url) }
 
+  has_many :queries, dependent: :destroy
+
   def verified?
     !verified_at.nil?
   end
