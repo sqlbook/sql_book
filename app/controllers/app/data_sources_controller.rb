@@ -5,9 +5,9 @@ module App
     before_action :require_authentication!
 
     def index
-      return redirect_to new_app_data_source_path if data_sources.empty?
+      @data_sources = data_sources
 
-      redirect_to app_data_source_queries_path(data_sources.first)
+      redirect_to new_app_data_source_path if data_sources.empty?
     end
 
     def new; end

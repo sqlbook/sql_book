@@ -26,7 +26,7 @@ class QueryService
   end
 
   def columns
-    model.columns.map(&:name)
+    model.columns.map(&:name).without('data_source_uuid')
   rescue ActiveRecord::ActiveRecordError
     []
   end

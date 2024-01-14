@@ -16,11 +16,13 @@ RSpec.describe 'App::DataSources', type: :request do
     end
 
     context 'when there are data sources' do
-      let!(:data_source) { create(:data_source, user:) }
+      let!(:data_source_1) { create(:data_source, user:) }
+      let!(:data_source_2) { create(:data_source, user:) }
 
-      it 'redirecets to the first data source query page' do
+      it 'renders a list of data_sources' do
         get '/app/data_sources'
-        expect(response).to redirect_to(app_data_source_queries_path(data_source))
+        expect(response.body).to have_selector('.data-sources h4 a', text: data_source_1.url)
+        expect(response.body).to have_selector('.data-sources h4 a', text: data_source_2.url)
       end
     end
   end

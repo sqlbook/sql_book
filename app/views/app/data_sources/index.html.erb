@@ -1,0 +1,36 @@
+<main>
+  <div class="page-header">
+    <h1>Data Sources</h1>
+    <%= link_to new_app_data_source_path, class: "link secondary create-data-source" do %>
+      <i class="ri-add-line red-500"></i>
+      <span>Create New</span>
+    <% end %>
+  </div>
+
+  <div class="data-sources container lg">
+    <% @data_sources.each do |data_source| %>
+      <div class="data-source">
+        <div class="details">
+          <h4>
+            <%= link_to data_source.url, app_data_source_queries_path(data_source), class: "link secondary" %>
+          </h4>
+        </div>
+        <div class="stat total-events">
+          <p class="title gray-200">Total events</p>
+          <h3 class="red-500">0</h3>
+          <p class="subtitle small gray-500">Since: <%= data_source.created_at.strftime('%d/%m/%y') %></p>
+        </div>
+        <div class="stat monthly-events">
+          <p class="title gray-200">Events this month</p>
+          <h3 class="red-500">0</h3>
+          <p class="subtitle small gray-500">of 0</p>
+        </div>
+        <div class="stat queries">
+          <p class="title gray-200">Related queries</p>
+          <h3 class="red-500">0</h3>
+          <p class="subtitle small gray-500">View</p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</main>

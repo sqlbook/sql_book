@@ -28,7 +28,6 @@ RSpec.describe QueryService, disable_transactions: true do
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
         uuid
-        data_source_uuid
         session_uuid
         visitor_uuid
         timestamp
@@ -45,7 +44,6 @@ RSpec.describe QueryService, disable_transactions: true do
       expect(instance.execute.rows).to match_array([
         [
           click_1.uuid,
-          click_1.data_source_uuid,
           click_1.session_uuid,
           click_1.visitor_uuid,
           click_1.timestamp,
@@ -58,7 +56,6 @@ RSpec.describe QueryService, disable_transactions: true do
         ],
         [
           click_2.uuid,
-          click_2.data_source_uuid,
           click_2.session_uuid,
           click_2.visitor_uuid,
           click_2.timestamp,
@@ -71,7 +68,6 @@ RSpec.describe QueryService, disable_transactions: true do
         ],
         [
           click_3.uuid,
-          click_3.data_source_uuid,
           click_3.session_uuid,
           click_3.visitor_uuid,
           click_3.timestamp,
@@ -100,7 +96,6 @@ RSpec.describe QueryService, disable_transactions: true do
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
         uuid
-        data_source_uuid
         session_uuid
         visitor_uuid
         timestamp
@@ -134,7 +129,6 @@ RSpec.describe QueryService, disable_transactions: true do
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
         uuid
-        data_source_uuid
         session_uuid
         visitor_uuid
         timestamp
@@ -167,7 +161,6 @@ RSpec.describe QueryService, disable_transactions: true do
       it 'has the correct columns' do
         expect(instance.execute.columns).to eq(%w[
           uuid
-          data_source_uuid
           session_uuid
           visitor_uuid
           timestamp
@@ -196,7 +189,6 @@ RSpec.describe QueryService, disable_transactions: true do
       it 'has the correct columns' do
         expect(instance.execute.columns).to eq(%w[
           uuid
-          data_source_uuid
           session_uuid
           visitor_uuid
           timestamp

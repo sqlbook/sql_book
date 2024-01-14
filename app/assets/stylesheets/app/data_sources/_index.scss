@@ -1,1 +1,69 @@
-.app-data_sources-index {}
+.app-data_sources-index {
+  .page-header {
+    align-items: center;
+    display: flex;
+    margin: 0 0 2rem 0;
+
+    h1 {
+      margin: 0;
+    }
+
+    .create-data-source {
+      margin: 0 0 0 1.5rem;
+      text-decoration: none;
+      
+      &:hover {
+        span {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  .data-sources {
+    .data-source {
+      background: var(--gray-800);
+      border: 1px solid var(--gray-900);
+      display: flex;
+      margin: 0 0 .75rem 0;
+      padding: 1.5rem;
+
+      h4 {
+        margin: 0;
+
+        .link {
+          color: var(--cream-250);
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      .details {
+        flex: 2;
+      }
+
+      .stat {
+        background: var(--gray-850);
+        flex: 1;
+        margin: 0 0 0 1.5rem;
+        padding: 1rem;
+
+        .title {
+          margin: 0 0 .75rem 0;
+        }
+
+        h3 {
+          margin: 0 0 .25rem 0;
+        }
+
+        .subtitle {
+          font-size: .75rem;
+          margin: 0;
+        }
+      }
+    }
+  }
+}
