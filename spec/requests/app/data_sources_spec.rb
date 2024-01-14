@@ -39,7 +39,13 @@ RSpec.describe 'App::DataSources', type: :request do
   describe 'POST /app/data_sources' do
     let(:user) { create(:user) }
 
-    before { sign_in(user) }
+    let(:data_source_view_spec) { instance_double('DataSourceViewService') }
+
+    before do
+      sign_in(user)
+      allow(DataSourceViewService).to receive(:new).and_return(data_source_view_spec)
+      allow(data_source_view_spec).to receive(:create!)
+    end
 
     context 'when no url is provided' do
       it 'redirects back to the new page' do
@@ -84,6 +90,11 @@ RSpec.describe 'App::DataSources', type: :request do
       it 'redirects back to the new page' do
         post '/app/data_sources', params: { url: }
         expect(response).to redirect_to(set_up_app_data_source_path(DataSource.last.id))
+      end
+
+      it 'creates the views' do
+        post '/app/data_sources', params: { url: }
+        expect(data_source_view_spec).to have_received(:create!)
       end
     end
   end

@@ -19,6 +19,8 @@ module App
 
       return handle_invalid_data_source_create(data_source) unless data_source.save
 
+      data_source.create_views!
+
       redirect_to set_up_app_data_source_path(data_source)
     end
 
