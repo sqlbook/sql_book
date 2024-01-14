@@ -39,4 +39,17 @@ RSpec.describe DataSourceViewService do
       end
     end
   end
+
+  describe '#replace_table_name' do
+    it 'replaces the default table name with the view' do
+      expect(instance.replace_table_name('select * from clicks')).to eq("select * from #{instance.view_name(Click)}")
+    end
+  end
+
+  describe '#view_name' do
+    it 'returns the view name for the model' do
+      expect(instance.view_name(Click)).to start_with('data_source_')
+      expect(instance.view_name(Click)).to end_with('clicks')
+    end
+  end
 end

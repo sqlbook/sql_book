@@ -41,12 +41,20 @@ class DataSourceViewService
     false
   end
 
-  private
+  def replace_table_name(query)
+    MODELS.each do |model|
+      query = query.gsub("from #{model.table_name}", "from #{view_name(model)}")
+    end
 
-  attr_reader :data_source
+    query
+  end
 
   def view_name(model)
     identifier = data_source.external_uuid.gsub('-', '') # the hyphens are not valid as table names
     "data_source_#{identifier}_#{model.table_name}"
   end
+
+  private
+
+  attr_reader :data_source
 end

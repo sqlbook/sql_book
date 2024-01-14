@@ -9,13 +9,20 @@ RSpec.describe QueryService, disable_transactions: true do
   let(:session_uuid) { SecureRandom.uuid }
   let(:visitor_uuid) { SecureRandom.uuid }
 
-  # TODO: Replace the where data_source_uuid when that part is implemented
-  let(:query_string) { "SELECT * FROM clicks WHERE data_source_uuid = '#{data_source.external_uuid}'" }
+  let(:query_string) { 'SELECT * FROM clicks' }
   let(:query) { create(:query, data_source:, query: query_string) }
 
   let!(:click_1) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
   let!(:click_2) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
   let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
+
+  before do
+    DataSourceViewService.new(data_source:).create!
+  end
+
+  after do
+    DataSourceViewService.new(data_source:).destroy!
+  end
 
   context 'when a valid query has been given' do
     it 'has the correct columns' do
@@ -119,7 +126,7 @@ RSpec.describe QueryService, disable_transactions: true do
     end
   end
 
-  context 'when a standard eror occurs' do
+  context 'when a standard error occurs' do
     before do
       allow(Click).to receive(:find_by_sql).and_raise(StandardError)
     end

@@ -41,14 +41,18 @@ class QueryService
 
   private
 
-  def prepared_query
+  def normalized_query
     query.query.sub(';', '').squish.downcase
   end
 
+  def prepared_query
+    DataSourceViewService.new(data_source: query.data_source).replace_table_name(normalized_query)
+  end
+
   def model
-    return Click if prepared_query.include?('from clicks')
-    return Session if prepared_query.include?('from sessions')
-    return PageView if prepared_query.include?('from page_views')
+    return Click if normalized_query.include?('from clicks')
+    return Session if normalized_query.include?('from sessions')
+    return PageView if normalized_query.include?('from page_views')
 
     handle_model_not_found_error
   end
@@ -69,7 +73,7 @@ class QueryService
   end
 
   def handle_model_not_found_error
-    table_name_matcher = /from (\w+)/.match(prepared_query)
+    table_name_matcher = /from (\w+)/.match(normalized_query)
 
     raise NoMatchingModelError, "'#{table_name_matcher[1]}' is not a valid table name" if table_name_matcher
 
