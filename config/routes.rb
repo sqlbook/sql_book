@@ -24,5 +24,7 @@ Rails.application.routes.draw do
       member { get 'set_up' }
       resources :queries, only: %i[index show create update], controller: 'data_sources/queries'
     end
+
+    resources :queries, only: %i[index]
   end
 end

@@ -1,0 +1,22 @@
+.app-queries-index {
+  .page-header {
+    align-items: center;
+    display: flex;
+    margin: 0 0 2rem 0;
+
+    h1 {
+      margin: 0;
+    }
+
+    .create-data-source {
+      margin: 0 0 0 1.5rem;
+      text-decoration: none;
+      
+      &:hover {
+        span {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}
