@@ -79,7 +79,7 @@ RSpec.describe 'App::DataSources', type: :request do
     end
 
     context 'when a valid url is provided and it has not been taken' do
-      let(:url) { "https://sqlbook.com" }
+      let(:url) { 'https://sqlbook.com' }
 
       it 'redirects back to the new page' do
         post '/app/data_sources', params: { url: }

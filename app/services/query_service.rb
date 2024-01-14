@@ -7,15 +7,16 @@
 class QueryService
   attr_accessor :data, :query, :error, :error_message
 
+  class NoMatchingModelError < ActiveRecord::ActiveRecordError; end
+
   def initialize(query:)
     @query = query
+    @error = false
   end
 
   def execute
-    ConnectionHelper.with_database(:clickhouse) do
-      @data = ActiveRecord::Base.connection.exec_query(prepared_query)
-      self
-    end
+    @data = model.find_by_sql(prepared_query)
+    self
   rescue ActiveRecord::ActiveRecordError => e
     handle_database_exception(e)
     self
@@ -25,17 +26,31 @@ class QueryService
   end
 
   def columns
-    @data&.columns.to_a
+    model.columns.map(&:name)
+  rescue ActiveRecord::ActiveRecordError
+    []
   end
 
   def rows
-    @data&.rows.to_a
+    return [] unless data
+
+    data.map do |item|
+      columns.map { |col| item.send(col.to_sym) }
+    end
   end
 
   private
 
   def prepared_query
     query.query.sub(';', '').squish.downcase
+  end
+
+  def model
+    return Click if prepared_query.include?('from clicks')
+    return Session if prepared_query.include?('from sessions')
+    return PageView if prepared_query.include?('from page_views')
+
+    handle_model_not_found_error
   end
 
   # These errors probably don't give away a huge amount, but it
@@ -50,6 +65,14 @@ class QueryService
   def handle_standard_error(error)
     Rails.logger.error("Failed to run query - #{error}")
     @error = true
-    @error_message = 'There was an unkown error'
+    @error_message = 'There was an unkown error, please try again'
+  end
+
+  def handle_model_not_found_error
+    table_name_matcher = /from (\w+)/.match(prepared_query)
+
+    raise NoMatchingModelError, "'#{table_name_matcher[1]}' is not a valid table name" if table_name_matcher
+
+    raise NoMatchingModelError, 'No valid table present in query'
   end
 end
