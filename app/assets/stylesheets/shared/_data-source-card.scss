@@ -25,7 +25,20 @@
     }
   }
 
+  .settings {
+    text-decoration: none;
+
+    &:hover {
+      span {
+        text-decoration: underline;
+      }
+    }
+  }
+
   .details {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     grid-area: details;
   }
 
@@ -33,15 +46,15 @@
     background: var(--gray-850);
     padding: 1rem;
 
-    &:nth-of-type(1) {
+    &:nth-of-type(0) {
       grid-area: stat-1;
     }
 
-    &:nth-of-type(2) {
+    &:nth-of-type(1) {
       grid-area: stat-2;
     }
 
-    &:nth-of-type(3) {
+    &:nth-of-type(2) {
       grid-area: stat-3;
     }
 

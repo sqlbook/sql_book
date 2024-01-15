@@ -6,12 +6,12 @@
     <% end %>
 
     <menu data-controller="menu">
-      <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle">
+      <button class="link secondary toggle-menu" data-menu-target="button">
         <i class="ri-menu-line"></i>
         <i class="ri-close-line"></i>
       </button>
 
-      <div class="dropdown" data-menu-target="dropdown">
+      <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->close" tabinde="0">
         <label class="text-small category">App</label>
         <%= link_to app_data_sources_path, class: "link secondary menu-item" do %>
           <i class="ri-database-2-line"></i> Data Sources
