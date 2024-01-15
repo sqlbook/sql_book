@@ -19,7 +19,16 @@
   </div>
 
   <% if active_tab?(tab: "source_url", default_selected: true) %>
-    <p>1</p>
+    <div data-controller="form">
+      <%= form_with url: app_data_source_path(@data_source), method: :put, class: "update-data-source-form", html: { "data-form-target": "form" } do |form| %>
+        <%= form.label :url, "URL", class: "label block" %>
+        <%= form.text_field :url, type: "url", placeholder: "https://", class: "input block fluid", required: true, pattern: "https://.*", value: @data_source.url %>
+
+        <%= render "shared/flash" %>
+
+        <%= form.submit "[Save Changes]", class: "link primary", "data-form-target": "submit" %>
+      <% end %> 
+    </div>
   <% end %>
 
   <% if active_tab?(tab: "tracking_code") %>

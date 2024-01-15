@@ -17,15 +17,25 @@ module App
     def new; end
 
     def create
-      return redirect_to app_data_sources_path unless create_params[:url]
+      return redirect_to app_data_sources_path unless data_source_params[:url]
 
-      data_source = DataSource.new(url: create_params[:url], user: current_user)
+      data_source = DataSource.new(url: data_source_params[:url], user: current_user)
 
       return handle_invalid_data_source_create(data_source) unless data_source.save
 
       data_source.create_views!
 
       redirect_to set_up_app_data_source_path(data_source)
+    end
+
+    def update
+      if data_source_params[:url]
+        data_source.url = data_source_params[:url]
+        data_source.verified_at = nil
+        return handle_invalid_data_source_update(data_source) unless data_source.save
+      end
+
+      redirect_to app_data_source_path(data_source)
     end
 
     def set_up
@@ -42,7 +52,7 @@ module App
       @data_sources ||= current_user.data_sources
     end
 
-    def create_params
+    def data_source_params
       params.permit(
         :url,
         :commit,
@@ -54,6 +64,11 @@ module App
     def handle_invalid_data_source_create(data_source)
       flash.alert = data_source.errors.full_messages.first
       redirect_to app_data_sources_path
+    end
+
+    def handle_invalid_data_source_update(data_source)
+      flash.alert = data_source.errors.full_messages.first
+      redirect_to app_data_source_path(data_source)
     end
   end
 end

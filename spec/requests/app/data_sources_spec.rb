@@ -101,6 +101,75 @@ RSpec.describe 'App::DataSources', type: :request do
     end
   end
 
+  describe 'GET /app/data_sources/:id' do
+    let(:user) { create(:user) }
+    let(:data_source) { create(:data_source, user:) }
+
+    before { sign_in(user) }
+
+    context 'when the data source does not exist' do
+      it 'renders the 404 page' do
+        get '/app/data_sources/342342343223'
+        expect(response.status).to eq(404)
+      end
+    end
+
+    context 'when the data source exists' do
+      it 'renders the show page' do
+        get "/app/data_sources/#{data_source.id}"
+        expect(response.status).to eq(200)
+      end
+    end
+  end
+
+  describe 'PUT /app/data_sources/:id' do
+    let(:user) { create(:user) }
+    let(:data_source) { create(:data_source, verified_at: Time.current, user:) }
+
+    before { sign_in(user) }
+
+    context 'when the url is not provided' do
+      it 'redirects to the show page' do
+        put "/app/data_sources/#{data_source.id}"
+        expect(response).to redirect_to(app_data_source_path(data_source))
+      end
+    end
+
+    context 'when the provided url is invalid' do
+      it 'redirects to the show page' do
+        put "/app/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfdsfdsfds' }
+        expect(response).to redirect_to(app_data_source_path(data_source))
+      end
+
+      it 'does not update the url' do
+        expect { put "/app/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfdsfdsfds' } }
+          .not_to change { data_source.reload.url }
+      end
+
+      it 'flashes a message' do
+        put "/app/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfdsfdsfds' }
+        expect(flash[:alert]).to eq('Url is not valid')
+      end
+    end
+
+    context 'when the provided url is valid' do
+      it 'redirects to the show page' do
+        put "/app/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' }
+        expect(response).to redirect_to(app_data_source_path(data_source))
+      end
+
+      it 'updates the url' do
+        expect { put "/app/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
+          .to change { data_source.reload.url }.from(data_source.url).to('https://valid-url.com')
+      end
+
+      it 'resets the verified_at' do
+        expect { put "/app/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
+          .to change { data_source.reload.verified_at }.from(data_source.verified_at).to(nil)
+      end
+    end
+  end
+
   describe 'GET /app/data_sources/:id/set_up' do
     let(:user) { create(:user) }
 
