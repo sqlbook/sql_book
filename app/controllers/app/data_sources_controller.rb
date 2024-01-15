@@ -10,6 +10,10 @@ module App
       redirect_to new_app_data_source_path if data_sources.empty?
     end
 
+    def show
+      @data_source = data_source
+    end
+
     def new; end
 
     def create

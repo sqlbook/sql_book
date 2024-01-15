@@ -1,0 +1,28 @@
+<main>
+  <div class="page-header">
+    <h1>Data Sources</h1>
+    <%= link_to new_app_data_source_path, class: "link secondary create-data-source" do %>
+      <i class="ri-add-line red-500"></i>
+      <span>Create New</span>
+    <% end %>
+  </div>
+
+  <div class="data-sources container lg">
+    <%= render "shared/data_source_card", data_source: @data_source %>
+  </div>
+</main>
+
+<aside>
+  <div class="tabs">
+    <%= render "shared/tabs/nav_item", tab: "source_url", name: "Source URL", icon_class: "ri-global-line", default_selected: true %>
+    <%= render "shared/tabs/nav_item", tab: "tracking_code", name: "Tracking Code", icon_class: "ri-fire-line" %>
+  </div>
+
+  <% if active_tab?(tab: "source_url", default_selected: true) %>
+    <p>1</p>
+  <% end %>
+
+  <% if active_tab?(tab: "tracking_code") %>
+    <p>2</p>
+  <% end %>
+</aside>
