@@ -18,7 +18,7 @@ class DataSource < ApplicationRecord
   end
 
   def create_views!
-    DataSourceViewService.new(data_source: self).create!
+    DataSourcesViewService.new(data_source: self).create!
   end
 
   def self.format_as_url_origin(url)

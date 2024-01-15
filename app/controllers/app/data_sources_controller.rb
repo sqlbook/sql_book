@@ -6,12 +6,14 @@ module App
 
     def index
       @data_sources = data_sources
+      @data_sources_stats = DataSourcesStatsService.new(data_sources:)
 
       redirect_to new_app_data_source_path if data_sources.empty?
     end
 
     def show
       @data_source = data_source
+      @data_sources_stats = DataSourcesStatsService.new(data_sources: [data_source])
     end
 
     def new; end

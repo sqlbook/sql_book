@@ -46,7 +46,7 @@ class QueryService
   end
 
   def prepared_query
-    DataSourceViewService.new(data_source: query.data_source).replace_table_name(normalized_query)
+    DataSourcesViewService.new(data_source: query.data_source).replace_table_name(normalized_query)
   end
 
   def model

@@ -27,8 +27,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
         'viewport_x' => 1920,
         'viewport_y' => 1080,
         'referrer' => 'https://google.com',
-        'useragent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)\
-         Version/17.2.1 Safari/605.1.15',
+        'useragent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15', # rubocop:disable Layout/LineLength
         'timezone' => 'Europe/London',
         'utm_campaign' => nil,
         'utm_content' => nil,

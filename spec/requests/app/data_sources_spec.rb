@@ -41,12 +41,12 @@ RSpec.describe 'App::DataSources', type: :request do
   describe 'POST /app/data_sources' do
     let(:user) { create(:user) }
 
-    let(:data_source_view_spec) { instance_double('DataSourceViewService') }
+    let(:data_sources_view_service) { instance_double('DataSourcesViewService') }
 
     before do
       sign_in(user)
-      allow(DataSourceViewService).to receive(:new).and_return(data_source_view_spec)
-      allow(data_source_view_spec).to receive(:create!)
+      allow(DataSourcesViewService).to receive(:new).and_return(data_sources_view_service)
+      allow(data_sources_view_service).to receive(:create!)
     end
 
     context 'when no url is provided' do
@@ -96,7 +96,7 @@ RSpec.describe 'App::DataSources', type: :request do
 
       it 'creates the views' do
         post '/app/data_sources', params: { url: }
-        expect(data_source_view_spec).to have_received(:create!)
+        expect(data_sources_view_service).to have_received(:create!)
       end
     end
   end

@@ -2,10 +2,10 @@
 
 require 'rails_helper'
 
-RSpec.describe DataSourceViewService do
+RSpec.describe DataSourcesViewService do
   let(:data_source) { create(:data_source) }
 
-  let(:instance) { DataSourceViewService.new(data_source:) }
+  let(:instance) { DataSourcesViewService.new(data_source:) }
 
   describe '#create!' do
     after { instance.destroy! }

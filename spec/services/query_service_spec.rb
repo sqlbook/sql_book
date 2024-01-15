@@ -17,11 +17,11 @@ RSpec.describe QueryService, disable_transactions: true do
   let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
 
   before do
-    DataSourceViewService.new(data_source:).create!
+    DataSourcesViewService.new(data_source:).create!
   end
 
   after do
-    DataSourceViewService.new(data_source:).destroy!
+    DataSourcesViewService.new(data_source:).destroy!
   end
 
   context 'when a valid query has been given' do

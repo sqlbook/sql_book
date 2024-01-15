@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DataSourceViewService
+class DataSourcesViewService
   def initialize(data_source:)
     @data_source = data_source
   end
