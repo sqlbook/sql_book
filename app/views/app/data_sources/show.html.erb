@@ -32,6 +32,6 @@
   <% end %>
 
   <% if active_tab?(tab: "tracking_code") %>
-    <p>2</p>
+    <%= render "shared/tracking_code", data_source: @data_source %>
   <% end %>
 </aside>

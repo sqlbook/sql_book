@@ -1,0 +1,5 @@
+<div data-controller="clipboard">
+  <pre><code class="comment"><%= "<!-- SQL_Book Tracking Code for #{data_source.url} -->" %></code></pre>
+  <pre><code class="tracking-code" data-clipboard-target="source"><%= tracking_code(data_source:) %></code></pre>
+  <%= render "shared/copy_to_clipboard" %>
+</div>
