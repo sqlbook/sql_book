@@ -21,9 +21,10 @@ module App
       end
 
       def update
-        query.update!(**update_params, saved: update_params[:name].present?)
+        return handle_update_query_name if query_params[:name].present?
+        return handle_update_query_query if query_params[:query].present?
 
-        redirect_to app_data_source_query_path(data_source, query, tab: 'settings')
+        redirect_to app_data_source_query_path(data_source, query)
       end
 
       private
@@ -36,10 +37,6 @@ module App
         Query.find_by!(id: params[:id], data_source_id: data_source.id)
       end
 
-      def update_params
-        query_params.slice(:name, :query)
-      end
-
       def query_params
         params.permit(
           :data_source_id,
@@ -48,6 +45,16 @@ module App
           :action,
           :authenticity_token
         )
+      end
+
+      def handle_update_query_name
+        query.update!(name: query_params[:name], saved: true)
+        redirect_to app_data_source_query_path(data_source, query, tab: 'settings')
+      end
+
+      def handle_update_query_query
+        query.update!(query: query_params[:query])
+        redirect_to app_data_source_query_path(data_source, query)
       end
     end
   end

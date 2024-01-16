@@ -98,6 +98,16 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
       end
     end
 
+    context 'when not updating the name or the query' do
+      let(:query) { create(:query, data_source:, query: 'SELECT * FROM page_views;') }
+      let(:updated_query) { 'SELECT * FROM page_views LIMIT 1;' }
+
+      it 'redirects to the query show page' do
+        put "/app/data_sources/#{data_source.id}/queries/#{query.id}"
+        expect(response).to redirect_to(app_data_source_query_path(data_source, query))
+      end
+    end
+
     context 'when updating the query' do
       let(:query) { create(:query, data_source:, query: 'SELECT * FROM page_views;') }
       let(:updated_query) { 'SELECT * FROM page_views LIMIT 1;' }
@@ -111,7 +121,7 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
 
       it 'redirects to the query show page' do
         put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query }
-        expect(response).to redirect_to(app_data_source_query_path(data_source, query, tab: 'settings'))
+        expect(response).to redirect_to(app_data_source_query_path(data_source, query))
       end
 
       it 'does not set the query as saved' do
