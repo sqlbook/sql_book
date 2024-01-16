@@ -15,7 +15,7 @@ class QueryService
   end
 
   def execute
-    @data = model.find_by_sql(prepared_query)
+    @data = ClickHouseRecord.connection.exec_query(prepared_query)
     self
   rescue ActiveRecord::ActiveRecordError => e
     handle_database_exception(e)
@@ -25,18 +25,12 @@ class QueryService
     self
   end
 
-  def columns
-    model.columns.map(&:name).without('data_source_uuid')
-  rescue ActiveRecord::ActiveRecordError
-    []
+  def rows
+    data&.rows.to_a
   end
 
-  def rows
-    return [] unless data
-
-    data.map do |item|
-      columns.map { |col| item.send(col.to_sym) }
-    end
+  def columns
+    data&.columns.to_a
   end
 
   private
@@ -46,10 +40,12 @@ class QueryService
   end
 
   def prepared_query
+    ensure_valid_models!
+
     DataSourcesViewService.new(data_source: query.data_source).replace_table_name(normalized_query)
   end
 
-  def model
+  def ensure_valid_models!
     return Click if normalized_query.include?('from clicks')
     return Session if normalized_query.include?('from sessions')
     return PageView if normalized_query.include?('from page_views')

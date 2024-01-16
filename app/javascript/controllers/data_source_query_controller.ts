@@ -1,23 +1,19 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'submit'];
+  static targets = ['form', 'input', 'submit'];
 
   declare readonly formTarget: HTMLFormElement;
+  declare readonly inputTarget: HTMLTextAreaElement;
   declare readonly submitTarget: HTMLButtonElement;
 
   public connect(): void {
     this.setButtonDisabled('');
+    this.setInputRows();
   }
 
-  public change(event: Event): void {
-    if (!event.target) return;
-
-    const target = event.target as HTMLTextAreaElement;
-    const query = target.value;
-
-    target.rows = query.split('\n').length;
-    this.setButtonDisabled(query);
+  public change(): void {
+    this.setInputRows();
   }
 
   public changeSource(event: Event): void {
@@ -49,5 +45,12 @@ export default class extends Controller<HTMLDivElement> {
     const query = value.toLowerCase();
 
     return query.includes('select') && query.includes('from');
+  }
+
+  private setInputRows(): void {
+    const query = this.inputTarget.value;
+
+    this.inputTarget.rows = query.split('\n').length;
+    this.setButtonDisabled(query);
   }
 }

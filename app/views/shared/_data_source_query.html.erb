@@ -18,7 +18,7 @@
     </div>
 
     <div class="query-form">
-      <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit", value: @query&.query %>
+      <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit",  "data-data-source-query-target": "input", value: @query&.query %>
       <%= form.submit "Press CMD+Enter to run...", class: "link secondary submit", "data-data-source-query-target": "submit" %>
     </div>
   <% end %>

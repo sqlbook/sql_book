@@ -28,6 +28,7 @@ RSpec.describe QueryService, disable_transactions: true do
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
         uuid
+        data_source_uuid
         session_uuid
         visitor_uuid
         timestamp
@@ -44,9 +45,10 @@ RSpec.describe QueryService, disable_transactions: true do
       expect(instance.execute.rows).to match_array([
         [
           click_1.uuid,
+          click_1.data_source_uuid,
           click_1.session_uuid,
           click_1.visitor_uuid,
-          click_1.timestamp,
+          click_1.timestamp.to_s,
           click_1.coordinates_x,
           click_1.coordinates_y,
           click_1.xpath,
@@ -56,9 +58,10 @@ RSpec.describe QueryService, disable_transactions: true do
         ],
         [
           click_2.uuid,
+          click_2.data_source_uuid,
           click_2.session_uuid,
           click_2.visitor_uuid,
-          click_2.timestamp,
+          click_2.timestamp.to_s,
           click_2.coordinates_x,
           click_2.coordinates_y,
           click_2.xpath,
@@ -68,9 +71,10 @@ RSpec.describe QueryService, disable_transactions: true do
         ],
         [
           click_3.uuid,
+          click_3.data_source_uuid,
           click_3.session_uuid,
           click_3.visitor_uuid,
-          click_3.timestamp,
+          click_3.timestamp.to_s,
           click_3.coordinates_x,
           click_3.coordinates_y,
           click_3.xpath,
@@ -93,19 +97,8 @@ RSpec.describe QueryService, disable_transactions: true do
   context 'when a database error occurs' do
     let(:query_string) { 'SELECT * FROM clicks with a syntax error' }
 
-    it 'has the correct columns' do
-      expect(instance.execute.columns).to eq(%w[
-        uuid
-        session_uuid
-        visitor_uuid
-        timestamp
-        coordinates_x
-        coordinates_y
-        xpath
-        inner_text
-        attribute_id
-        attribute_class
-      ])
+    it 'has empty columns' do
+      expect(instance.execute.columns).to eq([])
     end
 
     it 'has empty rows' do
@@ -123,22 +116,11 @@ RSpec.describe QueryService, disable_transactions: true do
 
   context 'when a standard error occurs' do
     before do
-      allow(Click).to receive(:find_by_sql).and_raise(StandardError)
+      allow(ClickHouseRecord.connection).to receive(:exec_query).and_raise(StandardError)
     end
 
-    it 'has the correct columns' do
-      expect(instance.execute.columns).to eq(%w[
-        uuid
-        session_uuid
-        visitor_uuid
-        timestamp
-        coordinates_x
-        coordinates_y
-        xpath
-        inner_text
-        attribute_id
-        attribute_class
-      ])
+    it 'has empty columns' do
+      expect(instance.execute.columns).to eq([])
     end
 
     it 'has empty rows' do
@@ -154,6 +136,35 @@ RSpec.describe QueryService, disable_transactions: true do
     end
   end
 
+  context 'when making queries that differ from the model' do
+    let(:query_string) do
+      <<-SQL.squish
+        SELECT COUNT(*) count, session_uuid
+        FROM clicks
+        GROUP BY session_uuid
+        ORDER BY count desc;
+      SQL
+    end
+
+    it 'has the correct columns' do
+      expect(instance.execute.columns).to eq(%w[count session_uuid])
+    end
+
+    it 'has the correct rows' do
+      expect(instance.execute.rows).to eq([
+        ['3', session_uuid]
+      ])
+    end
+
+    it 'has no error' do
+      expect(instance.execute.error).to eq(false)
+    end
+
+    it 'has no error message' do
+      expect(instance.execute.error_message).to eq(nil)
+    end
+  end
+
   context 'when querying different models' do
     context 'and the model is sessions' do
       let(:query_string) { 'SELECT * FROM sessions' }
@@ -161,6 +172,7 @@ RSpec.describe QueryService, disable_transactions: true do
       it 'has the correct columns' do
         expect(instance.execute.columns).to eq(%w[
           uuid
+          data_source_uuid
           session_uuid
           visitor_uuid
           timestamp
@@ -189,6 +201,7 @@ RSpec.describe QueryService, disable_transactions: true do
       it 'has the correct columns' do
         expect(instance.execute.columns).to eq(%w[
           uuid
+          data_source_uuid
           session_uuid
           visitor_uuid
           timestamp
