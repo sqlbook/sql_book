@@ -2,7 +2,13 @@
   .page-header {
     align-items: center;
     display: flex;
+    justify-content: space-between;
     margin: 0 0 2rem 0;
+
+    .title {
+      align-items: center;
+      display: flex;
+    }
 
     h1 {
       margin: 0;
@@ -16,6 +22,26 @@
         span {
           text-decoration: underline;
         }
+      }
+    }
+  }
+
+  .search {
+    width: 20rem;
+  }
+
+  .queries-table {
+    table {
+      background: var(--gray-800);
+      width: 100%;
+    }
+
+    .name {
+      text-decoration: none;
+
+      &:hover {
+        color: var(--red-500);
+        text-decoration: underline;
       }
     }
   }

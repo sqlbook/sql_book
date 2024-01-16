@@ -1,0 +1,30 @@
+table {
+  background: var(--gray-850);
+
+  th {
+    color: var(--cream-250);
+  }
+
+  tr:hover {
+    background: var(--gray-800);
+  }
+  
+  td {
+    color: var(--gray-250);
+  }
+  
+  th, td {
+    padding: .5rem 1.5rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .null {
+    color: var(--gray-500);
+  }
+}
+
+table, th, td {
+  border: 1px solid var(--gray-900);
+  border-collapse: collapse;
+}
