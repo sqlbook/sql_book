@@ -2,7 +2,7 @@
   <%= render "shared/data_source_query" %>
 </main>
 
-<aside>
+<aside data-controller="resizeable-page">
   <div class="tabs">
     <%= render "shared/tabs/nav_item", tab: "query_results", name: "Query Results", icon_class: "ri-table-2", default_selected: true %>
     <%= render "shared/tabs/nav_item", tab: "visualization", name: "Visualization", icon_class: "ri-bar-chart-box-line" %>
@@ -36,4 +36,6 @@
       <% end %>
     </div>
   <% end %>
+
+  <%= render "shared/grab_handle" %>
 </aside>

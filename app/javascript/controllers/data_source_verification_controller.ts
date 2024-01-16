@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller<HTMLDivElement> {
-  connect(): void {
+  public connect(): void {
     const params = new URLSearchParams(location.search);
     const verificationAttempt = Number(params.get('verification_attempt') || '0');
 

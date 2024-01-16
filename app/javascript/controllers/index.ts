@@ -10,6 +10,7 @@ import DataSourceVerificationController from './data_source_verification_control
 import FormController from './form_controller';
 import MenuController from './menu_controller';
 import OtpController from './otp_controller';
+import ResizeablePageController from './resizeable_page_controller';
 
 application.register('clipboard', ClipboardController);
 application.register('data-source-query', DataSourceQueryController);
@@ -17,3 +18,4 @@ application.register('data-source-verification', DataSourceVerificationControlle
 application.register('form', FormController);
 application.register('menu', MenuController);
 application.register('otp', OtpController);
+application.register('resizeable-page', ResizeablePageController);

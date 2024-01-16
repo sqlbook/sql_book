@@ -6,7 +6,7 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly buttonTarget: HTMLButtonElement;
   declare readonly sourceTarget: HTMLElement;
 
-  copy(): void {
+  public copy(): void {
     const originalText = this.buttonTarget.innerText;
 
     this.buttonTarget.innerText = '[Copied!]';

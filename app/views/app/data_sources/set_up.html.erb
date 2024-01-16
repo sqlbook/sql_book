@@ -19,7 +19,7 @@
     <% end %>
   </div>
 </main>
-<aside>
+<aside data-controller="resizeable-page">
   <div class="tabs">
     <%= render "shared/tabs/nav_item", tab: "tracking_code", name: "Tracking Code", icon_class: "ri-fire-line", default_selected: true %>
     <%= render "shared/tabs/nav_item", tab: "learn_more", name: "Learn More", icon_class: "ri-information-line" %>
@@ -36,4 +36,6 @@
 
     <%= render "shared/github_link" %>
   <% end %>
+
+  <%= render "shared/grab_handle" %>
 </aside>

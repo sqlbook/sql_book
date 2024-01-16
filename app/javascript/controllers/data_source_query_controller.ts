@@ -6,11 +6,11 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly formTarget: HTMLFormElement;
   declare readonly submitTarget: HTMLButtonElement;
 
-  connect(): void {
+  public connect(): void {
     this.setButtonDisabled('');
   }
 
-  change(event: Event): void {
+  public change(event: Event): void {
     if (!event.target) return;
 
     const target = event.target as HTMLTextAreaElement;
@@ -20,12 +20,12 @@ export default class extends Controller<HTMLDivElement> {
     this.setButtonDisabled(query);
   }
 
-  changeSource(event: Event): void {
+  public changeSource(event: Event): void {
     const target = event.target as HTMLSelectElement;
     window.Turbo.visit(`/app/data_sources/${target.value}/queries`, { action: 'replace' })
   }
 
-  submit(event: Event): void {
+  public submit(event: Event): void {
     if (!event.target) return;
 
     const target = event.target as HTMLTextAreaElement;
@@ -35,7 +35,7 @@ export default class extends Controller<HTMLDivElement> {
     }
   }
 
-  setButtonDisabled(value: string): void {    
+  private setButtonDisabled(value: string): void {    
     if (this.isMaybeValidForm(value)) {
       this.submitTarget.removeAttribute('disabled');
     } else {
@@ -43,7 +43,7 @@ export default class extends Controller<HTMLDivElement> {
     }
   }
 
-  isMaybeValidForm(value: string): boolean {
+  private isMaybeValidForm(value: string): boolean {
     if (!this.formTarget.checkValidity()) return false;
 
     const query = value.toLowerCase();

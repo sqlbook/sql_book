@@ -12,7 +12,7 @@
   </div>
 </main>
 
-<aside>
+<aside data-controller="resizeable-page">
   <div class="tabs">
     <%= render "shared/tabs/nav_item", tab: "source_url", name: "Source URL", icon_class: "ri-global-line", default_selected: true %>
     <%= render "shared/tabs/nav_item", tab: "tracking_code", name: "Tracking Code", icon_class: "ri-fire-line" %>
@@ -34,4 +34,6 @@
   <% if active_tab?(tab: "tracking_code") %>
     <%= render "shared/tracking_code", data_source: @data_source %>
   <% end %>
+
+  <%= render "shared/grab_handle" %>
 </aside>
