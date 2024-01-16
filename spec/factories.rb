@@ -16,6 +16,7 @@ FactoryBot.define do
   end
 
   factory :query do
+    name { 'My Query' }
     query { 'SELECT * FROM sessions;' }
     saved { false }
     data_source { create(:data_source) }

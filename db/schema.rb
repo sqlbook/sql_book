@@ -35,6 +35,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_12_090044) do
   end
 
   create_table "queries", force: :cascade do |t|
+    t.string "name"
     t.string "query", null: false
     t.boolean "saved", default: false, null: false
     t.bigint "data_source_id"

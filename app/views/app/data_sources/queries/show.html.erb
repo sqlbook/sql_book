@@ -6,6 +6,8 @@
   <div class="tabs">
     <%= render "shared/tabs/nav_item", tab: "query_results", name: "Query Results", icon_class: "ri-table-2", default_selected: true %>
     <%= render "shared/tabs/nav_item", tab: "visualization", name: "Visualization", icon_class: "ri-bar-chart-box-line" %>
+    <div class="seperator"></div>
+    <%= render "shared/tabs/nav_item", tab: "settings", name: "Settings", icon_class: "ri-settings-3-line" %>
   </div>
 
   <% if active_tab?(tab: "query_results", default_selected: true) %>
@@ -18,5 +20,20 @@
 
   <% if active_tab?(tab: "visualization") %>
     <p>Visualization</p>
+  <% end %>
+
+  <% if active_tab?(tab: "settings") %>
+    <% unless @query.saved %>
+      <%= render "shared/notice", message: "Save your query for future use by completing the form below." %>
+    <% end %>
+
+    <div data-controller="form">
+      <%= form_with url: app_data_source_query_path(@data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
+        <%= form.label :name, "Query name", class: "label block" %>
+        <%= form.text_field :name, type: "text", placeholder: "e.g. New Visitor Count",class: "input block fluid", required: true, value: @query.name %>
+
+        <%= form.submit "[Save Query]", class: "link primary", "data-form-target": "submit" %>
+      <% end %>
+    </div>
   <% end %>
 </aside>

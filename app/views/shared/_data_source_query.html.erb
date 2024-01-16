@@ -1,5 +1,5 @@
 <div class="container md-lg data-source-query" data-controller="data-source-query">
-  <%= form_with url: app_data_source_queries_path(@data_source), method: :post, html: { "data-data-source-query-target": "form" } do |form| %>
+  <%= form_with url: query_form_path(data_source: @data_source, query: @query), method: query_form_method(query: @query), html: { "data-data-source-query-target": "form" } do |form| %>
     <div class="data-sources-select">
       <%= form.label :data_source_id, class: "label" do %>
         <i class="ri-lg ri-database-2-line"></i>

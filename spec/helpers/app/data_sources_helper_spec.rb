@@ -62,4 +62,37 @@ RSpec.describe 'App::DataSourcesHelper', type: :helper do
       end
     end
   end
+
+  describe '#query_form_path' do
+    let(:data_source) { create(:data_source) }
+    let(:query) { create(:query) }
+
+    context 'when a query is provided' do
+      it 'returns the update path' do
+        expect(helper.query_form_path(data_source:, query:)).to eq(app_data_source_query_path(data_source, query))
+      end
+    end
+
+    context 'when a query is not provided' do
+      it 'returns the create path' do
+        expect(helper.query_form_path(data_source:, query: nil)).to eq(app_data_source_queries_path(data_source))
+      end
+    end
+  end
+
+  describe '#query_form_method' do
+    let(:query) { create(:query) }
+
+    context 'when a query is provided' do
+      it 'returns put' do
+        expect(helper.query_form_method(query:)).to eq(:put)
+      end
+    end
+
+    context 'when a query is not provided' do
+      it 'returns post' do
+        expect(helper.query_form_method(query: nil)).to eq(:post)
+      end
+    end
+  end
 end

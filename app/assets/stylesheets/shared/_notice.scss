@@ -1,0 +1,11 @@
+.notice {
+  align-items: center;
+  background: var(--gray-800);
+  border: 1px solid var(--gray-900);
+  display: flex;
+  padding: 1rem 1.5rem;
+
+  i {
+    margin: 0 .5rem 0 0;
+  }
+}

@@ -69,6 +69,14 @@
     .subtitle {
       font-size: .75rem;
       margin: 0;
+      
+      .link {
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
     }
   }
 }

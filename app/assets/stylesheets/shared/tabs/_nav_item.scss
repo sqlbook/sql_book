@@ -27,5 +27,15 @@
         border-color: var(--red-500);
       }
     }
+
+    &:hover {
+      span {
+        border-color: var(--red-500);
+      }
+    }
+  }
+
+  .seperator {
+    flex: 1;
   }
 }

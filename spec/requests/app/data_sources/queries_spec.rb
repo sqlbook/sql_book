@@ -87,4 +87,60 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
       expect(response).to redirect_to(app_data_source_query_path(data_source, query))
     end
   end
+
+  describe 'PUT /app/data_sources/:data_source/queries/:query' do
+    let(:data_source) { create(:data_source, user:) }
+
+    context 'when the query does not exist' do
+      it 'renders a 404 page' do
+        put "/app/data_sources/#{data_source.id}/queries/234243242"
+        expect(response.status).to eq(404)
+      end
+    end
+
+    context 'when updating the query' do
+      let(:query) { create(:query, data_source:, query: 'SELECT * FROM page_views;') }
+      let(:updated_query) { 'SELECT * FROM page_views LIMIT 1;' }
+
+      it 'updates the query' do
+        expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query } }
+          .to change { query.reload.query }
+          .from('SELECT * FROM page_views;')
+          .to('SELECT * FROM page_views LIMIT 1;')
+      end
+
+      it 'redirects to the query show page' do
+        put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query }
+        expect(response).to redirect_to(app_data_source_query_path(data_source, query, tab: 'settings'))
+      end
+
+      it 'does not set the query as saved' do
+        expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query } }
+          .not_to change { query.reload.saved }
+      end
+    end
+
+    context 'when updating the name' do
+      let(:query) { create(:query, data_source:, name: 'Query 1') }
+
+      it 'updates the query' do
+        expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { name: 'Query 2' } }
+          .to change { query.reload.name }
+          .from('Query 1')
+          .to('Query 2')
+      end
+
+      it 'redirects to the query show page' do
+        put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { name: 'Query 2' }
+        expect(response).to redirect_to(app_data_source_query_path(data_source, query, tab: 'settings'))
+      end
+
+      it 'sets the query as saved' do
+        expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { name: 'Query 2' } }
+          .to change { query.reload.saved }
+          .from(false)
+          .to(true)
+      end
+    end
+  end
 end

@@ -2,7 +2,7 @@
 
 # TODO
 # - Convert the error messages from ClickHouse to something safe to show
-# - Use the views and correct users
+# - Change joined tables to use views
 
 class QueryService
   attr_accessor :data, :query, :error, :error_message

@@ -33,6 +33,8 @@
     <h3 class="red-500">
       <%= @data_sources_stats.queries_for(data_source:) %>
     </h3>
-    <p class="subtitle small gray-500">View</p>
+    <p class="subtitle small">
+      <%= link_to "View", app_queries_path, class: "link gray-500" %>
+    </p>
   </div>
 </div>
