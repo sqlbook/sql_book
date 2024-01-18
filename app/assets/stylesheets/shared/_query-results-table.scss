@@ -1,20 +1,4 @@
 .query-results-table {
   overflow: auto;
   padding-bottom: 1rem;
-  scrollbar-color: var(--gray-250) transparent;
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--gray-250);
-    border-radius: var(--border-radius-md);
-  }
-
-  &::-webkit-scrollbar {
-    background: transparent;
-    height: .5rem;
-    width: .5rem;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
 }

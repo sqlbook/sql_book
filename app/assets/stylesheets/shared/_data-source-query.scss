@@ -1,15 +1,16 @@
 .data-source-query {
-  .data-sources-select {
+  .data-sources-row {
     align-items: center;
     background: var(--gray-900);
     border-radius: var(--border-radius-sm);
-    display: flex;
-    margin: 0 0 3rem 0;
+    display: grid;
+    grid-gap: 1rem;
+    grid-template-columns: 9rem minmax(0, 1fr) 1.5rem 1.5rem;
     padding: 1rem 1.5rem;
 
     .label {
       color: var(--cream-250);
-      margin: 0 1rem 0 0;
+      margin: 0;
 
       i {
         color: var(--red-600);
@@ -23,12 +24,49 @@
 
     .link {
       font-size: 1.25rem;
-      margin: 0 0 0 1.5rem;
       text-decoration: none;
+
+      &.active {
+        i {
+          color: var(--red-500);
+        }
+      }
+    }
+
+    &.schema {
+      padding-top: 0;
+    }
+
+    &.hide {
+      display: none;
+
+      & + .schema-table {
+        display: none;
+      }
+    }
+
+    &.schema-table {
+      grid-template-columns: 1fr;
+      padding-top: 0;
+      
+      table {
+        width: 100%;
+
+        &.hide {
+          display: none;
+        }
+      }
+
+      .scroll {
+        max-height: 26rem;
+        overflow-y: auto;
+      }
     }
   }
 
   .query-form {
+    margin: 3rem 0 0 0;
+
     textarea {
       appearance: none;
       background: none;

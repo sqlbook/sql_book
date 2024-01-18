@@ -1,11 +1,12 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'input', 'submit'];
+  static targets = ['form', 'input', 'submit', 'schema'];
 
   declare readonly formTarget: HTMLFormElement;
   declare readonly inputTarget: HTMLTextAreaElement;
   declare readonly submitTarget: HTMLButtonElement;
+  declare readonly schemaTarget: HTMLDivElement;
 
   public connect(): void {
     this.setButtonDisabled('');
@@ -21,6 +22,18 @@ export default class extends Controller<HTMLDivElement> {
     window.Turbo.visit(`/app/data_sources/${target.value}/queries`, { action: 'replace' })
   }
 
+  public changeSchema(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    
+    document.querySelectorAll('.schema-table table').forEach((table) => {
+      if (table.classList.contains(`schema-table-${target.value}`)) {
+        table.classList.remove('hide');
+      } else {
+        table.classList.add('hide');
+      }
+    });
+  }
+
   public submit(event: Event): void {
     if (!event.target) return;
 
@@ -28,6 +41,17 @@ export default class extends Controller<HTMLDivElement> {
     
     if (this.isMaybeValidForm(target.value)) {
       this.formTarget.requestSubmit();
+    }
+  }
+
+  public toggleSchema(event: Event): void {
+    const target = event.target as HTMLElement;
+    const button = target.closest('button');
+
+    this.schemaTarget.classList.toggle('hide');
+
+    if (button) {
+      button.classList.toggle('active');
     }
   }
 

@@ -36,7 +36,7 @@ class DataSourcesStatsService
   # by the data_source_uuid. Merge all of the results to get
   # a single sum by data_source_uuid
   def tally_events_for(method)
-    [Click, PageView, Session].inject({}) do |result, model|
+    Event::ALL_EVENT_TYPES.inject({}) do |result, model|
       data = send(:"#{method}_data_for", model)
       result.merge(data) { |_, a, b| a + b }
     end

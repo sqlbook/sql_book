@@ -46,9 +46,9 @@ class QueryService
   end
 
   def ensure_valid_models!
-    return Click if normalized_query.include?('from clicks')
-    return Session if normalized_query.include?('from sessions')
-    return PageView if normalized_query.include?('from page_views')
+    return if normalized_query.include?('from clicks')
+    return if normalized_query.include?('from sessions')
+    return if normalized_query.include?('from page_views')
 
     handle_model_not_found_error
   end
