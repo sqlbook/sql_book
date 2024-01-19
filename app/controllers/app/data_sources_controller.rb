@@ -25,8 +25,6 @@ module App
 
       return handle_invalid_data_source_create(data_source) unless data_source.save
 
-      data_source.create_views!
-
       redirect_to app_data_source_set_up_index_path(data_source)
     end
 
@@ -41,8 +39,7 @@ module App
     end
 
     def destroy
-      EventDeleteJob.perform_later(data_source.external_uuid)
-      DataSourcesViewService.new(data_source:).destroy!
+      # DataSourcesViewService.new(data_source:).destroy!
 
       data_source.destroy!
 

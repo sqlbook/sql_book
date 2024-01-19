@@ -25,7 +25,7 @@ FactoryBot.define do
   end
 
   factory :click do
-    uuid { SecureRandom.uuid }
+    data_source { create(:data_source) }
     data_source_uuid { SecureRandom.uuid }
     session_uuid { SecureRandom.uuid }
     visitor_uuid { SecureRandom.uuid }
@@ -39,7 +39,7 @@ FactoryBot.define do
   end
 
   factory :page_view do
-    uuid { SecureRandom.uuid }
+    data_source { create(:data_source) }
     data_source_uuid { SecureRandom.uuid }
     session_uuid { SecureRandom.uuid }
     visitor_uuid { SecureRandom.uuid }
@@ -48,7 +48,7 @@ FactoryBot.define do
   end
 
   factory :session do
-    uuid { SecureRandom.uuid }
+    data_source { create(:data_source) }
     data_source_uuid { SecureRandom.uuid }
     session_uuid { SecureRandom.uuid }
     visitor_uuid { SecureRandom.uuid }

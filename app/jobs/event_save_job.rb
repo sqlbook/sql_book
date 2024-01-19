@@ -10,9 +10,13 @@ class EventSaveJob < ApplicationJob
 
   private
 
+  def data_source(event)
+    DataSource.find_by(external_uuid: event['data_source_uuid'])
+  end
+
   def store_click(event)
     Click.create(
-      uuid: SecureRandom.uuid,
+      data_source: data_source(event),
       data_source_uuid: event['data_source_uuid'],
       session_uuid: event['session_uuid'],
       visitor_uuid: event['visitor_uuid'],
@@ -28,7 +32,7 @@ class EventSaveJob < ApplicationJob
 
   def store_page_view(event)
     PageView.create(
-      uuid: SecureRandom.uuid,
+      data_source: data_source(event),
       data_source_uuid: event['data_source_uuid'],
       session_uuid: event['session_uuid'],
       visitor_uuid: event['visitor_uuid'],
@@ -39,7 +43,7 @@ class EventSaveJob < ApplicationJob
 
   def store_session(event) # rubocop:disable Metrics/AbcSize
     Session.create(
-      uuid: SecureRandom.uuid,
+      data_source: data_source(event),
       data_source_uuid: event['data_source_uuid'],
       session_uuid: event['session_uuid'],
       visitor_uuid: event['visitor_uuid'],

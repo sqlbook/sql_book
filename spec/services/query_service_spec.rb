@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe QueryService, disable_transactions: true do
+RSpec.describe QueryService do
   let(:instance) { described_class.new(query:) }
 
   let(:data_source) { create(:data_source) }
@@ -12,22 +12,14 @@ RSpec.describe QueryService, disable_transactions: true do
   let(:query_string) { 'SELECT * FROM clicks' }
   let(:query) { create(:query, data_source:, query: query_string) }
 
-  let!(:click_1) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
-  let!(:click_2) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
-  let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
-
-  before do
-    DataSourcesViewService.new(data_source:).create!
-  end
-
-  after do
-    DataSourcesViewService.new(data_source:).destroy!
-  end
+  let!(:click_1) { create(:click, data_source:, session_uuid:, visitor_uuid:) }
+  let!(:click_2) { create(:click, data_source:, session_uuid:, visitor_uuid:) }
+  let!(:click_3) { create(:click, data_source:, session_uuid:, visitor_uuid:) }
 
   context 'when a valid query has been given' do
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
-        uuid
+        id
         data_source_uuid
         session_uuid
         visitor_uuid
@@ -44,7 +36,7 @@ RSpec.describe QueryService, disable_transactions: true do
     it 'has the correct rows' do
       expect(instance.execute.rows).to match_array([
         [
-          click_1.uuid,
+          click_1.id,
           click_1.data_source_uuid,
           click_1.session_uuid,
           click_1.visitor_uuid,
@@ -57,7 +49,7 @@ RSpec.describe QueryService, disable_transactions: true do
           click_1.attribute_class
         ],
         [
-          click_2.uuid,
+          click_2.id,
           click_2.data_source_uuid,
           click_2.session_uuid,
           click_2.visitor_uuid,
@@ -70,7 +62,7 @@ RSpec.describe QueryService, disable_transactions: true do
           click_2.attribute_class
         ],
         [
-          click_3.uuid,
+          click_3.id,
           click_3.data_source_uuid,
           click_3.session_uuid,
           click_3.visitor_uuid,
@@ -110,13 +102,13 @@ RSpec.describe QueryService, disable_transactions: true do
     end
 
     it 'has an error message' do
-      expect(instance.execute.error_message).to include('Code: 62. DB::Exception: Syntax error')
+      expect(instance.execute.error_message).to include('PG::SyntaxError: ERROR:  syntax error')
     end
   end
 
   context 'when a standard error occurs' do
     before do
-      allow(ClickHouseRecord.connection).to receive(:exec_query).and_raise(StandardError)
+      allow(ApplicationRecord.connection).to receive(:exec_query).and_raise(StandardError)
     end
 
     it 'has empty columns' do
@@ -152,7 +144,7 @@ RSpec.describe QueryService, disable_transactions: true do
 
     it 'has the correct rows' do
       expect(instance.execute.rows).to eq([
-        ['3', session_uuid]
+        [3, session_uuid]
       ])
     end
 
@@ -171,7 +163,7 @@ RSpec.describe QueryService, disable_transactions: true do
 
       it 'has the correct columns' do
         expect(instance.execute.columns).to eq(%w[
-          uuid
+          id
           data_source_uuid
           session_uuid
           visitor_uuid
@@ -200,7 +192,7 @@ RSpec.describe QueryService, disable_transactions: true do
 
       it 'has the correct columns' do
         expect(instance.execute.columns).to eq(%w[
-          uuid
+          id
           data_source_uuid
           session_uuid
           visitor_uuid

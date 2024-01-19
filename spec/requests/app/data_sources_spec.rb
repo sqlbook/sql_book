@@ -41,12 +41,8 @@ RSpec.describe 'App::DataSources', type: :request do
   describe 'POST /app/data_sources' do
     let(:user) { create(:user) }
 
-    let(:data_sources_view_service) { instance_double('DataSourcesViewService') }
-
     before do
       sign_in(user)
-      allow(DataSourcesViewService).to receive(:new).and_return(data_sources_view_service)
-      allow(data_sources_view_service).to receive(:create!)
     end
 
     context 'when no url is provided' do
@@ -92,11 +88,6 @@ RSpec.describe 'App::DataSources', type: :request do
       it 'redirects back to the new page' do
         post '/app/data_sources', params: { url: }
         expect(response).to redirect_to(app_data_source_set_up_index_path(DataSource.last.id))
-      end
-
-      it 'creates the views' do
-        post '/app/data_sources', params: { url: }
-        expect(data_sources_view_service).to have_received(:create!)
       end
     end
   end
@@ -174,29 +165,26 @@ RSpec.describe 'App::DataSources', type: :request do
     let(:user) { create(:user) }
     let(:data_source) { create(:data_source, user:) }
 
-    let(:data_sources_view_service) { instance_double('DataSourcesViewService') }
-
     before { sign_in(user) }
-
-    before do
-      allow(EventDeleteJob).to receive(:perform_later)
-      allow(DataSourcesViewService).to receive(:new).and_return(data_sources_view_service)
-      allow(data_sources_view_service).to receive(:destroy!)
-    end
-
-    it 'enqueues the delete job' do
-      delete "/app/data_sources/#{data_source.id}"
-      expect(EventDeleteJob).to have_received(:perform_later).with(data_source.external_uuid)
-    end
-
-    it 'destroys the views' do
-      delete "/app/data_sources/#{data_source.id}"
-      expect(data_sources_view_service).to have_received(:destroy!)
-    end
 
     it 'deletes the data source' do
       expect { delete "/app/data_sources/#{data_source.id}" }
         .to change { DataSource.exists?(data_source.id) }.from(true).to(false)
+    end
+
+    context 'when the data source has some data' do
+      before do
+        create(:click, data_source:)
+        create(:page_view, data_source:)
+        create(:page_view, data_source:)
+        create(:page_view, data_source:)
+        create(:session, data_source:)
+      end
+
+      it 'enqueues the delete job' do
+        delete "/app/data_sources/#{data_source.id}"
+        expect(ActiveRecord::DestroyAssociationAsyncJob).to have_been_enqueued.exactly(3).times
+      end
     end
   end
 end

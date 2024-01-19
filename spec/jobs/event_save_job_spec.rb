@@ -2,12 +2,11 @@
 
 require 'rails_helper'
 
-RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
+RSpec.describe EventSaveJob, type: :job do
   include ActiveJob::TestHelper
 
   let(:data_source) { create(:data_source) }
 
-  let(:data_source_uuid) { data_source.external_uuid }
   let(:session_uuid) { SecureRandom.uuid }
   let(:visitor_uuid) { SecureRandom.uuid }
 
@@ -17,7 +16,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
     [
       {
         'type' => 'session',
-        'data_source_uuid' => data_source_uuid,
+        'data_source_uuid' => data_source.external_uuid,
         'session_uuid' => session_uuid,
         'visitor_uuid' => visitor_uuid,
         'timestamp' => timestamp,
@@ -37,7 +36,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
       },
       {
         'type' => 'page_view',
-        'data_source_uuid' => data_source_uuid,
+        'data_source_uuid' => data_source.external_uuid,
         'session_uuid' => session_uuid,
         'visitor_uuid' => visitor_uuid,
         'timestamp' => timestamp,
@@ -45,7 +44,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
       },
       {
         'type' => 'page_view',
-        'data_source_uuid' => data_source_uuid,
+        'data_source_uuid' => data_source.external_uuid,
         'session_uuid' => session_uuid,
         'visitor_uuid' => visitor_uuid,
         'timestamp' => timestamp,
@@ -53,7 +52,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
       },
       {
         'type' => 'click',
-        'data_source_uuid' => data_source_uuid,
+        'data_source_uuid' => data_source.external_uuid,
         'session_uuid' => session_uuid,
         'visitor_uuid' => visitor_uuid,
         'timestamp' => timestamp,
@@ -66,7 +65,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
       },
       {
         'type' => 'click',
-        'data_source_uuid' => data_source_uuid,
+        'data_source_uuid' => data_source.external_uuid,
         'session_uuid' => session_uuid,
         'visitor_uuid' => visitor_uuid,
         'timestamp' => timestamp,
@@ -79,7 +78,7 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
       },
       {
         'type' => 'click',
-        'data_source_uuid' => data_source_uuid,
+        'data_source_uuid' => data_source.external_uuid,
         'session_uuid' => session_uuid,
         'visitor_uuid' => visitor_uuid,
         'timestamp' => timestamp,
@@ -97,8 +96,8 @@ RSpec.describe EventSaveJob, type: :job, disable_transactions: true do
 
   it 'stores all of the events' do
     subject
-    expect(Session.where(data_source_uuid:).count).to eq(1)
-    expect(PageView.where(data_source_uuid:).count).to eq(2)
-    expect(Click.where(data_source_uuid:).count).to eq(3)
+    expect(data_source.sessions.count).to eq(1)
+    expect(data_source.page_views.count).to eq(2)
+    expect(data_source.clicks.count).to eq(3)
   end
 end

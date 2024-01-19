@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-class PageView < ClickHouseRecord
-  self.table_name = 'page_views'
-  self.primary_key = 'uuid'
+class PageView < ApplicationRecord
+  belongs_to :data_source
 
   def self.nice_name
     'Page Views'

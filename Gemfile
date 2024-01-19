@@ -6,7 +6,6 @@ ruby '3.3.0'
 
 gem 'aws-sdk-rails'
 gem 'bootsnap', require: false
-gem 'clickhouse-activerecord'
 gem 'jbuilder'
 gem 'pg'
 gem 'puma'

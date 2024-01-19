@@ -3,28 +3,15 @@ default_primary: &default_primary
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
-default_clickhouse: &default_clickhouse
-  adapter: clickhouse
-  encoding: unicode
-  username: sql_book
-  database: sql_book
-  migrations_paths: db/migrate_clickhouse
-
 development:
   primary:
     <<: *default_primary
     database: sql_book_development
-  clickhouse:
-    <<: *default_clickhouse
-    password: password
 
 test:
   primary:
     <<: *default_primary
     database: sql_book_test
-  clickhouse:
-    <<: *default_clickhouse
-    password: password
 
 production:
   primary:
@@ -32,6 +19,3 @@ production:
     database: sql_book_production
     username: sql_book
     password: <%= ENV["SQL_BOOK_DATABASE_PASSWORD"] %>
-  clickhouse:
-    <<: *default_clickhouse
-    password: <%= ENV["SQL_BOOK_CLICKHOUSE_DATABASE_PASSWORD"] %>

@@ -13,12 +13,12 @@ class DataSource < ApplicationRecord
 
   has_many :queries, dependent: :destroy
 
+  has_many :clicks, dependent: :destroy_async
+  has_many :page_views, dependent: :destroy_async
+  has_many :sessions, dependent: :destroy_async
+
   def verified?
     !verified_at.nil?
-  end
-
-  def create_views!
-    DataSourcesViewService.new(data_source: self).create!
   end
 
   def self.format_as_url_origin(url)

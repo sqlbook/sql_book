@@ -9,11 +9,11 @@ class DataSourcesStatsService
   end
 
   def total_events_for(data_source:)
-    total_events[data_source.external_uuid].to_i
+    total_events[data_source.id].to_i
   end
 
   def monthly_events_for(data_source:)
-    monthly_events[data_source.external_uuid].to_i
+    monthly_events[data_source.id].to_i
   end
 
   def queries_for(data_source:)
@@ -28,13 +28,9 @@ class DataSourcesStatsService
     @data_source_id ||= data_sources.map(&:id)
   end
 
-  def data_source_uuid
-    @data_source_uuid ||= data_sources.map(&:external_uuid)
-  end
-
   # For each of the tables, fetch a tally of events and group
-  # by the data_source_uuid. Merge all of the results to get
-  # a single sum by data_source_uuid
+  # by the data_source_id. Merge all of the results to get
+  # a single sum by data_source_id
   def tally_events_for(method)
     Event::ALL_EVENT_TYPES.inject({}) do |result, model|
       data = send(:"#{method}_data_for", model)
@@ -44,7 +40,7 @@ class DataSourcesStatsService
 
   # Fetch the count of events for the data sources for all time
   def total_data_for(model)
-    model.where(data_source_uuid:).group(:data_source_uuid).count
+    model.where(data_source_id:).group(:data_source_id).count
   end
 
   # Fetch the count of events for the data sources for the
@@ -53,8 +49,8 @@ class DataSourcesStatsService
     from_timestamp = Time.current.beginning_of_month.to_i
 
     model
-      .where('data_source_uuid in (?) AND timestamp >= ?', data_source_uuid, from_timestamp)
-      .group(:data_source_uuid)
+      .where('data_source_id in (?) AND timestamp >= ?', data_source_id, from_timestamp)
+      .group(:data_source_id)
       .count
   end
 

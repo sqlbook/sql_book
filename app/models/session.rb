@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-class Session < ClickHouseRecord
-  self.table_name = 'sessions'
-  self.primary_key = 'uuid'
+class Session < ApplicationRecord
+  belongs_to :data_source
 
   def self.nice_name
     'Sessions'

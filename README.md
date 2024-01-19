@@ -18,11 +18,10 @@ sqlbook is open source and can be self hosted, however it is only for personal u
 - Ruby (see `/.ruby-version`)
 - Node.js (see `/script/.node-version`)
 - Postgres
-- ClickHouse
 
 ### Installation
 
-This assumes you already have Ruby, Node.js, Postgres and ClickHouse already installed.
+This assumes you already have Ruby, Node.js and Postgres already installed.
 
 ```
 $ git clone git@github.com:sqlbook/sql_book.git

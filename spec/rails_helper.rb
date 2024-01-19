@@ -71,10 +71,4 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
-
-  config.around(:each, disable_transactions: true) do |example|
-    self.use_transactional_tests = false
-    example.run
-    self.use_transactional_tests = true
-  end
 end
