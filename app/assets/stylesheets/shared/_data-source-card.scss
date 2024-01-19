@@ -13,6 +13,7 @@
   }
 
   h4 {
+    grid-area: url;
     margin: 0;
 
     .link {
@@ -25,7 +26,13 @@
     }
   }
 
+  .owner {
+    grid-area: owner;
+    margin: 1rem 0;
+  }
+
   .settings {
+    grid-area: settings;
     text-decoration: none;
 
     &:hover {
@@ -36,9 +43,12 @@
   }
 
   .details {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display: grid;
+    grid-template-areas: 'url'
+                         'owner'
+                         'settings'; 
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
     grid-area: details;
   }
 

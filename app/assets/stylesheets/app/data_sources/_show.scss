@@ -36,7 +36,9 @@
     grid-template-columns: 1fr 1fr 1fr;
 
     .details {
-      flex-direction: row;
+      grid-template-areas: 'url settings'
+                           'owner owner';
+      grid-template-columns: 1fr auto;
     }
   }
 

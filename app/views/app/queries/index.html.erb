@@ -33,7 +33,7 @@
             <% end %>
           </td>
           <td><%= query.data_source.url %></td>
-          <td>-</td>
+          <td><%= query.data_source.user.full_name %></td>
           <td><%= query.created_at.strftime('%a, %e %b %Y') %></td>
           <td><%= query.updated_at.strftime('%a, %e %b %Y') %></td>
           <td>-</td>

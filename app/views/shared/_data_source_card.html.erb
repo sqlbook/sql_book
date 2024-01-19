@@ -1,6 +1,7 @@
 <div class="data-source-card">
   <div class="details">
     <h4><%= link_to data_source.url, app_data_source_queries_path(data_source), class: "link secondary" %></h4>
+    <p class="owner gray-300">Owner: <%= data_source.user.full_name %></p>
 
     <% if request.path == app_data_source_path(data_source) %>
       <%= link_to app_data_sources_path, class: "link secondary settings" do %>
