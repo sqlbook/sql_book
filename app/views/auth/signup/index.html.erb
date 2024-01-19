@@ -3,6 +3,12 @@
 
   <div class="container md" data-controller="form">
     <%= form_with url: new_auth_signup_path, method: :get, class: "signup-form", html: { "data-form-target": "form" } do |form| %>
+      <%= form.label :first_name, "First name", class: "label block" %>
+      <%= form.text_field :first_name, class: "input block fluid", autocomplete: "given-name", placeholder: "e.g. Jess", required: true %>
+
+      <%= form.label :last_name, "Last name", class: "label block" %>
+      <%= form.text_field :last_name, class: "input block fluid", autocomplete: "family-name", placeholder: "e.g. Smith", required: true %>
+
       <%= form.label :email, "Email", class: "label block" %>
       <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
 

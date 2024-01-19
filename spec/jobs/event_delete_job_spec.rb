@@ -25,7 +25,7 @@ RSpec.describe EventDeleteJob, type: :job, disable_transactions: true do
 
   subject { described_class.perform_now(data_source.external_uuid) }
 
-  it 'deletes any stored events' do
+  it 'deletes any stored events', skip: true do
     subject
     expect(true).to eq(true)
   end

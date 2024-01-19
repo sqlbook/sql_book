@@ -97,9 +97,11 @@ RSpec.describe 'Auth::Signups', type: :request do
 
     context 'when there is an email, but no token submitted' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:first_name) { 'Jim' }
+      let(:last_name) { 'Morrison' }
 
       it 'redirects back to the index page' do
-        post '/auth/signup', params: { email: }
+        post '/auth/signup', params: { email:, first_name:, last_name: }
 
         expect(response).to redirect_to(auth_signup_index_path)
       end
@@ -107,6 +109,8 @@ RSpec.describe 'Auth::Signups', type: :request do
 
     context 'when there is an email and token but there is no matching One Time Password' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:first_name) { 'Jim' }
+      let(:last_name) { 'Morrison' }
 
       let(:tokens) do
         {
@@ -120,7 +124,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'redirects back to the new page and includes the email' do
-        post '/auth/signup', params: { email:, **tokens }
+        post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
 
         expect(response).to redirect_to(new_auth_signup_path(email:))
       end
@@ -134,6 +138,8 @@ RSpec.describe 'Auth::Signups', type: :request do
 
     context 'when there is an email and token and it has a matching One Time Password' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:first_name) { 'Jim' }
+      let(:last_name) { 'Morrison' }
       let(:one_time_password) { OneTimePasswordService.new(email:, auth_type: :signup).create! }
 
       let(:tokens) do
@@ -148,20 +154,20 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'directs to the app page' do
-        post '/auth/signup', params: { email:, **tokens }
+        post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
 
         expect(response).to redirect_to(new_app_data_source_path)
       end
 
       it 'creates the user' do
-        expect { post '/auth/signup', params: { email:, **tokens } }
+        expect { post '/auth/signup', params: { email:, first_name:, last_name:, **tokens } }
           .to change { User.exists?(email:) }
           .from(false)
           .to(true)
       end
 
       it 'sets the session cookie' do
-        post '/auth/signup', params: { email:, **tokens }
+        post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
 
         expect(session[:current_user_id]).to eq(User.last.id)
       end
