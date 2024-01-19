@@ -27,7 +27,7 @@ module App
 
       data_source.create_views!
 
-      redirect_to set_up_app_data_source_path(data_source)
+      redirect_to app_data_source_set_up_index_path(data_source)
     end
 
     def update
@@ -40,8 +40,13 @@ module App
       redirect_to app_data_source_path(data_source)
     end
 
-    def set_up
-      redirect_to app_data_sources_path if data_source.verified?
+    def destroy
+      EventDeleteJob.perform_later(data_source.external_uuid)
+      DataSourcesViewService.new(data_source:).destroy!
+
+      data_source.destroy!
+
+      redirect_to app_data_sources_path
     end
 
     private

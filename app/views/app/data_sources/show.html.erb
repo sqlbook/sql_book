@@ -16,6 +16,7 @@
   <div class="tabs">
     <%= render "shared/tabs/nav_item", tab: "source_url", name: "Source URL", icon_class: "ri-global-line", default_selected: true %>
     <%= render "shared/tabs/nav_item", tab: "tracking_code", name: "Tracking Code", icon_class: "ri-fire-line" %>
+    <%= render "shared/tabs/nav_item", tab: "source_deletion", name: "Source Deletion", icon_class: "ri-delete-bin-line" %>
   </div>
 
   <% if active_tab?(tab: "source_url", default_selected: true) %>
@@ -33,6 +34,17 @@
 
   <% if active_tab?(tab: "tracking_code") %>
     <%= render "shared/tracking_code", data_source: @data_source %>
+  <% end %>
+
+  <% if active_tab?(tab: "source_deletion") %>
+    <p><b>You can delete your site at any time:</b></p>
+    <ul class="gray-500">
+      <li>The data source will be deleted immediately for all users in your workspace.</li>
+      <li>Deleting your data source will not delete your sqlbook workspace or user account.</li>
+      <li>All data captured from <%= @data_source.url %> will be permanently deleted. To restore your data source you would need to re-add it to sqlbook.</li>
+    </ul>
+
+    <%= link_to "[Delete Data Source]", app_data_source_path(@data_source), method: :delete, class: "link primary" %>
   <% end %>
 
   <%= render "shared/grab_handle" %>
