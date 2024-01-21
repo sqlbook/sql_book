@@ -27,3 +27,13 @@ Layout/MultilineMethodCallIndentation:
 
 Metrics/MethodLength:
   CountAsOne: ['hash', 'array', 'heredoc']
+  Exclude:
+    - db/**/*
+
+Metrics/AbcSize:
+  Exclude:
+    - db/**/*
+
+Rails/CreateTableWithTimestamps:
+  Exclude:
+    - db/migrate_events/*

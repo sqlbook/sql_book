@@ -1,25 +1,34 @@
 # frozen_string_literal: true
 
 class CreatePageViews < ActiveRecord::Migration[7.1]
-  def up # rubocop:disable Metrics/MethodLength
-    create_table :page_views do |t|
+  def up
+    create_table :page_views, id: :uuid, primary_key: :uuid do |t|
       t.uuid :data_source_uuid, null: false
       t.uuid :session_uuid, null: false
       t.uuid :visitor_uuid, null: false
       t.bigint :timestamp, null: false
       t.string :url, null: false
-
-      t.belongs_to :data_source
-
-      t.timestamps
     end
 
+    add_index :page_views, :data_source_uuid
+
     # Enable RLS for this table
-    execute 'ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;'
+    execute <<-SQL.squish
+      ALTER TABLE page_views
+      ENABLE ROW LEVEL SECURITY
+    SQL
+
     # Ensure the table owner is also subject to RLS
-    execute 'ALTER TABLE page_views FORCE ROW LEVEL SECURITY;'
+    execute <<-SQL.squish
+      ALTER TABLE page_views
+      FORCE ROW LEVEL SECURITY
+    SQL
+
     # Set a policy on this table to scope the requests to the data source
-    execute "CREATE POLICY page_views_policy ON page_views FOR SELECT USING (data_source_uuid = current_setting('app.current_data_source_uuid')::uuid);" # rubocop:disable Layout/LineLength
+    execute <<-SQL.squish
+      CREATE POLICY page_views_policy ON page_views
+      FOR SELECT USING (data_source_uuid = current_setting('app.current_data_source_uuid')::uuid)
+    SQL
   end
 
   def down

@@ -16,13 +16,13 @@ RSpec.describe QueryService do
       SQL
     end
 
-    let!(:click_1) { create(:click, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:click_2) { create(:click, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:click_3) { create(:click, data_source:, data_source_uuid: data_source.external_uuid) }
+    let!(:click_1) { create(:click, data_source_uuid: data_source.external_uuid) }
+    let!(:click_2) { create(:click, data_source_uuid: data_source.external_uuid) }
+    let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid) }
 
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
-        id
+        uuid
         data_source_uuid
         session_uuid
         visitor_uuid
@@ -33,16 +33,13 @@ RSpec.describe QueryService do
         inner_text
         attribute_id
         attribute_class
-        data_source_id
-        created_at
-        updated_at
       ])
     end
 
     it 'has the correct rows' do
       expect(instance.execute.rows).to match_array([
         [
-          click_1.id,
+          click_1.uuid,
           click_1.data_source_uuid,
           click_1.session_uuid,
           click_1.visitor_uuid,
@@ -52,13 +49,10 @@ RSpec.describe QueryService do
           click_1.xpath,
           click_1.inner_text,
           click_1.attribute_id,
-          click_1.attribute_class,
-          click_1.data_source_id,
-          click_1.created_at,
-          click_1.updated_at
+          click_1.attribute_class
         ],
         [
-          click_2.id,
+          click_2.uuid,
           click_2.data_source_uuid,
           click_2.session_uuid,
           click_2.visitor_uuid,
@@ -68,13 +62,10 @@ RSpec.describe QueryService do
           click_2.xpath,
           click_2.inner_text,
           click_2.attribute_id,
-          click_2.attribute_class,
-          click_2.data_source_id,
-          click_2.created_at,
-          click_2.updated_at
+          click_2.attribute_class
         ],
         [
-          click_3.id,
+          click_3.uuid,
           click_3.data_source_uuid,
           click_3.session_uuid,
           click_3.visitor_uuid,
@@ -84,10 +75,7 @@ RSpec.describe QueryService do
           click_3.xpath,
           click_3.inner_text,
           click_3.attribute_id,
-          click_3.attribute_class,
-          click_3.data_source_id,
-          click_3.created_at,
-          click_3.updated_at
+          click_3.attribute_class
         ]
       ])
     end
@@ -109,58 +97,46 @@ RSpec.describe QueryService do
       SQL
     end
 
-    let!(:page_view_1) { create(:page_view, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:page_view_2) { create(:page_view, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:page_view_3) { create(:page_view, data_source:, data_source_uuid: data_source.external_uuid) }
+    let!(:page_view_1) { create(:page_view, data_source_uuid: data_source.external_uuid) }
+    let!(:page_view_2) { create(:page_view, data_source_uuid: data_source.external_uuid) }
+    let!(:page_view_3) { create(:page_view, data_source_uuid: data_source.external_uuid) }
 
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
-        id
+        uuid
         data_source_uuid
         session_uuid
         visitor_uuid
         timestamp
         url
-        data_source_id
-        created_at
-        updated_at
       ])
     end
 
     it 'has the correct rows' do
       expect(instance.execute.rows).to match_array([
         [
-          page_view_1.id,
+          page_view_1.uuid,
           page_view_1.data_source_uuid,
           page_view_1.session_uuid,
           page_view_1.visitor_uuid,
           page_view_1.timestamp,
-          page_view_1.url,
-          page_view_1.data_source_id,
-          page_view_1.created_at,
-          page_view_1.updated_at
+          page_view_1.url
         ],
         [
-          page_view_2.id,
+          page_view_2.uuid,
           page_view_2.data_source_uuid,
           page_view_2.session_uuid,
           page_view_2.visitor_uuid,
           page_view_2.timestamp,
-          page_view_2.url,
-          page_view_2.data_source_id,
-          page_view_2.created_at,
-          page_view_2.updated_at
+          page_view_2.url
         ],
         [
-          page_view_3.id,
+          page_view_3.uuid,
           page_view_3.data_source_uuid,
           page_view_3.session_uuid,
           page_view_3.visitor_uuid,
           page_view_3.timestamp,
-          page_view_3.url,
-          page_view_3.data_source_id,
-          page_view_3.created_at,
-          page_view_3.updated_at
+          page_view_3.url
         ]
       ])
     end
@@ -182,13 +158,13 @@ RSpec.describe QueryService do
       SQL
     end
 
-    let!(:session_1) { create(:session, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:session_2) { create(:session, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:session_3) { create(:session, data_source:, data_source_uuid: data_source.external_uuid) }
+    let!(:session_1) { create(:session, data_source_uuid: data_source.external_uuid) }
+    let!(:session_2) { create(:session, data_source_uuid: data_source.external_uuid) }
+    let!(:session_3) { create(:session, data_source_uuid: data_source.external_uuid) }
 
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[
-        id
+        uuid
         data_source_uuid
         session_uuid
         visitor_uuid
@@ -208,16 +184,13 @@ RSpec.describe QueryService do
         utm_campaign
         utm_content
         utm_term
-        data_source_id
-        created_at
-        updated_at
       ])
     end
 
     it 'has the correct rows' do
       expect(instance.execute.rows).to match_array([
         [
-          session_1.id,
+          session_1.uuid,
           session_1.data_source_uuid,
           session_1.session_uuid,
           session_1.visitor_uuid,
@@ -236,13 +209,10 @@ RSpec.describe QueryService do
           session_1.utm_medium,
           session_1.utm_campaign,
           session_1.utm_content,
-          session_1.utm_term,
-          session_1.data_source_id,
-          session_1.created_at,
-          session_1.updated_at
+          session_1.utm_term
         ],
         [
-          session_2.id,
+          session_2.uuid,
           session_2.data_source_uuid,
           session_2.session_uuid,
           session_2.visitor_uuid,
@@ -261,13 +231,10 @@ RSpec.describe QueryService do
           session_2.utm_medium,
           session_2.utm_campaign,
           session_2.utm_content,
-          session_2.utm_term,
-          session_2.data_source_id,
-          session_2.created_at,
-          session_2.updated_at
+          session_2.utm_term
         ],
         [
-          session_3.id,
+          session_3.uuid,
           session_3.data_source_uuid,
           session_3.session_uuid,
           session_3.visitor_uuid,
@@ -286,11 +253,8 @@ RSpec.describe QueryService do
           session_3.utm_medium,
           session_3.utm_campaign,
           session_3.utm_content,
-          session_3.utm_term,
-          session_3.data_source_id,
-          session_3.created_at,
-          session_3.updated_at
-        ],
+          session_3.utm_term
+        ]
       ])
     end
 
@@ -341,9 +305,9 @@ RSpec.describe QueryService do
     let(:session_1_uuid) { SecureRandom.uuid }
     let(:session_2_uuid) { SecureRandom.uuid }
 
-    let!(:click_1) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid: session_1_uuid) } # rubocop:disable Layout/LineLength
-    let!(:click_2) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid: session_1_uuid) } # rubocop:disable Layout/LineLength
-    let!(:click_3) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid: session_2_uuid) } # rubocop:disable Layout/LineLength
+    let!(:click_1) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid: session_1_uuid) }
+    let!(:click_2) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid: session_1_uuid) }
+    let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid: session_2_uuid) }
 
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[count session_uuid])
@@ -376,11 +340,11 @@ RSpec.describe QueryService do
 
     let(:session_uuid) { SecureRandom.uuid }
 
-    let!(:session) { create(:session, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, browser: 'Chrome') } # rubocop:disable Layout/LineLength
+    let!(:session) { create(:session, data_source_uuid: data_source.external_uuid, session_uuid:, browser: 'Chrome') }
 
-    let!(:click_1) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, coordinates_x: 100) } # rubocop:disable Layout/LineLength
-    let!(:click_2) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, coordinates_x: 200) } # rubocop:disable Layout/LineLength
-    let!(:click_3) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, coordinates_x: 300) } # rubocop:disable Layout/LineLength
+    let!(:click_1) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, coordinates_x: 100) }
+    let!(:click_2) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, coordinates_x: 200) }
+    let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid, session_uuid:, coordinates_x: 300) }
 
     it 'has the correct columns' do
       expect(instance.execute.columns).to eq(%w[browser coordinates_x])
@@ -441,12 +405,12 @@ RSpec.describe QueryService do
     let(:not_our_data_source_1) { create(:data_source) }
     let(:not_our_data_source_2) { create(:data_source) }
 
-    let!(:click_1) { create(:click, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:click_2) { create(:click, data_source:, data_source_uuid: data_source.external_uuid) }
-    let!(:click_3) { create(:click, data_source:, data_source_uuid: data_source.external_uuid) }
+    let!(:click_1) { create(:click, data_source_uuid: data_source.external_uuid) }
+    let!(:click_2) { create(:click, data_source_uuid: data_source.external_uuid) }
+    let!(:click_3) { create(:click, data_source_uuid: data_source.external_uuid) }
 
-    let!(:click_4) { create(:click, data_source: not_our_data_source_1, data_source_uuid: not_our_data_source_1.external_uuid) } # rubocop:disable Layout/LineLength
-    let!(:click_5) { create(:click, data_source: not_our_data_source_2, data_source_uuid: not_our_data_source_2.external_uuid) } # rubocop:disable Layout/LineLength
+    let!(:click_4) { create(:click, data_source_uuid: not_our_data_source_1.external_uuid) }
+    let!(:click_5) { create(:click, data_source_uuid: not_our_data_source_2.external_uuid) }
 
     it 'returns data with allowed data source' do
       expect(instance.execute.rows.flatten).to eq([

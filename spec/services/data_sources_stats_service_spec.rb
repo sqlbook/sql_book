@@ -14,13 +14,13 @@ RSpec.describe DataSourcesStatsService do
   let!(:data_source_3) { create(:data_source, user:) }
 
   before do
-    create(:click, data_source: data_source_1, timestamp: now)
-    create(:page_view, data_source: data_source_1, timestamp: now)
+    create(:click, data_source_uuid: data_source_1.external_uuid, timestamp: now)
+    create(:page_view, data_source_uuid: data_source_1.external_uuid, timestamp: now)
 
-    create(:click, data_source: data_source_2, timestamp: now)
-    create(:page_view, data_source: data_source_2, timestamp: last_month)
-    create(:page_view, data_source: data_source_2, timestamp: last_month)
-    create(:session, data_source: data_source_2, timestamp: last_month)
+    create(:click, data_source_uuid: data_source_2.external_uuid, timestamp: now)
+    create(:page_view, data_source_uuid: data_source_2.external_uuid, timestamp: last_month)
+    create(:page_view, data_source_uuid: data_source_2.external_uuid, timestamp: last_month)
+    create(:session, data_source_uuid: data_source_2.external_uuid, timestamp: last_month)
 
     create(:query, data_source: data_source_1, saved: true)
     create(:query, data_source: data_source_1, saved: true)

@@ -174,11 +174,11 @@ RSpec.describe 'App::DataSources', type: :request do
 
     context 'when the data source has some data' do
       before do
-        create(:click, data_source:)
-        create(:page_view, data_source:)
-        create(:page_view, data_source:)
-        create(:page_view, data_source:)
-        create(:session, data_source:)
+        create(:click, data_source_uuid: data_source.external_uuid)
+        create(:page_view, data_source_uuid: data_source.external_uuid)
+        create(:page_view, data_source_uuid: data_source.external_uuid)
+        create(:page_view, data_source_uuid: data_source.external_uuid)
+        create(:session, data_source_uuid: data_source.external_uuid)
       end
 
       it 'enqueues the delete job' do

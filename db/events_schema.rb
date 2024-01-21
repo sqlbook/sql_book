@@ -14,7 +14,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_20_104626) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "clicks", force: :cascade do |t|
+  create_table "clicks", primary_key: "uuid", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "data_source_uuid", null: false
     t.uuid "session_uuid", null: false
     t.uuid "visitor_uuid", null: false
@@ -25,25 +25,19 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_20_104626) do
     t.string "inner_text"
     t.string "attribute_id"
     t.string "attribute_class"
-    t.bigint "data_source_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["data_source_id"], name: "index_clicks_on_data_source_id"
+    t.index ["data_source_uuid"], name: "index_clicks_on_data_source_uuid"
   end
 
-  create_table "page_views", force: :cascade do |t|
+  create_table "page_views", primary_key: "uuid", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "data_source_uuid", null: false
     t.uuid "session_uuid", null: false
     t.uuid "visitor_uuid", null: false
     t.bigint "timestamp", null: false
     t.string "url", null: false
-    t.bigint "data_source_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["data_source_id"], name: "index_page_views_on_data_source_id"
+    t.index ["data_source_uuid"], name: "index_page_views_on_data_source_uuid"
   end
 
-  create_table "sessions", force: :cascade do |t|
+  create_table "sessions", primary_key: "uuid", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "data_source_uuid", null: false
     t.uuid "session_uuid", null: false
     t.uuid "visitor_uuid", null: false
@@ -63,10 +57,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_20_104626) do
     t.string "utm_campaign"
     t.string "utm_content"
     t.string "utm_term"
-    t.bigint "data_source_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["data_source_id"], name: "index_sessions_on_data_source_id"
+    t.index ["data_source_uuid"], name: "index_sessions_on_data_source_uuid"
   end
 
 end
