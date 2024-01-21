@@ -52,6 +52,11 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
         get "/app/data_sources/#{data_source.id}/queries/#{query.id}"
         expect(response.body).to include('data-source-query')
       end
+
+      it 'sets the last_run_at timestamp' do
+        expect { get "/app/data_sources/#{data_source.id}/queries/#{query.id}" }
+          .to change { query.reload.last_run_at.nil? }.from(true).to(false)
+      end
     end
 
     context 'when they do not own the query' do
@@ -79,6 +84,7 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
       post("/app/data_sources/#{data_source.id}/queries", params: { query: query_string })
       query = Query.where(data_source_id: data_source.id).last
       expect(query.query).to eq(query_string)
+      expect(query.author).to eq(user)
     end
 
     it 'redirects to the new query' do
@@ -128,6 +134,13 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
         expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query } }
           .not_to change { query.reload.saved }
       end
+
+      it 'updates the last updated by' do
+        expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query } }
+          .to change { query.reload.last_updated_by }
+          .from(nil)
+          .to(user)
+      end
     end
 
     context 'when updating the name' do
@@ -150,6 +163,13 @@ RSpec.describe 'App::DataSources::Queries', type: :request do
           .to change { query.reload.saved }
           .from(false)
           .to(true)
+      end
+
+      it 'updates the last updated by' do
+        expect { put "/app/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: 'Query 2' } }
+          .to change { query.reload.last_updated_by }
+          .from(nil)
+          .to(user)
       end
     end
   end

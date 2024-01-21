@@ -37,3 +37,6 @@ Metrics/AbcSize:
 Rails/CreateTableWithTimestamps:
   Exclude:
     - db/migrate_events/*
+
+Rails/InverseOf:
+  Enabled: false

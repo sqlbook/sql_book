@@ -6,6 +6,10 @@ class CreateQueries < ActiveRecord::Migration[7.1]
       t.string :name
       t.string :query, null: false
       t.boolean :saved, default: false, null: false
+      t.datetime :last_run_at
+
+      t.bigint :author_id, null: false
+      t.bigint :last_updated_by_id
 
       t.belongs_to :data_source
 

@@ -39,6 +39,9 @@ ActiveRecord::Schema[7.1].define(version: 2024_01_12_090044) do
     t.string "query", null: false
     t.boolean "saved", default: false, null: false
     t.bigint "data_source_id"
+    t.datetime "last_run_at"
+    t.bigint "author_id", null: false
+    t.bigint "last_updated_by_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["data_source_id"], name: "index_queries_on_data_source_id"

@@ -12,11 +12,16 @@ module App
 
       def show
         @data_sources = current_user.data_sources
+        query.update(last_run_at: Time.current)
         @query = query
       end
 
       def create
-        query = Query.create(query: query_params[:query], data_source:)
+        query = Query.create(
+          query: query_params[:query],
+          author: current_user,
+          data_source:
+        )
         redirect_to app_data_source_query_path(data_source, query)
       end
 
@@ -48,12 +53,20 @@ module App
       end
 
       def handle_update_query_name
-        query.update!(name: query_params[:name], saved: true)
+        query.update!(
+          saved: true,
+          name: query_params[:name],
+          last_updated_by: current_user
+        )
         redirect_to app_data_source_query_path(data_source, query, tab: 'settings')
       end
 
+      # TODO: Don't update if the query doesn't change
       def handle_update_query_query
-        query.update!(query: query_params[:query])
+        query.update!(
+          query: query_params[:query],
+          last_updated_by: current_user
+        )
         redirect_to app_data_source_query_path(data_source, query)
       end
     end

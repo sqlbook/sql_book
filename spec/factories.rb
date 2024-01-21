@@ -21,7 +21,10 @@ FactoryBot.define do
     name { 'My Query' }
     query { 'SELECT * FROM sessions;' }
     saved { false }
+    last_run_at { nil }
     data_source { create(:data_source) }
+    author { create(:user) }
+    last_updated_by { nil }
   end
 
   factory :click do

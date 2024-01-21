@@ -3,7 +3,10 @@
 class User < ApplicationRecord
   has_many :data_sources, dependent: :destroy
 
-  has_many :queries, through: :data_sources
+  has_many :queries,
+           dependent: :destroy,
+           primary_key: :author_id,
+           foreign_key: :id
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 

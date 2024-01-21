@@ -13,17 +13,17 @@ class DataSource < ApplicationRecord
 
   has_many :queries, dependent: :destroy
 
-  has_many :clicks, # rubocop:disable Rails/InverseOf
+  has_many :clicks,
            dependent: :destroy_async,
            primary_key: :external_uuid,
            foreign_key: :data_source_uuid
 
-  has_many :page_views, # rubocop:disable Rails/InverseOf
+  has_many :page_views,
            dependent: :destroy_async,
            primary_key: :external_uuid,
            foreign_key: :data_source_uuid
 
-  has_many :sessions, # rubocop:disable Rails/InverseOf
+  has_many :sessions,
            dependent: :destroy_async,
            primary_key: :external_uuid,
            foreign_key: :data_source_uuid
