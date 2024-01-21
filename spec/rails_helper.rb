@@ -50,11 +50,11 @@ RSpec.configure do |config|
   config.use_transactional_fixtures = false
 
   config.before(:suite) do
-    DatabaseCleaner[:active_record, db: :primary].strategy = :deletion
-    DatabaseCleaner[:active_record, db: :events].strategy = :deletion
+    DatabaseCleaner[:active_record, db: :primary].strategy = :truncation
+    DatabaseCleaner[:active_record, db: :events].strategy = :truncation
 
-    DatabaseCleaner[:active_record, db: :primary].clean_with(:deletion)
-    DatabaseCleaner[:active_record, db: :events].clean_with(:deletion)
+    DatabaseCleaner[:active_record, db: :primary].clean_with(:truncation)
+    DatabaseCleaner[:active_record, db: :events].clean_with(:truncation)
   end
 
   config.around(:each) do |example|

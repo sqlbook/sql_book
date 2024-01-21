@@ -15,9 +15,9 @@ class CreatePageViews < ActiveRecord::Migration[7.1]
     end
 
     # Enable RLS for this table
-    execute 'ALTER TABLE page_views ENABLE ROW LEVEL SECURITY'
+    execute 'ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;'
     # Ensure the table owner is also subject to RLS
-    execute 'ALTER TABLE page_views FORCE ROW LEVEL SECURITY'
+    execute 'ALTER TABLE page_views FORCE ROW LEVEL SECURITY;'
     # Set a policy on this table to scope the requests to the data source
     execute "CREATE POLICY page_views_policy ON page_views FOR SELECT USING (data_source_uuid = current_setting('app.current_data_source_uuid')::uuid);" # rubocop:disable Layout/LineLength
   end

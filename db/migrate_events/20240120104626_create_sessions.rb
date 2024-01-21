@@ -29,9 +29,9 @@ class CreateSessions < ActiveRecord::Migration[7.1]
     end
 
     # Enable RLS for this table
-    execute 'ALTER TABLE sessions ENABLE ROW LEVEL SECURITY'
+    execute 'ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;'
     # Ensure the table owner is also subject to RLS
-    execute 'ALTER TABLE sessions FORCE ROW LEVEL SECURITY'
+    execute 'ALTER TABLE sessions FORCE ROW LEVEL SECURITY;'
     # Set a policy on this table to scope the requests to the data source
     execute "CREATE POLICY sessions_policy ON sessions FOR SELECT USING (data_source_uuid = current_setting('app.current_data_source_uuid')::uuid);" # rubocop:disable Layout/LineLength
   end
