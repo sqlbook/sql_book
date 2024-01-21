@@ -462,6 +462,30 @@ RSpec.describe QueryService do
     end
   end
 
+  context 'when attempting to drop a table' do
+    let(:query_string) do
+      <<-SQL.squish
+        DROP TABLE clicks
+      SQL
+    end
+
+    it 'has the correct columns' do
+      expect(instance.execute.columns).to eq([])
+    end
+
+    it 'has the correct rows' do
+      expect(instance.execute.rows).to eq([])
+    end
+
+    it 'has an error' do
+      expect(instance.execute.error).to eq(true)
+    end
+
+    it 'has an error message' do
+      expect(instance.execute.error_message).to include('PG::InsufficientPrivilege')
+    end
+  end
+
   context 'when an unexpected error occurs' do
     let(:query_string) do
       <<-SQL.squish
