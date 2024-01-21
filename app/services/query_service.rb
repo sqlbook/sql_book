@@ -11,8 +11,10 @@ class QueryService
   end
 
   def execute
-    @data = ApplicationRecord.connection.exec_query(prepared_query)
-    self
+    as_read_only do
+      @data = execute_query
+      self
+    end
   rescue ActiveRecord::ActiveRecordError => e
     handle_database_exception(e)
     self
@@ -32,24 +34,11 @@ class QueryService
   private
 
   def normalized_query
-    query.query.sub(';', '').squish.downcase
-  end
-
-  def prepared_query
-    ensure_valid_models!
-
-    normalized_query
-  end
-
-  def ensure_valid_models!
-    return if normalized_query.include?('from clicks')
-    return if normalized_query.include?('from sessions')
-    return if normalized_query.include?('from page_views')
-
-    handle_model_not_found_error
+    query.query.squish.downcase
   end
 
   def handle_database_exception(error)
+    # Handle PG::InsufficientPrivilege?
     Rails.logger.warn("Failed to run query - #{error}")
     @error = true
     @error_message = error.message
@@ -61,11 +50,20 @@ class QueryService
     @error_message = 'There was an unkown error, please try again'
   end
 
-  def handle_model_not_found_error
-    table_name_matcher = /from (\w+)/.match(normalized_query)
+  def as_read_only(&)
+    old_config = EventRecord.connection_db_config.configuration_hash.dup
+    new_config = old_config.merge(username: 'sql_book_readonly')
 
-    raise NoMatchingModelError, "'#{table_name_matcher[1]}' is not a valid table name" if table_name_matcher
+    EventRecord.establish_connection(new_config)
+    yield
+  ensure
+    EventRecord.establish_connection(old_config)
+  end
 
-    raise NoMatchingModelError, 'No valid table present in query'
+  def execute_query
+    EventRecord.transaction do
+      EventRecord.connection.exec_query("SET LOCAL app.current_data_source_uuid = '#{query.data_source.external_uuid}'")
+      EventRecord.connection.exec_query(normalized_query)
+    end
   end
 end

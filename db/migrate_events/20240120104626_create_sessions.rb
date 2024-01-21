@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CreateSessions < ActiveRecord::Migration[7.1]
-  def change # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+  def up # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     create_table :sessions do |t|
       t.uuid :data_source_uuid, null: false
       t.uuid :session_uuid, null: false
@@ -27,5 +27,16 @@ class CreateSessions < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
+
+    # Enable RLS for this table
+    execute 'ALTER TABLE sessions ENABLE ROW LEVEL SECURITY'
+    # Ensure the table owner is also subject to RLS
+    execute 'ALTER TABLE sessions FORCE ROW LEVEL SECURITY'
+    # Set a policy on this table to scope the requests to the data source
+    execute "CREATE POLICY sessions_policy ON sessions FOR SELECT USING (data_source_uuid = current_setting('app.current_data_source_uuid')::uuid);" # rubocop:disable Layout/LineLength
+  end
+
+  def down
+    drop_table :sessions
   end
 end

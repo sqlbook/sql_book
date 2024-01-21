@@ -23,14 +23,14 @@
         Table schema
       <% end %>
       <div class="select">
-        <%= form.select :schema, options_from_collection_for_select(Event::ALL_EVENT_TYPES, :table_name, :nice_name, selected: Click.table_name), {}, { "data-action": "data-source-query#changeSchema" } %>
+        <%= form.select :schema, options_from_collection_for_select(EventRecord.all_event_types, :table_name, :nice_name, selected: Click.table_name), {}, { "data-action": "data-source-query#changeSchema" } %>
         <i class="ri-arrow-drop-down-line"></i>
       </div>
     </div>
 
     <div class="data-sources-row schema-table">
       <div class="scroll">
-        <% Event::ALL_EVENT_TYPES.each do |event| %>
+        <% EventRecord.all_event_types.each do |event| %>
           <table class="schema-table-<%= event.table_name %> <%= "hide" unless event.table_name == Click.table_name %>">
             <tr>
               <th>name</th>

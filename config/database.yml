@@ -3,19 +3,34 @@ default_primary: &default_primary
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+default_events: &default_events
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  migrations_paths: db/migrate_events
+
 development:
   primary:
     <<: *default_primary
     database: sql_book_development
+  events:
+    <<: *default_events
+    database: sql_book_events_development
 
 test:
   primary:
     <<: *default_primary
     database: sql_book_test
+  events:
+    <<: *default_events
+    database: sql_book_events_test
 
 production:
   primary:
     <<: *default_primary
     database: sql_book_production
-    username: sql_book
+    password: <%= ENV["SQL_BOOK_DATABASE_PASSWORD"] %>
+  events:
+    <<: *default_events
+    database: sql_book_events_production
     password: <%= ENV["SQL_BOOK_DATABASE_PASSWORD"] %>

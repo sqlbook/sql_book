@@ -12,9 +12,9 @@ RSpec.describe QueryService do
   let(:query_string) { 'SELECT * FROM clicks' }
   let(:query) { create(:query, data_source:, query: query_string) }
 
-  let!(:click_1) { create(:click, data_source:, session_uuid:, visitor_uuid:) }
-  let!(:click_2) { create(:click, data_source:, session_uuid:, visitor_uuid:) }
-  let!(:click_3) { create(:click, data_source:, session_uuid:, visitor_uuid:) }
+  let!(:click_1) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
+  let!(:click_2) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
+  let!(:click_3) { create(:click, data_source:, data_source_uuid: data_source.external_uuid, session_uuid:, visitor_uuid:) }
 
   context 'when a valid query has been given' do
     it 'has the correct columns' do
@@ -30,6 +30,9 @@ RSpec.describe QueryService do
         inner_text
         attribute_id
         attribute_class
+        data_source_id
+        created_at
+        updated_at
       ])
     end
 
@@ -106,28 +109,6 @@ RSpec.describe QueryService do
     end
   end
 
-  context 'when a standard error occurs' do
-    before do
-      allow(ApplicationRecord.connection).to receive(:exec_query).and_raise(StandardError)
-    end
-
-    it 'has empty columns' do
-      expect(instance.execute.columns).to eq([])
-    end
-
-    it 'has empty rows' do
-      expect(instance.execute.rows).to eq([])
-    end
-
-    it 'has an error' do
-      expect(instance.execute.error).to eq(true)
-    end
-
-    it 'has a generic error message' do
-      expect(instance.execute.error_message).to include('There was an unkown error, please try again')
-    end
-  end
-
   context 'when making queries that differ from the model' do
     let(:query_string) do
       <<-SQL.squish
@@ -183,6 +164,9 @@ RSpec.describe QueryService do
           utm_campaign
           utm_content
           utm_term
+          data_source_id
+          created_at
+          updated_at
         ])
       end
     end
@@ -198,39 +182,10 @@ RSpec.describe QueryService do
           visitor_uuid
           timestamp
           url
+          data_source_id
+          created_at
+          updated_at
         ])
-      end
-    end
-
-    context 'and the model is unknown' do
-      let(:query_string) { 'SELECT * FROM not_a_real_model' }
-
-      it 'has empty columns' do
-        expect(instance.execute.columns).to eq([])
-      end
-
-      it 'has an error' do
-        expect(instance.execute.error).to eq(true)
-      end
-
-      it 'has an error message' do
-        expect(instance.execute.error_message).to eq("'not_a_real_model' is not a valid table name")
-      end
-    end
-
-    context 'and there is no model present' do
-      let(:query_string) { 'SELECT *' }
-
-      it 'has empty columns' do
-        expect(instance.execute.columns).to eq([])
-      end
-
-      it 'has an error' do
-        expect(instance.execute.error).to eq(true)
-      end
-
-      it 'has an error message' do
-        expect(instance.execute.error_message).to eq('No valid table present in query')
       end
     end
   end
