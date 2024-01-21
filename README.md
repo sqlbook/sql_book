@@ -16,8 +16,9 @@ sqlbook is open source and can be self hosted, however it is only for personal u
 ### Requirements
 
 - Ruby (see `/.ruby-version`)
-- Node.js (see `/script/.node-version`)
+- Node.js (>= v18)
 - Postgres
+- AWS
 
 ### Installation
 
@@ -26,8 +27,23 @@ This assumes you already have Ruby, Node.js and Postgres already installed.
 ```
 $ git clone git@github.com:sqlbook/sql_book.git
 $ bundle install
+```
+
+## Create the databases
+```
 $ bundle exec rails db:create
+```
+
+## Create the readonly events user
+```
+$ bundle exec rake readonly_events_user:create
+$ RAILS_ENV=test bundle exec rake readonly_events_user:create
+```
+
+## Run the migrations
+```
 $ bundle exec rails db:migrate
+$ RAILS_ENV=test bundle exec rails db:migrate
 ```
 
 ### Running the tests
