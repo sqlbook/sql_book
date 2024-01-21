@@ -1,5 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
+const MIN_SIZE = 600;
+
 export default class extends Controller<HTMLDivElement> { 
   static targets = ['handle'];
 
@@ -33,7 +35,9 @@ export default class extends Controller<HTMLDivElement> {
 
   private handleMouseMove = (event: MouseEvent) => {
     if (this.isDragging) {
-      document.body.style.gridTemplateColumns = `${event.clientX}px minmax(0, 1fr)`;
+      const value = Math.min(Math.max(event.clientX, MIN_SIZE), window.innerWidth - MIN_SIZE);
+
+      document.body.style.gridTemplateColumns = `${value}px minmax(0, 1fr)`;
     }
   };
 }
