@@ -43,9 +43,9 @@
       <% if signup_page? %>
         <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
       <% elsif login_page? %>
-        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large" %>
+        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large", "data-shortcut": "S" %>
       <% else %>
-        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large" %>
+        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large", "data-shortcut": "S" %>
         <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
       <% end %>
     </menu>

@@ -4,6 +4,7 @@
 
 import { application } from './application';
 
+import BodyController from './body_controller';
 import ClipboardController from './clipboard_controller';
 import DataSourceQueryController from './data_source_query_controller';
 import DataSourceVerificationController from './data_source_verification_controller';
@@ -12,6 +13,7 @@ import MenuController from './menu_controller';
 import OtpController from './otp_controller';
 import ResizeablePageController from './resizeable_page_controller';
 
+application.register('body', BodyController);
 application.register('clipboard', ClipboardController);
 application.register('data-source-query', DataSourceQueryController);
 application.register('data-source-verification', DataSourceVerificationController);
