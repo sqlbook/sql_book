@@ -461,4 +461,33 @@ RSpec.describe QueryService do
       expect(instance.execute.rows.flatten).not_to include(not_our_data_source_2.external_uuid)
     end
   end
+
+  context 'when an unexpected error occurs' do
+    let(:query_string) do
+      <<-SQL.squish
+        SELECT d*
+        FROM clicks
+      SQL
+    end
+
+    before do
+      allow(instance).to receive(:execute_query).and_raise(StandardError)
+    end
+
+    it 'has the correct columns' do
+      expect(instance.execute.columns).to eq([])
+    end
+
+    it 'has the correct rows' do
+      expect(instance.execute.rows).to eq([])
+    end
+
+    it 'has an error' do
+      expect(instance.execute.error).to eq(true)
+    end
+
+    it 'has an error message' do
+      expect(instance.execute.error_message).to include('There was an unkown error, please try again')
+    end
+  end
 end
