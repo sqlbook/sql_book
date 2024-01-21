@@ -12,7 +12,7 @@ class QueryService
 
   def execute
     as_read_only do
-      @data = execute_query
+      @data ||= execute_query
       self
     end
   rescue ActiveRecord::ActiveRecordError => e

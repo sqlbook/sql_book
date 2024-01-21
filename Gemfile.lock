@@ -111,10 +111,11 @@ GEM
     concurrent-ruby (1.2.2)
     connection_pool (2.4.1)
     crass (1.0.6)
+    database_cleaner-active_record (2.1.0)
+      activerecord (>= 5.a)
+      database_cleaner-core (~> 2.0.0)
+    database_cleaner-core (2.0.1)
     date (3.3.4)
-    debug (1.9.1)
-      irb (~> 1.10)
-      reline (>= 0.3.8)
     diff-lcs (1.5.0)
     docile (1.4.0)
     drb (2.2.0)
@@ -327,7 +328,7 @@ DEPENDENCIES
   aws-sdk-rails
   bootsnap
   capybara
-  debug
+  database_cleaner-active_record
   factory_bot_rails
   jbuilder
   pg
@@ -342,7 +343,6 @@ DEPENDENCIES
   sprockets-rails
   stimulus-rails
   turbo-rails
-  tzinfo-data
   useragent
   web-console
 

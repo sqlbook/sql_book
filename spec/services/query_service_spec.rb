@@ -43,39 +43,48 @@ RSpec.describe QueryService do
           click_1.data_source_uuid,
           click_1.session_uuid,
           click_1.visitor_uuid,
-          click_1.timestamp.to_s,
+          click_1.timestamp,
           click_1.coordinates_x,
           click_1.coordinates_y,
           click_1.xpath,
           click_1.inner_text,
           click_1.attribute_id,
-          click_1.attribute_class
+          click_1.attribute_class,
+          click_1.data_source_id,
+          click_1.created_at,
+          click_1.updated_at
         ],
         [
           click_2.id,
           click_2.data_source_uuid,
           click_2.session_uuid,
           click_2.visitor_uuid,
-          click_2.timestamp.to_s,
+          click_2.timestamp,
           click_2.coordinates_x,
           click_2.coordinates_y,
           click_2.xpath,
           click_2.inner_text,
           click_2.attribute_id,
-          click_2.attribute_class
+          click_2.attribute_class,
+          click_2.data_source_id,
+          click_2.created_at,
+          click_2.updated_at
         ],
         [
           click_3.id,
           click_3.data_source_uuid,
           click_3.session_uuid,
           click_3.visitor_uuid,
-          click_3.timestamp.to_s,
+          click_3.timestamp,
           click_3.coordinates_x,
           click_3.coordinates_y,
           click_3.xpath,
           click_3.inner_text,
           click_3.attribute_id,
-          click_3.attribute_class
+          click_3.attribute_class,
+          click_3.data_source_id,
+          click_3.created_at,
+          click_3.updated_at
         ]
       ])
     end
