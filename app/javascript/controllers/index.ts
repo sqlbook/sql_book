@@ -12,6 +12,7 @@ import FormController from './form_controller';
 import MenuController from './menu_controller';
 import OtpController from './otp_controller';
 import ResizeablePageController from './resizeable_page_controller';
+import SearchController from './search_controller';
 
 application.register('body', BodyController);
 application.register('clipboard', ClipboardController);
@@ -21,3 +22,4 @@ application.register('form', FormController);
 application.register('menu', MenuController);
 application.register('otp', OtpController);
 application.register('resizeable-page', ResizeablePageController);
+application.register('search', SearchController);

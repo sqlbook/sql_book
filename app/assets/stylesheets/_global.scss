@@ -46,5 +46,9 @@ aside {
 }
 
 ::-webkit-scrollbar-track {
+  background: transparerent;
+}
+
+::-webkit-scrollbar-corner {
   background: transparent;
 }

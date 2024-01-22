@@ -7,9 +7,9 @@
         <span>Create New</span>
       <% end %>
     </div>
-    <div class="controls">
-      <%= form_with url: app_queries_path, method: :get do |form| %>
-        <%= form.text_field :search, type: "search", placeholder: "Search...", value: params[:search], class: "input block search" %>
+    <div class="controls" data-controller="search">
+      <%= form_with url: app_queries_path, method: :get, html: { "data-search-target": "form" } do |form| %>
+        <%= form.text_field :search, type: "search", placeholder: "Search...", value: params[:search], class: "input block search", "data-action": "search#change" %>
       <% end %>
     </div>
   </div>
