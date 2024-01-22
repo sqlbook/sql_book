@@ -34,16 +34,36 @@ $ bundle install
 $ bundle exec rails db:create
 ```
 
-## Create the readonly events user
-```
-$ bundle exec rake readonly_events_user:create
-$ RAILS_ENV=test bundle exec rake readonly_events_user:create
-```
-
 ## Run the migrations
 ```
 $ bundle exec rails db:migrate
 $ RAILS_ENV=test bundle exec rails db:migrate
+```
+
+### Create the readonly user and give permissions
+Create the user:
+```
+$ psql -U postgres
+
+postgres=# CREATE ROLE sql_book_readonly WITH LOGIN PASSWORD NULL;
+```
+
+Give permissions to the development environment:
+```
+$ psql -U postgres -d sql_book_events_development
+
+sql_book_events_development=# GRANT SELECT ON clicks TO sql_book_readonly;
+sql_book_events_development=# GRANT SELECT ON page_views TO sql_book_readonly;
+sql_book_events_development=# GRANT SELECT ON sessions TO sql_book_readonly;
+```
+
+Give permissions to the test environment:
+```
+$ psql -U postgres -d sql_book_events_test
+
+sql_book_events_test=# GRANT SELECT ON clicks TO sql_book_readonly;
+sql_book_events_test=# GRANT SELECT ON page_views TO sql_book_readonly;
+sql_book_events_test=# GRANT SELECT ON sessions TO sql_book_readonly;
 ```
 
 ### Running the tests

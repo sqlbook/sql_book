@@ -13,6 +13,8 @@ module SqlBook
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 7.1
 
+    config.active_record.schema_format = :sql
+
     config.middleware.use Rack::Deflater
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
