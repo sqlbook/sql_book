@@ -18,7 +18,7 @@
   <div class="stat data-sources">
     <p class="title gray-200">Data Sources</p>
     <h3 class="red-500">
-      0
+      <%= workspace.data_sources.count %>
     </h3> 
     <p class="subtitle small gray-500">
       <%= link_to "View", app_workspace_data_sources_path(workspace), class: "link gray-500" %>
@@ -27,7 +27,7 @@
   <div class="stat queries">
     <p class="title gray-200">Queries</p>
     <h3 class="red-500">
-      0
+      <%= workspace.queries.count %>
     </h3>
     <p class="subtitle small gray-500">
       <%= link_to "View", app_workspace_queries_path(workspace), class: "link gray-500" %>

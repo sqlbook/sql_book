@@ -7,6 +7,9 @@ class Workspace < ApplicationRecord
   has_many :members,
            dependent: :destroy
 
+  has_many :queries,
+           through: :data_sources
+
   def owner
     members.find_by(role: Member::Roles::OWNER).user
   end
