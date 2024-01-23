@@ -54,7 +54,7 @@ FactoryBot.define do
     timestamp { Time.now.to_i }
     coordinates_x { 1920 }
     coordinates_y { 1080 }
-    xpath { '/html/body' }
+    selector { 'html>body' }
     inner_text { nil }
     attribute_id { nil }
     attribute_class { nil }

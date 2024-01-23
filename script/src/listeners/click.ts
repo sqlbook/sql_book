@@ -1,4 +1,5 @@
 import { Base } from './base';
+import { getSelectorForElement } from '../utils/selector';
 
 export class Click extends Base {
   public init() {
@@ -13,7 +14,7 @@ export class Click extends Base {
     this.fireEvent('click', {
       coordinates_x: event.clientX,
       coordinates_y: event.clientY,
-      xpath: 'TODO',
+      selector: getSelectorForElement(element),
       attributes_class: element.getAttribute('class'),
       attributes_id: element.getAttribute('id'),
       inner_text: this.innerText(element),

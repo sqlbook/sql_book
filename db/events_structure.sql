@@ -37,7 +37,7 @@ CREATE TABLE public.clicks (
     "timestamp" bigint NOT NULL,
     coordinates_x integer NOT NULL,
     coordinates_y integer NOT NULL,
-    xpath character varying NOT NULL,
+    selector character varying NOT NULL,
     inner_text character varying,
     attribute_id character varying,
     attribute_class character varying

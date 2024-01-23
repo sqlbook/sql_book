@@ -18,7 +18,7 @@ class EventSaveJob < ApplicationJob
       timestamp: event['timestamp'],
       coordinates_x: event['coordinates_x'],
       coordinates_y: event['coordinates_y'],
-      xpath: event['xpath'],
+      selector: event['selector'],
       inner_text: event['inner_text'],
       attribute_id: event['attribute_id'],
       attribute_class: event['attribute_class']

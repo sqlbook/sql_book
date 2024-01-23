@@ -9,7 +9,7 @@ class CreateClicks < ActiveRecord::Migration[7.1]
       t.bigint :timestamp, null: false
       t.integer :coordinates_x, null: false
       t.integer :coordinates_y, null: false
-      t.string :xpath, null: false
+      t.string :selector, null: false
       t.string :inner_text
       t.string :attribute_id
       t.string :attribute_class

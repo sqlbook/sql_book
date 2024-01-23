@@ -29,7 +29,7 @@ RSpec.describe QueryService do
         timestamp
         coordinates_x
         coordinates_y
-        xpath
+        selector
         inner_text
         attribute_id
         attribute_class
@@ -46,7 +46,7 @@ RSpec.describe QueryService do
           click_1.timestamp,
           click_1.coordinates_x,
           click_1.coordinates_y,
-          click_1.xpath,
+          click_1.selector,
           click_1.inner_text,
           click_1.attribute_id,
           click_1.attribute_class
@@ -59,7 +59,7 @@ RSpec.describe QueryService do
           click_2.timestamp,
           click_2.coordinates_x,
           click_2.coordinates_y,
-          click_2.xpath,
+          click_2.selector,
           click_2.inner_text,
           click_2.attribute_id,
           click_2.attribute_class
@@ -72,7 +72,7 @@ RSpec.describe QueryService do
           click_3.timestamp,
           click_3.coordinates_x,
           click_3.coordinates_y,
-          click_3.xpath,
+          click_3.selector,
           click_3.inner_text,
           click_3.attribute_id,
           click_3.attribute_class

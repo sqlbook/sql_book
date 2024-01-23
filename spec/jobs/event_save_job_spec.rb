@@ -58,7 +58,7 @@ RSpec.describe EventSaveJob, type: :job do
         'timestamp' => timestamp,
         'coordinates_x' => 50,
         'coordinates_y' => 150,
-        'xpath' => '/html/body/main/div/form/div',
+        'selector' => 'body > main > div.workspaces.container.lg > div:nth-child(1) > div.details > p',
         'inner_text' => nil,
         'attributes_id' => nil,
         'attributes_class' => nil
@@ -71,7 +71,7 @@ RSpec.describe EventSaveJob, type: :job do
         'timestamp' => timestamp,
         'coordinates_x' => 25,
         'coordinates_y' => 110,
-        'xpath' => '/html/body/main/div/form/div/a[1]/i',
+        'selector' => 'body > main > div.workspaces.container.lg > div:nth-child(1) > div.details > p',
         'inner_text' => nil,
         'attributes_id' => nil,
         'attributes_class' => 'icon'
@@ -84,7 +84,7 @@ RSpec.describe EventSaveJob, type: :job do
         'timestamp' => timestamp,
         'coordinates_x' => 450,
         'coordinates_y' => 250,
-        'xpath' => '/html/body/header/menu/div/a[2]',
+        'selector' => 'body > main > div.workspaces.container.lg > div:nth-child(1) > div.details > p',
         'inner_text' => 'Query Library',
         'attributes_id' => nil,
         'attributes_class' => nil
