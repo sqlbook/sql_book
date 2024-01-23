@@ -9,10 +9,21 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
 
     before { sign_in(user) }
 
-    it 'renders the dashboards page' do
-      get "/app/workspaces/#{workspace.id}/dashboards"
+    context 'when there are no data soures' do
+      it 'redirects to create one' do
+        get "/app/workspaces/#{workspace.id}/dashboards"
+        expect(response).to redirect_to(new_app_workspace_data_source_path(workspace))
+      end
+    end
 
-      expect(response.status).to eq(200)
+    context 'when there are data sources' do
+      let!(:data_source) { create(:data_source, workspace:) }
+
+      it 'renders the dashboards page' do
+        get "/app/workspaces/#{workspace.id}/dashboards"
+
+        expect(response.status).to eq(200)
+      end
     end
   end
 end

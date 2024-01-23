@@ -8,6 +8,8 @@ module App
       def index
         @queries = queries
         @data_sources = data_sources
+
+        redirect_to new_app_workspace_data_source_path(workspace) if data_sources.empty?
       end
 
       private
