@@ -117,34 +117,27 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
 
     context 'when updating the query' do
       let(:query) { create(:query, data_source:, query: 'SELECT * FROM page_views;') }
-      let(:updated_query) { 'SELECT * FROM page_views LIMIT 1;' }
+      let(:params) { { query: 'SELECT * FROM page_views LIMIT 1;' } }
 
       it 'updates the query' do
-        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params: { query: updated_query } }
+        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params: }
           .to change { query.reload.query }
           .from('SELECT * FROM page_views;')
           .to('SELECT * FROM page_views LIMIT 1;')
       end
 
       it 'redirects to the query show page' do
-        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
-            params: { query: updated_query }
+        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params:)
         expect(response).to redirect_to(app_workspace_data_source_query_path(workspace, data_source, query))
       end
 
       it 'does not set the query as saved' do
-        expect do
-          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
-              params: { query: updated_query }
-        end
+        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params: }
           .not_to change { query.reload.saved }
       end
 
       it 'updates the last updated by' do
-        expect do
-          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
-              params: { query: updated_query }
-        end
+        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params: }
           .to change { query.reload.last_updated_by }
           .from(nil)
           .to(user)

@@ -31,9 +31,10 @@ RSpec.describe 'App::Workspaces::DataSources::SetUp', type: :request do
 
     context 'when the verification has failed' do
       let(:data_source) { create(:data_source, workspace:) }
+      let(:query_string) { 'verifying=true&verification_attempt=5' }
 
       it 'renders the failure message' do
-        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/set_up?verifying=true&verification_attempt=5"
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/set_up?#{query_string}"
         expect(response.body).to include('We were unable to verify your installation')
       end
     end
