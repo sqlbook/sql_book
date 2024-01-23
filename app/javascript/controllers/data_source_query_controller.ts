@@ -19,7 +19,13 @@ export default class extends Controller<HTMLDivElement> {
 
   public changeSource(event: Event): void {
     const target = event.target as HTMLSelectElement;
-    window.Turbo.visit(`/app/data_sources/${target.value}/queries`, { action: 'replace' })
+    
+    const parts = location.pathname.split('/');
+
+    // Replace the data_source_id
+    parts[5] = target.value;
+
+    window.Turbo.visit(parts.join('/'), { action: 'replace' })
   }
 
   public changeSchema(event: Event): void {

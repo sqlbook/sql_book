@@ -25,7 +25,7 @@ module App
       end
 
       def queries
-        data_source_id = data_sources.select(:data_source_id)
+        data_source_id = data_sources.select(:id)
         queries = Query.where(data_source_id:, saved: true)
         queries = queries.where('LOWER(name) LIKE ?', "%#{params[:search].downcase}%") if params[:search]
         queries

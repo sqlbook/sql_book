@@ -29,7 +29,7 @@
   .workspace-card {
     grid-template-areas: 'details details details details'
                          'data-sources queries dashboards events';
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
 
     .details {
       grid-template-areas: 'url settings'

@@ -134,7 +134,7 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
     end
   end
 
-  describe 'PUT /app/data_sources/:id' do
+  describe 'PUT /app/workspaces/:workspace_id/data_sources/:id' do
     let(:user) { create(:user) }
     let(:workspace) { create(:workspace_with_owner, owner: user) }
     let(:data_source) { create(:data_source, workspace:, verified_at: Time.current) }
