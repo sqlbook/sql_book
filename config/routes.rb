@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   end
 
   namespace :app do
-    resources :workspaces, only: %i[index new] do
+    resources :workspaces, only: %i[index show new create] do
       resources :queries, only: %i[index], controller: 'workspaces/queries'
 
       resources :data_sources, controller: 'workspaces/data_sources' do

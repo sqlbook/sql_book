@@ -1,9 +1,15 @@
 <main>
-  <h1>Welcome to sqlbook</h1>
+  <% if @workspace.data_sources.empty? %>
+    <h1>Create your first data source</h1>
+  <% else %>
+    <h1>Create data source</h1>
+  <% end %>
 
   <div class="container md" data-controller="form">
-    <%= form_with url: app_workspace_data_sources_path(@workspace), method: :post, class: "new-site-form", html: { "data-form-target": "form" } do |form| %>
-      <p>Let&apos;s get started by adding your first data source.</p>
+    <%= form_with url: app_workspace_data_sources_path(@workspace), method: :post, class: "new-data-source-form", html: { "data-form-target": "form" } do |form| %>
+      <% if @workspace.data_sources.empty? %>
+        <p>Let&apos;s get started by adding your first data source.</p>
+      <% end %>
       <%= form.label :url, "Please enter the URL you would like to capture data on:", class: "label block" %>
       <%= form.text_field :url, type: "url", placeholder: "https://", value: "https://", class: "input block fluid", required: true, pattern: "https://.*" %>
 

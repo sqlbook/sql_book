@@ -39,6 +39,22 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       get "/app/workspaces/#{workspace.id}/data_sources/new"
       expect(response.body).to include('type="url"')
     end
+
+    it 'shows a welcome message' do
+      get "/app/workspaces/#{workspace.id}/data_sources/new"
+      expect(response.body).to include('Create your first data source')
+    end
+
+    context 'if the user already has data sources' do
+      before do
+        create(:data_source, workspace:)
+      end
+
+      it 'shows a boring message' do
+        get "/app/workspaces/#{workspace.id}/data_sources/new"
+        expect(response.body).to include('data source')
+      end
+    end
   end
 
   describe 'POST /app/workspaces/:workspace_id/data_sources' do
@@ -89,7 +105,7 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
     context 'when a valid url is provided and it has not been taken' do
       let(:url) { 'https://sqlbook.com' }
 
-      it 'redirects back to the new page' do
+      it 'redirects to the set up page' do
         post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
         expect(response).to redirect_to(app_workspace_data_source_set_up_index_path(workspace, DataSource.last.id))
       end

@@ -1,3 +1,15 @@
 <main>
-  <h1>Welcome to sqlbook</h1>
+  <div class="page-header">
+    <h1>Workspaces</h1>
+    <%= link_to new_app_workspace_path, class: "link secondary create-workspace", "data-shortcut": "N" do %>
+      <i class="ri-add-line red-500"></i>
+      <span>Create New</span>
+    <% end %>
+  </div>
+
+  <div class="workspaces container lg">
+    <% @workspaces.each do |workspace| %>
+      <%= render "shared/workspace_card", workspace: %>
+    <% end %>
+  </div>
 </main>

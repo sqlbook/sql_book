@@ -1,0 +1,29 @@
+.app-workspaces-data_sources-new {
+  .new-data-source-form {
+    p:not(.alert) {
+      color: var(--cream-250);
+      margin: 0;
+    }
+
+    .label {
+      font-weight: var(--font-weight-normal);
+    }
+
+    .input {
+      background: none;
+      border: none;
+      caret-color: var(--red-500);
+      margin: 0 0 .25rem 0;
+      padding: 0;
+    }
+
+    .link {
+      color: var(--gray-300);
+      font-style: italic;
+
+      &:disabled {
+        display: none;
+      }
+    }
+  }
+}

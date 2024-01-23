@@ -1,3 +1,20 @@
 <main>
-  <h1>Welcome to sqlbook</h1>
+  <% if @current_user.workspaces.empty? %>
+    <h1>Welcome to sqlbook</h1>
+  <% else %>
+    <h1>Create new workspace</h1>
+  <% end %>
+
+  <div class="container md" data-controller="form">
+    <%= form_with url: app_workspaces_path, method: :post, class: "new-workspace-form", html: { "data-form-target": "form" } do |form| %>
+      <% if @current_user.workspaces.empty? %>
+        <p>Let&apos;s get started by creating your first workspace.</p>
+      <% end %>
+      <%= form.label :name, "Please enter the name you would like to use:", class: "label block" %>
+      <%= form.text_field :name, type: "text", placeholder: "e.g. Quokka Inc", class: "input block fluid", required: true %>
+
+      <%= form.submit "Press ENTER to submit", class: "link", "data-form-target": "submit" %>
+    <% end %>
+  </div>
 </main>
+

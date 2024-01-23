@@ -1,4 +1,4 @@
-.app-data_sources-show {
+.app-workspaces-show {
   display: grid;
   grid-template-areas: 'header aside'
                        'main aside';
@@ -14,7 +14,7 @@
       margin: 0;
     }
 
-    .create-data-source {
+    .create-workspace {
       margin: 0 0 0 1.5rem;
       text-decoration: none;
       
@@ -26,29 +26,15 @@
     }
   }
 
-  .tracking-code {
-    color: var(--cream-250);
-  }
-
-  .data-source-card {
-    grid-template-areas: 'details details details'
-                         'total-events monthly-events queries';
+  .workspace-card {
+    grid-template-areas: 'details details details details'
+                         'data-sources queries dashboards events';
     grid-template-columns: 1fr 1fr 1fr;
 
     .details {
       grid-template-areas: 'url settings'
                            'owner owner';
       grid-template-columns: 1fr auto;
-    }
-  }
-
-  .update-data-source-form {
-    .flash {
-      margin: .5rem 0 0 0;
-    }
-
-    .link {
-      margin-top: 2rem;
     }
   }
 }
