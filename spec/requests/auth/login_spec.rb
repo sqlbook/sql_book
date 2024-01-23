@@ -150,7 +150,7 @@ RSpec.describe 'Auth::Logins', type: :request do
       it 'directs to the app page' do
         post '/auth/login', params: { email: user.email, **tokens }
 
-        expect(response).to redirect_to(app_data_sources_path)
+        expect(response).to redirect_to(app_workspaces_path)
       end
 
       it 'sets a session cookie' do

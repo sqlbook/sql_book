@@ -18,7 +18,7 @@ RSpec.describe 'Home', type: :request do
 
       it 'redirects them to the data sources page' do
         get '/'
-        expect(response).to redirect_to(app_data_sources_path)
+        expect(response).to redirect_to(app_workspaces_path)
       end
     end
   end

@@ -2,44 +2,48 @@
 
 require 'rails_helper'
 
-RSpec.describe 'App::DataSources', type: :request do
-  describe 'GET /app/data_sources' do
+RSpec.describe 'App::Workspaces::DataSources', type: :request do
+  describe 'GET /app/workspaces/:workspace_id/data_sources' do
     let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
 
     before { sign_in(user) }
 
     context 'when there are no data sources' do
       it 'redirects to the new page' do
-        get '/app/data_sources'
-        expect(response).to redirect_to(new_app_data_source_path)
+        get "/app/workspaces/#{workspace.id}/data_sources"
+        expect(response).to redirect_to(new_app_workspace_data_source_path(workspace))
       end
     end
 
     context 'when there are data sources' do
-      let!(:data_source_1) { create(:data_source, user:) }
-      let!(:data_source_2) { create(:data_source, user:) }
+      let!(:data_source_1) { create(:data_source, workspace:) }
+      let!(:data_source_2) { create(:data_source, workspace:) }
 
       it 'renders a list of data_sources' do
-        get '/app/data_sources'
+        get "/app/workspaces/#{workspace.id}/data_sources"
+
         expect(response.body).to have_selector('.data-source-card h4 a', text: data_source_1.url)
         expect(response.body).to have_selector('.data-source-card h4 a', text: data_source_2.url)
       end
     end
   end
 
-  describe 'GET /app/data_sources/new' do
+  describe 'GET /app/workspaces/:workspace_id/data_sources/new' do
     let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
 
     before { sign_in(user) }
 
     it 'renders a form to enter a url' do
-      get '/app/data_sources/new'
+      get "/app/workspaces/#{workspace.id}/data_sources/new"
       expect(response.body).to include('type="url"')
     end
   end
 
-  describe 'POST /app/data_sources' do
+  describe 'POST /app/workspaces/:workspace_id/data_sources' do
     let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
 
     before do
       sign_in(user)
@@ -47,8 +51,8 @@ RSpec.describe 'App::DataSources', type: :request do
 
     context 'when no url is provided' do
       it 'redirects back to the new page' do
-        post '/app/data_sources'
-        expect(response).to redirect_to(app_data_sources_path)
+        post "/app/workspaces/#{workspace.id}/data_sources"
+        expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
       end
     end
 
@@ -56,12 +60,12 @@ RSpec.describe 'App::DataSources', type: :request do
       let(:url) { 'sdfsfdsf' }
 
       it 'redirects back to the new page' do
-        post '/app/data_sources', params: { url: }
-        expect(response).to redirect_to(app_data_sources_path)
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
+        expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
       end
 
       it 'flashes a message' do
-        post '/app/data_sources', params: { url: }
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
         expect(flash[:alert]).to eq('Url is not valid')
       end
     end
@@ -69,15 +73,15 @@ RSpec.describe 'App::DataSources', type: :request do
     context 'when a valid url is provided but it has been taken' do
       let(:url) { 'https://sqlbook.com' }
 
-      before { create(:data_source, url:, user:) }
+      before { create(:data_source, url:) }
 
       it 'redirects back to the new page' do
-        post '/app/data_sources', params: { url: }
-        expect(response).to redirect_to(app_data_sources_path)
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
+        expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
       end
 
       it 'flashes a message' do
-        post '/app/data_sources', params: { url: }
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
         expect(flash[:alert]).to eq('Url has already been taken')
       end
     end
@@ -86,28 +90,29 @@ RSpec.describe 'App::DataSources', type: :request do
       let(:url) { 'https://sqlbook.com' }
 
       it 'redirects back to the new page' do
-        post '/app/data_sources', params: { url: }
-        expect(response).to redirect_to(app_data_source_set_up_index_path(DataSource.last.id))
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
+        expect(response).to redirect_to(app_workspace_data_source_set_up_index_path(workspace, DataSource.last.id))
       end
     end
   end
 
-  describe 'GET /app/data_sources/:id' do
+  describe 'GET /app/workspaces/:workspace_id/data_sources/:data_source_id' do
     let(:user) { create(:user) }
-    let(:data_source) { create(:data_source, user:) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:data_source) { create(:data_source, workspace:) }
 
     before { sign_in(user) }
 
     context 'when the data source does not exist' do
       it 'renders the 404 page' do
-        get '/app/data_sources/342342343223'
+        get "/app/workspace/#{workspace.id}/data_sources/342342343223"
         expect(response.status).to eq(404)
       end
     end
 
     context 'when the data source exists' do
       it 'renders the show page' do
-        get "/app/data_sources/#{data_source.id}"
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
         expect(response.status).to eq(200)
       end
     end
@@ -115,60 +120,62 @@ RSpec.describe 'App::DataSources', type: :request do
 
   describe 'PUT /app/data_sources/:id' do
     let(:user) { create(:user) }
-    let(:data_source) { create(:data_source, verified_at: Time.current, user:) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:data_source) { create(:data_source, workspace:, verified_at: Time.current) }
 
     before { sign_in(user) }
 
     context 'when the url is not provided' do
       it 'redirects to the show page' do
-        put "/app/data_sources/#{data_source.id}"
-        expect(response).to redirect_to(app_data_source_path(data_source))
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
+        expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
       end
     end
 
     context 'when the provided url is invalid' do
       it 'redirects to the show page' do
-        put "/app/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfdsfdsfds' }
-        expect(response).to redirect_to(app_data_source_path(data_source))
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfds' }
+        expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
       end
 
       it 'does not update the url' do
-        expect { put "/app/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfdsfdsfds' } }
+        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfds' } }
           .not_to change { data_source.reload.url }
       end
 
       it 'flashes a message' do
-        put "/app/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfdsfdsfds' }
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfds' }
         expect(flash[:alert]).to eq('Url is not valid')
       end
     end
 
     context 'when the provided url is valid' do
       it 'redirects to the show page' do
-        put "/app/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' }
-        expect(response).to redirect_to(app_data_source_path(data_source))
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' }
+        expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
       end
 
       it 'updates the url' do
-        expect { put "/app/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
+        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
           .to change { data_source.reload.url }.from(data_source.url).to('https://valid-url.com')
       end
 
       it 'resets the verified_at' do
-        expect { put "/app/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
+        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
           .to change { data_source.reload.verified_at }.from(data_source.verified_at).to(nil)
       end
     end
   end
 
-  describe 'DELETE /app/data_sources/:id' do
+  describe 'DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id' do
     let(:user) { create(:user) }
-    let(:data_source) { create(:data_source, user:) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:data_source) { create(:data_source, workspace:) }
 
     before { sign_in(user) }
 
     it 'deletes the data source' do
-      expect { delete "/app/data_sources/#{data_source.id}" }
+      expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}" }
         .to change { DataSource.exists?(data_source.id) }.from(true).to(false)
     end
 
@@ -182,7 +189,7 @@ RSpec.describe 'App::DataSources', type: :request do
       end
 
       it 'enqueues the delete job' do
-        delete "/app/data_sources/#{data_source.id}"
+        delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
         expect(ActiveRecord::DestroyAssociationAsyncJob).to have_been_enqueued.exactly(3).times
       end
     end

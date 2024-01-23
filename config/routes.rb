@@ -20,11 +20,13 @@ Rails.application.routes.draw do
   end
 
   namespace :app do
-    resources :data_sources do
-      resources :set_up, only: %i[index], controller: 'data_sources/set_up'
-      resources :queries, only: %i[index show create update], controller: 'data_sources/queries'
-    end
+    resources :workspaces, only: %i[index new] do
+      resources :queries, only: %i[index], controller: 'workspaces/queries'
 
-    resources :queries, only: %i[index]
+      resources :data_sources, controller: 'workspaces/data_sources' do
+        resources :set_up, only: %i[index], controller: 'workspaces/data_sources/set_up'
+        resources :queries, only: %i[index show create update], controller: 'workspaces/data_sources/queries'
+      end
+    end
   end
 end

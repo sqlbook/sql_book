@@ -45,7 +45,7 @@ module Auth
         last_name: signup_params[:last_name]
       )
       session[:current_user_id] = user.id
-      redirect_to new_app_data_source_path
+      redirect_to new_app_workspace_path
     end
 
     def signup_params # rubocop:disable Metrics/MethodLength

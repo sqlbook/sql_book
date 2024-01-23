@@ -9,9 +9,11 @@ RSpec.describe DataSourcesStatsService do
   let(:last_week) { now - 1.week }
   let(:last_month) { now - 1.month }
 
-  let!(:data_source_1) { create(:data_source, user:) }
-  let!(:data_source_2) { create(:data_source, user:) }
-  let!(:data_source_3) { create(:data_source, user:) }
+  let(:workspace) { create(:workspace_with_owner, owner: user) }
+
+  let!(:data_source_1) { create(:data_source, workspace:) }
+  let!(:data_source_2) { create(:data_source, workspace:) }
+  let!(:data_source_3) { create(:data_source, workspace:) }
 
   before do
     create(:click, data_source_uuid: data_source_1.external_uuid, timestamp: now)

@@ -64,18 +64,19 @@ RSpec.describe 'App::DataSourcesHelper', type: :helper do
   end
 
   describe '#query_form_path' do
-    let(:data_source) { create(:data_source) }
+    let(:workspace) { create(:workspace) }
+    let(:data_source) { create(:data_source, workspace:) }
     let(:query) { create(:query) }
 
     context 'when a query is provided' do
       it 'returns the update path' do
-        expect(helper.query_form_path(data_source:, query:)).to eq(app_data_source_query_path(data_source, query))
+        expect(helper.query_form_path(workspace:, data_source:, query:)).to eq(app_workspace_data_source_query_path(workspace, data_source, query))
       end
     end
 
     context 'when a query is not provided' do
       it 'returns the create path' do
-        expect(helper.query_form_path(data_source:, query: nil)).to eq(app_data_source_queries_path(data_source))
+        expect(helper.query_form_path(workspace:, data_source:, query: nil)).to eq(app_workspace_data_source_queries_path(workspace, data_source))
       end
     end
   end

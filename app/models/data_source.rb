@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class DataSource < ApplicationRecord
-  belongs_to :user
+  belongs_to :workspace
 
   # Ensure the data source URL is unique
   validates :url, uniqueness: true

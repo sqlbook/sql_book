@@ -2,10 +2,11 @@
 
 require 'rails_helper'
 
-RSpec.describe 'App::Queries', type: :request do
-  describe 'GET /app/queries' do
+RSpec.describe 'App::Workspaces::Queries', type: :request do
+  describe 'GET /app/workspaces/:workspace_id/queries' do
     let(:user) { create(:user) }
-    let(:data_source) { create(:data_source, user:) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:data_source) { create(:data_source, workspace:) }
 
     let!(:query_1) { create(:query, saved: true, name: 'Foo', data_source:) }
     let!(:query_2) { create(:query, saved: true, name: 'Bar', data_source:) }
@@ -17,7 +18,7 @@ RSpec.describe 'App::Queries', type: :request do
     before { sign_in(user) }
 
     it 'renders the queries page' do
-      get '/app/queries'
+      get "/app/workspaces/#{workspace.id}/queries"
 
       expect(response.body).to have_selector('.queries-table .name', text: query_1.name)
       expect(response.body).to have_selector('.queries-table .name', text: query_2.name)
@@ -30,7 +31,7 @@ RSpec.describe 'App::Queries', type: :request do
 
     context 'when a search param is provided' do
       it 'returns the results with the matching names' do
-        get '/app/queries', params: { search: 'foo' }
+        get "/app/workspaces/#{workspace.id}/queries", params: { search: 'foo' }
 
         expect(response.body).to have_selector('.queries-table .name', text: query_1.name)
         expect(response.body).to have_selector('.queries-table .name', text: query_4.name)

@@ -7,7 +7,7 @@ class CreateDataSources < ActiveRecord::Migration[7.1]
       t.uuid :external_uuid, null: false, default: 'gen_random_uuid()'
       t.datetime :verified_at
 
-      t.belongs_to :user
+      t.belongs_to :workspace
 
       t.timestamps
     end

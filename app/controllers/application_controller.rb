@@ -8,10 +8,8 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_authenticated_users_to_app!
-    redirect_to app_data_sources_path if current_user
+    redirect_to app_workspaces_path if current_user
   end
-
-  private
 
   def current_user
     @current_user ||= User.find_by(id: session[:current_user_id])

@@ -24,10 +24,10 @@ module App
       params[:verification_attempt].to_i >= 5
     end
 
-    def query_form_path(data_source:, query: nil)
-      return app_data_source_queries_path(data_source) unless query
+    def query_form_path(workspace:, data_source:, query: nil)
+      return app_workspace_data_source_queries_path(workspace, data_source) unless query
 
-      app_data_source_query_path(data_source, query)
+      app_workspace_data_source_query_path(workspace, data_source, query)
     end
 
     def query_form_method(query: nil)

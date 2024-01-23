@@ -12,9 +12,29 @@ FactoryBot.define do
     token { '123456' }
   end
 
+  factory :workspace do
+    name { 'The Doors' }
+
+    transient do
+      owner { create(:user) }
+    end
+
+    factory :workspace_with_owner do
+      after(:create) do |workspace, evaluator|
+        create(:member, workspace:, user: evaluator.owner)
+      end
+    end
+  end
+
+  factory :member do
+    user { create(:user) }
+    workspace { create(:workspace) }
+    role { Member::Roles::OWNER }
+  end
+
   factory :data_source do
     url { "https://#{SecureRandom.base36}.com" }
-    user { create(:user) }
+    workspace { create(:workspace) }
   end
 
   factory :query do

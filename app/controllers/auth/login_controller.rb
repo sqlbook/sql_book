@@ -36,7 +36,7 @@ module Auth
     def find_and_authenticate_user!
       user = User.find_by!(email:)
       session[:current_user_id] = user.id
-      redirect_to app_data_sources_path
+      redirect_to app_workspaces_path
     end
 
     def handle_invalid_login_code

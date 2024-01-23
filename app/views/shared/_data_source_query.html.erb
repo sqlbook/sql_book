@@ -1,5 +1,5 @@
 <div class="container md-lg data-source-query" data-controller="data-source-query">
-  <%= form_with url: query_form_path(data_source: @data_source, query: @query), method: query_form_method(query: @query), html: { "data-data-source-query-target": "form" } do |form| %>
+  <%= form_with url: query_form_path(workspace: @workspace, data_source: @data_source, query: @query), method: query_form_method(query: @query), html: { "data-data-source-query-target": "form" } do |form| %>
     <div class="data-sources-row source">
       <%= form.label :data_source_id, class: "label" do %>
         <i class="ri-lg ri-database-2-line"></i>
@@ -9,7 +9,7 @@
         <%= form.select :data_source_id, options_from_collection_for_select(@data_sources, :id, :url, selected: params[:data_source_id]), {}, { "data-action": "data-source-query#changeSource" } %>
         <i class="ri-arrow-drop-down-line"></i>
       </div>
-      <%= link_to app_data_source_path(@data_source), class: "link secondary" do %>
+      <%= link_to app_workspace_data_source_path(@workspace, @data_source), class: "link secondary" do %>
         <i class="ri-settings-3-line"></i>
       <% end %>
       <button class="link secondary" type="button" data-action="data-source-query#toggleSchema">

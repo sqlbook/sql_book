@@ -28,7 +28,7 @@
     <% end %>
 
     <div data-controller="form">
-      <%= form_with url: app_data_source_query_path(@data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
+      <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
         <%= form.label :name, "Query name", class: "label block" %>
         <%= form.text_field :name, type: "text", placeholder: "e.g. New Visitor Count",class: "input block fluid", required: true, value: @query.name %>
 

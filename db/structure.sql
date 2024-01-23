@@ -34,7 +34,7 @@ CREATE TABLE public.data_sources (
     url character varying NOT NULL,
     external_uuid uuid DEFAULT gen_random_uuid() NOT NULL,
     verified_at timestamp(6) without time zone,
-    user_id bigint,
+    workspace_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
@@ -57,6 +57,39 @@ CREATE SEQUENCE public.data_sources_id_seq
 --
 
 ALTER SEQUENCE public.data_sources_id_seq OWNED BY public.data_sources.id;
+
+
+--
+-- Name: members; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.members (
+    id bigint NOT NULL,
+    role integer,
+    user_id bigint,
+    workspace_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: members_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.members_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: members_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.members_id_seq OWNED BY public.members.id;
 
 
 --
@@ -171,10 +204,48 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: workspaces; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.workspaces (
+    id bigint NOT NULL,
+    name character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: workspaces_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.workspaces_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: workspaces_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.workspaces_id_seq OWNED BY public.workspaces.id;
+
+
+--
 -- Name: data_sources id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.data_sources ALTER COLUMN id SET DEFAULT nextval('public.data_sources_id_seq'::regclass);
+
+
+--
+-- Name: members id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.members ALTER COLUMN id SET DEFAULT nextval('public.members_id_seq'::regclass);
 
 
 --
@@ -199,6 +270,13 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Name: workspaces id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspaces ALTER COLUMN id SET DEFAULT nextval('public.workspaces_id_seq'::regclass);
+
+
+--
 -- Name: ar_internal_metadata ar_internal_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -212,6 +290,14 @@ ALTER TABLE ONLY public.ar_internal_metadata
 
 ALTER TABLE ONLY public.data_sources
     ADD CONSTRAINT data_sources_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: members members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.members
+    ADD CONSTRAINT members_pkey PRIMARY KEY (id);
 
 
 --
@@ -247,6 +333,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: workspaces workspaces_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.workspaces
+    ADD CONSTRAINT workspaces_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: index_data_sources_on_external_uuid; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -261,10 +355,24 @@ CREATE UNIQUE INDEX index_data_sources_on_url ON public.data_sources USING btree
 
 
 --
--- Name: index_data_sources_on_user_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_data_sources_on_workspace_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX index_data_sources_on_user_id ON public.data_sources USING btree (user_id);
+CREATE INDEX index_data_sources_on_workspace_id ON public.data_sources USING btree (workspace_id);
+
+
+--
+-- Name: index_members_on_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_members_on_user_id ON public.members USING btree (user_id);
+
+
+--
+-- Name: index_members_on_workspace_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_members_on_workspace_id ON public.members USING btree (workspace_id);
 
 
 --
@@ -295,6 +403,8 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20240122193609'),
+('20240122193346'),
 ('20240112090044'),
 ('20231222144500'),
 ('20231221122435'),
