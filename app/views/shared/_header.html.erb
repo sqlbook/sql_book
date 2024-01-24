@@ -1,8 +1,7 @@
 <% if signed_in? %>
   <header class="header">
     <%= link_to app_workspaces_path do %>
-      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
-      <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
+      <%= render "shared/logo" %>
     <% end %>
 
     <% if @workspace %>
@@ -41,8 +40,7 @@
 <% else %>
   <header class="header split">
     <%= link_to root_path do %>
-      <%= image_tag "logo-dark.svg", height: 24, width: 108, alt: "Logo", class: "logo-dark" %>
-      <%= image_tag "logo-light.svg", height: 24, width: 108, alt: "Logo", class: "logo-light" %>
+      <%= render "shared/logo" %>
     <% end %>
 
     <menu>

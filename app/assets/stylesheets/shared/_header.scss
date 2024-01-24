@@ -36,13 +36,9 @@
   p {
     margin: 0;
   }
-  
-  .logo-dark {
+
+  .logo {
     display: block;
-  }
-  
-  .logo-light {
-    display: none;
   }
 
   .dropdown {
@@ -105,18 +101,6 @@
       &:last-of-type {
         display: none;
       }
-    }
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  .header {
-    .logo-dark {
-      display: none;
-    }
-  
-    .logo-light {
-      display: block;
     }
   }
 }
