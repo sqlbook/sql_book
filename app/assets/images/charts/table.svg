@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="60" viewBox="0 0 104 60" fill="none">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M102 1H2C1.44772 1 1 1.44772 1 2V58C1 58.5523 1.44772 59 2 59H102C102.552 59 103 58.5523 103 58V2C103 1.44772 102.552 1 102 1ZM2 0C0.895431 0 0 0.895432 0 2V58C0 59.1046 0.895432 60 2 60H102C103.105 60 104 59.1046 104 58V2C104 0.895431 103.105 0 102 0H2Z" fill="#F5807B"/>
+  <path opacity="0.5" d="M1 2C1 1.44772 1.44772 1 2 1H102C102.552 1 103 1.44772 103 2V9H1V2Z" fill="#F5807B"/>
+  <rect x="8" y="13" width="18" height="2" fill="#A1A1A1"/>
+  <rect x="8" y="21" width="15" height="2" fill="#A1A1A1"/>
+  <rect x="8" y="29" width="18" height="2" fill="#A1A1A1"/>
+  <rect x="8" y="37" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="8" y="45" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="8" y="53" width="20" height="2" fill="#A1A1A1"/>
+  <rect x="8" y="4" width="19" height="2" fill="#F5807B"/>
+  <rect x="41" y="13" width="19" height="2" fill="#A1A1A1"/>
+  <rect x="41" y="21" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="41" y="29" width="16" height="2" fill="#A1A1A1"/>
+  <rect x="41" y="37" width="18" height="2" fill="#A1A1A1"/>
+  <rect x="41" y="45" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="41" y="53" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="41" y="4" width="21" height="2" fill="#F5807B"/>
+  <rect x="74" y="13" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="74" y="21" width="22" height="2" fill="#A1A1A1"/>
+  <rect x="74" y="29" width="18" height="2" fill="#A1A1A1"/>
+  <rect x="74" y="37" width="22" height="2" fill="#A1A1A1"/>
+  <rect x="74" y="45" width="12" height="2" fill="#A1A1A1"/>
+  <rect x="74" y="53" width="18" height="2" fill="#A1A1A1"/>
+  <rect x="74" y="4" width="13" height="2" fill="#F5807B"/>
+</svg>

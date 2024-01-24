@@ -19,7 +19,22 @@
   <% end %>
 
   <% if active_tab?(tab: "visualization") %>
-    <p>Visualization</p>
+    <p class="cream-250">Select a visualisation type from the list below:</p>
+    
+    <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "charts" do |form| %>
+      <% chart_types.each do |chart_type| %>
+        <div class="chart">
+          <%= radio_button_tag(:chart_type, chart_type[:key]) %>
+          <%= label_tag(chart_type[:label_tag]) do %>
+            <div class="image">
+              <%= image_tag chart_type[:image] %>
+            </div>
+            <p class="cream-250"><%= chart_type[:label] %></p>
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+    
   <% end %>
 
   <% if active_tab?(tab: "settings") %>

@@ -2,6 +2,7 @@ import { Consumer, Subscription, createConsumer } from '@rails/actioncable';
 import { Click, PageView, Session } from './listeners';
 import { Visitor } from './utils/visitor';
 import { EventType, Event } from './types/events/event';
+import { store } from './utils/store';
 
 // TODO: Replace with config
 const WEBSOCKET_URL = 'ws://localhost:3000/events/in';
@@ -35,6 +36,8 @@ export class Script {
   }
 
   private onEvent = (type: EventType, event: Event) => {
+    store.set('lastEventAt', new Date().toISOString());
+
     this.subscription.perform('event', {
       ...event,
       type,
