@@ -24,6 +24,7 @@ module SqlBook
 
     config.action_cable.mount_path = '/events/in'
 
+    config.charts = config_for(:charts)
     config.timezones = config_for(:timezones)
 
     # Configuration for the application, engines, and railties goes here.

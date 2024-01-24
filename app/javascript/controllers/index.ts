@@ -5,6 +5,7 @@
 import { application } from './application';
 
 import BodyController from './body_controller';
+import ChartGalleryController from './chart_gallery';
 import ClipboardController from './clipboard_controller';
 import DataSourceQueryController from './data_source_query_controller';
 import DataSourceVerificationController from './data_source_verification_controller';
@@ -15,6 +16,7 @@ import ResizeablePageController from './resizeable_page_controller';
 import SearchController from './search_controller';
 
 application.register('body', BodyController);
+application.register('chart-gallery', ChartGalleryController);
 application.register('clipboard', ClipboardController);
 application.register('data-source-query', DataSourceQueryController);
 application.register('data-source-verification', DataSourceVerificationController);

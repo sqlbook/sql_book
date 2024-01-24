@@ -31,6 +31,10 @@
       cursor: pointer;
       padding: .5rem;
 
+      label {
+        cursor: pointer;
+      }
+
       .image {
         align-items: center;
         background: var(--gray-800);

@@ -1,0 +1,58 @@
+default: &default
+  total:
+    label_tag: chart_type_total
+    image: 'charts/total.svg'
+    label: 'Total'
+  table:
+    label_tag: chart_type_table
+    image: 'charts/table.svg'
+    label: 'Table'
+  line:
+    label_tag: chart_type_line
+    image: 'charts/line.svg'
+    label: 'Line'
+  area:
+    label_tag: chart_type_area
+    image: 'charts/area.svg'
+    label: 'Area'
+  stacked_area:
+    label_tag: chart_type_stacked_area
+    image: 'charts/stacked-area.svg'
+    label: 'Stacked area'
+  column:
+    label_tag: chart_type_column
+    image: 'charts/column.svg'
+    label: 'Column'
+  stacked_column:
+    label_tag: chart_type_stacked_column
+    image: 'charts/stacked-column.svg'
+    label: 'Stacked column'
+  bar:
+    label_tag: chart_type_bar
+    image: 'charts/bar.svg'
+    label: 'Bar'
+  stacked_bar:
+    label_tag: chart_type_stacked_bar
+    image: 'charts/stacked-bar.svg'
+    label: 'Stacked bar'
+  combo:
+    label_tag: chart_type_combo
+    image: 'charts/combo.svg'
+    label: 'Combo'
+  pie:
+    label_tag: chart_type_pie
+    image: 'charts/pie.svg'
+    label: 'Pie'
+  donut:
+    label_tag: chart_type_donut
+    image: 'charts/donut.svg'
+    label: 'Donut'
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default

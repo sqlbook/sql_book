@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'App::DataSourcesHelper', type: :helper do
+RSpec.describe 'App::Workspaces::DataSourcesHelper', type: :helper do
   describe '#tracking_code' do
     let(:data_source) { create(:data_source) }
 
