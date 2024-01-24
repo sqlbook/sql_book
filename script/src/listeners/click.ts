@@ -14,7 +14,7 @@ export class Click extends Base {
     this.fireEvent('click', {
       coordinates_x: event.clientX,
       coordinates_y: event.clientY,
-      selector: getSelectorForElement(element),
+      selector: getSelectorForElement(element) || 'html > body',
       attributes_class: element.getAttribute('class'),
       attributes_id: element.getAttribute('id'),
       inner_text: this.innerText(element),
@@ -29,9 +29,9 @@ export class Click extends Base {
     const text = textContent.trim().substring(0, 50);
 
     if (text.length === textContent.length) {
-      return text;
+      return `${text}...`;
     }
 
-    return `${text}...`;
+    return text;
   }
 }

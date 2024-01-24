@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 class EventSaveJob < ApplicationJob
-  def perform(*args)
-    args.each do |arg|
+  def perform(*events)
+    events.each do |arg|
       method = :"store_#{arg['type']}"
       send(method, arg) if respond_to?(method, true)
     end
+
+    verify_data_sources(events)
   end
 
   private
@@ -57,5 +59,13 @@ class EventSaveJob < ApplicationJob
       utm_content: event['utm_content'],
       utm_term: event['utm_term']
     )
+  end
+
+  def verify_data_sources(events)
+    data_source_uuids = events.pluck('data_source_uuid').uniq
+
+    DataSource
+      .where(external_uuid: data_source_uuids, verified_at: nil)
+      .update_all(verified_at: Time.current) # rubocop:disable Rails/SkipsModelValidations
   end
 end

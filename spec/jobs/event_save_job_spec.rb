@@ -100,4 +100,16 @@ RSpec.describe EventSaveJob, type: :job do
     expect(data_source.page_views.count).to eq(2)
     expect(data_source.clicks.count).to eq(3)
   end
+
+  it 'verifies the data source' do
+    expect { subject }.to change { data_source.reload.verified_at.nil? }.from(true).to(false)
+  end
+
+  context 'when the data source was already verified' do
+    let(:data_source) { create(:data_source, verified_at: Date.yesterday) }
+
+    it 'does not verify it again' do
+      expect { subject }.not_to change { data_source.reload.verified_at }
+    end
+  end
 end
