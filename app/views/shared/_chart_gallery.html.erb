@@ -1,0 +1,17 @@
+<p class="cream-250">Select a visualisation type from the list below:</p>
+      
+<div class="chart-gallery" data-controller="chart-gallery">
+  <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "charts", html: { "data-chart-gallery-target": "form" } do |form| %>
+    <% Rails.configuration.charts.each do |type, chart| %>
+      <div class="chart">
+        <%= radio_button_tag :chart_type, type, "data-action": "chart-gallery#submit" %>
+        <%= label_tag chart[:label_tag].to_sym do %>
+          <div class="image">
+            <%= image_tag chart[:image] %>
+          </div>
+          <p class="cream-250"><%= chart[:label] %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

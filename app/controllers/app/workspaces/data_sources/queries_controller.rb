@@ -27,10 +27,9 @@ module App
         end
 
         def update
-          return handle_update_query_name if query_params[:name].present?
-          return handle_update_query_query if query_params[:query].present?
+          query.update(query_update_params)
 
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query)
+          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: query_redirect_tab)
         end
 
         private
@@ -52,31 +51,24 @@ module App
         end
 
         def query_params
-          params.permit(
-            :data_source_id,
-            :query,
-            :name,
-            :action,
-            :authenticity_token
-          )
+          params.permit(:chart_type, :query, :name)
         end
 
-        def handle_update_query_name
-          query.update!(
-            saved: true,
-            name: query_params[:name],
-            last_updated_by: current_user
-          )
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: 'settings')
+        def query_update_params
+          params = {}
+
+          params.merge!(query_params)
+          params[:last_updated_by] = current_user
+          params[:saved] = true if query_params[:name]
+
+          params
         end
 
-        # TODO: Don't update if the query doesn't change
-        def handle_update_query_query
-          query.update!(
-            query: query_params[:query],
-            last_updated_by: current_user
-          )
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query)
+        def query_redirect_tab
+          return 'settings' if query_params[:name]
+          return 'visualization' if query_params[:chart_type]
+
+          nil
         end
       end
     end

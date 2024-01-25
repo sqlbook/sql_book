@@ -1,0 +1,38 @@
+.chart-config {
+  .heading {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 1.5rem 0;
+
+    h4 {
+      margin: 0;
+    }
+
+    .link {
+      text-decoration: none;
+
+      span {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .preview {
+    background: var(--gray-850);
+    margin: 0 0 1.5rem 0;
+    padding: 1.5rem;
+
+    .title {
+      margin: 0 0 .5rem 0;
+    }
+
+    .subtitle {
+      margin: 0;
+    }
+
+    .chart {
+      height: 16rem;
+    }
+  }
+}

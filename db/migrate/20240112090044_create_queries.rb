@@ -8,6 +8,8 @@ class CreateQueries < ActiveRecord::Migration[7.1]
       t.boolean :saved, default: false, null: false
       t.datetime :last_run_at
 
+      t.string :chart_type
+
       t.bigint :author_id, null: false
       t.bigint :last_updated_by_id
 

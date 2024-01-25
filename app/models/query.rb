@@ -12,6 +12,8 @@ class Query < ApplicationRecord
              primary_key: :id,
              optional: true
 
+  normalizes :chart_type, with: ->(chart_type) { chart_type.presence }
+
   def query_result
     @query_result ||= QueryService.new(query: self).execute
   end

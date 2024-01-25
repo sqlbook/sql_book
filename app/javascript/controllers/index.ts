@@ -4,8 +4,9 @@
 
 import { application } from './application';
 
+import AccordionController from './accordion_controller';
 import BodyController from './body_controller';
-import ChartGalleryController from './chart_gallery';
+import ChartGalleryController from './chart_gallery_controller';
 import ClipboardController from './clipboard_controller';
 import DataSourceQueryController from './data_source_query_controller';
 import DataSourceVerificationController from './data_source_verification_controller';
@@ -15,6 +16,7 @@ import OtpController from './otp_controller';
 import ResizeablePageController from './resizeable_page_controller';
 import SearchController from './search_controller';
 
+application.register('accordion', AccordionController);
 application.register('body', BodyController);
 application.register('chart-gallery', ChartGalleryController);
 application.register('clipboard', ClipboardController);

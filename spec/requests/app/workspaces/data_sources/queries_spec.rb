@@ -147,7 +147,7 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
     context 'when updating the name' do
       let(:query) { create(:query, data_source:, name: 'Query 1') }
 
-      it 'updates the query' do
+      it 'updates the name' do
         expect do
           put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
               params: { name: 'Query 2' }
@@ -182,6 +182,34 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
           .to change { query.reload.last_updated_by }
           .from(nil)
           .to(user)
+      end
+    end
+
+    context 'when updating the chart type' do
+      let(:query) { create(:query, data_source:) }
+
+      it 'updates the query' do
+        expect do
+          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
+              params: { chart_type: 'line' }
+        end
+          .to change { query.reload.chart_type }
+          .from(nil)
+          .to('line')
+      end
+
+      context 'when discarding the chart type' do
+        let(:query) { create(:query, data_source:, chart_type: 'line') }
+
+        it 'sets it to nil when the chart type is empty' do
+          expect do
+            put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
+                params: { chart_type: '' }
+          end
+            .to change { query.reload.chart_type }
+            .from('line')
+            .to(nil)
+        end
       end
     end
   end

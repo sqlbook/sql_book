@@ -134,6 +134,7 @@ CREATE TABLE public.queries (
     query character varying NOT NULL,
     saved boolean DEFAULT false NOT NULL,
     last_run_at timestamp(6) without time zone,
+    chart_type character varying,
     author_id bigint NOT NULL,
     last_updated_by_id bigint,
     data_source_id bigint,

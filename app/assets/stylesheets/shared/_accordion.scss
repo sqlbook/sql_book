@@ -1,0 +1,40 @@
+.accordion {
+  background: var(--gray-850);
+  margin: 0 0 1rem 0;
+
+  .open {
+    display: block;
+  }
+
+  .content,
+  .close {
+    display: none;
+  }
+
+  .toggle {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    padding: 1.5rem;
+    width: 100%;
+
+    i {
+      margin: 0 1rem 0 0;
+    }
+  }
+
+  .content {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+  }
+
+  &.open {
+    .content,
+    .close {
+      display: block;
+    }
+
+    .open {
+      display: none;
+    }
+  }
+}

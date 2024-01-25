@@ -18,43 +18,4 @@
     flex-direction: column;
     padding-bottom: 2rem;
   }
-
-  .charts {
-    display: grid;
-    grid-gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-    margin: 1.5rem 0;
-
-    .chart {
-      background: var(--gray-850);
-      border: 1px solid var(--gray-850);
-      cursor: pointer;
-      padding: .5rem;
-
-      label {
-        cursor: pointer;
-      }
-
-      .image {
-        align-items: center;
-        background: var(--gray-800);
-        display: flex;
-        justify-content: center;
-        min-height: 5.5rem;
-      }
-
-      p {
-        margin: .5rem 0 0 0;
-        text-align: center;
-      }
-
-      &:hover {
-        border-color: var(--gray-500);
-      }
-    }
-
-    input {
-      display: none;
-    }
-  }
 }
