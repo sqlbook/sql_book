@@ -1,4 +1,6 @@
 .chart-config {
+  overflow-y: auto;
+
   .heading {
     align-items: center;
     display: flex;
@@ -33,6 +35,41 @@
 
     .chart {
       height: 16rem;
+    }
+  }
+
+  .content {
+    .split {
+      display: grid;
+      grid-gap: 1rem;
+      grid-template-columns: 1fr 1fr;
+      margin: 0 0 1.5rem 0;
+    }
+
+    .inline {
+      align-items: center;
+      display: flex;
+
+      > div {
+        margin: 0 1.5rem 0 0;
+      }
+    }
+
+    p {
+      margin: 1.5rem 0;
+    }
+
+    .label {
+      color: var(--cream-250);
+    }
+
+    .divider {
+      background: var(--gray-700);
+      height: 1px;
+    }
+
+    .spacing-top {
+      margin-top: 1.5rem;
     }
   }
 }

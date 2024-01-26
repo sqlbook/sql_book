@@ -20,15 +20,263 @@
       </div>
 
       <%= render "shared/accordion", label: "Data" do %>
-        <p>Data</p>
+        <p>X-Axis</p>
+
+        <div class="split">
+          <div>
+            <%= form.label :x_axis_key, "Data", class: "label block" %>
+            <div class="select">
+              <%= form.select :x_axis_key, @query.query_result.columns, {}, { "data-action": "data-source-query#changeSchema" } %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+          <div>
+            <%= form.label :x_axis_label, "Label", class: "label block" %>
+            <%= form.text_field :x_axis_label, class: "input block fluid", value: @query.query_result.columns.first.humanize %>
+          </div>
+        </div>
+
+        <%= form.label "Show", class: "label block" %>
+        <div class="inline">
+          <div>
+            <%= form.label :x_axis_label_enabled, class: "checkbox" do %>
+              <%= form.check_box :x_axis_label_enabled %>
+              <div class="check">
+                <i class="ri-check-line"></i>
+              </div>
+              Label
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :x_axis_gridlines_enabled, class: "checkbox" do %>
+              <%= form.check_box :x_axis_gridlines_enabled %>
+              <div class="check">
+                <i class="ri-check-line"></i>
+              </div>
+              Gridlines
+            <% end %>
+          </div>
+        </div>
+
+        <div class="divider spacing-top"></div>
+
+        <p>Y-Axis</p>
+
+        <div class="split">
+          <div>
+            <%= form.label :y_axis_key, "Data", class: "label block" %>
+            <div class="select">
+              <%= form.select :y_axis_key, @query.query_result.columns, {}, { "data-action": "data-source-query#changeSchema" } %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+          <div>
+            <%= form.label :y_axis_label, "Label", class: "label block" %>
+            <%= form.text_field :y_axis_label, class: "input block fluid", value: @query.query_result.columns.first.humanize %>
+          </div>
+        </div>
+
+        <%= form.label "Show", class: "label block" %>
+        <div class="inline">
+          <div>
+            <%= form.label :y_axis_label_enabled, class: "checkbox" do %>
+              <%= form.check_box :y_axis_label_enabled %>
+              <div class="check">
+                <i class="ri-check-line"></i>
+              </div>
+              Label
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :y_axis_gridlines_enabled, class: "checkbox" do %>
+              <%= form.check_box :y_axis_gridlines_enabled %>
+              <div class="check">
+                <i class="ri-check-line"></i>
+              </div>
+              Gridlines
+            <% end %>
+          </div>
+        </div>
       <% end %>
 
       <%= render "shared/accordion", label: "Appearance" do %>
-        <p>Appearance</p>
+        <div class="split">
+          <div>
+            <%= form.label :title, "Title", class: "label block" %>
+            <%= form.text_field :title, class: "input block fluid", placeholder: "e.g. Visitor Count" %>
+          </div>
+          <div>
+            <%= form.label :subtitle, "Subtitle", class: "label block" %>
+            <%= form.text_field :subtitle, class: "input block fluid", placeholder: "e.g. 6-month growth" %>
+          </div>
+        </div>
+
+        <%= form.label "Show", class: "label block" %>
+        <div class="inline">
+          <div>
+            <%= form.label :title_enabled, class: "checkbox" do %>
+              <%= form.check_box :title_enabled %>
+              <div class="check">
+                <i class="ri-check-line"></i>
+              </div>
+              Title
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :subtitle_enabled, class: "checkbox" do %>
+              <%= form.check_box :subtitle_enabled %>
+              <div class="check">
+                <i class="ri-check-line"></i>
+              </div>
+              Subtitle
+            <% end %>
+          </div>
+        </div>
+
+        <div class="divider spacing-top"></div>
+
+        <%= form.label "Display legend", class: "label block spacing-top" %>
+        <div class="inline">
+          <div>
+            <%= form.label :legend_enabled_true, class: "radio" do %>
+              <%= form.radio_button :legend_enabled, true %>
+              <div class="check">
+                <span></span>
+              </div>
+              Yes
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :legend_enabled_false, class: "radio" do %>
+              <%= form.radio_button :legend_enabled, false %>
+              <div class="check">
+                <span></span>
+              </div>
+              No
+            <% end %>
+          </div>
+        </div>
+
+        <%= form.label "Position", class: "label block spacing-top" %>
+        <div class="inline">
+          <div>
+            <%= form.label :position_top, class: "radio" do %>
+              <%= form.radio_button :position, 'top' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Top
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :position_right, class: "radio" do %>
+              <%= form.radio_button :position, 'right' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Right
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :position_bottom, class: "radio" do %>
+              <%= form.radio_button :position, 'bottom' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Bottom
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :position_left, class: "radio" do %>
+              <%= form.radio_button :position, 'left' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Left
+            <% end %>
+          </div>
+        </div>
+
+        <%= form.label "Alignment", class: "label block spacing-top" %>
+        <div class="inline">
+          <div>
+            <%= form.label :alignment_left, class: "radio" do %>
+              <%= form.radio_button :alignment, 'left' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Left
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :alignment_centre, class: "radio" do %>
+              <%= form.radio_button :alignment, 'centre' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Centre
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :alignment_right, class: "radio" do %>
+              <%= form.radio_button :alignment, 'right' %>
+              <div class="check">
+                <span></span>
+              </div>
+              Right
+            <% end %>
+          </div>
+        </div>
+
+        <div class="divider spacing-top"></div>
+
+        <%= form.label "Color array", class: "label block spacing-top" %>
       <% end %>
 
       <%= render "shared/accordion", label: "Other" do %>
-        <p>Other</p>
+        <%= form.label "Display tooltips", class: "label block" %>
+        <div class="inline">
+          <div>
+            <%= form.label :tooltips_enabled_true, class: "radio" do %>
+              <%= form.radio_button :tooltips_enabled, true %>
+              <div class="check">
+                <span></span>
+              </div>
+              Yes
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :tooltips_enabled_false, class: "radio" do %>
+              <%= form.radio_button :tooltips_enabled, false %>
+              <div class="check">
+                <span></span>
+              </div>
+              No
+            <% end %>
+          </div>
+        </div>
+
+        <%= form.label "Allow zooming", class: "label block spacing-top" %>
+        <div class="inline">
+          <div>
+            <%= form.label :zooming_enabled_true, class: "radio" do %>
+              <%= form.radio_button :zooming_enabled, true %>
+              <div class="check">
+                <span></span>
+              </div>
+              Yes
+            <% end %>
+          </div>
+          <div>
+            <%= form.label :zooming_enabled_false, class: "radio" do %>
+              <%= form.radio_button :zooming_enabled, false %>
+              <div class="check">
+                <span></span>
+              </div>
+              No
+            <% end %>
+          </div>
+        </div>
       <% end %>
     <% end %>
   </div>
