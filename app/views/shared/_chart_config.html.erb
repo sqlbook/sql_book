@@ -12,10 +12,14 @@
   </div>
 
   <div data-controller="chart-config">
-    <%= form_with url: chart_config_app_workspace_data_source_queries_path(@workspace, @data_source, @query), method: :put, html: { "data-chart-config-target": "form" } do |form| %>
+    <%= form_with url: chart_config_app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, html: { "data-chart-config-target": "form" } do |form| %>
       <div class="preview">
-        <h4 class="title cream-250">Title</h4>
-        <p class="subtitle gray-300">Subtitle text string</p>
+        <h4 class="title cream-250">
+          <%= @query.chart_config[:title] || 'Title' %>
+        </h4>
+        <p class="subtitle gray-300">
+          <%= @query.chart_config[:subtitle] || 'Subtitle text string' %>
+        </p>
         <div class="chart"></div>
       </div>
 
@@ -26,7 +30,7 @@
           <div>
             <%= form.label :x_axis_key, "Data", class: "label block" %>
             <div class="select">
-              <%= form.select :x_axis_key, options_for_select(@query.query_result.columns, @query.chart_config[:x_axis_key]), {}, { "data-action": "data-source-query#changeSchema" } %>
+              <%= form.select :x_axis_key, options_for_select(@query.query_result.columns, @query.chart_config[:x_axis_key]), {} %>
               <i class="ri-arrow-drop-down-line"></i>
             </div>
           </div>
@@ -66,7 +70,7 @@
           <div>
             <%= form.label :y_axis_key, "Data", class: "label block" %>
             <div class="select">
-              <%= form.select :y_axis_key, options_for_select(@query.query_result.columns, @query.chart_config[:y_axis_key]), {}, { "data-action": "data-source-query#changeSchema" } %>
+              <%= form.select :y_axis_key, options_for_select(@query.query_result.columns, @query.chart_config[:y_axis_key]), {} %>
               <i class="ri-arrow-drop-down-line"></i>
             </div>
           </div>
@@ -103,11 +107,11 @@
         <div class="split">
           <div>
             <%= form.label :title, "Title", class: "label block" %>
-            <%= form.text_field :title, class: "input block fluid", placeholder: "e.g. Visitor Count" %>
+            <%= form.text_field :title, class: "input block fluid", placeholder: "e.g. Visitor Count", value: @query.chart_config[:title] %>
           </div>
           <div>
             <%= form.label :subtitle, "Subtitle", class: "label block" %>
-            <%= form.text_field :subtitle, class: "input block fluid", placeholder: "e.g. 6-month growth" %>
+            <%= form.text_field :subtitle, class: "input block fluid", placeholder: "e.g. 6-month growth", value: @query.chart_config[:subtitle] %>
           </div>
         </div>
 
@@ -138,8 +142,8 @@
         <%= form.label "Display legend", class: "label block spacing-top" %>
         <div class="inline">
           <div>
-            <%= form.label :legend_enabled_true, class: "radio" do %>
-              <%= form.radio_button :legend_enabled, true, checked: @query.chart_config[:legend_enabled] %>
+            <%= form.label :legend_enabled_1, class: "radio" do %>
+              <%= form.radio_button :legend_enabled, 1, checked: @query.chart_config[:legend_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -147,8 +151,8 @@
             <% end %>
           </div>
           <div>
-            <%= form.label :legend_enabled_false, class: "radio" do %>
-              <%= form.radio_button :legend_enabled, false, checked: !@query.chart_config[:legend_enabled] %>
+            <%= form.label :legend_enabled_0, class: "radio" do %>
+              <%= form.radio_button :legend_enabled, 0, checked: !@query.chart_config[:legend_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -237,8 +241,8 @@
         <%= form.label "Display tooltips", class: "label block" %>
         <div class="inline">
           <div>
-            <%= form.label :tooltips_enabled_true, class: "radio" do %>
-              <%= form.radio_button :tooltips_enabled, true, checked: @query.chart_config[:tooltips_enabled] %>
+            <%= form.label :tooltips_enabled_1, class: "radio" do %>
+              <%= form.radio_button :tooltips_enabled, 1, checked: @query.chart_config[:tooltips_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -246,8 +250,8 @@
             <% end %>
           </div>
           <div>
-            <%= form.label :tooltips_enabled_false, class: "radio" do %>
-              <%= form.radio_button :tooltips_enabled, false, checked: !@query.chart_config[:tooltips_enabled] %>
+            <%= form.label :tooltips_enabled_0, class: "radio" do %>
+              <%= form.radio_button :tooltips_enabled, 0, checked: !@query.chart_config[:tooltips_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -259,8 +263,8 @@
         <%= form.label "Allow zooming", class: "label block spacing-top" %>
         <div class="inline">
           <div>
-            <%= form.label :zooming_enabled_true, class: "radio" do %>
-              <%= form.radio_button :zooming_enabled, true, checked: @query.chart_config[:zooming_enabled] %>
+            <%= form.label :zooming_enabled_1, class: "radio" do %>
+              <%= form.radio_button :zooming_enabled, 1, checked: @query.chart_config[:zooming_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -268,8 +272,8 @@
             <% end %>
           </div>
           <div>
-            <%= form.label :zooming_enabled_false, class: "radio" do %>
-              <%= form.radio_button :zooming_enabled, false, checked: !@query.chart_config[:zooming_enabled] %>
+            <%= form.label :zooming_enabled_0, class: "radio" do %>
+              <%= form.radio_button :zooming_enabled, 0, checked: !@query.chart_config[:zooming_enabled] %>
               <div class="check">
                 <span></span>
               </div>

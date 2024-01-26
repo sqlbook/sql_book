@@ -33,7 +33,7 @@ module App
         end
 
         def chart_config
-          query.update(chart_config: chart_config_params)
+          query.update(query_chart_config_params)
 
           redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
         end
@@ -99,8 +99,8 @@ module App
         def query_chart_config_params
           params = {}
 
-          params.merge!(chart_config_params)
           params[:last_updated_by] = current_user
+          params[:chart_config] = chart_config_params
 
           params
         end
