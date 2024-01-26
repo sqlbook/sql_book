@@ -27,7 +27,7 @@ Rails.application.routes.draw do
       resources :data_sources, controller: 'workspaces/data_sources' do
         resources :set_up, only: %i[index], controller: 'workspaces/data_sources/set_up'
         resources :queries, only: %i[index show create update], controller: 'workspaces/data_sources/queries' do
-          collection { put 'chart_config' }
+          member { put 'chart_config' }
         end
       end
     end

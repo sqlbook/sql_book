@@ -44,7 +44,7 @@ module Auth
       redirect_to new_auth_login_path(email:)
     end
 
-    def login_params # rubocop:disable Metrics/MethodLength
+    def login_params
       params.permit(
         :email,
         :one_time_password_1,
@@ -52,9 +52,7 @@ module Auth
         :one_time_password_3,
         :one_time_password_4,
         :one_time_password_5,
-        :one_time_password_6,
-        :commit,
-        :authenticity_token
+        :one_time_password_6
       )
     end
 

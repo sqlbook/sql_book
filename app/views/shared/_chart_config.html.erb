@@ -26,13 +26,13 @@
           <div>
             <%= form.label :x_axis_key, "Data", class: "label block" %>
             <div class="select">
-              <%= form.select :x_axis_key, @query.query_result.columns, {}, { "data-action": "data-source-query#changeSchema" } %>
+              <%= form.select :x_axis_key, options_for_select(@query.query_result.columns, @query.chart_config[:x_axis_key]), {}, { "data-action": "data-source-query#changeSchema" } %>
               <i class="ri-arrow-drop-down-line"></i>
             </div>
           </div>
           <div>
             <%= form.label :x_axis_label, "Label", class: "label block" %>
-            <%= form.text_field :x_axis_label, class: "input block fluid", value: @query.query_result.columns.first.humanize %>
+            <%= form.text_field :x_axis_label, class: "input block fluid", value: @query.chart_config[:x_axis_label] %>
           </div>
         </div>
 
@@ -40,7 +40,7 @@
         <div class="inline">
           <div>
             <%= form.label :x_axis_label_enabled, class: "checkbox" do %>
-              <%= form.check_box :x_axis_label_enabled %>
+              <%= form.check_box :x_axis_label_enabled, checked: @query.chart_config[:x_axis_label_enabled] %>
               <div class="check">
                 <i class="ri-check-line"></i>
               </div>
@@ -49,7 +49,7 @@
           </div>
           <div>
             <%= form.label :x_axis_gridlines_enabled, class: "checkbox" do %>
-              <%= form.check_box :x_axis_gridlines_enabled %>
+              <%= form.check_box :x_axis_gridlines_enabled, checked: @query.chart_config[:x_axis_gridlines_enabled] %>
               <div class="check">
                 <i class="ri-check-line"></i>
               </div>
@@ -60,19 +60,19 @@
 
         <div class="divider spacing-top"></div>
 
-        <p>Y-Axis</p>
+        <p class="spacing-top">Y-Axis</p>
 
         <div class="split">
           <div>
             <%= form.label :y_axis_key, "Data", class: "label block" %>
             <div class="select">
-              <%= form.select :y_axis_key, @query.query_result.columns, {}, { "data-action": "data-source-query#changeSchema" } %>
+              <%= form.select :y_axis_key, options_for_select(@query.query_result.columns, @query.chart_config[:y_axis_key]), {}, { "data-action": "data-source-query#changeSchema" } %>
               <i class="ri-arrow-drop-down-line"></i>
             </div>
           </div>
           <div>
             <%= form.label :y_axis_label, "Label", class: "label block" %>
-            <%= form.text_field :y_axis_label, class: "input block fluid", value: @query.query_result.columns.first.humanize %>
+            <%= form.text_field :y_axis_label, class: "input block fluid", value: @query.chart_config[:y_axis_label] %>
           </div>
         </div>
 
@@ -80,7 +80,7 @@
         <div class="inline">
           <div>
             <%= form.label :y_axis_label_enabled, class: "checkbox" do %>
-              <%= form.check_box :y_axis_label_enabled %>
+              <%= form.check_box :y_axis_label_enabled, checked: @query.chart_config[:y_axis_label_enabled] %>
               <div class="check">
                 <i class="ri-check-line"></i>
               </div>
@@ -89,7 +89,7 @@
           </div>
           <div>
             <%= form.label :y_axis_gridlines_enabled, class: "checkbox" do %>
-              <%= form.check_box :y_axis_gridlines_enabled %>
+              <%= form.check_box :y_axis_gridlines_enabled, checked: @query.chart_config[:y_axis_gridlines_enabled] %>
               <div class="check">
                 <i class="ri-check-line"></i>
               </div>
@@ -115,7 +115,7 @@
         <div class="inline">
           <div>
             <%= form.label :title_enabled, class: "checkbox" do %>
-              <%= form.check_box :title_enabled %>
+              <%= form.check_box :title_enabled, checked: @query.chart_config[:title_enabled] %>
               <div class="check">
                 <i class="ri-check-line"></i>
               </div>
@@ -124,7 +124,7 @@
           </div>
           <div>
             <%= form.label :subtitle_enabled, class: "checkbox" do %>
-              <%= form.check_box :subtitle_enabled %>
+              <%= form.check_box :subtitle_enabled, checked: @query.chart_config[:subtitle_enabled] %>
               <div class="check">
                 <i class="ri-check-line"></i>
               </div>
@@ -139,7 +139,7 @@
         <div class="inline">
           <div>
             <%= form.label :legend_enabled_true, class: "radio" do %>
-              <%= form.radio_button :legend_enabled, true %>
+              <%= form.radio_button :legend_enabled, true, checked: @query.chart_config[:legend_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -148,7 +148,7 @@
           </div>
           <div>
             <%= form.label :legend_enabled_false, class: "radio" do %>
-              <%= form.radio_button :legend_enabled, false %>
+              <%= form.radio_button :legend_enabled, false, checked: !@query.chart_config[:legend_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -161,7 +161,7 @@
         <div class="inline">
           <div>
             <%= form.label :position_top, class: "radio" do %>
-              <%= form.radio_button :position, 'top' %>
+              <%= form.radio_button :position, 'top', checked: @query.chart_config[:position] == 'top' %>
               <div class="check">
                 <span></span>
               </div>
@@ -170,7 +170,7 @@
           </div>
           <div>
             <%= form.label :position_right, class: "radio" do %>
-              <%= form.radio_button :position, 'right' %>
+              <%= form.radio_button :position, 'right', checked: @query.chart_config[:position] == 'right' %>
               <div class="check">
                 <span></span>
               </div>
@@ -179,7 +179,7 @@
           </div>
           <div>
             <%= form.label :position_bottom, class: "radio" do %>
-              <%= form.radio_button :position, 'bottom' %>
+              <%= form.radio_button :position, 'bottom', checked: @query.chart_config[:position] == 'bottom' %>
               <div class="check">
                 <span></span>
               </div>
@@ -188,7 +188,7 @@
           </div>
           <div>
             <%= form.label :position_left, class: "radio" do %>
-              <%= form.radio_button :position, 'left' %>
+              <%= form.radio_button :position, 'left', checked: @query.chart_config[:position] == 'left' %>
               <div class="check">
                 <span></span>
               </div>
@@ -201,7 +201,7 @@
         <div class="inline">
           <div>
             <%= form.label :alignment_left, class: "radio" do %>
-              <%= form.radio_button :alignment, 'left' %>
+              <%= form.radio_button :alignment, 'left', checked: @query.chart_config[:alignment] == 'left' %>
               <div class="check">
                 <span></span>
               </div>
@@ -210,7 +210,7 @@
           </div>
           <div>
             <%= form.label :alignment_centre, class: "radio" do %>
-              <%= form.radio_button :alignment, 'centre' %>
+              <%= form.radio_button :alignment, 'centre', checked: @query.chart_config[:alignment] == 'centre' %>
               <div class="check">
                 <span></span>
               </div>
@@ -219,7 +219,7 @@
           </div>
           <div>
             <%= form.label :alignment_right, class: "radio" do %>
-              <%= form.radio_button :alignment, 'right' %>
+              <%= form.radio_button :alignment, 'right', checked: @query.chart_config[:alignment] == 'right' %>
               <div class="check">
                 <span></span>
               </div>
@@ -238,7 +238,7 @@
         <div class="inline">
           <div>
             <%= form.label :tooltips_enabled_true, class: "radio" do %>
-              <%= form.radio_button :tooltips_enabled, true %>
+              <%= form.radio_button :tooltips_enabled, true, checked: @query.chart_config[:tooltips_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -247,7 +247,7 @@
           </div>
           <div>
             <%= form.label :tooltips_enabled_false, class: "radio" do %>
-              <%= form.radio_button :tooltips_enabled, false %>
+              <%= form.radio_button :tooltips_enabled, false, checked: !@query.chart_config[:tooltips_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -260,7 +260,7 @@
         <div class="inline">
           <div>
             <%= form.label :zooming_enabled_true, class: "radio" do %>
-              <%= form.radio_button :zooming_enabled, true %>
+              <%= form.radio_button :zooming_enabled, true, checked: @query.chart_config[:zooming_enabled] %>
               <div class="check">
                 <span></span>
               </div>
@@ -269,7 +269,7 @@
           </div>
           <div>
             <%= form.label :zooming_enabled_false, class: "radio" do %>
-              <%= form.radio_button :zooming_enabled, false %>
+              <%= form.radio_button :zooming_enabled, false, checked: !@query.chart_config[:zooming_enabled] %>
               <div class="check">
                 <span></span>
               </div>

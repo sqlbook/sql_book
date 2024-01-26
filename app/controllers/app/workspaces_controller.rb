@@ -39,12 +39,7 @@ module App
     end
 
     def workspace_params
-      params.permit(
-        :name,
-        :commit,
-        :authenticity_token,
-        :action
-      )
+      params.permit(:name)
     end
 
     def create_workspace!

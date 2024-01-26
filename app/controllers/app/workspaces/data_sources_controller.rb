@@ -66,12 +66,7 @@ module App
       end
 
       def data_source_params
-        params.permit(
-          :url,
-          :commit,
-          :authenticity_token,
-          :action
-        )
+        params.permit(:url)
       end
 
       def handle_invalid_data_source_create(data_source)

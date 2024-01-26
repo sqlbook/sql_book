@@ -235,17 +235,26 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       let(:query) { create(:query, data_source:) }
 
       let(:params) do
-        { # TODO
-
+        {
+          **query.chart_config,
+          title: 'My chart'
         }
       end
 
       it 'updates the query' do
-        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params:)
+        expect do
+          put(
+            "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/chart_config",
+            params:
+          )
+        end
+          .to change { query.reload.chart_config[:title] }
+          .from(nil)
+          .to('My chart')
       end
 
       it 'redirects to the query show page' do
-        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params:)
+        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/chart_config", params:)
 
         expect(response).to redirect_to(
           app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')

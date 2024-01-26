@@ -17,4 +17,38 @@ class Query < ApplicationRecord
   def query_result
     @query_result ||= QueryService.new(query: self).execute
   end
+
+  def chart_config
+    return self[:chart_config].symbolize_keys unless self[:chart_config].empty?
+
+    chart_config_detaults
+  end
+
+  private
+
+  def chart_config_detaults
+    {
+      # Data accordion
+      x_axis_key: query_result.columns.first,
+      x_axis_label: query_result.columns.first.humanize,
+      x_axis_label_enabled: true,
+      x_axis_gridlines_enabled: true,
+      y_axis_key: query_result.columns.last,
+      y_axis_label: query_result.columns.last.humanize,
+      y_axis_label_enabled: true,
+      y_axis_gridlines_enabled: false,
+      # Appearance accordion
+      title: nil,
+      title_enabled: true,
+      subtitle: nil,
+      subtitle_enabled: true,
+      legend_enabled: true,
+      position: 'top',
+      alignment: 'left',
+      colors: [],
+      # Other accordion
+      tooltips_enabled: true,
+      zooming_enabled: false
+    }
+  end
 end
