@@ -139,7 +139,8 @@ CREATE TABLE public.queries (
     last_updated_by_id bigint,
     data_source_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    chart_config jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 

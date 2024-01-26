@@ -11,21 +11,25 @@
     <% end %>
   </div>
 
-  <div class="preview">
-    <h4 class="title cream-250">Title</h4>
-    <p class="subtitle gray-300">Subtitle text string</p>
-    <div class="chart"></div>
+  <div data-controller="chart-config">
+    <%= form_with url: chart_config_app_workspace_data_source_queries_path(@workspace, @data_source, @query), method: :put, html: { "data-chart-config-target": "form" } do |form| %>
+      <div class="preview">
+        <h4 class="title cream-250">Title</h4>
+        <p class="subtitle gray-300">Subtitle text string</p>
+        <div class="chart"></div>
+      </div>
+
+      <%= render "shared/accordion", label: "Data" do %>
+        <p>Data</p>
+      <% end %>
+
+      <%= render "shared/accordion", label: "Appearance" do %>
+        <p>Appearance</p>
+      <% end %>
+
+      <%= render "shared/accordion", label: "Other" do %>
+        <p>Other</p>
+      <% end %>
+    <% end %>
   </div>
-
-  <%= render "shared/accordion", label: "Data" do %>
-    <p>Data</p>
-  <% end %>
-
-  <%= render "shared/accordion", label: "Appearance" do %>
-    <p>Appearance</p>
-  <% end %>
-
-  <%= render "shared/accordion", label: "Other" do %>
-    <p>Other</p>
-  <% end %>
 </div>

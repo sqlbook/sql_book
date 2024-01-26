@@ -6,6 +6,7 @@ import { application } from './application';
 
 import AccordionController from './accordion_controller';
 import BodyController from './body_controller';
+import ChartConfigController from './chart_config_controller';
 import ChartGalleryController from './chart_gallery_controller';
 import ClipboardController from './clipboard_controller';
 import DataSourceQueryController from './data_source_query_controller';
@@ -18,6 +19,7 @@ import SearchController from './search_controller';
 
 application.register('accordion', AccordionController);
 application.register('body', BodyController);
+application.register('chart-config', ChartConfigController);
 application.register('chart-gallery', ChartGalleryController);
 application.register('clipboard', ClipboardController);
 application.register('data-source-query', DataSourceQueryController);

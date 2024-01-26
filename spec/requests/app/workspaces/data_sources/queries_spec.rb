@@ -198,6 +198,15 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
           .to('line')
       end
 
+      it 'redirects to the query show page' do
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
+            params: { chart_type: 'line' }
+
+        expect(response).to redirect_to(
+          app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
+        )
+      end
+
       context 'when discarding the chart type' do
         let(:query) { create(:query, data_source:, chart_type: 'line') }
 
@@ -210,6 +219,37 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
             .from('line')
             .to(nil)
         end
+
+        it 'redirects to the query show page' do
+          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
+              params: { chart_type: 'line' }
+
+          expect(response).to redirect_to(
+            app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
+          )
+        end
+      end
+    end
+
+    context 'when updating the chart config' do
+      let(:query) { create(:query, data_source:) }
+
+      let(:params) do
+        { # TODO
+
+        }
+      end
+
+      it 'updates the query' do
+        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params:)
+      end
+
+      it 'redirects to the query show page' do
+        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params:)
+
+        expect(response).to redirect_to(
+          app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
+        )
       end
     end
   end

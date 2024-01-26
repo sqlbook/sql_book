@@ -32,6 +32,12 @@ module App
           redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: query_redirect_tab)
         end
 
+        def chart_config
+          query.update(chart_config_params)
+
+          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
+        end
+
         private
 
         def workspace
@@ -54,12 +60,47 @@ module App
           params.permit(:chart_type, :query, :name)
         end
 
+        def chart_config_params # rubocop:disable Metrics/MethodLength
+          params.permit(
+            # Data accordion
+            :x_axis_key,
+            :x_axis_label,
+            :x_axis_label_enabled,
+            :x_axis_gridlines_enabled,
+            :y_axis_key,
+            :y_axis_label,
+            :y_axis_label_enabled,
+            :y_axis_gridlines_enabled,
+            # Appearance accordion
+            :title,
+            :title_enabled,
+            :subtitle,
+            :subtitle_enabled,
+            :legend_enabled,
+            :position,
+            :alignment,
+            :colors,
+            # Other accordion
+            :tooltips_enabled,
+            :zooming_enabled
+          )
+        end
+
         def query_update_params
           params = {}
-
+          # TODO: Skip update if the query has not changed
           params.merge!(query_params)
           params[:last_updated_by] = current_user
           params[:saved] = true if query_params[:name]
+
+          params
+        end
+
+        def query_chart_config_params
+          params = {}
+
+          params.merge!(chart_config_params)
+          params[:last_updated_by] = current_user
 
           params
         end
