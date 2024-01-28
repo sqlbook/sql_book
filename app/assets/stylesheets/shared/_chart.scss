@@ -1,0 +1,51 @@
+.chart-container {
+  .title {
+    margin: 0 0 .5rem 0;
+  }
+
+  .subtitle {
+    margin: 0;
+  }
+
+  .chart {
+    height: 18rem;
+    margin: 1rem 0 0 0;
+
+    // billboard specific styles
+
+    text {
+      font-size: .75rem;
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    .tick {
+      text {
+        fill: var(--gray-250);
+      }
+    }
+
+    .domain {
+      stroke: none;
+    }
+
+    .bb-axis-y-label,
+    .bb-axis-x-label {
+      fill: var(--gray-200);
+    }
+
+    .bb-legend-item {
+      text {
+        fill: var(--gray-250);
+      }
+    }
+
+    .bb-xgrid,
+    .bb-ygrid {
+      stroke: var(--gray-700);
+    }
+
+    .bb-xgrid-focus {
+      stroke: var(--gray-500);
+    }
+  }
+}

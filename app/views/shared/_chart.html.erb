@@ -1,0 +1,15 @@
+<div class="chart-container">
+  <% if chart_config[:title_enabled] %>
+    <h4 class="title cream-250">
+      <%= chart_config[:title] || 'Title' %>
+    </h4>
+  <% end %>
+
+  <% if chart_config[:subtitle_enabled] %>
+    <p class="subtitle gray-300">
+      <%= chart_config[:subtitle] || 'Subtitle text string' %>
+    </p>
+  <% end %>
+
+  <div id="chart" class="chart" data-controller="chart" data-chart-config-value="<%= chart_config.to_json %>"></div>
+</div>

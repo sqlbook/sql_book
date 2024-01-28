@@ -55,7 +55,6 @@ RSpec.describe Query, type: :model do
           subtitle_enabled: true,
           legend_enabled: true,
           position: 'top',
-          alignment: 'left',
           colors: [],
           tooltips_enabled: true,
           zooming_enabled: false

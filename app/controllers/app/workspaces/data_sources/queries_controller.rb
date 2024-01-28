@@ -78,7 +78,6 @@ module App
             :subtitle_enabled,
             :legend_enabled,
             :position,
-            :alignment,
             :colors,
             # Other accordion
             :tooltips_enabled,

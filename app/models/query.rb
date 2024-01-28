@@ -53,8 +53,7 @@ class Query < ApplicationRecord
       subtitle: nil,
       subtitle_enabled: true,
       legend_enabled: true,
-      position: 'top',
-      alignment: 'left',
+      position: 'bottom',
       colors: [],
       # Other accordion
       tooltips_enabled: true,

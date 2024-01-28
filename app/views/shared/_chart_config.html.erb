@@ -14,13 +14,7 @@
   <div data-controller="chart-config">
     <%= form_with url: chart_config_app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, html: { "data-chart-config-target": "form" } do |form| %>
       <div class="preview">
-        <h4 class="title cream-250">
-          <%= @query.chart_config[:title] || 'Title' %>
-        </h4>
-        <p class="subtitle gray-300">
-          <%= @query.chart_config[:subtitle] || 'Subtitle text string' %>
-        </p>
-        <div class="chart"></div>
+        <%= render "shared/chart", chart_config: @query.chart_config %>
       </div>
 
       <%= render "shared/accordion", label: "Data" do %>
@@ -164,12 +158,12 @@
         <%= form.label "Position", class: "label block spacing-top" %>
         <div class="inline">
           <div>
-            <%= form.label :position_top, class: "radio" do %>
-              <%= form.radio_button :position, 'top', checked: @query.chart_config[:position] == 'top' %>
+            <%= form.label :position_bottom, class: "radio" do %>
+              <%= form.radio_button :position, 'bottom', checked: @query.chart_config[:position] == 'bottom' %>
               <div class="check">
                 <span></span>
               </div>
-              Top
+              Bottom
             <% end %>
           </div>
           <div>
@@ -182,52 +176,12 @@
             <% end %>
           </div>
           <div>
-            <%= form.label :position_bottom, class: "radio" do %>
-              <%= form.radio_button :position, 'bottom', checked: @query.chart_config[:position] == 'bottom' %>
+            <%= form.label :position_inset, class: "radio" do %>
+              <%= form.radio_button :position, 'inset', checked: @query.chart_config[:position] == 'inset' %>
               <div class="check">
                 <span></span>
               </div>
-              Bottom
-            <% end %>
-          </div>
-          <div>
-            <%= form.label :position_left, class: "radio" do %>
-              <%= form.radio_button :position, 'left', checked: @query.chart_config[:position] == 'left' %>
-              <div class="check">
-                <span></span>
-              </div>
-              Left
-            <% end %>
-          </div>
-        </div>
-
-        <%= form.label "Alignment", class: "label block spacing-top" %>
-        <div class="inline">
-          <div>
-            <%= form.label :alignment_left, class: "radio" do %>
-              <%= form.radio_button :alignment, 'left', checked: @query.chart_config[:alignment] == 'left' %>
-              <div class="check">
-                <span></span>
-              </div>
-              Left
-            <% end %>
-          </div>
-          <div>
-            <%= form.label :alignment_centre, class: "radio" do %>
-              <%= form.radio_button :alignment, 'centre', checked: @query.chart_config[:alignment] == 'centre' %>
-              <div class="check">
-                <span></span>
-              </div>
-              Centre
-            <% end %>
-          </div>
-          <div>
-            <%= form.label :alignment_right, class: "radio" do %>
-              <%= form.radio_button :alignment, 'right', checked: @query.chart_config[:alignment] == 'right' %>
-              <div class="check">
-                <span></span>
-              </div>
-              Right
+              Inset
             <% end %>
           </div>
         </div>

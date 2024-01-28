@@ -1,0 +1,18 @@
+export type ChartConfig = {
+  legend_enabled: boolean;
+  position: 'bottom' | 'right' | 'inset';
+  subtitle: string;
+  subtitle_enabled: boolean;
+  title: string;
+  title_enabled: boolean;
+  tooltips_enabled: boolean;
+  x_axis_gridlines_enabled: boolean;
+  x_axis_key: string;
+  x_axis_label: string;
+  x_axis_label_enabled: boolean;
+  y_axis_gridlines_enabled: boolean;
+  y_axis_key: string;
+  y_axis_label: string;
+  y_axis_label_enabled: boolean;
+  zooming_enabled: boolean;
+}
