@@ -1,6 +1,7 @@
 export type ChartConfig = {
+  colors: string[],
   legend_enabled: boolean;
-  position: 'bottom' | 'right' | 'inset';
+  position: 'top' | 'bottom' | 'right' | 'left';
   subtitle: string;
   subtitle_enabled: boolean;
   title: string;

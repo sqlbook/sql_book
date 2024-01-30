@@ -38,7 +38,6 @@ class Query < ApplicationRecord
 
   def chart_config_detaults
     {
-      # Data accordion
       x_axis_key: query_result.columns.first,
       x_axis_label: query_result.columns.first&.humanize,
       x_axis_label_enabled: true,
@@ -47,15 +46,13 @@ class Query < ApplicationRecord
       y_axis_label: query_result.columns.last&.humanize,
       y_axis_label_enabled: true,
       y_axis_gridlines_enabled: false,
-      # Appearance accordion
-      title: nil,
+      title: 'Title',
       title_enabled: true,
-      subtitle: nil,
+      subtitle: 'Subtitle text string',
       subtitle_enabled: true,
       legend_enabled: true,
-      position: 'bottom',
-      colors: [],
-      # Other accordion
+      position: 'top',
+      colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
       tooltips_enabled: true,
       zooming_enabled: false
     }

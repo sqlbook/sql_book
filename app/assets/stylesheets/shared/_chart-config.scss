@@ -60,4 +60,17 @@
       margin-top: 1.5rem;
     }
   }
+
+  .colors {
+    align-items: center;
+    display: flex;
+    margin: 1rem 0 0 0;
+
+    .color {
+      border-radius: var(--border-radius-o);
+      height: 2rem;
+      margin: 0 1rem 0 0;
+      width: 2rem;
+    }
+  }
 }

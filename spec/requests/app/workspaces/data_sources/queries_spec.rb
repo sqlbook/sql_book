@@ -249,7 +249,7 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
           )
         end
           .to change { query.reload.chart_config[:title] }
-          .from(nil)
+          .from('Title')
           .to('My chart')
       end
 

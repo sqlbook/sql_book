@@ -31,6 +31,10 @@ class QueryService
     data&.columns.to_a
   end
 
+  def to_json(*)
+    { rows:, columns: }.to_json
+  end
+
   private
 
   def normalized_query

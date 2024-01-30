@@ -62,7 +62,6 @@ module App
 
         def chart_config_params # rubocop:disable Metrics/MethodLength
           params.permit(
-            # Data accordion
             :x_axis_key,
             :x_axis_label,
             :x_axis_label_enabled,
@@ -71,17 +70,15 @@ module App
             :y_axis_label,
             :y_axis_label_enabled,
             :y_axis_gridlines_enabled,
-            # Appearance accordion
             :title,
             :title_enabled,
             :subtitle,
             :subtitle_enabled,
             :legend_enabled,
             :position,
-            :colors,
-            # Other accordion
             :tooltips_enabled,
-            :zooming_enabled
+            :zooming_enabled,
+            colors: []
           )
         end
 
