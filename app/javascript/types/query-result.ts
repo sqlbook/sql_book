@@ -1,4 +1,1 @@
-export type QueryResult = {
-  columns: string[];
-  rows: string[][];
-}
+export type QueryResult = Record<string, string>[];

@@ -75,7 +75,8 @@ module App
             :subtitle,
             :subtitle_enabled,
             :legend_enabled,
-            :position,
+            :legend_position,
+            :legend_alignment,
             :tooltips_enabled,
             :zooming_enabled,
             colors: []

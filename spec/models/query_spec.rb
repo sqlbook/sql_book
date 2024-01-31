@@ -54,7 +54,8 @@ RSpec.describe Query, type: :model do
           subtitle: 'Subtitle text string',
           subtitle_enabled: true,
           legend_enabled: true,
-          position: 'top',
+          legend_position: 'top',
+          legend_alignment: 'start',
           colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
           tooltips_enabled: true,
           zooming_enabled: false
@@ -80,8 +81,8 @@ RSpec.describe Query, type: :model do
           subtitle: 'My subtitle',
           subtitle_enabled: true,
           legend_enabled: true,
-          position: 'top',
-          alignment: 'centre',
+          legend_position: 'top',
+          legend_alignment: 'center',
           colors: [],
           tooltips_enabled: true,
           zooming_enabled: false

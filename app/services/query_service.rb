@@ -32,7 +32,7 @@ class QueryService
   end
 
   def to_json(*)
-    { rows:, columns: }.to_json
+    data.to_json # TODO: Test this
   end
 
   private

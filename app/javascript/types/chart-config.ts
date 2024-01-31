@@ -1,7 +1,8 @@
 export type ChartConfig = {
   colors: string[],
   legend_enabled: boolean;
-  position: 'top' | 'bottom' | 'right' | 'left';
+  legend_position: 'top' | 'bottom' | 'right' | 'left';
+  legend_alignment: 'start' | 'center' | 'end',
   subtitle: string;
   subtitle_enabled: boolean;
   title: string;
