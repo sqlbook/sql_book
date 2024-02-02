@@ -3,50 +3,104 @@ default: &default
     label_tag: chart_type_total
     image: 'charts/total.svg'
     label: 'Total'
+    partials:
+      data: []
+      appearance: []
+      other: []
   table:
     label_tag: chart_type_table
     image: 'charts/table.svg'
     label: 'Table'
+    partials:
+      data: []
+      appearance: []
+      other: []
   line:
     label_tag: chart_type_line
     image: 'charts/line.svg'
     label: 'Line'
+    partials:
+      data: []
+      appearance: []
+      other: []
   area:
     label_tag: chart_type_area
     image: 'charts/area.svg'
     label: 'Area'
+    partials:
+      data: []
+      appearance: []
+      other: []
   stacked_area:
     label_tag: chart_type_stacked_area
     image: 'charts/stacked-area.svg'
     label: 'Stacked area'
+    partials:
+      data: []
+      appearance: []
+      other: []
   column:
     label_tag: chart_type_column
     image: 'charts/column.svg'
     label: 'Column'
+    partials:
+      data: []
+      appearance: []
+      other: []
   stacked_column:
     label_tag: chart_type_stacked_column
     image: 'charts/stacked-column.svg'
     label: 'Stacked column'
+    partials:
+      data: []
+      appearance: []
+      other: []
   bar:
     label_tag: chart_type_bar
     image: 'charts/bar.svg'
     label: 'Bar'
+    partials:
+      data: 
+        - x_axis
+        - y_axis
+      appearance:
+        - title
+        - legend
+        - colors
+      other:
+        - tooltips  
   stacked_bar:
     label_tag: chart_type_stacked_bar
     image: 'charts/stacked-bar.svg'
     label: 'Stacked bar'
+    partials:
+      data: []
+      appearance: []
+      other: []
   combo:
     label_tag: chart_type_combo
     image: 'charts/combo.svg'
     label: 'Combo'
+    partials:
+      data: []
+      appearance: []
+      other: []
   pie:
     label_tag: chart_type_pie
     image: 'charts/pie.svg'
     label: 'Pie'
+    partials:
+      data: []
+      appearance: []
+      other: []
   donut:
     label_tag: chart_type_donut
     image: 'charts/donut.svg'
     label: 'Donut'
+    partials:
+      data: []
+      appearance: []
+      other: []
 
 development:
   <<: *default

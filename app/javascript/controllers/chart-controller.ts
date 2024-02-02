@@ -13,9 +13,7 @@ export default class extends Controller<HTMLCanvasElement> {
   declare readonly resultValue: QueryResult;
 
   // TODO: 
-  // - zooming_enabled
   // - colors won't work in light mode
-
   // For each of the supported chart types, return some cofig that needs to be deep merged
 
   public connect(): void {
@@ -31,7 +29,6 @@ export default class extends Controller<HTMLCanvasElement> {
         ],
       },
       options: {
-        indexAxis: 'y',
         plugins: {
           tooltip: {
             enabled: this.configValue.tooltips_enabled,

@@ -78,7 +78,6 @@ module App
             :legend_position,
             :legend_alignment,
             :tooltips_enabled,
-            :zooming_enabled,
             colors: []
           )
         end

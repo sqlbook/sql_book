@@ -16,5 +16,4 @@ export type ChartConfig = {
   y_axis_key: string;
   y_axis_label: string;
   y_axis_label_enabled: boolean;
-  zooming_enabled: boolean;
 }

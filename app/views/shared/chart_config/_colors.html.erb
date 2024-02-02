@@ -1,0 +1,10 @@
+<div class="chart-group colors">
+  <%= form.label "Color array", class: "label block fluid spacing-top" %>
+
+  <div class="color-array">
+    <% query.chart_config[:colors].each do |color| %>
+      <%= form.hidden_field 'colors', value: color, multiple: true %>
+      <div class="color" style="background: <%= color %>"></div>
+    <% end %>
+  </div>
+</div>

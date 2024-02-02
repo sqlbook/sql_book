@@ -1,0 +1,39 @@
+<div class="config-group y-axis">
+  <p class="spacing-top">Y-Axis</p>
+
+  <div class="split">
+    <div>
+      <%= form.label :y_axis_key, "Data", class: "label block" %>
+      <div class="select">
+        <%= form.select :y_axis_key, options_for_select(query.query_result.columns, query.chart_config[:y_axis_key]), {} %>
+        <i class="ri-arrow-drop-down-line"></i>
+      </div>
+    </div>
+    <div>
+      <%= form.label :y_axis_label, "Label", class: "label block" %>
+      <%= form.text_field :y_axis_label, class: "input block fluid", value: query.chart_config[:y_axis_label] %>
+    </div>
+  </div>
+
+  <%= form.label "Show", class: "label block" %>
+  <div class="inline">
+    <div>
+      <%= form.label :y_axis_label_enabled, class: "checkbox" do %>
+        <%= form.check_box :y_axis_label_enabled, checked: query.chart_config[:y_axis_label_enabled] %>
+        <div class="check">
+          <i class="ri-check-line"></i>
+        </div>
+        Label
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :y_axis_gridlines_enabled, class: "checkbox" do %>
+        <%= form.check_box :y_axis_gridlines_enabled, checked: query.chart_config[:y_axis_gridlines_enabled] %>
+        <div class="check">
+          <i class="ri-check-line"></i>
+        </div>
+        Gridlines
+      <% end %>
+    </div>
+  </div>
+</div>

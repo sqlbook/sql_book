@@ -28,10 +28,9 @@ RSpec.describe Query, type: :model do
 
   describe '#before_save' do
     it 'converts "1" and "0" to booleans' do
-      instance.update(chart_config: { x_axis_label_enabled: '1', zooming_enabled: '0' })
+      instance.update(chart_config: { x_axis_label_enabled: '1' })
 
       expect(instance.reload.chart_config[:x_axis_label_enabled]).to eq(true)
-      expect(instance.reload.chart_config[:zooming_enabled]).to eq(false)
     end
   end
 
@@ -57,8 +56,7 @@ RSpec.describe Query, type: :model do
           legend_position: 'top',
           legend_alignment: 'start',
           colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
-          tooltips_enabled: true,
-          zooming_enabled: false
+          tooltips_enabled: true
         )
       end
     end
@@ -84,8 +82,7 @@ RSpec.describe Query, type: :model do
           legend_position: 'top',
           legend_alignment: 'center',
           colors: [],
-          tooltips_enabled: true,
-          zooming_enabled: false
+          tooltips_enabled: true
         }
       end
 

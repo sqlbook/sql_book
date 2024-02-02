@@ -51,17 +51,20 @@
       color: var(--cream-250);
     }
 
-    .divider {
-      background: var(--gray-700);
-      height: 1px;
-    }
-
     .spacing-top {
       margin-top: 1.5rem;
     }
+
+    .config-group {
+      &:not(:last-of-type) {
+        border-bottom: 1px solid var(--gray-700);
+        margin: 0 0 1.5rem 0;
+        padding: 0 0 1.5rem 0;
+      }
+    }
   }
 
-  .colors {
+  .color-array {
     align-items: center;
     display: flex;
     margin: 1rem 0 0 0;

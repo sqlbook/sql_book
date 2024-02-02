@@ -1,0 +1,94 @@
+<div class="config-group legend">
+  <%= form.label "Display legend", class: "label block spacing-top" %>
+  <div class="inline">
+    <div>
+      <%= form.label :legend_enabled_1, class: "radio" do %>
+        <%= form.radio_button :legend_enabled, 1, checked: query.chart_config[:legend_enabled] %>
+        <div class="check">
+          <span></span>
+        </div>
+        Yes
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :legend_enabled_0, class: "radio" do %>
+        <%= form.radio_button :legend_enabled, 0, checked: !query.chart_config[:legend_enabled] %>
+        <div class="check">
+          <span></span>
+        </div>
+        No
+      <% end %>
+    </div>
+  </div>
+
+  <%= form.label "Position", class: "label block spacing-top" %>
+  <div class="inline">
+    <div>
+      <%= form.label :legend_position_top, class: "radio" do %>
+        <%= form.radio_button :legend_position, 'top', checked: query.chart_config[:legend_position] == 'top' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Top
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :legend_position_right, class: "radio" do %>
+        <%= form.radio_button :legend_position, 'right', checked: query.chart_config[:legend_position] == 'right' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Right
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :legend_position_bottom, class: "radio" do %>
+        <%= form.radio_button :legend_position, 'bottom', checked: query.chart_config[:legend_position] == 'bottom' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Bottom
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :legend_position_left, class: "radio" do %>
+        <%= form.radio_button :legend_position, 'left', checked: query.chart_config[:legend_position] == 'left' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Left
+      <% end %>
+    </div>
+  </div>
+
+  <%= form.label "Alignment", class: "label block spacing-top" %>
+  <div class="inline">
+    <div>
+      <%= form.label :legend_alignment_start, class: "radio" do %>
+        <%= form.radio_button :legend_alignment, 'start', checked: query.chart_config[:legend_alignment] == 'start' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Left
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :legend_alignment_center, class: "radio" do %>
+        <%= form.radio_button :legend_alignment, 'center', checked: query.chart_config[:legend_alignment] == 'center' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Center
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :legend_alignment_end, class: "radio" do %>
+        <%= form.radio_button :legend_alignment, 'end', checked: query.chart_config[:legend_alignment] == 'end' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Right
+      <% end %>
+    </div>
+  </div>
+  </div>

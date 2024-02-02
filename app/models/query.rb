@@ -54,8 +54,7 @@ class Query < ApplicationRecord
       legend_position: 'top',
       legend_alignment: 'start',
       colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
-      tooltips_enabled: true,
-      zooming_enabled: false
+      tooltips_enabled: true
     }
   end
 end

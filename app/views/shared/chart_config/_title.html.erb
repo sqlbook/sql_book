@@ -1,0 +1,34 @@
+<div class="config-group title">
+  <div class="split">
+    <div>
+      <%= form.label :title, "Title", class: "label block" %>
+      <%= form.text_field :title, class: "input block fluid", placeholder: "e.g. Visitor Count", value: query.chart_config[:title] %>
+    </div>
+    <div>
+      <%= form.label :subtitle, "Subtitle", class: "label block" %>
+      <%= form.text_field :subtitle, class: "input block fluid", placeholder: "e.g. 6-month growth", value: query.chart_config[:subtitle] %>
+    </div>
+  </div>
+
+  <%= form.label "Show", class: "label block" %>
+  <div class="inline">
+    <div>
+      <%= form.label :title_enabled, class: "checkbox" do %>
+        <%= form.check_box :title_enabled, checked: query.chart_config[:title_enabled] %>
+        <div class="check">
+          <i class="ri-check-line"></i>
+        </div>
+        Title
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :subtitle_enabled, class: "checkbox" do %>
+        <%= form.check_box :subtitle_enabled, checked: query.chart_config[:subtitle_enabled] %>
+        <div class="check">
+          <i class="ri-check-line"></i>
+        </div>
+        Subtitle
+      <% end %>
+    </div>
+  </div>
+</div>
