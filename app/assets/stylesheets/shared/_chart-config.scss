@@ -55,6 +55,10 @@
       margin-top: 1.5rem;
     }
 
+    .no-spacing {
+      margin: 0;
+    }
+
     .config-group {
       &:not(:last-of-type) {
         border-bottom: 1px solid var(--gray-700);

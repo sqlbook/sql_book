@@ -78,6 +78,10 @@ module App
             :legend_position,
             :legend_alignment,
             :tooltips_enabled,
+            :data_column,
+            :post_text_label_enabled,
+            :post_text_label,
+            :post_text_label_position,
             colors: []
           )
         end

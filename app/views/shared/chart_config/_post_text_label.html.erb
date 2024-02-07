@@ -1,0 +1,53 @@
+<div class="config-group post-text-label">
+  <%= form.label "Display post-text label", class: "label block" %>
+  <div class="inline">
+    <div>
+      <%= form.label :post_text_label_enabled_1, class: "radio" do %>
+        <%= form.radio_button :post_text_label_enabled, 1, checked: @query.chart_config[:post_text_label_enabled] %>
+        <div class="check">
+          <span></span>
+        </div>
+        Yes
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :post_text_label_enabled_0, class: "radio" do %>
+        <%= form.radio_button :post_text_label_enabled, 0, checked: !@query.chart_config[:post_text_label_enabled] %>
+        <div class="check">
+          <span></span>
+        </div>
+        No
+      <% end %>
+    </div>
+  </div>
+
+  <div class="split spacing-top">
+    <div>
+      <%= form.label :post_text_label, "Label", class: "label block" %>
+      <%= form.text_field :post_text_label, class: "input block fluid", value: query.chart_config[:post_text_label] %>
+    </div>
+    <div></div>
+  </div>
+
+  <%= form.label "Position", class: "label block spacing-top" %>
+  <div class="inline">
+    <div>
+      <%= form.label :post_text_label_position_right, class: "radio" do %>
+        <%= form.radio_button :post_text_label_position, 'right', checked: query.chart_config[:post_text_label_position] == 'right' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Right
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :post_text_label_position_bottom, class: "radio" do %>
+        <%= form.radio_button :post_text_label_position, 'bottom', checked: query.chart_config[:post_text_label_position] == 'bottom' %>
+        <div class="check">
+          <span></span>
+        </div>
+        Bottom
+      <% end %>
+    </div>
+  </div>
+</div>

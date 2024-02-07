@@ -4,9 +4,13 @@ default: &default
     image: 'charts/total.svg'
     label: 'Total'
     partials:
-      data: []
-      appearance: []
-      other: []
+      data:
+        - data_column
+      appearance:
+        - title
+        - colors
+      other:
+        - post_text_label
   table:
     label_tag: chart_type_table
     image: 'charts/table.svg'

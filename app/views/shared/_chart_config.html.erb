@@ -14,7 +14,7 @@
   <div data-controller="chart-config">
     <%= form_with url: chart_config_app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, html: { "data-chart-config-target": "form" } do |form| %>
       <div class="preview">
-        <%= render "shared/chart", chart_config: @query.chart_config, query_result: @query.query_result %>
+        <%= render "shared/chart", query: @query %>
       </div>
 
       <%= render "shared/accordion", label: "Data" do %>

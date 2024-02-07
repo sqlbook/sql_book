@@ -1,0 +1,12 @@
+<div class="config-group data-column">
+  <div class="split no-spacing">
+    <div>
+      <%= form.label :data_column, "Data", class: "label block" %>
+      <div class="select">
+        <%= form.select :data_column, options_for_select(query.query_result.columns, query.chart_config[:data_column]), {} %>
+        <i class="ri-arrow-drop-down-line"></i>
+      </div>
+    </div>
+    <div></div>
+  </div>
+</div>

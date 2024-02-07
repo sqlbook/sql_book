@@ -36,7 +36,7 @@ class Query < ApplicationRecord
     end
   end
 
-  def chart_config_detaults
+  def chart_config_detaults # rubocop:disable Metrics/AbcSize
     {
       x_axis_key: query_result.columns.first,
       x_axis_label: query_result.columns.first&.humanize,
@@ -54,7 +54,11 @@ class Query < ApplicationRecord
       legend_position: 'top',
       legend_alignment: 'start',
       colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
-      tooltips_enabled: true
+      tooltips_enabled: true,
+      data_column: query_result.columns.first,
+      post_text_label_enabled: true,
+      post_text_label: 'post-text-label',
+      post_text_label_position: 'right'
     }
   end
 end
