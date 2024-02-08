@@ -16,4 +16,6 @@ export type ChartConfig = {
   y_axis_key: string;
   y_axis_label: string;
   y_axis_label_enabled: boolean;
+  pagination_rows: number;
+  pagination_enabled: boolean;
 }

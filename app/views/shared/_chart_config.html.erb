@@ -17,21 +17,27 @@
         <%= render "shared/chart", query: @query %>
       </div>
 
-      <%= render "shared/accordion", label: "Data" do %>
-        <% config_partials_for(chart_type: @query.chart_type, group: :data).each do |partial| %>
-          <%= render "shared/chart_config/#{partial}", form:, query: @query %>
+      <% config_partials_for(chart_type: @query.chart_type, group: :data) do |partials| %>
+        <%= render "shared/accordion", label: "Data" do %>
+          <% partials.each do |partial| %>
+            <%= render "shared/chart_config/#{partial}", form:, query: @query %>
+          <% end %>
         <% end %>
       <% end %>
 
-      <%= render "shared/accordion", label: "Appearance" do %>
-        <% config_partials_for(chart_type: @query.chart_type, group: :appearance).each do |partial| %>
-          <%= render "shared/chart_config/#{partial}", form:, query: @query %>
+      <% config_partials_for(chart_type: @query.chart_type, group: :appearance) do |partials| %>
+        <%= render "shared/accordion", label: "Appearance" do %>
+          <% partials.each do |partial| %>
+            <%= render "shared/chart_config/#{partial}", form:, query: @query %>
+          <% end %>
         <% end %>
       <% end %>
 
-      <%= render "shared/accordion", label: "Other" do %>
-        <% config_partials_for(chart_type: @query.chart_type, group: :other).each do |partial| %>
-          <%= render "shared/chart_config/#{partial}", form:, query: @query %>
+      <% config_partials_for(chart_type: @query.chart_type, group: :other) do |partials| %>
+        <%= render "shared/accordion", label: "Other" do %>
+          <% partials.each do |partial| %>
+            <%= render "shared/chart_config/#{partial}", form:, query: @query %>
+          <% end %>
         <% end %>
       <% end %>
     <% end %>

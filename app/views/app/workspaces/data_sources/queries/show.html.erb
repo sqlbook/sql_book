@@ -14,7 +14,7 @@
     <% if @query.query_result.error %>
       <p class="red-500"><%= @query.query_result.error_message %></p>
     <% else %>
-      <%= render "shared/query_results_table", query_result: @query.query_result %>
+      <%= render "shared/query_results_table", query: @query %>
     <% end %>
   <% end %>
 

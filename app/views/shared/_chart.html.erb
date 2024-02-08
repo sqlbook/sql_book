@@ -23,7 +23,9 @@
       <% end %>
     </div>
   <% elsif query.chart_type == 'table' %>
-
+    <div class="chart table">
+      <%= render "shared/query_results_table", query: query %>
+    </div>
   <% else %>
     <canvas
       id="chart"
@@ -34,3 +36,4 @@
     ></canvas>
   <% end %>
 </div>
+ 

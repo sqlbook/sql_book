@@ -58,7 +58,9 @@ class Query < ApplicationRecord
       data_column: query_result.columns.first,
       post_text_label_enabled: true,
       post_text_label: 'post-text-label',
-      post_text_label_position: 'right'
+      post_text_label_position: 'right',
+      pagination_rows: 10,
+      pagination_enabled: true
     }
   end
 end

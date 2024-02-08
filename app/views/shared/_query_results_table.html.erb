@@ -1,22 +1,49 @@
-<div class="query-results-table">
-  <table>
-    <tr>
-      <% query_result.columns.each do |col| %>
-        <th><%= col %></th>
-      <% end %>
-    </tr>
-    <% query_result.rows.each do |row| %>
+<div
+  class="query-results"
+  data-controller="query-results-table" 
+  data-query-results-table-config-value="<%= query.chart_config.to_json %>"
+  data-query-results-table-result-value="<%= query.query_result.to_json %>"
+>
+  <div class="query-results-table">
+    <table>
       <tr>
-        <% query_result.columns.each_with_index do |_, index| %>
-          <td>
-            <% if row[index] %>
-              <%= row[index] %>
-            <% else %>
-              <span class="null">NULL</span>
-            <% end %>
-          </td>
+        <% query.query_result.columns.each do |col| %>
+          <th><%= col %></th>
         <% end %>
       </tr>
-    <% end %>
-  </table>
+      <% query.query_result.rows.each do |row| %>
+        <tr>
+          <% query.query_result.columns.each_with_index do |_, index| %>
+            <td>
+              <% if row[index] %>
+                <%= row[index] %>
+              <% else %>
+                <span class="null">NULL</span>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+  <% if query.chart_config[:pagination_enabled] %>
+    <div class="pagination">
+      <button type="button" class="link disabled" data-query-results-table-target="start" data-action="query-results-table#start">
+        <i class="ri-arrow-left-double-line gray-500"></i>
+      </button>
+      <button type="button" class="link disabled" data-query-results-table-target="prev" data-action="query-results-table#prev">
+        <i class="ri-arrow-left-s-line gray-500"></i>
+      </button>
+      <div class="page">
+        <span class="current-page" data-query-results-table-target="currentPage">0</span> <span class="gray-500">of</span> <span class="total-pages" data-query-results-table-target="totalPages">0</span>
+      </div>
+      <button type="button" class="link" data-query-results-table-target="next" data-action="query-results-table#next">
+        <i class="ri-arrow-right-s-line gray-500"></i>
+      </button>
+      <button type="button" class="link" data-query-results-table-target="end" data-action="query-results-table#end">
+        <i class="ri-arrow-right-double-line gray-500"></i>
+      </button>
+    </div>
+  <% end %>
 </div>

@@ -82,6 +82,8 @@ module App
             :post_text_label_enabled,
             :post_text_label,
             :post_text_label_position,
+            :pagination_rows,
+            :pagination_enabled,
             colors: []
           )
         end

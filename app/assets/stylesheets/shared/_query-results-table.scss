@@ -1,4 +1,42 @@
-.query-results-table {
-  overflow: auto;
-  padding-bottom: 1rem;
+.query-results {
+  .query-results-table {
+    overflow: auto;
+    padding-bottom: 1rem;
+  }
+
+  .pagination {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0 0 0;
+
+    .link {
+      align-items: center;
+      border: 1px solid var(--gray-700);
+      border-radius: var(--border-radius-o);
+      display: flex;
+      height: 1.5rem;
+      justify-content: center;
+      margin: 0 .25rem;
+      padding: 0;
+      width: 1.5rem;
+
+      &.disabled {
+        pointer-events: none;
+
+        i {
+          color: var(--gray-700);
+        }
+      }
+
+      &:hover {
+        background: var(--gray-900);
+        border-color: var(--red-500);
+      }
+    }
+
+    .page {
+      margin: 0 .5rem;
+    }
+  }
 }

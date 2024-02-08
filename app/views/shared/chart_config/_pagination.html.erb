@@ -1,0 +1,31 @@
+<div class="config-group pagination">
+  <%= form.label "Use pagination", class: "label block" %>
+  <div class="inline">
+    <div>
+      <%= form.label :pagination_enabled_1, class: "radio" do %>
+        <%= form.radio_button :pagination_enabled, 1, checked: @query.chart_config[:pagination_enabled] %>
+        <div class="check">
+          <span></span>
+        </div>
+        Yes
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :pagination_enabled_0, class: "radio" do %>
+        <%= form.radio_button :pagination_enabled, 0, checked: !@query.chart_config[:pagination_enabled] %>
+        <div class="check">
+          <span></span>
+        </div>
+        No
+      <% end %>
+    </div>
+  </div>
+
+  <div class="container x-sm">
+    <%= form.label :pagination_rows, "Rows per page", class: "label block spacing-top" %>
+    <div class="select">
+      <%= form.select :pagination_rows, options_for_select([10, 25, 50, 100, 250, 500], query.chart_config[:pagination_rows]), {} %>
+      <i class="ri-arrow-drop-down-line"></i>
+    </div>
+  </div>
+</div>

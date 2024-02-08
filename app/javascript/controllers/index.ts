@@ -15,6 +15,7 @@ import DataSourceVerificationController from './data-source-verification-control
 import FormController from './form-controller';
 import MenuController from './menu-controller';
 import OtpController from './otp-controller';
+import QueryResultsTableController from './query-results-table-controller';
 import ResizeablePageController from './resizeable-page-controller';
 import SearchController from './search-controller';
 
@@ -29,5 +30,6 @@ application.register('data-source-verification', DataSourceVerificationControlle
 application.register('form', FormController);
 application.register('menu', MenuController);
 application.register('otp', OtpController);
+application.register('query-results-table', QueryResultsTableController);
 application.register('resizeable-page', ResizeablePageController);
 application.register('search', SearchController);

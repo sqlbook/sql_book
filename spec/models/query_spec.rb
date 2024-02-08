@@ -56,6 +56,12 @@ RSpec.describe Query, type: :model do
           legend_position: 'top',
           legend_alignment: 'start',
           colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
+          data_column: 'col_1',
+          pagination_enabled: true,
+          pagination_rows: 10,
+          post_text_label: 'post-text-label',
+          post_text_label_enabled: true,
+          post_text_label_position: 'right',
           tooltips_enabled: true
         )
       end

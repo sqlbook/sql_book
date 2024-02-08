@@ -8,8 +8,10 @@ module App
           Rails.configuration.charts[chart_type][:label]
         end
 
-        def config_partials_for(chart_type:, group:)
-          Rails.configuration.charts[chart_type][:partials][group]
+        def config_partials_for(chart_type:, group:, &)
+          partials = Rails.configuration.charts[chart_type][:partials][group]
+
+          yield partials unless partials.empty?
         end
       end
     end
