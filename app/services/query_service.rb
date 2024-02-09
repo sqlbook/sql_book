@@ -12,7 +12,7 @@ class QueryService
 
   def execute
     as_read_only do
-      @data ||= Rails.cache.fetch("query_results::#{query.id}", expires_in: 15.minutes) { execute_query }
+      @data ||= Rails.cache.fetch(cache_key, expires_in: 15.minutes) { execute_query }
       self
     end
   rescue ActiveRecord::ActiveRecordError => e
@@ -32,10 +32,18 @@ class QueryService
   end
 
   def to_json(*)
-    data.to_json # TODO: Test this
+    data.to_json
+  end
+
+  def clear_cache!
+    Rails.cache.delete(cache_key)
   end
 
   private
+
+  def cache_key
+    "query_results::#{query.id}"
+  end
 
   def normalized_query
     query.query.squish.downcase

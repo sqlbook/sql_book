@@ -16,8 +16,13 @@ class Query < ApplicationRecord
 
   before_save :normalize_boolean_fields
 
+  # Changing any of the chart config will not impact
+  # the query results, so only clear the cache if
+  # that specific field is changed
+  before_update :clear_query_cache!, if: :will_save_change_to_query?
+
   def query_result
-    @query_result ||= QueryService.new(query: self).execute
+    @query_result ||= query_service.execute
   end
 
   def chart_config
@@ -27,6 +32,14 @@ class Query < ApplicationRecord
   end
 
   private
+
+  def clear_query_cache!
+    query_service.clear_cache!
+  end
+
+  def query_service
+    @query_service ||= QueryService.new(query: self)
+  end
 
   def normalize_boolean_fields
     self.chart_config = chart_config.transform_values do |val|

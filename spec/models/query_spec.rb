@@ -6,7 +6,7 @@ RSpec.describe Query, type: :model do
   let(:instance) { create(:query) }
 
   let(:query_service_columns) { [] }
-  let(:query_service) { instance_double('QueryService', columns: query_service_columns) }
+  let(:query_service) { instance_double('QueryService', columns: query_service_columns, clear_cache!: nil) }
 
   before do
     allow(QueryService).to receive(:new).and_return(query_service)
@@ -31,6 +31,24 @@ RSpec.describe Query, type: :model do
       instance.update(chart_config: { x_axis_label_enabled: '1' })
 
       expect(instance.reload.chart_config[:x_axis_label_enabled]).to eq(true)
+    end
+  end
+
+  describe '#before_update' do
+    context 'when the query has been updated' do
+      it 'clears the cache' do
+        instance.update(query: 'SELECT * FROM sessions')
+
+        expect(query_service).to have_received(:clear_cache!)
+      end
+    end
+
+    context 'when the query has not been updated' do
+      it 'does not clear the cache' do
+        instance.update(chart_config: { x_axis_label_enabled: '1' })
+
+        expect(query_service).not_to have_received(:clear_cache!)
+      end
     end
   end
 

@@ -5,6 +5,7 @@ require 'rails_helper'
 RSpec.describe QueryService do
   let(:instance) { described_class.new(query:) }
 
+  let(:query_string) { '' }
   let(:data_source) { create(:data_source) }
   let(:query) { create(:query, data_source:, query: query_string) }
 
@@ -80,6 +81,50 @@ RSpec.describe QueryService do
       ])
     end
 
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq([
+        {
+          uuid: click_1.uuid,
+          data_source_uuid: click_1.data_source_uuid,
+          session_uuid: click_1.session_uuid,
+          visitor_uuid: click_1.visitor_uuid,
+          timestamp: click_1.timestamp,
+          coordinates_x: click_1.coordinates_x,
+          coordinates_y: click_1.coordinates_y,
+          selector: click_1.selector,
+          inner_text: click_1.inner_text,
+          attribute_id: click_1.attribute_id,
+          attribute_class: click_1.attribute_class
+        },
+        {
+          uuid: click_2.uuid,
+          data_source_uuid: click_2.data_source_uuid,
+          session_uuid: click_2.session_uuid,
+          visitor_uuid: click_2.visitor_uuid,
+          timestamp: click_2.timestamp,
+          coordinates_x: click_2.coordinates_x,
+          coordinates_y: click_2.coordinates_y,
+          selector: click_2.selector,
+          inner_text: click_2.inner_text,
+          attribute_id: click_2.attribute_id,
+          attribute_class: click_2.attribute_class
+        },
+        {
+          uuid: click_3.uuid,
+          data_source_uuid: click_3.data_source_uuid,
+          session_uuid: click_3.session_uuid,
+          visitor_uuid: click_3.visitor_uuid,
+          timestamp: click_3.timestamp,
+          coordinates_x: click_3.coordinates_x,
+          coordinates_y: click_3.coordinates_y,
+          selector: click_3.selector,
+          inner_text: click_3.inner_text,
+          attribute_id: click_3.attribute_id,
+          attribute_class: click_3.attribute_class
+        }
+      ].to_json)
+    end
+
     it 'has no error' do
       expect(instance.execute.error).to eq(false)
     end
@@ -139,6 +184,35 @@ RSpec.describe QueryService do
           page_view_3.url
         ]
       ])
+    end
+
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq([
+        {
+          uuid: page_view_1.uuid,
+          data_source_uuid: page_view_1.data_source_uuid,
+          session_uuid: page_view_1.session_uuid,
+          visitor_uuid: page_view_1.visitor_uuid,
+          timestamp: page_view_1.timestamp,
+          url: page_view_1.url
+        },
+        {
+          uuid: page_view_2.uuid,
+          data_source_uuid: page_view_2.data_source_uuid,
+          session_uuid: page_view_2.session_uuid,
+          visitor_uuid: page_view_2.visitor_uuid,
+          timestamp: page_view_2.timestamp,
+          url: page_view_2.url
+        },
+        {
+          uuid: page_view_3.uuid,
+          data_source_uuid: page_view_3.data_source_uuid,
+          session_uuid: page_view_3.session_uuid,
+          visitor_uuid: page_view_3.visitor_uuid,
+          timestamp: page_view_3.timestamp,
+          url: page_view_3.url
+        }
+      ].to_json)
     end
 
     it 'has no error' do
@@ -258,6 +332,77 @@ RSpec.describe QueryService do
       ])
     end
 
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq([
+        {
+          uuid: session_1.uuid,
+          data_source_uuid: session_1.data_source_uuid,
+          session_uuid: session_1.session_uuid,
+          visitor_uuid: session_1.visitor_uuid,
+          timestamp: session_1.timestamp,
+          viewport_x: session_1.viewport_x,
+          viewport_y: session_1.viewport_y,
+          device_x: session_1.device_x,
+          device_y: session_1.device_y,
+          referrer: session_1.referrer,
+          locale: session_1.locale,
+          useragent: session_1.useragent,
+          browser: session_1.browser,
+          timezone: session_1.timezone,
+          country_code: session_1.country_code,
+          utm_source: session_1.utm_source,
+          utm_medium: session_1.utm_medium,
+          utm_campaign: session_1.utm_campaign,
+          utm_content: session_1.utm_content,
+          utm_term: session_1.utm_term
+        },
+        {
+          uuid: session_2.uuid,
+          data_source_uuid: session_2.data_source_uuid,
+          session_uuid: session_2.session_uuid,
+          visitor_uuid: session_2.visitor_uuid,
+          timestamp: session_2.timestamp,
+          viewport_x: session_2.viewport_x,
+          viewport_y: session_2.viewport_y,
+          device_x: session_2.device_x,
+          device_y: session_2.device_y,
+          referrer: session_2.referrer,
+          locale: session_2.locale,
+          useragent: session_2.useragent,
+          browser: session_2.browser,
+          timezone: session_2.timezone,
+          country_code: session_2.country_code,
+          utm_source: session_2.utm_source,
+          utm_medium: session_2.utm_medium,
+          utm_campaign: session_2.utm_campaign,
+          utm_content: session_2.utm_content,
+          utm_term: session_2.utm_term
+        },
+        {
+          uuid: session_3.uuid,
+          data_source_uuid: session_3.data_source_uuid,
+          session_uuid: session_3.session_uuid,
+          visitor_uuid: session_3.visitor_uuid,
+          timestamp: session_3.timestamp,
+          viewport_x: session_3.viewport_x,
+          viewport_y: session_3.viewport_y,
+          device_x: session_3.device_x,
+          device_y: session_3.device_y,
+          referrer: session_3.referrer,
+          locale: session_3.locale,
+          useragent: session_3.useragent,
+          browser: session_3.browser,
+          timezone: session_3.timezone,
+          country_code: session_3.country_code,
+          utm_source: session_3.utm_source,
+          utm_medium: session_3.utm_medium,
+          utm_campaign: session_3.utm_campaign,
+          utm_content: session_3.utm_content,
+          utm_term: session_3.utm_term
+        }
+      ].to_json)
+    end
+
     it 'has no error' do
       expect(instance.execute.error).to eq(false)
     end
@@ -281,6 +426,10 @@ RSpec.describe QueryService do
 
     it 'has the correct rows' do
       expect(instance.execute.rows).to eq([])
+    end
+
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq('null')
     end
 
     it 'has an error' do
@@ -318,6 +467,19 @@ RSpec.describe QueryService do
         [2, session_1_uuid],
         [1, session_2_uuid]
       ])
+    end
+
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq([
+        {
+          count: 2,
+          session_uuid: session_1_uuid
+        },
+        {
+          count: 1,
+          session_uuid: session_2_uuid
+        }
+      ].to_json)
     end
 
     it 'has no error' do
@@ -358,6 +520,23 @@ RSpec.describe QueryService do
       ])
     end
 
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq([
+        {
+          browser: 'Chrome',
+          coordinates_x: 100
+        },
+        {
+          browser: 'Chrome',
+          coordinates_x: 200
+        },
+        {
+          browser: 'Chrome',
+          coordinates_x: 300
+        }
+      ].to_json)
+    end
+
     it 'has no error' do
       expect(instance.execute.error).to eq(false)
     end
@@ -382,6 +561,10 @@ RSpec.describe QueryService do
 
     it 'has the correct rows' do
       expect(instance.execute.rows).to eq([])
+    end
+
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq('null')
     end
 
     it 'has an error' do
@@ -441,6 +624,10 @@ RSpec.describe QueryService do
       expect(instance.execute.rows).to eq([])
     end
 
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq('null')
+    end
+
     it 'has an error' do
       expect(instance.execute.error).to eq(true)
     end
@@ -470,12 +657,27 @@ RSpec.describe QueryService do
       expect(instance.execute.rows).to eq([])
     end
 
+    it 'has the correct json data' do
+      expect(instance.execute.to_json).to eq('null')
+    end
+
     it 'has an error' do
       expect(instance.execute.error).to eq(true)
     end
 
     it 'has an error message' do
       expect(instance.execute.error_message).to include('There was an unkown error, please try again')
+    end
+  end
+
+  describe '#clear_cache!' do
+    before do
+      allow(Rails.cache).to receive(:delete)
+    end
+
+    it 'clears the cache' do
+      instance.clear_cache!
+      expect(Rails.cache).to have_received(:delete)
     end
   end
 end
