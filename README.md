@@ -18,6 +18,7 @@ sqlbook is open source and can be self hosted, however it is only for personal u
 - Ruby (see `/.ruby-version`)
 - Node.js (>= v18)
 - Postgres
+- Redis
 - AWS
 
 ### Installation
