@@ -27,23 +27,21 @@
     </table>
   </div>
 
-  <% if query.chart_config[:pagination_enabled] %>
-    <div class="pagination">
-      <button type="button" class="link disabled" data-query-results-table-target="start" data-action="query-results-table#start">
-        <i class="ri-arrow-left-double-line gray-500"></i>
-      </button>
-      <button type="button" class="link disabled" data-query-results-table-target="prev" data-action="query-results-table#prev">
-        <i class="ri-arrow-left-s-line gray-500"></i>
-      </button>
-      <div class="page">
-        <span class="current-page" data-query-results-table-target="currentPage">0</span> <span class="gray-500">of</span> <span class="total-pages" data-query-results-table-target="totalPages">0</span>
-      </div>
-      <button type="button" class="link" data-query-results-table-target="next" data-action="query-results-table#next">
-        <i class="ri-arrow-right-s-line gray-500"></i>
-      </button>
-      <button type="button" class="link" data-query-results-table-target="end" data-action="query-results-table#end">
-        <i class="ri-arrow-right-double-line gray-500"></i>
-      </button>
+  <div class="pagination <%= 'hidden' unless query.chart_config[:pagination_enabled] %>">
+    <button type="button" class="link disabled" data-query-results-table-target="start" data-action="query-results-table#start">
+      <i class="ri-arrow-left-double-line gray-500"></i>
+    </button>
+    <button type="button" class="link disabled" data-query-results-table-target="prev" data-action="query-results-table#prev">
+      <i class="ri-arrow-left-s-line gray-500"></i>
+    </button>
+    <div class="page">
+      <span class="current-page" data-query-results-table-target="currentPage">0</span> <span class="gray-500">of</span> <span class="total-pages" data-query-results-table-target="totalPages">0</span>
     </div>
-  <% end %>
+    <button type="button" class="link" data-query-results-table-target="next" data-action="query-results-table#next">
+      <i class="ri-arrow-right-s-line gray-500"></i>
+    </button>
+    <button type="button" class="link" data-query-results-table-target="end" data-action="query-results-table#end">
+      <i class="ri-arrow-right-double-line gray-500"></i>
+    </button>
+  </div>
 </div>
