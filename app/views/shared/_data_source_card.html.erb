@@ -18,14 +18,14 @@
   <div class="stat total-events">
     <p class="title gray-200">Total events</p>
     <h3 class="red-500">
-      <%= @data_sources_stats.total_events_for(data_source:) %>
+      <%= ActiveSupport::NumberHelper.number_to_delimited(@data_sources_stats.total_events_for(data_source:)) %>
     </h3>
     <p class="subtitle small gray-500">Since: <%= data_source.created_at.strftime('%d/%m/%y') %></p>
   </div>
   <div class="stat monthly-events">
     <p class="title gray-200">Events this month</p>
     <h3 class="red-500">
-      <%= @data_sources_stats.monthly_events_for(data_source:) %>
+      <%= ActiveSupport::NumberHelper.number_to_delimited(@data_sources_stats.monthly_events_for(data_source:)) %>
     </h3>
     <p class="subtitle small gray-500">of 15,000</p>
   </div>

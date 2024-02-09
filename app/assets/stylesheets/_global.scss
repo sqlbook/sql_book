@@ -34,6 +34,10 @@ aside {
   position: relative;
 }
 
+.turbo-progress-bar {
+  background: var(--red-500);
+}
+
 ::-webkit-scrollbar-thumb {
   background: var(--gray-250);
   border-radius: var(--border-radius-md);
