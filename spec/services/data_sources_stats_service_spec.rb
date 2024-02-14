@@ -30,6 +30,8 @@ RSpec.describe DataSourcesStatsService do
 
     create(:query, data_source: data_source_2, saved: true)
     create(:query, data_source: data_source_2, saved: true)
+
+    allow(Time).to receive(:current).and_return(now)
   end
 
   let(:instance) { DataSourcesStatsService.new(data_sources: [data_source_1, data_source_2, data_source_3]) }

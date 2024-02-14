@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-Rails.application.routes.draw do
+Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   get 'ping' => 'rails/health#show', as: :rails_health_check
@@ -12,10 +12,16 @@ Rails.application.routes.draw do
   namespace :auth do
     resources :signout, only: %i[index]
     resources :login, only: %i[index new create] do
-      collection { get 'resend' }
+      collection do
+        get 'magic_link', to: 'login#create'
+        get 'resend'
+      end
     end
     resources :signup, only: %i[index new create] do
-      collection { get 'resend' }
+      collection do
+        get 'magic_link', to: 'signup#create'
+        get 'resend'
+      end
     end
   end
 
