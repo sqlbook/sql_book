@@ -2,77 +2,46 @@ import Chart, { ChartType } from 'chart.js/auto';
 import { Controller } from '@hotwired/stimulus';
 import { ChartConfig } from '../types/chart-config';
 import { QueryResult } from '../types/query-result';
+import { buildConfig } from '../charts/config';
+import { buildData } from '../charts/data';
 
 export default class extends Controller<HTMLCanvasElement> {
   static values = {
+    type: '',
     config: {},
     result: [],
   };
 
+  declare readonly typeValue: string;
   declare readonly configValue: ChartConfig;
   declare readonly resultValue: QueryResult;
 
-  // TODO: 
-  // - colors won't work in light mode
-  // For each of the supported chart types, return some cofig that needs to be deep merged
-
   public connect(): void {
     new Chart(this.element, {
-      type: 'bar',
-      data: {
-        datasets: [
-          {
-            data: this.mappedDataToAxis,
-            backgroundColor: this.configValue.colors[0],
-            borderRadius: 4,
-          },
-        ],
-      },
-      options: {
-        plugins: {
-          tooltip: {
-            enabled: this.configValue.tooltips_enabled,
-          },
-          legend: {
-            display: this.configValue.legend_enabled,
-            position: this.configValue.legend_position,
-            align: this.configValue.legend_alignment,
-          },
-        },
-        scales: {
-          x: {
-            title: {
-              color: '#CCCCCC',
-              display: this.configValue.x_axis_label_enabled,
-              text: this.configValue.x_axis_label,
-            },
-            grid: {
-              color: '#333333',
-              drawTicks: false,
-              display: this.configValue.x_axis_gridlines_enabled,
-            },
-            ticks: {
-              color: '#BBBBBB',
-            },
-          },
-          y: {
-            title: {
-              color: '#BBBBBB',
-              display: this.configValue.y_axis_label_enabled,
-              text: this.configValue.y_axis_label,
-            },
-            grid: {
-              color: '#333333',
-              drawTicks: false,
-              display: this.configValue.y_axis_gridlines_enabled,
-            },
-            ticks: {
-              color: '#BBBBBB',
-            },
-          }
-        },
-      },
+      type: this.chartType,
+      ...buildConfig(this.configValue),
+      ...buildData(this.typeValue, this.configValue, this.mappedDataToAxis),
     });
+  }
+
+  private get chartType(): ChartType {
+    switch(this.typeValue) {
+      case 'bar':
+      case 'column':
+      case 'stacked_column':
+      case 'stacked_bar':
+        return 'bar';
+      case 'line':
+      case 'area':
+      case 'stacked_area':
+        return 'line';
+      case 'pie':
+        return 'pie';
+      case 'donut':
+        return 'doughnut';
+      default:
+        throw new Error('Unknown chart type');
+    }
   }
 
   private get mappedDataToAxis(): { x: string, y: string }[] {

@@ -26,17 +26,29 @@ default: &default
     image: charts/line.svg
     label: Line
     partials:
-      data: []
-      appearance: []
-      other: []
+      data:
+        - x_axis
+        - y_axis
+      appearance:
+        - title
+        - legend
+        - colors
+      other:
+        - tooltips
   area:
     label_tag: chart_type_area
     image: charts/area.svg
     label: Area
     partials:
-      data: []
-      appearance: []
-      other: []
+      data:
+        - x_axis
+        - y_axis
+      appearance:
+        - title
+        - legend
+        - colors
+      other:
+        - tooltips
   stacked_area:
     label_tag: chart_type_stacked_area
     image: charts/stacked-area.svg
@@ -74,7 +86,7 @@ default: &default
         - legend
         - colors
       other:
-        - tooltips  
+        - tooltips
   stacked_bar:
     label_tag: chart_type_stacked_bar
     image: charts/stacked-bar.svg
