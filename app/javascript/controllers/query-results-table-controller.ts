@@ -77,16 +77,18 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private setVisibleRows = () => {
-    const start = (this.page * this.configValue.pagination_rows);
-    const end = start + Number(this.configValue.pagination_rows) - 1;
+    if (this.configValue.pagination_enabled) {
+      const start = (this.page * this.configValue.pagination_rows);
+      const end = start + Number(this.configValue.pagination_rows) - 1;
 
-    this.element.querySelectorAll<HTMLTableRowElement>('tr:not(:first-of-type)').forEach((row, index) => {
-      row.style.display = 'none';
+      this.element.querySelectorAll<HTMLTableRowElement>('tr:not(:first-of-type)').forEach((row, index) => {
+        row.style.display = 'none';
 
-      if (index >= start && index <= end) {
-        row.style.removeProperty('display');
-      }
-    });
+        if (index >= start && index <= end) {
+          row.style.removeProperty('display');
+        }
+      });
+    }
   };
 
   private get pages() {

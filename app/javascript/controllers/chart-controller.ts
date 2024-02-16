@@ -19,7 +19,7 @@ export default class extends Controller<HTMLCanvasElement> {
   public connect(): void {
     new Chart(this.element, {
       type: this.chartType,
-      ...buildConfig(this.configValue),
+      ...buildConfig(this.typeValue, this.configValue),
       ...buildData(this.typeValue, this.configValue, this.mappedDataToAxis),
     });
   }

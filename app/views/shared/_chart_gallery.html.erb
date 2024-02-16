@@ -3,7 +3,7 @@
 <div class="chart-gallery" data-controller="chart-gallery">
   <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "charts", html: { "data-chart-gallery-target": "form" } do |form| %>
     <% Rails.configuration.charts.each do |type, chart| %>
-      <div class="chart">
+      <div class="chart <%= 'disabled' if chart[:disabled] %>">
         <%= radio_button_tag :chart_type, type, "data-action": "chart-gallery#submit" %>
         <%= label_tag chart[:label_tag].to_sym do %>
           <div class="image">

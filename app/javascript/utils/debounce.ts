@@ -1,4 +1,4 @@
-export const debounce = (func: Function, delay: number) => {
+export function debounce(func: Function, delay: number) {
   let timer: ReturnType<typeof setTimeout>;
 
   return function() {

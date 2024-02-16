@@ -3,6 +3,7 @@ default: &default
     label_tag: chart_type_total
     image: charts/total.svg
     label: Total
+    disabled: false
     partials:
       data:
         - data_column
@@ -15,6 +16,7 @@ default: &default
     label_tag: chart_type_table
     image: charts/table.svg
     label: Table
+    disabled: false
     partials:
       data: []
       appearance:
@@ -25,6 +27,7 @@ default: &default
     label_tag: chart_type_line
     image: charts/line.svg
     label: Line
+    disabled: false
     partials:
       data:
         - x_axis
@@ -39,6 +42,7 @@ default: &default
     label_tag: chart_type_area
     image: charts/area.svg
     label: Area
+    disabled: false
     partials:
       data:
         - x_axis
@@ -53,6 +57,7 @@ default: &default
     label_tag: chart_type_stacked_area
     image: charts/stacked-area.svg
     label: Stacked area
+    disabled: true
     partials:
       data: []
       appearance: []
@@ -61,14 +66,22 @@ default: &default
     label_tag: chart_type_column
     image: charts/column.svg
     label: Column
+    disabled: false
     partials:
-      data: []
-      appearance: []
-      other: []
+      data:
+        - x_axis
+        - y_axis
+      appearance:
+        - title
+        - legend
+        - colors
+      other:
+        - tooltips
   stacked_column:
     label_tag: chart_type_stacked_column
     image: charts/stacked-column.svg
     label: Stacked column
+    disabled: true
     partials:
       data: []
       appearance: []
@@ -77,6 +90,7 @@ default: &default
     label_tag: chart_type_bar
     image: charts/bar.svg
     label: Bar
+    disabled: false
     partials:
       data: 
         - x_axis
@@ -91,6 +105,7 @@ default: &default
     label_tag: chart_type_stacked_bar
     image: charts/stacked-bar.svg
     label: Stacked bar
+    disabled: true
     partials:
       data: []
       appearance: []
@@ -99,6 +114,7 @@ default: &default
     label_tag: chart_type_combo
     image: charts/combo.svg
     label: Combo
+    disabled: true
     partials:
       data: []
       appearance: []
@@ -107,6 +123,7 @@ default: &default
     label_tag: chart_type_pie
     image: charts/pie.svg
     label: Pie
+    disabled: false
     partials:
       data: []
       appearance: []
@@ -115,6 +132,7 @@ default: &default
     label_tag: chart_type_donut
     image: charts/donut.svg
     label: Donut
+    disabled: false
     partials:
       data: []
       appearance: []
