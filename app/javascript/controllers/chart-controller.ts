@@ -1,4 +1,4 @@
-import Chart, { ChartType } from 'chart.js/auto';
+import { Chart, ChartType } from 'chart.js/auto';
 import { Controller } from '@hotwired/stimulus';
 import { ChartConfig } from '../types/chart-config';
 import { QueryResult } from '../types/query-result';
@@ -20,7 +20,7 @@ export default class extends Controller<HTMLCanvasElement> {
     new Chart(this.element, {
       type: this.chartType,
       ...buildConfig(this.typeValue, this.configValue),
-      ...buildData(this.typeValue, this.configValue, this.mappedDataToAxis),
+      ...buildData(this.typeValue, this.configValue, this.resultValue),
     });
   }
 
@@ -42,12 +42,5 @@ export default class extends Controller<HTMLCanvasElement> {
       default:
         throw new Error('Unknown chart type');
     }
-  }
-
-  private get mappedDataToAxis(): { x: string, y: string }[] {
-    return this.resultValue.map(r => ({
-      x: r[this.configValue.x_axis_key],
-      y: r[this.configValue.y_axis_key],
-    }));
   }
 }

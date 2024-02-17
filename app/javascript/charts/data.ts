@@ -1,9 +1,13 @@
+import { ChartData } from 'chart.js';
 import { ChartConfig } from '../types/chart-config';
+import { QueryResult } from '../types/query-result';
 import { hexToRgb } from './utils';
 
 type Data = { x: string, y: string }[];
 
-export function buildData(type: string, config: ChartConfig, data: Data) {
+export function buildData(type: string, config: ChartConfig, result: QueryResult) {
+  const data = mapDataToAxis(config, result);
+
   switch(type) {
     case 'line':
       return buildLineData(config, data);
@@ -12,12 +16,22 @@ export function buildData(type: string, config: ChartConfig, data: Data) {
     case 'column':
     case 'bar':
       return buildColumnData(config, data);
+    case 'pie':
+    case 'donut':
+      return buildPieData(config, result);
     default:
       throw new Error(`Unsure how to build chart data for ${type}`);
   }  
 };
 
-function buildLineData(config: ChartConfig, data: Data) {
+function mapDataToAxis(config: ChartConfig, results: QueryResult): Data {
+  return results.map(r => ({
+    x: r[config.x_axis_key],
+    y: r[config.y_axis_key],
+  }));
+}
+
+function buildLineData(config: ChartConfig, data: Data): { data: ChartData<'line', Data> } {
   return {
     data: {
       datasets: [
@@ -34,7 +48,7 @@ function buildLineData(config: ChartConfig, data: Data) {
   };
 }
 
-function buildAreaData(config: ChartConfig, data: Data) {
+function buildAreaData(config: ChartConfig, data: Data): { data: ChartData<'line', Data> } {
   return {
     data: {
       datasets: [
@@ -52,7 +66,7 @@ function buildAreaData(config: ChartConfig, data: Data) {
   };
 }
 
-function buildColumnData(config: ChartConfig, data: Data) {
+function buildColumnData(config: ChartConfig, data: Data): { data: ChartData<'bar', Data> } {
   return {
     data: {
       datasets: [
@@ -61,6 +75,29 @@ function buildColumnData(config: ChartConfig, data: Data) {
           backgroundColor: config.colors[0],
           borderColor: config.colors[0],
           borderRadius: 4,
+        },
+      ],
+    },
+  };
+}
+
+function buildPieData(config: ChartConfig, result: QueryResult): { data: ChartData<'pie', number[]> } {
+  const values = result.map(r => Object.values(r));
+  const firstValueIsCount = typeof values[0][0] === 'number';
+  
+  const labels = values.map(v => v[firstValueIsCount ? 1 : 0]);
+  const counts = values.map(v => Number(v[firstValueIsCount ? 0 : 1]));
+  
+  return {
+    data: {
+      labels,
+      datasets: [
+        {
+          data: counts,
+          backgroundColor: config.colors,
+          borderColor: '#1C1C1C',
+          borderWidth: 2,
+          radius: '50%',
         },
       ],
     },

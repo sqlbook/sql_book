@@ -12,6 +12,11 @@ export function buildConfig(type: string, config: ChartConfig) {
           display: config.legend_enabled,
           position: config.legend_position,
           align: config.legend_alignment,
+          labels: {
+            color: '#BBBBBB',
+            boxHeight: 16,
+            boxWidth: 16,
+          }
         },
       },
       scales: {
