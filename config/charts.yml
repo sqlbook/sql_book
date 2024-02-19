@@ -141,6 +141,7 @@ default: &default
       appearance:
         - title
         - legend
+        - circumference
         - colors
       other: []
 

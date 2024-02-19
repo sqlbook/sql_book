@@ -84,6 +84,7 @@ module App
             :post_text_label_position,
             :pagination_rows,
             :pagination_enabled,
+            :circumference,
             colors: []
           )
         end

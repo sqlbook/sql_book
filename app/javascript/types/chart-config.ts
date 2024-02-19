@@ -18,4 +18,5 @@ export type ChartConfig = {
   y_axis_label_enabled: boolean;
   pagination_rows: number;
   pagination_enabled: boolean;
+  circumference: number;
 }

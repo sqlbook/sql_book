@@ -13,12 +13,12 @@ export function buildData(settings: ChartSettings) {
       return buildLineData(settings, data);
     case 'area':
       return buildAreaData(settings, data);
-    case 'column':
     case 'bar':
+    case 'column':
       return buildColumnData(settings, data);
+    case 'doughnut':
     case 'pie':
-    case 'donut':
-      return buildPieData(settings, settings.result);
+      return buildPieData(settings);
     default:
       throw new Error(`Unsure how to build chart data for ${settings.type}`);
   }  
@@ -29,6 +29,16 @@ function mapDataToAxis(settings: ChartSettings, results: QueryResult): Data {
     x: r[settings.config.x_axis_key],
     y: r[settings.config.y_axis_key],
   }));
+}
+
+function mapDataToLabels(settings: ChartSettings): [string[], number[]] {
+  const values = settings.result.map(r => Object.values(r));
+  const firstValueIsCount = typeof values[0][0] === 'number';
+  
+  return [
+    values.map(v => v[firstValueIsCount ? 1 : 0]),
+    values.map(v => Number(v[firstValueIsCount ? 0 : 1]))
+  ];
 }
 
 function buildLineData(settings: ChartSettings, data: Data): { data: ChartData<'line', Data> } {
@@ -81,10 +91,10 @@ function buildColumnData(settings: ChartSettings, data: Data): { data: ChartData
   };
 }
 
-function buildPieData(settings: ChartSettings, result: QueryResult): { data: ChartData<'pie', Data> } {
-  const values = result.map(r => Object.values(r));
+function buildPieData(settings: ChartSettings): { data: ChartData<'pie', Data> } {
+  const values = settings.result.map(r => Object.values(r));
   const firstValueIsCount = typeof values[0][0] === 'number';
-  
+
   const labels = values.map(v => v[firstValueIsCount ? 1 : 0]);
   const counts = values.map(v => Number(v[firstValueIsCount ? 0 : 1]));
   
@@ -97,7 +107,9 @@ function buildPieData(settings: ChartSettings, result: QueryResult): { data: Cha
           backgroundColor: settings.config.colors,
           borderColor: '#1C1C1C',
           borderWidth: 2,
-          ['radius' as any]: '50%', // This is valid
+          // These are valid
+          ['radius' as any]: '50%',
+          ['cutout' as any]: settings.type === 'pie' ? 0 : `${settings.config.circumference}%`,
         },
       ],
     },

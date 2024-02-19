@@ -73,6 +73,7 @@ RSpec.describe Query, type: :model do
           legend_enabled: true,
           legend_position: 'top',
           legend_alignment: 'start',
+          circumference: 50,
           colors: ['#F5807B', '#5CA1F2', '#F8BD77', '#B2405B', '#D97FC6', '#F0E15A', '#95A7B1', '#6CCB5F'],
           data_column: 'col_1',
           pagination_enabled: true,

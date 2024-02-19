@@ -73,7 +73,8 @@ class Query < ApplicationRecord
       post_text_label: 'post-text-label',
       post_text_label_position: 'right',
       pagination_rows: 10,
-      pagination_enabled: true
+      pagination_enabled: true,
+      circumference: 50
     }
   end
 end

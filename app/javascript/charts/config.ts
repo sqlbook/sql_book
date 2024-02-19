@@ -22,7 +22,7 @@ export function buildConfig(settings: ChartSettings): { options: ChartOptions } 
       },
       scales: {
         x: {
-          display: !['pie', 'donut'].includes(settings.type),
+          display: !['pie', 'doughnut'].includes(settings.type),
           title: {
             color: settings.colors.gray200,
             display: settings.config.x_axis_label_enabled,
@@ -38,7 +38,7 @@ export function buildConfig(settings: ChartSettings): { options: ChartOptions } 
           },
         },
         y: {
-          display: !['pie', 'donut'].includes(settings.type),
+          display: !['pie', 'doughnut'].includes(settings.type),
           title: {
             color: settings.colors.gray250,
             display: settings.config.y_axis_label_enabled,
