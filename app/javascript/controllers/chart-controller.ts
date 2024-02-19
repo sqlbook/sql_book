@@ -4,6 +4,8 @@ import { ChartConfig } from '../types/chart-config';
 import { QueryResult } from '../types/query-result';
 import { buildConfig } from '../charts/config';
 import { buildData } from '../charts/data';
+import { Colors } from '../utils/colors';
+import { ChartSettings } from '../types/chart-settings';
 
 export default class extends Controller<HTMLCanvasElement> {
   static values = {
@@ -19,9 +21,22 @@ export default class extends Controller<HTMLCanvasElement> {
   public connect(): void {
     new Chart(this.element, {
       type: this.chartType,
-      ...buildConfig(this.typeValue, this.configValue),
-      ...buildData(this.typeValue, this.configValue, this.resultValue),
+      ...buildData(this.settings),
+      ...buildConfig(this.settings),
     });
+  }
+
+  private get settings(): ChartSettings {
+    return {
+      type: this.chartType,
+      config: this.configValue,
+      result: this.resultValue,
+      colors: this.colors,
+    };
+  }
+
+  private get colors() {
+    return new Colors();
   }
 
   private get chartType(): ChartType {

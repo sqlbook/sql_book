@@ -1,19 +1,20 @@
-import { ChartConfig } from '../types/chart-config';
+import { ChartOptions } from 'chart.js';
+import { ChartSettings } from '../types/chart-settings';
 
-export function buildConfig(type: string, config: ChartConfig) {
+export function buildConfig(settings: ChartSettings): { options: ChartOptions } {
   return {
     options: {
-      indexAxis: indexAxis(type),
+      indexAxis: indexAxis(settings.type),
       plugins: {
         tooltip: {
-          enabled: config.tooltips_enabled,
+          enabled: settings.config.tooltips_enabled,
         },
         legend: {
-          display: config.legend_enabled,
-          position: config.legend_position,
-          align: config.legend_alignment,
+          display: settings.config.legend_enabled,
+          position: settings.config.legend_position,
+          align: settings.config.legend_alignment,
           labels: {
-            color: '#BBBBBB',
+            color: settings.colors.gray250,
             boxHeight: 16,
             boxWidth: 16,
           }
@@ -21,33 +22,35 @@ export function buildConfig(type: string, config: ChartConfig) {
       },
       scales: {
         x: {
+          display: !['pie', 'donut'].includes(settings.type),
           title: {
-            color: '#CCCCCC',
-            display: config.x_axis_label_enabled,
-            text: config.x_axis_label,
+            color: settings.colors.gray200,
+            display: settings.config.x_axis_label_enabled,
+            text: settings.config.x_axis_label,
           },
           grid: {
-            color: '#333333',
+            color: settings.colors.gray700,
             drawTicks: false,
-            display: config.x_axis_gridlines_enabled,
+            display: settings.config.x_axis_gridlines_enabled,
           },
           ticks: {
-            color: '#BBBBBB',
+            color: settings.colors.gray250,
           },
         },
         y: {
+          display: !['pie', 'donut'].includes(settings.type),
           title: {
-            color: '#BBBBBB',
-            display: config.y_axis_label_enabled,
-            text: config.y_axis_label,
+            color: settings.colors.gray250,
+            display: settings.config.y_axis_label_enabled,
+            text: settings.config.y_axis_label,
           },
           grid: {
-            color: '#333333',
+            color: settings.colors.gray700,
             drawTicks: false,
-            display: config.y_axis_gridlines_enabled,
+            display: settings.config.y_axis_gridlines_enabled,
           },
           ticks: {
-            color: '#BBBBBB',
+            color: settings.colors.gray250,
           },
         },
       },

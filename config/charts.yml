@@ -126,7 +126,10 @@ default: &default
     disabled: false
     partials:
       data: []
-      appearance: []
+      appearance:
+        - title
+        - legend
+        - colors
       other: []
   donut:
     label_tag: chart_type_donut
@@ -135,7 +138,10 @@ default: &default
     disabled: false
     partials:
       data: []
-      appearance: []
+      appearance:
+        - title
+        - legend
+        - colors
       other: []
 
 development:
