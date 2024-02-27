@@ -44,3 +44,6 @@ coverage
 
 .DS_Store
 yarn-error.log
+
+infrastructure/.terraform
+infrastructure/.terraform.lock.hcl
