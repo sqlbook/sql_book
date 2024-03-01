@@ -42,16 +42,12 @@ resource "aws_ecs_task_definition" "web" {
     ],
     "environment": [
       {
-        "name": "DATABASE_HOSTNAME",
-        "value": "${var.database_hostname}"
+        "name": "DATABASE_PRIMARY_URL",
+        "value": "postgresql://sqlbook:${data.aws_ssm_parameter.sqlbook_rds_root_password.value}@${var.database_hostname}/sql_book_production"
       },
       {
-        "name": "DATABASE_USERNAME",
-        "value": "${var.database_username}"
-      },
-      {
-        "name": "DATABASE_PASSWORD",
-        "value": "${data.aws_ssm_parameter.sqlbook_rds_root_password.value}"
+        "name": "DATABASE_EVENTS_URL",
+        "value": "postgresql://sqlbook:${data.aws_ssm_parameter.sqlbook_rds_root_password.value}@${var.database_hostname}/sql_book_events_production"
       },
       {
         "name": "SECRET_KEY_BASE",

@@ -28,13 +28,7 @@ test:
 production:
   primary:
     <<: *default_primary
-    database: sql_book_production
-    hostname: <%= ENV["DATABASE_HOSTNAME"] %>
-    username: <%= ENV["DATABASE_USERNAME"] %>
-    password: <%= ENV["DATABASE_PASSWORD"] %>
+    url: <%= ENV["DATABASE_PRIMARY_URL"] %>
   events:
     <<: *default_events
-    database: sql_book_events_production
-    hostname: <%= ENV["DATABASE_HOSTNAME"] %>
-    username: <%= ENV["DATABASE_USERNAME"] %>
-    password: <%= ENV["DATABASE_PASSWORD"] %>
+    url: <%= ENV["DATABASE_EVENTS_URL"] %>

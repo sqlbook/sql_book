@@ -22,10 +22,6 @@ variable "database_hostname" {
   type = string
 }
 
-variable "database_username" {
-  type = string
-}
-
 variable "listener_arn" {
   type = string
 }
