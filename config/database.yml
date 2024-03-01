@@ -29,8 +29,12 @@ production:
   primary:
     <<: *default_primary
     database: sql_book_production
-    password: <%= ENV["SQL_BOOK_DATABASE_PASSWORD"] %>
+    hostname: <%= ENV["DATABASE_HOSTNAME"] %>
+    username: <%= ENV["DATABASE_USERNAME"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
   events:
     <<: *default_events
     database: sql_book_events_production
-    password: <%= ENV["SQL_BOOK_DATABASE_PASSWORD"] %>
+    hostname: <%= ENV["DATABASE_HOSTNAME"] %>
+    username: <%= ENV["DATABASE_USERNAME"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
