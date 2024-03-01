@@ -20,11 +20,11 @@ RUN bundle install
 
 RUN yarn install
 
-RUN rails assets:precompile
-
 COPY . /app
 
 RUN yarn build
+
+RUN rails assets:precompile
 
 EXPOSE 3000
 
