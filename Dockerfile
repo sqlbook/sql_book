@@ -20,6 +20,8 @@ RUN bundle install
 
 RUN yarn install
 
+RUN rails assets:precompile
+
 COPY . /app
 
 RUN yarn build
