@@ -30,6 +30,11 @@ resource "aws_codebuild_project" "app" {
       name  = "IMAGE_REPO_NAME"
       value = var.name
     }
+
+    environment_variable {
+      name  = "SQLBOOK_DOCKER_PASSWORD"
+      value = data.aws_ssm_parameter.sqlbook_docker_password.value
+    }
   }
 
   source {
@@ -60,4 +65,8 @@ resource "aws_codebuild_webhook" "app" {
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/aws/codebuild/${var.name}"
   retention_in_days = 1
+}
+
+data "aws_ssm_parameter" "sqlbook_docker_password" {
+  name = "sqlbook_docker_password"
 }

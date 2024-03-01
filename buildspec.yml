@@ -7,6 +7,7 @@ phases:
 
   pre_build:
     commands:
+      - docker login -u sqlbook -p "${SQLBOOK_DOCKER_PASSWORD}"
       - $(aws ecr get-login --no-include-email)
       - export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query "Account" --output text)"
 
