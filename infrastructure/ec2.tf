@@ -87,14 +87,14 @@ resource "aws_security_group" "sqlbook" {
   vpc_id = aws_vpc.sqlbook.id
 }
 
-resource "aws_security_group_rule" "sqlbook" {
+resource "aws_security_group_rule" "load_balancer" {
   security_group_id        = aws_security_group.sqlbook.id
   type                     = "ingress"
   description              = "Load Balancer"
   from_port                = 0
   to_port                  = 65535
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.public_load_balancer.id
 }
 
 resource "aws_security_group_rule" "egress_http" {
@@ -124,7 +124,7 @@ resource "aws_security_group_rule" "egress_rds" {
   from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.rds.id
 }
 
 resource "aws_security_group_rule" "egress_redis" {
@@ -134,5 +134,5 @@ resource "aws_security_group_rule" "egress_redis" {
   from_port                = 6379
   to_port                  = 6379
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.elasticache.id
 }

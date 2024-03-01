@@ -12,6 +12,7 @@ resource "aws_db_instance" "sqlbook" {
   deletion_protection     = true
   skip_final_snapshot     = true
   db_subnet_group_name    = aws_db_subnet_group.sqlbook.name
+  vpc_security_group_ids  = [aws_security_group.rds.id]
 }
 
 resource "aws_db_subnet_group" "sqlbook" {
@@ -34,5 +35,5 @@ resource "aws_security_group_rule" "ingress_rds_ecs" {
   from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.sqlbook.id
 }

@@ -37,5 +37,5 @@ resource "aws_security_group_rule" "ingress_elasticache_ecs" {
   protocol                 = "tcp"
   from_port                = aws_elasticache_cluster.sqlbook.port
   to_port                  = aws_elasticache_cluster.sqlbook.port
-  source_security_group_id = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.sqlbook.id
 }
