@@ -27,7 +27,7 @@ resource "aws_ecs_task_definition" "web" {
     "name": "web",
     "image": "404356446913.dkr.ecr.eu-west-1.amazonaws.com/sql_book:${var.docker_tag}",
     "cpu": 256,
-    "memory": 1024,
+    "memory": 512,
     "essential": true,
     "runtimePlatform": {
       "cpuArchitecture": "ARM64"

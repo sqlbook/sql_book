@@ -15,27 +15,18 @@ data "aws_ami" "ecs_latest" {
 
 
 resource "aws_instance" "sqlbook" {
-  ami           = data.aws_ami.ecs_latest.id
-  instance_type = "t4g.micro"
+  ami                     = data.aws_ami.ecs_latest.id
+  instance_type           = "t4g.small"
+  availability_zone       = "eu-west-1a"
+  iam_instance_profile    = aws_iam_instance_profile.sqlbook.name
+  user_data               = base64encode(templatefile("${path.module}/userdata.tmpl", { cluster = "sqlbook" }))
+  disable_api_termination = true
+  vpc_security_group_ids  = [aws_security_group.sqlbook.id]
+  subnet_id               = aws_subnet.public_1a.id
 
   tags = {
     Name = "sqlbook"
   }
-}
-
-resource "aws_launch_template" "sqlbook" {
-  name                   = "sqlbook"
-  image_id               = data.aws_ami.ecs_latest.image_id
-  instance_type          = "t4g.micro"
-  update_default_version = true
-  vpc_security_group_ids = [aws_security_group.ecs_tasks.id]
-  key_name               = "sqlbook"
-
-  iam_instance_profile {
-    arn = aws_iam_instance_profile.sqlbook.arn
-  }
-
-  user_data = filebase64("${path.module}/userdata.sh")
 }
 
 resource "aws_iam_instance_profile" "sqlbook" {

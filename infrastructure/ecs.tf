@@ -6,7 +6,7 @@ module "web" {
   source = "./modules/apps/web"
 
   docker_tag         = "latest"
-  instance_count     = 0
+  instance_count     = 1
   cluster_name       = aws_ecs_cluster.sqlbook.name
   load_balancer_name = aws_alb.sqlbook.name
   listener_arn       = aws_alb_listener.https.arn
