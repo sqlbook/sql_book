@@ -11,8 +11,8 @@ phases:
   build:
     commands:
       - docker build --platform linux/arm64 -t sql_book:latest .
-      - docker tag sql_book:latest "${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/sql_book:latest"
-      - docker push "${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/sql_book:latest"
+      - docker tag sql_book:latest "${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/sql_book:latest"
+      - docker push "${CODEBUILD_WEBHOOK_ACTOR_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/sql_book:latest"
 
   post_build:
     commands:
