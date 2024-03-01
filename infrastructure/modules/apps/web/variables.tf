@@ -37,3 +37,7 @@ variable "events_queue_url" {
 variable "events_queue_arn" {
   type = string
 }
+
+variable "ses_domain_identity_arn" {
+  type = string
+}

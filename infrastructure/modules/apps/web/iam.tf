@@ -23,7 +23,7 @@ resource "aws_iam_role_policy" "task_role" {
 data "aws_iam_policy_document" "task_role" {
   statement {
     actions   = ["ses:SendEmail", "ses:SendRawEmail"]
-    resources = ["arn:aws:ses:eu-west-1:404356446913:identity/sqlbook.com"]
+    resources = [var.ses_domain_identity_arn]
   }
 
   statement {
