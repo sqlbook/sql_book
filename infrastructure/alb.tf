@@ -89,6 +89,18 @@ resource "aws_acm_certificate" "sqlbook" {
   }
 }
 
+resource "aws_route53_record" "sqlbook" {
+  name    = "sqlbook.com"
+  type    = "A"
+  zone_id = aws_route53_zone.sqlbook.zone_id
+
+  alias {
+    evaluate_target_health = true
+    name                   = aws_alb.sqlbook.dns_name
+    zone_id                = aws_alb.sqlbook.zone_id
+  }
+}
+
 resource "aws_route53_record" "sqlbook_certificate" {
   for_each = {
     for dvo in aws_acm_certificate.sqlbook.domain_validation_options : dvo.domain_name => {
