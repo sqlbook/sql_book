@@ -1,9 +1,5 @@
 version: 0.2
 
-env:
-  variables:
-    AWS_ACCOUNT_ID: "$(aws sts get-caller-identity --query "Account" --output text)"
-
 phases:
   install:
     runtime-versions:
@@ -12,6 +8,8 @@ phases:
   pre_build:
     commands:
       - $(aws ecr get-login --no-include-email)
+      - export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query "Account" --output text)"
+
   build:
     commands:
       - docker build --platform linux/arm64 -t sql_book:latest .
