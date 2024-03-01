@@ -24,7 +24,8 @@ COPY . /app
 
 RUN yarn build
 
-RUN rails assets:precompile
+# Yes this is a real thing in Rails
+RUN SECRET_KEY_BASE_DUMMY=1 rails assets:precompile
 
 EXPOSE 3000
 
