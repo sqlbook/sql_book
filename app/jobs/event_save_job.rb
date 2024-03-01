@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EventSaveJob < ApplicationJob
+  queue_as :events
+
   def perform(*events)
     events.each do |arg|
       method = :"store_#{arg['type']}"

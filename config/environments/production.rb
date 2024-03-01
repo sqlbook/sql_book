@@ -5,7 +5,7 @@ require 'active_support/core_ext/integer/time'
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
-  config.active_job.queue_adapter = :amazon_sqs
+  config.active_job.queue_adapter = :amazon_sqs_async
 
   # Code is not reloaded between requests.
   config.enable_reloading = false
