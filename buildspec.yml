@@ -18,6 +18,5 @@ phases:
 
   post_build:
     commands:
-      - aws ecs update-service --cluster sqlbook --service sql_book --force-new-deployment
-      - aws ecs wait services-stable --cluster sqlbook --services sql_book
-
+      - aws ecs update-service --cluster sqlbook --service web --force-new-deployment
+      - aws ecs wait services-stable --cluster sqlbook --services web
