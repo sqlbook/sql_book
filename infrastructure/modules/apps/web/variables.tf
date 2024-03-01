@@ -33,3 +33,11 @@ variable "listener_arn" {
 variable "redis_url" {
   type = string
 }
+
+variable "events_queue_url" {
+  type = string
+}
+
+variable "events_queue_arn" {
+  type = string
+}

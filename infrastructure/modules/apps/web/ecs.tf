@@ -64,6 +64,10 @@ resource "aws_ecs_task_definition" "web" {
       {
         "name": "REDIS_URL",
         "value": "${var.redis_url}"
+      },
+      {
+        "name": "EVENTS_QUEUE_URL",
+        "value": "${var.events_queue_url}"
       }
     ],
     "logConfiguration": {

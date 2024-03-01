@@ -14,4 +14,6 @@ module "web" {
   database_hostname  = aws_db_instance.sqlbook.endpoint
   database_username  = aws_db_instance.sqlbook.username
   redis_url          = "redis://${aws_elasticache_cluster.sqlbook.cache_nodes.0.address}:6379/0"
+  events_queue_url   = aws_sqs_queue.events.url
+  events_queue_arn   = aws_sqs_queue.events.arn
 }

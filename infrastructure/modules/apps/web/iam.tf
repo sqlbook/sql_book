@@ -36,4 +36,9 @@ data "aws_iam_policy_document" "task_role" {
 
     resources = ["*"]
   }
+
+  statement {
+    actions  = ["sqs:SendMessage"]
+    resources = [var.events_queue_arn]
+  }
 }
