@@ -64,7 +64,7 @@ class QueryService
 
   def as_read_only(&)
     old_config = EventRecord.connection_db_config.configuration_hash.dup
-    new_config = old_config.merge(username: 'sql_book_readonly')
+    new_config = old_config.merge(username: readonly_username, password: readonly_password)
 
     EventRecord.establish_connection(new_config)
     yield
@@ -77,5 +77,13 @@ class QueryService
       EventRecord.connection.exec_query("SET LOCAL app.current_data_source_uuid = '#{query.data_source.external_uuid}'")
       EventRecord.connection.exec_query(normalized_query)
     end
+  end
+
+  def readonly_username
+    ENV.fetch('DATABASE_READONLY_USERNAME', 'sql_book_readonly')
+  end
+
+  def readonly_password
+    ENV.fetch('DATABASE_READONLY_PASSWORD', 'password')
   end
 end

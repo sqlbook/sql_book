@@ -46,7 +46,7 @@ Create the user:
 ```
 $ psql -U postgres
 
-postgres=# CREATE ROLE sql_book_readonly WITH LOGIN PASSWORD NULL;
+postgres=# CREATE ROLE sql_book_readonly WITH LOGIN PASSWORD 'password';
 ```
 
 Give permissions to the development environment:

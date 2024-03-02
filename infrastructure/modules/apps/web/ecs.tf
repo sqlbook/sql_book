@@ -50,6 +50,14 @@ resource "aws_ecs_task_definition" "web" {
         "value": "postgresql://sqlbook:${data.aws_ssm_parameter.sqlbook_rds_root_password.value}@${var.database_hostname}/sql_book_events_production"
       },
       {
+        "name": "DATABASE_READONLY_USERNAME",
+        "value": "sql_book_readonly"
+      },
+      {
+        "name": "DATABASE_READONLY_PASSWORD",
+        "value": "${data.aws_ssm_parameter.sqlbook_rds_readonly_password.value}"
+      },
+      {
         "name": "SECRET_KEY_BASE",
         "value": "${data.aws_ssm_parameter.sqlbook_secret_key.value}"
       },
@@ -119,4 +127,8 @@ data "aws_ssm_parameter" "sqlbook_secret_key" {
 
 data "aws_ssm_parameter" "sqlbook_rds_root_password" {
   name = "sqlbook_rds_root_password"
+}
+
+data "aws_ssm_parameter" "sqlbook_rds_readonly_password" {
+  name = "sqlbook_rds_readonly_password"
 }
