@@ -31,16 +31,6 @@ function mapDataToAxis(settings: ChartSettings, results: QueryResult): Data {
   }));
 }
 
-function mapDataToLabels(settings: ChartSettings): [string[], number[]] {
-  const values = settings.result.map(r => Object.values(r));
-  const firstValueIsCount = typeof values[0][0] === 'number';
-  
-  return [
-    values.map(v => v[firstValueIsCount ? 1 : 0]),
-    values.map(v => Number(v[firstValueIsCount ? 0 : 1]))
-  ];
-}
-
 function buildLineData(settings: ChartSettings, data: Data): { data: ChartData<'line', Data> } {
   return {
     data: {

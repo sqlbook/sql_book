@@ -28,7 +28,7 @@ export default class extends Controller<HTMLCanvasElement> {
 
   private get settings(): ChartSettings {
     return {
-      type: this.chartType,
+      type: this.typeValue,
       config: this.configValue,
       result: this.resultValue,
       colors: this.colors,
