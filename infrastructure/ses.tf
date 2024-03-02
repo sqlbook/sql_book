@@ -7,7 +7,7 @@ resource "aws_ses_domain_dkim" "sqlbook" {
 }
 
 resource "aws_ses_domain_mail_from" "sqlbook" {
-  domain = aws_ses_domain_identity.sqlbook.domain
+  domain           = aws_ses_domain_identity.sqlbook.domain
   mail_from_domain = "bounce.sqlbook.com"
 }
 

@@ -13,9 +13,15 @@ phases:
 
   build:
     commands:
+      # Build and push the docker image
       - docker build --platform linux/arm64 -t sql_book:latest .
       - docker tag sql_book:latest "${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/sql_book:latest"
       - docker push "${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/sql_book:latest"
+      # Extract the assets directory and sync it to S3
+      - CID=$(docker create sql_book)
+      - docker cp ${CID}:/app/public/assets /tmp/
+      - docker rm ${CID}
+      - aws s3 sync /tmp/assets s3://cdn.sqlbook.com/
 
   post_build:
     commands:
