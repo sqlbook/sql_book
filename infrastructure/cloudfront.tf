@@ -164,7 +164,7 @@ resource "aws_cloudfront_origin_access_identity" "cdn" {
 }
 
 resource "aws_route53_record" "cdn_a" {
-  name    = "sqlbook"
+  name    = "cdn.sqlbook.com"
   type    = "A"
   zone_id = aws_route53_zone.sqlbook.id
 

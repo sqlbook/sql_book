@@ -12,7 +12,7 @@ module App
               a=q.createElement('script');
               a.src=l+s._sbSettings.uuid;
               e.appendChild(a);
-            })(window,document,'https://cdn.sqlbook.com/1.0.0/script.js?');
+            })(window,document,'https://cdn.sqlbook.com/script.js?');
           </script>
         HTML
       end

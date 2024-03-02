@@ -21,7 +21,7 @@ phases:
       - CID=$(docker create sql_book)
       - docker cp ${CID}:/app/public/assets /tmp/
       - docker rm ${CID}
-      - aws s3 sync /tmp/assets s3://cdn.sqlbook.com/
+      - aws s3 sync /tmp/assets s3://cdn.sqlbook.com/ --delete
 
   post_build:
     commands:
