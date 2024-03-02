@@ -14,6 +14,7 @@
     "remixicon": "^4.0.1"
   },
   "devDependencies": {
+    "@types/node": "^20.11.24",
     "@types/rails__actioncable": "^6.1.10"
   }
 }

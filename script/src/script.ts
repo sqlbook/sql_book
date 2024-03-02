@@ -4,9 +4,6 @@ import { Visitor } from './utils/visitor';
 import { EventType, Event } from './types/events/event';
 import { store } from './utils/store';
 
-// TODO: Replace with config
-const WEBSOCKET_URL = 'ws://localhost:3000/events/in';
-
 export class Script {
   private visitor: Visitor;
   private dataSourceUuid: string;
@@ -24,7 +21,7 @@ export class Script {
     this.dataSourceUuid = dataSourceUuid;
     this.visitor = new Visitor(dataSourceUuid);
 
-    this.consumer = createConsumer(`${WEBSOCKET_URL}?${this.visitor.params.toString()}`);
+    this.consumer = createConsumer(`${this.websocketUrl}?${this.visitor.params.toString()}`);
 
     this.subscription = this.consumer.subscriptions.create('EventChannel', {
       connected: () => {
@@ -47,4 +44,12 @@ export class Script {
       timestamp: Math.floor(new Date().valueOf() / 1000),
     });
   };
+
+  private get websocketUrl() {
+    try {
+      return process.env.WEBSOCKET_URL;
+    } catch {
+      return 'ws://localhost:3000/events/in';
+    }
+  }
 }
