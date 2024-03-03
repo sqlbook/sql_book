@@ -147,7 +147,7 @@ RSpec.describe 'Auth::Logins', type: :request do
         }
       end
 
-      it 'directs to the app page' do
+      it 'redirects to the app page' do
         post '/auth/login', params: { email: user.email, **tokens }
 
         expect(response).to redirect_to(app_workspaces_path)

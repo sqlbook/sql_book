@@ -7,6 +7,7 @@ module App
 
       def create
         return redirect_to_team_tab if invite_params[:role].to_i == Member::Roles::OWNER
+        return redirect_to_team_tab if already_a_member?
 
         create_invite!
 
@@ -26,6 +27,13 @@ module App
 
       def allowed_to_destroy_member?
         workspace.role_for(user: current_user) < member.role
+      end
+
+      def already_a_member?
+        user = User.find_by(email: invite_params[:email])
+        return false unless user
+
+        user.member_of?(workspace)
       end
 
       def redirect_to_team_tab

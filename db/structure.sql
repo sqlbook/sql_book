@@ -66,11 +66,12 @@ ALTER SEQUENCE public.data_sources_id_seq OWNED BY public.data_sources.id;
 CREATE TABLE public.members (
     id bigint NOT NULL,
     role integer NOT NULL,
-    status integer NOT NULL,
     user_id bigint,
     workspace_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    status integer NOT NULL,
+    invitation character varying
 );
 
 
@@ -135,12 +136,12 @@ CREATE TABLE public.queries (
     query character varying NOT NULL,
     saved boolean DEFAULT false NOT NULL,
     last_run_at timestamp(6) without time zone,
-    chart_type character varying,
     author_id bigint NOT NULL,
     last_updated_by_id bigint,
     data_source_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
+    chart_type character varying,
     chart_config jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
@@ -362,6 +363,13 @@ CREATE UNIQUE INDEX index_data_sources_on_url ON public.data_sources USING btree
 --
 
 CREATE INDEX index_data_sources_on_workspace_id ON public.data_sources USING btree (workspace_id);
+
+
+--
+-- Name: index_members_on_invitation; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_members_on_invitation ON public.members USING btree (invitation);
 
 
 --

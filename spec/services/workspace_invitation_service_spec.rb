@@ -55,4 +55,14 @@ RSpec.describe WorkspaceInvitationService do
       end
     end
   end
+
+  describe '#invite!' do
+    let!(:member) { create(:member, status: Member::Status::PENDING) }
+
+    subject { instance.accept!(member:) }
+
+    it 'sets the status to accepted' do
+      expect { subject }.to change { member.status }.from(Member::Status::PENDING).to(Member::Status::ACCEPTED)
+    end
+  end
 end

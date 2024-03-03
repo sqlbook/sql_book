@@ -17,4 +17,8 @@ class User < ApplicationRecord
   def full_name
     "#{first_name} #{last_name}"
   end
+
+  def member_of?(workspace:)
+    workspaces.exists?(id: workspace.id)
+  end
 end

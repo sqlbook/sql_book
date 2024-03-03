@@ -10,6 +10,7 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   resources :about, only: %i[index]
 
   namespace :auth do
+    resources :invitation, only: %i[show]
     resources :signout, only: %i[index]
     resources :login, only: %i[index new create] do
       collection do

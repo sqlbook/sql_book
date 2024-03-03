@@ -5,6 +5,10 @@ class WorkspaceInvitationService
     @workspace = workspace
   end
 
+  def accept!(member:)
+    member.update!(status: Member::Status::ACCEPTED, invitation: nil)
+  end
+
   def invite!(first_name:, last_name:, email:, role:)
     user = find_or_create_user!(first_name:, last_name:, email:)
     member = create_member!(user:, role:)
@@ -25,6 +29,12 @@ class WorkspaceInvitationService
   end
 
   def create_member!(user:, role:)
-    Member.create!(user:, workspace:, role:, status: Member::Status::PENDING)
+    Member.create!(
+      user:,
+      workspace:,
+      role:,
+      status: Member::Status::PENDING,
+      invitation: SecureRandom.base36
+    )
   end
 end
