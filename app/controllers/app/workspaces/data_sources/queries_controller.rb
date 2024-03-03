@@ -95,6 +95,7 @@ module App
           params.merge!(query_params)
           params[:last_updated_by] = current_user
           params[:saved] = true if query_params[:name]
+          params[:chart_config] = {} if query_params[:chart_type].blank? # Reset the config
 
           params
         end
