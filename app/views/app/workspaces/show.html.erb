@@ -24,7 +24,28 @@
   <% end %>
 
   <% if active_tab?(tab: "team") %>
-    -
+    <div class="members-table">
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Actions</td>
+        </tr>
+        <% @workspace.members.each do |member| %>
+          <tr>
+            <td><%= member.user.full_name %></td>
+            <td><%= member.role_name %></td>
+            <td><%= member.status_name %></td>
+            <td>
+              <% if current_user_role(workspace: @workspace, current_user: @current_user) < member.role %>
+                <%= link_to "Remove", app_workspace_member_path(@workspace, member), class: "link primary", data: { turbo_method: :delete } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
   <% end %>
 
   <% if active_tab?(tab: "subscription") %>

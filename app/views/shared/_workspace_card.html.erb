@@ -4,7 +4,7 @@
     <p class="owner gray-300">Owner: <%= workspace.owner.full_name %></p>
 
     <% if request.path == app_workspace_path(workspace) %>
-      <%= link_to app_workspaces_path(workspace), class: "link secondary settings" do %>
+      <%= link_to app_workspaces_path, class: "link secondary settings" do %>
         <i class="ri-close-line red-500"></i>
         <span>Close</span>
       <% end %>

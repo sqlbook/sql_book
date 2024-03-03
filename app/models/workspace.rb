@@ -18,4 +18,8 @@ class Workspace < ApplicationRecord
   def event_limit
     15_000
   end
+
+  def role_for(user:)
+    members.find { |member| member.user.id == user.id }.role
+  end
 end

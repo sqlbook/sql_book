@@ -30,6 +30,7 @@ FactoryBot.define do
     user { create(:user) }
     workspace { create(:workspace) }
     role { Member::Roles::OWNER }
+    status { Member::Status::ACCEPTED }
   end
 
   factory :data_source do

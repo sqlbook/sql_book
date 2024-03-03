@@ -49,7 +49,12 @@ module App
     end
 
     def create_owner!(workspace:)
-      Member.create!(user: current_user, workspace:, role: Member::Roles::OWNER)
+      Member.create!(
+        user: current_user,
+        workspace:,
+        role: Member::Roles::OWNER,
+        status: Member::Status::ACCEPTED
+      )
     end
   end
 end

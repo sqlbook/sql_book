@@ -65,7 +65,8 @@ ALTER SEQUENCE public.data_sources_id_seq OWNED BY public.data_sources.id;
 
 CREATE TABLE public.members (
     id bigint NOT NULL,
-    role integer,
+    role integer NOT NULL,
+    status integer NOT NULL,
     user_id bigint,
     workspace_id bigint,
     created_at timestamp(6) without time zone NOT NULL,

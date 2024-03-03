@@ -37,4 +37,14 @@
       grid-template-columns: 1fr auto;
     }
   }
+
+  .members-table {
+    table {
+      width: 100%;
+    }
+
+    td {
+      width: 25%;
+    }
+  }
 }

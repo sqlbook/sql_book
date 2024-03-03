@@ -3,7 +3,8 @@
 class CreateMembers < ActiveRecord::Migration[7.1]
   def change
     create_table :members do |t|
-      t.integer :role
+      t.integer :role, null: false
+      t.integer :status, null: false
 
       t.belongs_to :user
       t.belongs_to :workspace
