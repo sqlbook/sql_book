@@ -46,6 +46,47 @@
         <% end %>
       </table>
     </div>
+
+    <div data-controller="member-invite">
+      <button class="link secondary invite show" type="button" data-member-invite-target="button" data-action="member-invite#show">
+        <i class="ri-add-line"></i>
+        <span>Invite team member</span>
+      </button>
+
+      <div data-controller="form">
+        <%= form_with url: app_workspace_members_path(@workspace), method: :post, class: "invite-team-member-form", html: { "data-form-target": "form", "data-member-invite-target": "form" } do |form| %>
+          <div class="split">
+            <div>
+              <%= form.label :first_name, "First name", class: "label block" %>
+              <%= form.text_field :first_name, class: "input block fluid", placeholder: "Jess", required: true %>
+            </div>
+            <div>
+              <%= form.label :last_name, "Last name", class: "label block" %>
+              <%= form.text_field :last_name, class: "input block fluid", placeholder: "Smith", required: true %>
+            </div>
+          </div>
+          <div class="split">
+            <div>
+              <%= form.label :email, "Email", class: "label block" %>
+              <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
+            </div>
+            <div>
+              <%= form.label :role, "Role", class: "label block" %>
+              <div class="select">
+                <%= form.select :role, options_for_select([["Admin", Member::Roles::ADMIN], ["Read only", Member::Roles::READ_ONLY]]), {} %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <%= form.submit "[Send invitation]", class: "link primary", "data-form-target": "submit" %>
+            <button type="button" class="link secondary" data-action="member-invite#hide">
+              Cancel
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
   <% end %>
 
   <% if active_tab?(tab: "subscription") %>

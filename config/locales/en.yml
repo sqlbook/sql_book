@@ -39,6 +39,9 @@ en:
       subjects:
         login: Your log-in code for sql_book
         signup: Your sign-up code for sql_book
+    workspace:
+      subjects:
+        invite: You've been invited to join sql_book
 
   models:
     data_source:

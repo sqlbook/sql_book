@@ -3,6 +3,61 @@
 require 'rails_helper'
 
 RSpec.describe 'App::Workspaces::Members', type: :request do
+  describe 'POST /app/workspaces/:workspace_id/members' do
+    let(:user) { create(:user) }
+    let!(:workspace) { create(:workspace_with_owner, owner: user) }
+
+    let(:params) do
+      {
+        first_name: 'Bob',
+        last_name: 'Dylan',
+        email: 'bobdylan@gmail.com',
+        role: Member::Roles::READ_ONLY
+      }
+    end
+
+    before { sign_in(user) }
+
+    it 'creates the user' do
+      expect { post "/app/workspaces/#{workspace.id}/members", params: }
+        .to change { User.exists?(email: params[:email]) }.from(false).to(true)
+    end
+
+    it 'creates the member' do
+      expect { post "/app/workspaces/#{workspace.id}/members", params: }.to change { Member.count }.by(1)
+    end
+
+    it 'redirects to the workspace settings' do
+      post("/app/workspaces/#{workspace.id}/members", params:)
+      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+    end
+
+    context 'when trying to create someone as an owner' do
+      let(:params) do
+        {
+          first_name: 'Bob',
+          last_name: 'Dylan',
+          email: 'bobdylan@gmail.com',
+          role: Member::Roles::OWNER
+        }
+      end
+
+      it 'does not creat the user' do
+        expect { post "/app/workspaces/#{workspace.id}/members", params: }
+          .not_to change { User.exists?(email: params[:email]) }
+      end
+
+      it 'does not creat the member' do
+        expect { post "/app/workspaces/#{workspace.id}/members", params: }.not_to change { Member.count }
+      end
+
+      it 'redirects to the workspace settings' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+    end
+  end
+
   describe 'DELETE /app/workspaces/:workspace_id/members/:member_id' do
     let(:user) { create(:user) }
     let(:workspace) { create(:workspace_with_owner, owner: user) }

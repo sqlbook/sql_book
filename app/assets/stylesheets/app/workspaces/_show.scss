@@ -47,4 +47,42 @@
       width: 25%;
     }
   }
+
+  .invite {
+    display: none;
+    margin: 2rem 0 0 0;
+    text-decoration: none;
+
+    &.show {
+      display: inline-block;
+    }
+
+    span {
+      text-decoration: underline;
+    }
+  }
+
+  .invite-team-member-form {
+    display: none;
+    margin: 2rem 0 0 0;
+
+    &.show {
+      display: block;
+    }
+
+    .split {
+      display: grid;
+      grid-gap: 1rem;
+      grid-template-columns: 1fr 1fr;
+      margin: 0 0 1rem 0;
+    }
+
+    .actions {
+      margin: 2rem 0 0 0;
+
+      .link {
+        margin: 0 1rem 0 0;
+      }
+    }
+  }
 }

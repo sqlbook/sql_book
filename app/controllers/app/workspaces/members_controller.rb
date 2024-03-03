@@ -5,6 +5,14 @@ module App
     class MembersController < ApplicationController
       before_action :require_authentication!
 
+      def create
+        return redirect_to_team_tab if invite_params[:role].to_i == Member::Roles::OWNER
+
+        create_invite!
+
+        redirect_to_team_tab
+      end
+
       def destroy
         return redirect_to_team_tab if member.owner?
         return redirect_to_team_tab unless allowed_to_destroy_member?
@@ -34,6 +42,19 @@ module App
 
       def workspace
         @workspace ||= workspaces.find(params[:workspace_id])
+      end
+
+      def invite_params
+        params.permit(:first_name, :last_name, :email, :role)
+      end
+
+      def create_invite!
+        WorkspaceInvitationService.new(workspace:).invite!(
+          first_name: invite_params[:first_name],
+          last_name: invite_params[:last_name],
+          email: invite_params[:email],
+          role: invite_params[:role].to_i
+        )
       end
     end
   end
