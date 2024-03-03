@@ -59,14 +59,14 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
     context 'when trying to create an existing member' do
       let(:existing_user) { create(:user) }
-      let(:existing_member) { create(:member, workspace:, user: existing_user) }
+      let!(:existing_member) { create(:member, workspace:, user: existing_user) }
 
       let(:params) do
         {
           first_name: 'Bob',
           last_name: 'Dylan',
           email: existing_user.email,
-          role: Member::Roles::OWNER
+          role: Member::Roles::ADMIN
         }
       end
 

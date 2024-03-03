@@ -33,7 +33,7 @@ module App
         user = User.find_by(email: invite_params[:email])
         return false unless user
 
-        user.member_of?(workspace)
+        user.member_of?(workspace:)
       end
 
       def redirect_to_team_tab
