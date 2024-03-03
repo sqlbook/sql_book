@@ -13,4 +13,9 @@ class Workspace < ApplicationRecord
   def owner
     members.find_by(role: Member::Roles::OWNER).user
   end
+
+  # Placeholder until billing is in
+  def event_limit
+    15_000
+  end
 end

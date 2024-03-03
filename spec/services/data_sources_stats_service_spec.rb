@@ -52,6 +52,14 @@ RSpec.describe DataSourcesStatsService do
     end
   end
 
+  describe '#monthly_events_limit_for' do
+    it 'returns an even share for all data sources' do
+      expect(instance.monthly_events_limit_for(data_source: data_source_1)).to eq(5000)
+      expect(instance.monthly_events_limit_for(data_source: data_source_2)).to eq(5000)
+      expect(instance.monthly_events_limit_for(data_source: data_source_3)).to eq(5000)
+    end
+  end
+
   describe '#queries_for' do
     it 'returns the correct counts' do
       expect(instance.queries_for(data_source: data_source_1)).to eq(3)

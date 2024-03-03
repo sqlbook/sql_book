@@ -6,12 +6,14 @@ module App
 
     def index
       @workspaces = workspaces
+      @workspaces_stats = WorkspacesStatsService.new(workspaces:)
 
       redirect_to new_app_workspace_path if workspaces.empty?
     end
 
     def show
       @workspace = workspace
+      @workspaces_stats = WorkspacesStatsService.new(workspaces: [workspace])
     end
 
     def new; end

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class DataSourcesStatsService
+  attr_reader :total_events, :monthly_events
+
   def initialize(data_sources:)
     @data_sources = data_sources
 
@@ -16,13 +18,18 @@ class DataSourcesStatsService
     monthly_events[data_source.external_uuid].to_i
   end
 
+  def monthly_events_limit_for(data_source:)
+    workspace = data_source.workspace
+    workspace.event_limit / workspace.data_sources.count
+  end
+
   def queries_for(data_source:)
     queries[data_source.id].to_i
   end
 
   private
 
-  attr_reader :data_sources, :total_events, :monthly_events
+  attr_reader :data_sources
 
   def data_source_id
     @data_source_id ||= data_sources.map(&:id)

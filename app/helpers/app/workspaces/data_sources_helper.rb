@@ -3,6 +3,8 @@
 module App
   module Workspaces
     module DataSourcesHelper
+      include ActiveSupport::NumberHelper
+
       def tracking_code(data_source:)
         <<~HTML
           <script>

@@ -14,7 +14,7 @@
   <% if query.chart_type == 'total' %>
     <div class="chart total align-<%= query.chart_config[:post_text_label_position] %>">
       <h2 class="count red-500">
-        <%= ActiveSupport::NumberHelper.number_to_delimited(query.query_result.data.first[query.chart_config[:data_column].to_s]) %>
+        <%= number_to_delimited(query.query_result.data.first[query.chart_config[:data_column].to_s]) %>
       </h2>
       <% if query.chart_config[:post_text_label_enabled] %>
         <p class="gray-500 post-text-label">
@@ -37,4 +37,3 @@
     ></canvas>
   <% end %>
 </div>
- 

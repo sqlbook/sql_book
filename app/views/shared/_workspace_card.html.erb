@@ -45,8 +45,10 @@
   <div class="stat events">
     <p class="title gray-200">Events</p>
     <h3 class="red-500">
-      0
+      <%= number_to_delimited(@workspaces_stats.monthly_events_for(workspace:)) %>
     </h3>
-    <p class="subtitle small gray-500">/ 15,000</p>
+    <p class="subtitle small gray-500">
+      / <%= number_to_delimited(@workspaces_stats.monthly_events_limit_for(workspace:)) %>
+    </p>
   </div>
 </div>
