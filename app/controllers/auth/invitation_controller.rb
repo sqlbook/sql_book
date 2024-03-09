@@ -3,14 +3,24 @@
 module Auth
   class InvitationController < ApplicationController
     def show
-      member = Member.find_by(invitation: params[:id])
+      @member = member
+    end
 
-      return render :show unless member
-
+    def accept
       WorkspaceInvitationService.new(workspace: member.workspace).accept!(member:)
-
       session[:current_user_id] = member.user.id
       redirect_to app_workspace_path(member.workspace)
+    end
+
+    def reject
+      WorkspaceInvitationService.new(workspace: member.workspace).reject!(member:)
+      redirect_to root_path
+    end
+
+    private
+
+    def member
+      @member ||= Member.find_by(invitation: params[:id])
     end
   end
 end

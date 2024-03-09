@@ -56,6 +56,44 @@ RSpec.describe WorkspaceInvitationService do
     end
   end
 
+  describe '#reject!' do
+    let(:worksapce) { create(:workspace) }
+
+    subject { instance.reject!(member:) }
+
+    context 'when the member has no workspaces' do
+      let(:user) { create(:user) }
+      let!(:member) { create(:member, status: Member::Status::PENDING, user:) }
+
+      it 'destroys the member' do
+        expect { subject }.to change { Member.exists?(member.id) }.from(true).to(false)
+      end
+
+      it 'destroys the user' do
+        expect { subject }.to change { User.exists?(user.id) }.from(true).to(false)
+      end
+    end
+
+    context 'when the member has other workspaces' do
+      let(:user) { create(:user) }
+      let!(:member) { create(:member, status: Member::Status::PENDING, user:) }
+
+      before do
+        # Add the user to another workspace
+        other_workspace = create(:workspace)
+        create(:member, user:, workspace: other_workspace)
+      end
+
+      it 'destroys the member' do
+        expect { subject }.to change { Member.exists?(member.id) }.from(true).to(false)
+      end
+
+      it 'does not destroy the user' do
+        expect { subject }.not_to change { User.exists?(user.id) }
+      end
+    end
+  end
+
   describe '#invite!' do
     let!(:member) { create(:member, status: Member::Status::PENDING) }
 

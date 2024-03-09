@@ -9,6 +9,12 @@ class WorkspaceInvitationService
     member.update!(status: Member::Status::ACCEPTED, invitation: nil)
   end
 
+  def reject!(member:)
+    user = member.user
+    member.destroy
+    user.destroy if user.workspaces.empty?
+  end
+
   def invite!(first_name:, last_name:, email:, role:)
     user = find_or_create_user!(first_name:, last_name:, email:)
     member = create_member!(user:, role:)

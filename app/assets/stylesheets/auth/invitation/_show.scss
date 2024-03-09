@@ -1,0 +1,30 @@
+.auth-invitation-show {
+  .header,
+  .footer {
+    display: none;
+  }
+
+  main {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .invitation {
+    margin: 2rem 0;
+    text-align: center;
+
+    h1 {
+      margin: 0 0 2rem 0;
+    }
+
+    .link {
+      margin: 0 .5rem;
+
+      &.secondary {
+        color: var(--gray-500);
+      }
+    }
+  }
+}

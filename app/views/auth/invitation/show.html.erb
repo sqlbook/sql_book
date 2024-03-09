@@ -1,5 +1,19 @@
 <main>
-  <h1>Accept invitation</h1>
-  <p>Your invitation link is no longer valid, please contact the site owner to request a new invitation</p>
-  <%= link_to "[Go home]", root_path, class: "link primary" %>
+  <%= image_tag "quokka.svg", height: 54, width: 50 %>
+  <div class="container invitation md">
+    <% if @member %>
+      <h1>Welcome to Sqlbook</h1>
+      <p>You have been invited you to join the <%= @member.workspace.name %> workspace. Please choose from the options below:</p>
+      <div class="links">
+        <%= link_to "[Accept Invitation]", accept_auth_invitation_path(params[:id]), class: "link primary" %>
+        <%= link_to "Reject", reject_auth_invitation_path(params[:id]), class: "link secondary" %>
+      </div>
+    <% else %>
+      <h1>Your invitation is invalid</h1>
+      <p>Your invitation link is no longer valid, please contact the site owner to request a new invitation</p>
+      <div class="links">
+        <%= link_to "[Go home]", root_path, class: "link primary" %>
+      </div>
+    <% end %>
+  </div>
 </main>
