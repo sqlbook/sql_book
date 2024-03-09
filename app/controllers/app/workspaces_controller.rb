@@ -30,6 +30,11 @@ module App
       redirect_to app_workspaces_path
     end
 
+    def update
+      workspace.update(name: workspace_params[:name])
+      redirect_to app_workspace_path(workspace, tab: 'general')
+    end
+
     private
 
     def workspaces
@@ -55,6 +60,10 @@ module App
         role: Member::Roles::OWNER,
         status: Member::Status::ACCEPTED
       )
+    end
+
+    def update_params
+      params.permit(:name)
     end
   end
 end

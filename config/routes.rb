@@ -32,7 +32,7 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   end
 
   namespace :app do
-    resources :workspaces, only: %i[index show new create] do
+    resources :workspaces do
       resources :queries, only: %i[index], controller: 'workspaces/queries'
       resources :dashboards, only: %i[index], controller: 'workspaces/dashboards'
       resources :members, only: %i[create destroy], controller: 'workspaces/members'

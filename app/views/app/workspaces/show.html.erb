@@ -20,7 +20,13 @@
   </div>
 
   <% if active_tab?(tab: "general", default_selected: true) %>
-    -
+    <div data-controller="form">
+      <%= form_with url: app_workspace_path(@workspace), method: :patch, class: "workspace-update-form", html: { "data-form-target": "form" } do |form| %>
+        <%= form.label :name, "Workspace name", class: "label block" %>
+        <%= form.text_field :name, class: "input block fluid", value: @workspace.name, required: true %>
+        <%= form.submit "[Save Changes]", class: "link primary", "data-form-target": "submit" %>
+      <% end %>
+    </div>
   <% end %>
 
   <% if active_tab?(tab: "team") %>

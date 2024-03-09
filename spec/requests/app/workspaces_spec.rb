@@ -112,4 +112,21 @@ RSpec.describe 'App::Workspaces', type: :request do
       end
     end
   end
+
+  describe 'PATCH /app/workspaces/:workspace_id' do
+    let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+
+    before { sign_in(user) }
+
+    it 'updates the workspace' do
+      expect { patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' } }
+        .to change { workspace.reload.name }.from(workspace.name).to('new_name')
+    end
+
+    it 'redirects to the general tab' do
+      patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' }
+      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'general'))
+    end
+  end
 end
