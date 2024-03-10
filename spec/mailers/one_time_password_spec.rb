@@ -12,7 +12,7 @@ RSpec.describe OneTimePasswordMailer, type: :mailer do
     it 'renders the correct headers' do
       expect(subject.subject).to eq 'Your log-in code for sql_book'
       expect(subject.to).to eq [email]
-      expect(subject.from).to eq ['hello@sqlbook.com']
+      expect(subject.from).to eq ['noreply@sqlbook.com']
     end
 
     it 'includes the token in the email' do
@@ -37,7 +37,7 @@ RSpec.describe OneTimePasswordMailer, type: :mailer do
     it 'renders the correct headers' do
       expect(subject.subject).to eq 'Your sign-up code for sql_book'
       expect(subject.to).to eq [email]
-      expect(subject.from).to eq ['hello@sqlbook.com']
+      expect(subject.from).to eq ['noreply@sqlbook.com']
     end
 
     it 'includes the token in the email' do

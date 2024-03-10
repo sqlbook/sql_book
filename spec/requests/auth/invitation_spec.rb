@@ -19,13 +19,16 @@ RSpec.describe 'Auth::Invitation', type: :request do
 
     context 'when the token is valid' do
       let(:workspace) { create(:workspace) }
-      let(:member) { create(:member, workspace:, invitation: SecureRandom.base36) }
+      let(:invited_by) { create(:user) }
+      let(:member) { create(:member, workspace:, invitation: SecureRandom.base36, invited_by:) }
       let(:token) { member.invitation }
 
       it 'renders the confirmation page' do
         subject
         expect(response.status).to eq(200)
-        expect(response.body).to include("You have been invited you to join the #{workspace.name} workspace")
+        expect(response.body).to include(
+          "#{invited_by.full_name} has invited you to join the #{workspace.name} workspace"
+        )
       end
     end
   end

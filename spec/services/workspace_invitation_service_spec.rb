@@ -12,12 +12,13 @@ RSpec.describe WorkspaceInvitationService do
     let(:last_name) { 'Hetfield' }
     let(:email) { 'downpickingking@gmail.com' }
     let(:role) { Member::Roles::ADMIN }
+    let(:invited_by) { create(:user) }
 
     before do
       allow(WorkspaceMailer).to receive(:invite).and_call_original
     end
 
-    subject { instance.invite!(first_name:, last_name:, email:, role:) }
+    subject { instance.invite!(invited_by:, first_name:, last_name:, email:, role:) }
 
     context 'when the user does not exist' do
       it 'creates the user' do
@@ -31,6 +32,11 @@ RSpec.describe WorkspaceInvitationService do
       it 'sends the invitation email' do
         subject
         expect(WorkspaceMailer).to have_received(:invite).with(member: Member.last)
+      end
+
+      it 'sets the invited by user' do
+        subject
+        expect(workspace.reload.members.last.invited_by_id).to eq(invited_by.id)
       end
     end
 
@@ -52,6 +58,11 @@ RSpec.describe WorkspaceInvitationService do
       it 'sends the invitation email' do
         subject
         expect(WorkspaceMailer).to have_received(:invite).with(member: Member.last)
+      end
+
+      it 'sets the invited by user' do
+        subject
+        expect(workspace.reload.members.last.invited_by_id).to eq(invited_by.id)
       end
     end
   end

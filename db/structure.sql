@@ -71,7 +71,8 @@ CREATE TABLE public.members (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     status integer NOT NULL,
-    invitation character varying
+    invitation character varying,
+    invited_by_id bigint
 );
 
 

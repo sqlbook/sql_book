@@ -58,6 +58,7 @@ module App
 
       def create_invite!
         WorkspaceInvitationService.new(workspace:).invite!(
+          invited_by: current_user,
           first_name: invite_params[:first_name],
           last_name: invite_params[:last_name],
           email: invite_params[:email],

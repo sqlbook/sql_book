@@ -15,9 +15,9 @@ class WorkspaceInvitationService
     user.destroy if user.workspaces.empty?
   end
 
-  def invite!(first_name:, last_name:, email:, role:)
+  def invite!(invited_by:, first_name:, last_name:, email:, role:)
     user = find_or_create_user!(first_name:, last_name:, email:)
-    member = create_member!(user:, role:)
+    member = create_member!(user:, role:, invited_by:)
 
     WorkspaceMailer.invite(member:).deliver_now
   end
@@ -34,13 +34,14 @@ class WorkspaceInvitationService
     end
   end
 
-  def create_member!(user:, role:)
+  def create_member!(user:, role:, invited_by:)
     Member.create!(
       user:,
       workspace:,
       role:,
       status: Member::Status::PENDING,
-      invitation: SecureRandom.base36
+      invitation: SecureRandom.base36,
+      invited_by:
     )
   end
 end

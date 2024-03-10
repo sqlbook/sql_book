@@ -7,6 +7,8 @@ class CreateMembers < ActiveRecord::Migration[7.1]
       t.integer :status, null: false
       t.string :invitation
 
+      t.bigint :invited_by_id
+
       t.belongs_to :user
       t.belongs_to :workspace
 

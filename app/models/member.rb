@@ -4,6 +4,11 @@ class Member < ApplicationRecord
   belongs_to :workspace
   belongs_to :user
 
+  belongs_to :invited_by,
+             class_name: 'User',
+             primary_key: :id,
+             optional: true
+
   class Roles
     OWNER = 1
     ADMIN = 2

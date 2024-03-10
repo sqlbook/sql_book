@@ -1,3 +1,3 @@
 <h1>Hi <%= @member.user.first_name %>, you&apos;ve been invited to join a workspace on sqlbook.</h1>
-<p>You have been invited you to join the <%= @member.workspace.name %> workspace on sqlbook. Please click the button below to proceed.</p>
+<p><%= @member.invited_by.full_name %> has invited you to join the <%= @member.workspace.name %> workspace on sqlbook. Please click the button below to proceed.</p>
 <%= link_to "[View Invitation]", auth_invitation_url(@member.invitation), style: "margin: 0; text-decoration: none;" %>
