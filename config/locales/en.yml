@@ -41,7 +41,8 @@ en:
         signup: Your sign-up code for sql_book
     workspace:
       subjects:
-        invite: You've been invited to join sql_book
+        invite: You've been invited to join a workspace on sqlbook.
+        invite_reject: Invitation rejected.
 
   models:
     data_source:

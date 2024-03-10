@@ -4,7 +4,14 @@
 class WorkspacePreview < ActionMailer::Preview
   def invite
     member = Member.first
+    member.invited_by_id = member.user.id
     member.invitation = 'token' # This is only in memory but works fine for a preview
     WorkspaceMailer.invite(member:)
+  end
+
+  def invite_reject
+    member = Member.first
+    member.invited_by_id = member.user.id
+    WorkspaceMailer.invite_reject(member:)
   end
 end

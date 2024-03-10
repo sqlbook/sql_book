@@ -12,6 +12,9 @@ class WorkspaceInvitationService
   def reject!(member:)
     user = member.user
     member.destroy
+
+    WorkspaceMailer.invite_reject(member:).deliver_now
+
     user.destroy if user.workspaces.empty?
   end
 

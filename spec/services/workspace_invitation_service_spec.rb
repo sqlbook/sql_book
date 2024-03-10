@@ -70,14 +70,24 @@ RSpec.describe WorkspaceInvitationService do
   describe '#reject!' do
     let(:worksapce) { create(:workspace) }
 
+    before do
+      allow(WorkspaceMailer).to receive(:invite_reject).and_call_original
+    end
+
     subject { instance.reject!(member:) }
 
     context 'when the member has no workspaces' do
       let(:user) { create(:user) }
-      let!(:member) { create(:member, status: Member::Status::PENDING, user:) }
+      let(:invited_by) { create(:user) }
+      let!(:member) { create(:member, status: Member::Status::PENDING, user:, invited_by:) }
 
       it 'destroys the member' do
         expect { subject }.to change { Member.exists?(member.id) }.from(true).to(false)
+      end
+
+      it 'sends the rejection email to the inviter' do
+        subject
+        expect(WorkspaceMailer).to have_received(:invite_reject).with(member:)
       end
 
       it 'destroys the user' do
@@ -87,7 +97,8 @@ RSpec.describe WorkspaceInvitationService do
 
     context 'when the member has other workspaces' do
       let(:user) { create(:user) }
-      let!(:member) { create(:member, status: Member::Status::PENDING, user:) }
+      let(:invited_by) { create(:user) }
+      let!(:member) { create(:member, status: Member::Status::PENDING, user:, invited_by:) }
 
       before do
         # Add the user to another workspace
@@ -97,6 +108,11 @@ RSpec.describe WorkspaceInvitationService do
 
       it 'destroys the member' do
         expect { subject }.to change { Member.exists?(member.id) }.from(true).to(false)
+      end
+
+      it 'sends the rejection email to the inviter' do
+        subject
+        expect(WorkspaceMailer).to have_received(:invite_reject).with(member:)
       end
 
       it 'does not destroy the user' do
