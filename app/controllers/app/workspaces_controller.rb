@@ -35,6 +35,11 @@ module App
       redirect_to app_workspace_path(workspace, tab: 'general')
     end
 
+    def destroy
+      workspace.destroy
+      redirect_to app_workspaces_path
+    end
+
     private
 
     def workspaces

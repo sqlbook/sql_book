@@ -129,4 +129,21 @@ RSpec.describe 'App::Workspaces', type: :request do
       expect(response).to redirect_to(app_workspace_path(workspace, tab: 'general'))
     end
   end
+
+  describe 'DELETE /app/workspaces/:workspace_id' do
+    let(:user) { create(:user) }
+    let!(:workspace) { create(:workspace_with_owner, owner: user) }
+
+    before { sign_in(user) }
+
+    it 'destroys the workspace' do
+      expect { delete "/app/workspaces/#{workspace.id}" }
+        .to change { Workspace.exists?(workspace.id) }.from(true).to(false)
+    end
+
+    it 'redirects to the workspaces page' do
+      delete "/app/workspaces/#{workspace.id}"
+      expect(response).to redirect_to(app_workspaces_path)
+    end
+  end
 end
