@@ -1,20 +1,22 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'input', 'submit', 'schema'];
+  static targets = ['form', 'input', 'submit', 'schema', 'queryLibrary'];
 
   declare readonly formTarget: HTMLFormElement;
   declare readonly inputTarget: HTMLTextAreaElement;
   declare readonly submitTarget: HTMLButtonElement;
   declare readonly schemaTarget: HTMLDivElement;
+  declare readonly queryLibraryTarget: HTMLDivElement;
 
   public connect(): void {
     this.setButtonDisabled('');
     this.setInputRows();
   }
 
-  public change(): void {
+  public change(event: InputEvent): void {
     this.setInputRows();
+    this.showQueryLibrary(event);
   }
 
   public changeSource(event: Event): void {
@@ -82,5 +84,24 @@ export default class extends Controller<HTMLDivElement> {
 
     this.inputTarget.rows = query.split('\n').length;
     this.setButtonDisabled(query);
+  }
+
+  private showQueryLibrary(event: InputEvent): void {
+    const target = event.target as HTMLInputElement;
+    const searchTerm = target.value.replace('/', '').toLowerCase();
+
+    this.queryLibraryTarget.querySelectorAll('.link').forEach(link => {
+      link.classList.add('hide');
+      
+      if (link.textContent?.trim().toLowerCase()?.includes(searchTerm)) {
+        link.classList.remove('hide');
+      }
+    });
+    
+    if (target.value.startsWith('/')) {
+      this.queryLibraryTarget.classList.add('show');
+    } else {
+      this.queryLibraryTarget.classList.remove('show');
+    }
   }
 }

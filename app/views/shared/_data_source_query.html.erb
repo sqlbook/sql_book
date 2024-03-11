@@ -52,6 +52,21 @@
     <div class="query-form">
       <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit",  "data-data-source-query-target": "input", value: @query&.query %>
       <%= form.submit "Press CMD+Enter to run...", class: "link secondary submit", "data-data-source-query-target": "submit" %>
+
+      <div class="query-library" data-data-source-query-target="queryLibrary">
+        <button type="button" class="link">
+          Average busiest day
+        </button>
+        <button type="button" class="link">
+          Average busiest time
+        </button>
+        <button type="button" class="link">
+          Average quietest day
+        </button>
+        <button type="button" class="link">
+          Average session duration
+        </button>
+      </div>
     </div>
   <% end %>
 </div>
