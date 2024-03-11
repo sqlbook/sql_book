@@ -188,11 +188,25 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
     let(:workspace) { create(:workspace_with_owner, owner: user) }
     let(:data_source) { create(:data_source, workspace:) }
 
-    before { sign_in(user) }
+    before do
+      sign_in(user)
+
+      # Create 3 other members
+      create(:member, workspace:)
+      create(:member, workspace:)
+      create(:member, workspace:)
+
+      allow(DataSourceMailer).to receive(:destroy).and_call_original
+    end
 
     it 'deletes the data source' do
       expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}" }
         .to change { DataSource.exists?(data_source.id) }.from(true).to(false)
+    end
+
+    it 'sends a mailer to every member in that workspace' do
+      delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
+      expect(DataSourceMailer).to have_received(:destroy).exactly(4).times
     end
 
     context 'when the data source has some data' do

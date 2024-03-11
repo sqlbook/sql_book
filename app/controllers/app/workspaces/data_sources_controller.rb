@@ -42,6 +42,8 @@ module App
       end
 
       def destroy
+        send_data_source_destroy_mailer
+
         data_source.destroy!
 
         redirect_to app_workspace_data_sources_path(workspace)
@@ -67,6 +69,12 @@ module App
 
       def data_source_params
         params.permit(:url)
+      end
+
+      def send_data_source_destroy_mailer
+        workspace.members.each do |member|
+          DataSourceMailer.destroy(deleted_by: current_user, data_source:, member:).deliver_now
+        end
       end
 
       def handle_invalid_data_source_create(data_source)

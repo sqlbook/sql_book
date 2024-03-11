@@ -1,0 +1,4 @@
+<h1>Data source deleted</h1>
+<p><%= @deleted_by.full_name %> has deleted the data source <b><%= @data_source.url %></b> from the <b><%= @data_source.workspace.name %></b> workspace.</p>
+<p>If you think this action may have been performed in error, please contact <%= @deleted_by.first_name %> directly.</p>
+<%= link_to "[Visit Workspace]", app_workspace_url(@data_source.workspace), style: "margin: 0; text-decoration: none;" %>
