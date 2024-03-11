@@ -36,7 +36,7 @@
   <div class="stat dashboards">
     <p class="title gray-200">Dashboards</p>
     <h3 class="red-500">
-      0
+      <%= workspace.dashboards.count %>
     </h3>
     <p class="subtitle small gray-500">
       <%= link_to "View", app_workspace_dashboards_path(workspace), class: "link gray-500", "aria-label": "View dashboards for the #{workspace.name} workspace" %>

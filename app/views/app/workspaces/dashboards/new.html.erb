@@ -1,0 +1,14 @@
+<main>
+  <h1>New Dashboard</h1>
+
+  <div class="container md" data-controller="form">
+    <%= form_with url: app_workspace_dashboards_path(@workspace), method: :post, class: "new-dashboard-form", html: { "data-form-target": "form" } do |form| %>
+      <%= form.label :name, "Please enter the name of your dashboard:", class: "label block" %>
+      <%= form.text_field :name, placeholder: "e.g. Site Health Dashboard", class: "input block fluid", required: true %>
+
+      <%= render "shared/flash" %>
+
+      <%= form.submit "Press ENTER to submit", class: "link", "data-form-target": "submit" %>
+    <% end %>
+  </div>
+</main>

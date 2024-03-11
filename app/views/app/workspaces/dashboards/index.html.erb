@@ -1,3 +1,46 @@
 <main>
-  <h1>Dashboards</h1>
+  <% if @dashboards.empty? %>
+    <h1>Dashboards</h1>
+    <p>Any dashboards you&apos;ve created will be available here.</p>
+
+    <%= link_to "[Create New Dashboard]", new_app_workspace_dashboard_path(@workspace), class: "link primary", "data-shortcut": "N", "aria-label": "Create new dashboard" %>
+  <% else %>
+    <div class="page-header">
+      <div class="title">
+        <h1>Dashboards</h1>
+        <%= link_to new_app_workspace_dashboard_path(@workspace), class: "link secondary create-dashboard", "data-shortcut": "N", "aria-label": "Create new dashboard" do %>
+          <i class="ri-add-line red-500"></i>
+          <span>Create New</span>
+        <% end %>
+      </div>
+      <div class="controls" data-controller="search">
+        <%= form_with url: app_workspace_dashboards_path(@workspace), method: :get, html: { "data-search-target": "form" } do |form| %>
+          <%= form.text_field :search, type: "search", placeholder: "Search...", value: params[:search], class: "input block search", "data-action": "search#change" %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="dashboards-table">
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Created by</th>
+          <th>Date created</th>
+          <th>Last updated</th>
+        </tr>
+        <% @dashboards.each do |dashboard| %>
+          <tr>
+            <td>
+              <%= link_to app_workspace_dashboard_path(@workspace, dashboard), class: "link name cream-250", "aria-label": "View the #{dashboard.name} dashboard" do %>
+                <%= dashboard.name %>
+              <% end %>
+            </td>
+            <td><%= dashboard.author.full_name %></td>
+            <td><%= dashboard.created_at.strftime('%a, %e %b %Y') %></td>
+            <td><%= dashboard.updated_at.strftime('%a, %e %b %Y') %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+  <% end %>
 </main>

@@ -1,4 +1,4 @@
-.app-workspaces-queries-index {
+.app-workspaces-dashboards-index {
   .page-header {
     align-items: center;
     display: flex;
@@ -14,7 +14,7 @@
       margin: 0;
     }
 
-    .create-query {
+    .create-dashboard {
       margin: 0 0 0 1.5rem;
       text-decoration: none;
       
@@ -30,7 +30,7 @@
     width: 20rem;
   }
 
-  .queries-table {
+  .dashboards-table {
     table {
       background: var(--gray-800);
       width: 100%;

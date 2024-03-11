@@ -38,6 +38,11 @@ FactoryBot.define do
     workspace { create(:workspace) }
   end
 
+  factory :dashboard do
+    name { 'My dashboard' }
+    workspace { create(:workspace) }
+  end
+
   factory :query do
     name { 'My Query' }
     query { 'SELECT * FROM sessions;' }

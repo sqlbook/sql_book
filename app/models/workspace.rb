@@ -7,6 +7,9 @@ class Workspace < ApplicationRecord
   has_many :members,
            dependent: :destroy
 
+  has_many :dashboards,
+           dependent: :destroy
+
   has_many :queries,
            through: :data_sources
 
