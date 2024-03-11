@@ -11,7 +11,7 @@ sqlbook has a free tier, and charges per event after the free tier has been exce
 
 ## Self-hosting sqlbook
 
-sqlbook is open source and can be self hosted, however it is only for personal use and cannot be resold. Please check the licence for more information.
+sqlbook is open source and can be self hosted, however it is only for personal use and cannot be resold. Please check the license for more information.
 
 ### Requirements
 
