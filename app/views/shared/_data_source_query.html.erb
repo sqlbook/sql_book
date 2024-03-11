@@ -9,7 +9,7 @@
         <%= form.select :data_source_id, options_from_collection_for_select(@data_sources, :id, :url, selected: params[:data_source_id]), {}, { "data-action": "data-source-query#changeSource" } %>
         <i class="ri-arrow-drop-down-line"></i>
       </div>
-      <%= link_to app_workspace_data_source_path(@workspace, @data_source), class: "link secondary" do %>
+      <%= link_to app_workspace_data_source_path(@workspace, @data_source), class: "link secondary", "aria-label": "View datasource" do %>
         <i class="ri-settings-3-line"></i>
       <% end %>
       <button class="link secondary" type="button" data-action="data-source-query#toggleSchema">

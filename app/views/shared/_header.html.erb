@@ -1,6 +1,6 @@
 <% if signed_in? %>
   <header class="header">
-    <%= link_to app_workspaces_path do %>
+    <%= link_to app_workspaces_path, "aria-label": "Return to the workspaces page" do %>
       <%= render "shared/logo" %>
     <% end %>
 
@@ -17,20 +17,20 @@
             <i class="ri-arrow-drop-down-line"></i>
           </div>
 
-          <%= link_to app_workspace_data_sources_path(@workspace), class: "link secondary menu-item" do %>
+          <%= link_to app_workspace_data_sources_path(@workspace), class: "link secondary menu-item", "aria-label": "View datasources for the #{@workspace.name} workspace" do %>
             <i class="ri-database-2-line"></i> Data Sources
           <% end %>
-          <%= link_to app_workspace_queries_path(@workspace), class: "link secondary menu-item" do %>
+          <%= link_to app_workspace_queries_path(@workspace), class: "link secondary menu-item", "aria-label": "View queries for the #{@workspace.name} workspace" do %>
             <i class="ri-book-open-line"></i> Query Library
           <% end %>
-          <%= link_to app_workspace_dashboards_path(@workspace), class: "link secondary menu-item" do %>
+          <%= link_to app_workspace_dashboards_path(@workspace), class: "link secondary menu-item", "aria-label": "View dashboards for the #{@workspace.name} workspace" do %>
             <i class="ri-dashboard-line"></i> Dashboards
           <% end %>
           <label class="text-small category">Account</label>
-          <%= link_to "#", class: "link secondary menu-item" do %>
+          <%= link_to "#", class: "link secondary menu-item", "aria-label": "View account settings" do %>
             <i class="ri-settings-3-line"></i> Settings
           <% end %>
-          <%= link_to auth_signout_index_path, class: "link secondary menu-item" do %>
+          <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>
             <i class="ri-logout-box-r-line"></i> Log out
           <% end %>
         </div>
@@ -39,18 +39,18 @@
   </header>
 <% else %>
   <header class="header split">
-    <%= link_to root_path do %>
+    <%= link_to root_path, "aria-label": "Return to the home page" do %>
       <%= render "shared/logo" %>
     <% end %>
 
     <menu>
       <% if signup_page? %>
-        <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
+        <p>Already have an account? <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large", "aria-label": "Visit the login page" %>
       <% elsif login_page? %>
-        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large", "data-shortcut": "S" %>
+        <p>New to sqlbook? <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large", "data-shortcut": "S", "aria-label": "Visit the sign up page" %>
       <% else %>
-        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large", "data-shortcut": "S" %>
-        <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large" %>
+        <%= link_to "[Sign up]", auth_signup_index_path, class: "link primary text-large", "data-shortcut": "S", "aria-label": "Visit the sign up page" %>
+        <%= link_to "Log in", auth_login_index_path, class: "link secondary text-large", "aria-label": "Visit the login page" %>
       <% end %>
     </menu>
   </header>

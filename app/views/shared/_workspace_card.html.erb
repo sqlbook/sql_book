@@ -1,15 +1,15 @@
 <div class="workspace-card">
   <div class="details">
-    <h4><%= link_to workspace.name, app_workspace_data_sources_path(workspace), class: "link secondary" %></h4>
+    <h4><%= link_to workspace.name, app_workspace_data_sources_path(workspace), class: "link secondary", "aria-label": "Visit the #{workspace.name} workspace" %></h4>
     <p class="owner gray-300">Owner: <%= workspace.owner.full_name %></p>
 
     <% if request.path == app_workspace_path(workspace) %>
-      <%= link_to app_workspaces_path, class: "link secondary settings" do %>
+      <%= link_to app_workspaces_path, class: "link secondary settings", "aria-label": "Close and return to the workspaces page" do %>
         <i class="ri-close-line red-500"></i>
         <span>Close</span>
       <% end %>
     <% else %>
-      <%= link_to app_workspace_path(workspace), class: "link secondary settings" do %>
+      <%= link_to app_workspace_path(workspace), class: "link secondary settings", "aria-label": "View settings for the #{workspace.name} workspace" do %>
         <i class="ri-settings-3-line red-500"></i>
         <span>Settings</span>
       <% end %>
@@ -21,7 +21,7 @@
       <%= workspace.data_sources.count %>
     </h3> 
     <p class="subtitle small gray-500">
-      <%= link_to "View", app_workspace_data_sources_path(workspace), class: "link gray-500" %>
+      <%= link_to "View", app_workspace_data_sources_path(workspace), class: "link gray-500", "aria-label": "View datasources for the #{workspace.name} workspace" %>
     </p>
   </div>
   <div class="stat queries">
@@ -30,7 +30,7 @@
       <%= workspace.queries.count %>
     </h3>
     <p class="subtitle small gray-500">
-      <%= link_to "View", app_workspace_queries_path(workspace), class: "link gray-500" %>
+      <%= link_to "View", app_workspace_queries_path(workspace), class: "link gray-500", "aria-label": "View queries for the #{workspace.name} workspace" %>
     </p>
   </div>
   <div class="stat dashboards">
@@ -39,7 +39,7 @@
       0
     </h3>
     <p class="subtitle small gray-500">
-      <%= link_to "View", app_workspace_dashboards_path(workspace), class: "link gray-500" %>
+      <%= link_to "View", app_workspace_dashboards_path(workspace), class: "link gray-500", "aria-label": "View dashboards for the #{workspace.name} workspace" %>
     </p>
   </div>
   <div class="stat events">

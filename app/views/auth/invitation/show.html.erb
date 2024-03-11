@@ -5,14 +5,14 @@
       <h1>Welcome to Sqlbook</h1>
       <p><%= @member.invited_by.full_name %> has invited you to join the <%= @member.workspace.name %> workspace. Please choose from the options below:</p>
       <div class="links">
-        <%= link_to "[Accept Invitation]", accept_auth_invitation_path(params[:id]), class: "link primary" %>
-        <%= link_to "Reject", reject_auth_invitation_path(params[:id]), class: "link secondary" %>
+        <%= link_to "[Accept Invitation]", accept_auth_invitation_path(params[:id]), class: "link primary", "aria-label": "Accept invitation to the #{@member.workspace.name} workspace" %>
+        <%= link_to "Reject", reject_auth_invitation_path(params[:id]), class: "link secondary", "aria-label": "Reject invitation to the #{@member.workspace.name} workspace" %>
       </div>
     <% else %>
       <h1>Your invitation is invalid</h1>
       <p>Your invitation link is no longer valid, please contact the site owner to request a new invitation</p>
       <div class="links">
-        <%= link_to "[Go home]", root_path, class: "link primary" %>
+        <%= link_to "[Go home]", root_path, class: "link primary", "aria-label": "Return to the home page" %>
       </div>
     <% end %>
   </div>

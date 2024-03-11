@@ -8,7 +8,7 @@
           <p>Please ensure you&apos;ve correctly copied the code opposite into the &lt;head&gt; section of your sites HTML and that you&apos;ve published the changes.</p>
           <p>Providing you&apos;ve successfully completed the step above, we will automatically verify your installation the moment your website&apos;s first session data is captured. You can speed-up auto-verification by visiting your site yourself.</p>
           <p>If you&apos;re stuck, please contact us via <a href="mailto:support@sqlbook.com" class="link secondary">support@sqlbook.com</a></p>
-          <%= link_to "[Verify Installation]", add_params(verification_attempt: 0), class: "link primary text-large", "data-shortcut": "V" %>
+          <%= link_to "[Verify Installation]", add_params(verification_attempt: 0), class: "link primary text-large", "data-shortcut": "V", "aria-label": "Verify installation of the tracking code" %>
         <% else %>
           <p>Verifying installation...</p>
         <% end %>
@@ -32,7 +32,7 @@
   <% if active_tab?(tab: "learn_more") %>
     <p>The <span>sql_book</span> tracking code is a small piece of JavaScript that you add to any pages of your site that you wish to capture analytics data on.</p>
     <p>Our code is <span>privacy-friendly</span> and <span>cookieless</span>, meaning you won&apos;t need to bug your visitors with consent or cookie banners unless you plan to capture their personal data.</p>
-    <p>Not only that, but <span>our script is fully</span> <%= link_to "open source", "#", class: "link primary" %> under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. This means you can review it yourself to ensure it meets your business requirements, contribute improvements for the community, or even fork it for use in your own projects, subject to the stated <%= link_to "licensing terms", "#", class: "link primary" %>.</p>
+    <p>Not only that, but <span>our script is fully</span> <%= link_to "open source", "http://github.com/sqlbook/sql_book", class: "link primary", "aria-label": "Visit the sqlbook Github page" %> under the GNU Affero General Public License Version 3 (AGPLv3) or any later version. This means you can review it yourself to ensure it meets your business requirements, contribute improvements for the community, or even fork it for use in your own projects, subject to the stated <%= link_to "licensing terms", "https://github.com/sqlbook/sql_book/blob/main/LICENCE.md", class: "link primary", "aria-label": "Visit the sqlbook licence on Github" %>.</p>
 
     <%= render "shared/github_link" %>
   <% end %>

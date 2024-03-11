@@ -1,7 +1,7 @@
 <main>
   <div class="page-header">
     <h1>Workspaces</h1>
-    <%= link_to new_app_workspace_path, class: "link secondary create-workspace", "data-shortcut": "N" do %>
+    <%= link_to new_app_workspace_path, class: "link secondary create-workspace", "data-shortcut": "N", "aria-label": "Create a new workspace" do %>
       <i class="ri-add-line red-500"></i>
       <span>Create New</span>
     <% end %>
@@ -48,7 +48,7 @@
             <td><%= member.status_name %></td>
             <td>
               <% if current_user_role(workspace: @workspace, current_user: @current_user) < member.role %>
-                <%= link_to "Remove", app_workspace_member_path(@workspace, member), class: "link primary", data: { turbo_method: :delete } %>
+                <%= link_to "Remove", app_workspace_member_path(@workspace, member), class: "link primary", data: { turbo_method: :delete }, "aria-label": "Remove #{member.user.full_name} from the team" %>
               <% end %>
             </td>
           </tr>
@@ -117,13 +117,13 @@
             <p class="title cream-250"><b>Are you sure you wish to delete your workspace</b></p>
             <p>If so, all data sources, data, queries and dashboards will be deleted permanently.</p>
             <div class="actions">
-              <%= link_to "[Delete Workspace]", app_workspace_path, class: "link primary", data: { turbo_method: :delete } %>
-              <%= link_to "Cancel", add_params(confirm_delete: nil), class: "link secondary" %>
+              <%= link_to "[Delete Workspace]", app_workspace_path, class: "link primary", data: { turbo_method: :delete }, "aria-label": "Confirm deletion of workspace" %>
+              <%= link_to "Cancel", add_params(confirm_delete: nil), class: "link secondary", "aria-label": "Cancel deleting the workspace" %>
             </div>
           </div>
         </div>
       <% else %>
-        <%= link_to "[Delete Workspace]", add_params(confirm_delete: 1), class: "link primary" %>
+        <%= link_to "[Delete Workspace]", add_params(confirm_delete: 1), class: "link primary", "aria-label": "Delete workspace" %>
       <% end %>
     </div>
   <% end %>
