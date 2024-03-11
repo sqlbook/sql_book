@@ -66,9 +66,5 @@ module App
         status: Member::Status::ACCEPTED
       )
     end
-
-    def update_params
-      params.permit(:name)
-    end
   end
 end
