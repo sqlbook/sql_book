@@ -3,7 +3,7 @@
   "private": "true",
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --outdir=app/assets/builds --public-path=/assets",
-    "build_script": "esbuild script/src/index.ts --bundle --outfile=public/assets/script.js --minify"
+    "build_script": "esbuild script/src/index.ts --bundle --outfile=public/assets/script.js"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",

@@ -22,8 +22,8 @@ RUN yarn install
 
 COPY . /app
 
-RUN yarn build
-RUN yarn build_script --define:process.env.WEBSOCKET_URL="'https://sqlbook.com/events/in'"
+RUN yarn build --minify
+RUN yarn build_script --define:process.env.WEBSOCKET_URL="'https://sqlbook.com/events/in'" --minify
 
 # Yes this is a real thing in Rails
 RUN SECRET_KEY_BASE_DUMMY=1 rails assets:precompile
