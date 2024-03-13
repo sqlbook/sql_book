@@ -51,5 +51,7 @@ export default class extends Controller<HTMLDivElement> {
     document.querySelectorAll<HTMLInputElement>('.otp-code .input').forEach((element, index) => {
       element.value = code[index];
     });
+
+    document.querySelector('.otp-code')?.closest('form')?.requestSubmit();
   }
 }
