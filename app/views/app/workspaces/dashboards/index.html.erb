@@ -20,13 +20,14 @@
       </div>
     </div>
 
-    <div class="dashboards-table">
+    <div class="dashboards-table" data-controller="table">
       <table>
         <tr>
           <th>Name</th>
           <th>Created by</th>
           <th>Date created</th>
           <th>Last updated</th>
+          <th class="options"></th>
         </tr>
         <% @dashboards.each do |dashboard| %>
           <tr>
@@ -38,6 +39,15 @@
             <td><%= dashboard.author.full_name %></td>
             <td><%= dashboard.created_at.strftime('%a, %e %b %Y') %></td>
             <td><%= dashboard.updated_at.strftime('%a, %e %b %Y') %></td>
+            <td class="options" >
+              <button class="toggle-options" data-action="table#toggleOptions">
+                <i class="ri-more-2-fill ri-xl gray-250"></i>
+              </button>
+              <div class="dropdown-options context">
+                <%= link_to "Open", app_workspace_dashboard_path(@workspace, dashboard), class: "link", "aria-label": "View the #{dashboard.name} dashboard" %>
+                <%= link_to "Delete", app_workspace_dashboard_path(@workspace, dashboard), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{dashboard.name} dashboard" %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </table>

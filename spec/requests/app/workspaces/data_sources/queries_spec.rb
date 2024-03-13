@@ -262,4 +262,29 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       end
     end
   end
+
+  describe 'DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query' do
+    let(:data_source) { create(:data_source, workspace:) }
+
+    context 'when the query does not exist' do
+      it 'renders a 404 page' do
+        delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/234243242"
+        expect(response.status).to eq(404)
+      end
+    end
+
+    context 'when the query exists' do
+      let!(:query) { create(:query, data_source:) }
+
+      it 'redirects to the queries page' do
+        delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}"
+        expect(response).to redirect_to(app_workspace_queries_path(workspace))
+      end
+
+      it 'destroys the query' do
+        expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}" }
+          .to change { Query.exists?(query.id) }.from(true).to(false)
+      end
+    end
+  end
 end

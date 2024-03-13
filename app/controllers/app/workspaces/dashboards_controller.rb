@@ -30,6 +30,11 @@ module App
         redirect_to app_workspace_dashboard_path(workspace, dashboard)
       end
 
+      def destroy
+        dashboard.destroy!
+        redirect_to app_workspace_dashboards_path
+      end
+
       private
 
       def workspace

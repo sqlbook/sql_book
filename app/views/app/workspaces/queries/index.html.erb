@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <div class="queries-table">
+    <div class="queries-table" data-controller="table">
       <table>
         <tr>
           <th>Name</th>
@@ -29,6 +29,7 @@
           <th>Last updated</th>
           <th>Last updated by</th>
           <th>Last run</th>
+          <th class="options"></th>
         </tr>
         <% @queries.each do |query| %>
           <tr>
@@ -43,6 +44,15 @@
             <td><%= query.updated_at.strftime('%a, %e %b %Y') %></td>
             <td><%= query.last_updated_by&.full_name || '-' %></td>
             <td><%= query.last_run_at&.strftime('%a, %e %b %Y') || '-' %></td>
+            <td class="options" >
+              <button class="toggle-options" data-action="table#toggleOptions">
+                <i class="ri-more-2-fill ri-xl gray-250"></i>
+              </button>
+              <div class="dropdown-options context">
+                <%= link_to "Open", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
+                <%= link_to "Delete", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
+              </div>
+            </td>
           </tr>
         <% end %>
       </table>

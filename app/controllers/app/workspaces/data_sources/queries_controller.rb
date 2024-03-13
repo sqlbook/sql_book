@@ -32,6 +32,11 @@ module App
           redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: query_redirect_tab)
         end
 
+        def destroy
+          query.destroy!
+          redirect_to app_workspace_queries_path(workspace)
+        end
+
         def chart_config
           query.update(query_chart_config_params)
 

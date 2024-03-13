@@ -132,4 +132,33 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
       end
     end
   end
+
+  describe 'DELETE /app/workspaces/:workspace_id/dashboards/:dashboard_id' do
+    let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let!(:dashboard) { create(:dashboard, workspace:, author: user) }
+
+    before do
+      sign_in(user)
+    end
+
+    context 'when the dashboard does not exist' do
+      it 'renders the 404 page' do
+        delete "/app/workspace/#{workspace.id}/dashboards/342342343223"
+        expect(response.status).to eq(404)
+      end
+    end
+
+    context 'when the dashboard exists' do
+      it 'directs to the index page' do
+        delete "/app/workspaces/#{workspace.id}/dashboards/#{dashboard.id}"
+        expect(response).to redirect_to(app_workspace_dashboards_path)
+      end
+
+      it 'destroys the dashboard' do
+        expect { delete "/app/workspaces/#{workspace.id}/dashboards/#{dashboard.id}" }
+          .to change { Dashboard.exists?(dashboard.id) }.from(true).to(false)
+      end
+    end
+  end
 end

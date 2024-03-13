@@ -103,35 +103,4 @@
       }
     }
   }
-
-  .query-library {
-    background: var(--gray-800);
-    border: 1px solid var(--gray-500);
-    border-radius: var(--border-radius-sm);
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    width: 15rem;
-
-    &.show {
-      display: flex;
-    }
-
-    .link {
-      color: var(--gray-250);
-      cursor: pointer;
-      display: block;
-      text-align: left;
-      padding: .125rem .5rem;
-
-      &.hide {
-        display: none;
-      }
-
-      &:hover {
-        background: var(--gray-900);
-        color: var(--cream-250);
-      }
-    }
-  }
 }
