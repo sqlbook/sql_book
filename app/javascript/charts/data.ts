@@ -39,7 +39,7 @@ function buildLineData(settings: ChartSettings, data: Data): { data: ChartData<'
           data,
           backgroundColor: settings.config.colors[0],
           borderColor: settings.config.colors[0],
-          pointBackgroundColor: '#1C1C1C',
+          pointBackgroundColor: settings.colors.gray850,
           pointBorderColor: settings.config.colors[0],
           pointBorderWidth: 2,
         },
@@ -56,7 +56,7 @@ function buildAreaData(settings: ChartSettings, data: Data): { data: ChartData<'
           data,
           backgroundColor: hexToRgb(settings.config.colors[0], .25),
           borderColor: settings.config.colors[0],
-          pointBackgroundColor: '#1C1C1C',
+          pointBackgroundColor: settings.colors.gray850,
           pointBorderColor: settings.config.colors[0],
           pointBorderWidth: 2,
           fill: 'start',
@@ -95,7 +95,7 @@ function buildPieData(settings: ChartSettings): { data: ChartData<'pie', Data> }
         {
           data: counts,
           backgroundColor: settings.config.colors,
-          borderColor: '#1C1C1C',
+          borderColor: settings.colors.gray850,
           borderWidth: 2,
           // These are valid
           ['radius' as any]: '50%',
