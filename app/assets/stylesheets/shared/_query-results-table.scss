@@ -2,6 +2,10 @@
   .query-results-table {
     overflow: auto;
     padding-bottom: 1rem;
+
+    table {
+      width: 100%;
+    }
   }
 
   .pagination {
