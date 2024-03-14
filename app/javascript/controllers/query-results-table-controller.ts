@@ -51,12 +51,12 @@ export default class extends Controller<HTMLDivElement> {
     this.setPage();
   }
 
-  private setPage = () => {
+  private setPage = (): void => {
     this.setPageValue();
     this.setVisibleRows();
   };
 
-  private setPageValue = () => {
+  private setPageValue = (): void => {
     this.currentPageTarget.innerText = (this.page + 1).toString();
     this.totalPagesTarget.innerText = this.pages.toString();
 
@@ -76,7 +76,7 @@ export default class extends Controller<HTMLDivElement> {
     }
   }
 
-  private setVisibleRows = () => {
+  private setVisibleRows = (): void => {
     if (this.configValue.pagination_enabled) {
       const start = (this.page * this.configValue.pagination_rows);
       const end = start + Number(this.configValue.pagination_rows) - 1;
@@ -91,7 +91,7 @@ export default class extends Controller<HTMLDivElement> {
     }
   };
 
-  private get pages() {
+  private get pages(): number {
     return Math.ceil(this.resultValue.length / this.configValue.pagination_rows);
   }
 }

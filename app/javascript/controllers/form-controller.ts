@@ -6,12 +6,12 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly formTarget: HTMLFormElement;
   declare readonly submitTarget: HTMLButtonElement;
 
-  public connect() {
+  public connect(): void {
     this.setButtonDisabled();
     this.formTarget.addEventListener('input', () => this.setButtonDisabled());
   }
 
-  private setButtonDisabled() {
+  private setButtonDisabled(): void {
     if (this.formTarget.checkValidity()) {
       this.submitTarget.removeAttribute('disabled');
     } else {

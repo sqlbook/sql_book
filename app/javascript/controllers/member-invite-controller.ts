@@ -6,12 +6,12 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly buttonTarget: HTMLButtonElement;
   declare readonly formTarget: HTMLFormElement;
 
-  public show() {
+  public show(): void {
     this.buttonTarget.classList.remove('show');
     this.formTarget.classList.add('show');
   }
 
-  public hide() {
+  public hide(): void {
     this.buttonTarget.classList.add('show');
     this.formTarget.classList.remove('show');
   }

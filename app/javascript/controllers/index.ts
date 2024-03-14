@@ -6,6 +6,7 @@ import { application } from './application';
 
 import AccordionController from './accordion-controller';
 import BodyController from './body-controller';
+import CardsController from './cards-controller';
 import ChartConfigController from './chart-config-controller';
 import ChartController from './chart-controller';
 import ChartGalleryController from './chart-gallery-controller';
@@ -23,6 +24,7 @@ import TableController from './table-controller';
 
 application.register('accordion', AccordionController);
 application.register('body', BodyController);
+application.register('cards', CardsController);
 application.register('chart-config', ChartConfigController);
 application.register('chart', ChartController);
 application.register('chart-gallery', ChartGalleryController);

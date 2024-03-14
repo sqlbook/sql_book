@@ -1,6 +1,7 @@
 .data-source-card {
   background: var(--gray-800);
   border: 1px solid var(--gray-900);
+  cursor: pointer;
   display: grid;
   grid-template-areas: 'details total-events monthly-events queries';
   grid-template-columns: 1fr 11rem 11rem 11rem;
@@ -34,10 +35,12 @@
   }
 
   .settings {
-    align-items: center;
-    display: flex;
-    grid-area: settings;
-    text-decoration: none;
+    .link {
+      align-items: center;
+      display: inline-flex;
+      grid-area: settings;
+      text-decoration: none;
+    }
 
     i {
       margin: 0 .5rem 0 0;

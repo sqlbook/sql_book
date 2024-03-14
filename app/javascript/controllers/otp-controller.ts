@@ -47,7 +47,7 @@ export default class extends Controller<HTMLDivElement> {
     }
   };
 
-  private autofillCode(code: string) {
+  private autofillCode(code: string): void {
     document.querySelectorAll<HTMLInputElement>('.otp-code .input').forEach((element, index) => {
       element.value = code[index];
     });

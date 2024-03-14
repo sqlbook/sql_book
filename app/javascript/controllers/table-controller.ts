@@ -5,7 +5,7 @@ export default class extends Controller<HTMLDivElement> {
 
   declare readonly tableTarget: HTMLFormElement;
 
-  public initialize(): void {
+  public connect(): void {
     document.addEventListener('click', this.onDocumentClick);
   }
 
@@ -20,7 +20,7 @@ export default class extends Controller<HTMLDivElement> {
     }
   }
 
-  private onDocumentClick = (event: MouseEvent) => {
+  private onDocumentClick = (event: MouseEvent): void => {
     const target = event.target as HTMLElement;
     
     if (!target.closest('tr')) {

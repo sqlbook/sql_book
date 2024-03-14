@@ -7,7 +7,7 @@
     <% end %>
   </div>
 
-  <div class="data-sources container lg">
+  <div class="data-sources container lg" data-controller="cards">
     <% @data_sources.each do |data_source| %>
       <%= render "shared/data_source_card", workspace: @workspace, data_source: %>
     <% end %>

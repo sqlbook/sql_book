@@ -17,7 +17,7 @@ export function buildConfig(settings: ChartSettings): { options: ChartOptions } 
             color: settings.colors.gray250,
             boxHeight: 16,
             boxWidth: 16,
-          }
+          },
         },
       },
       scales: {

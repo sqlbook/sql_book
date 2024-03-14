@@ -6,11 +6,11 @@ export default class extends Controller<HTMLDivElement> {
 
   declare readonly formTarget: HTMLFormElement;
 
-  initialize() {
+  public connect(): void {
     this.change = debounce(this.change, 500);
   }
 
-  public change() {
+  public change(): void {
     this.formTarget.requestSubmit();
   }
 }

@@ -5,7 +5,7 @@ export default class extends Controller<HTMLDivElement> {
   
   declare readonly formTarget: HTMLFormElement;
 
-  public submit() {
+  public submit(): void {
     this.formTarget.requestSubmit();
   }
 }

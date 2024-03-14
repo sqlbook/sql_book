@@ -17,7 +17,7 @@ export default class extends Controller<HTMLDivElement> {
     });
   }
 
-  private submit = () => {
+  private submit = (): void => {
     this.formTarget.requestSubmit();
   }
 }

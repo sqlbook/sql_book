@@ -23,17 +23,17 @@ export default class extends Controller<HTMLDivElement> {
     window.removeEventListener('mousemove', this.handleMouseMove, true);
   }
 
-  private handleMouseUp = (event: MouseEvent) => {
+  private handleMouseUp = (event: MouseEvent): void => {
     event.preventDefault();
     this.isDragging = false;
   };
 
-  private handleMouseDown = (event: MouseEvent) => {
+  private handleMouseDown = (event: MouseEvent): void => {
     event.preventDefault();
     this.isDragging = true;
   };
 
-  private handleMouseMove = (event: MouseEvent) => {
+  private handleMouseMove = (event: MouseEvent): void => {
     if (this.isDragging) {
       const value = Math.min(Math.max(event.clientX, MIN_SIZE), window.innerWidth - MIN_SIZE);
 

@@ -16,6 +16,6 @@ export default class extends Controller<HTMLMenuElement> {
     // Replace the workspace_id
     parts[3] = target.value;
 
-    window.Turbo.visit(parts.join('/'), { action: 'replace' })
+    window.Turbo.visit(parts.join('/'), { action: 'replace' });
   }
 }
