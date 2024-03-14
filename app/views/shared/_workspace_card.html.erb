@@ -20,8 +20,8 @@
     <h3 class="red-500">
       <%= workspace.data_sources.count %>
     </h3> 
-    <p class="subtitle small gray-500">
-      <%= link_to "View", app_workspace_data_sources_path(workspace), class: "link gray-500", "aria-label": "View datasources for the #{workspace.name} workspace" %>
+    <p class="subtitle small">
+      <%= link_to "View", app_workspace_data_sources_path(workspace), class: "link gray-200", "aria-label": "View datasources for the #{workspace.name} workspace" %>
     </p>
   </div>
   <div class="stat queries">
@@ -29,8 +29,8 @@
     <h3 class="red-500">
       <%= workspace.queries.count %>
     </h3>
-    <p class="subtitle small gray-500">
-      <%= link_to "View", app_workspace_queries_path(workspace), class: "link gray-500", "aria-label": "View queries for the #{workspace.name} workspace" %>
+    <p class="subtitle small">
+      <%= link_to "View", app_workspace_queries_path(workspace), class: "link gray-200", "aria-label": "View queries for the #{workspace.name} workspace" %>
     </p>
   </div>
   <div class="stat dashboards">
@@ -38,8 +38,8 @@
     <h3 class="red-500">
       <%= workspace.dashboards.count %>
     </h3>
-    <p class="subtitle small gray-500">
-      <%= link_to "View", app_workspace_dashboards_path(workspace), class: "link gray-500", "aria-label": "View dashboards for the #{workspace.name} workspace" %>
+    <p class="subtitle small">
+      <%= link_to "View", app_workspace_dashboards_path(workspace), class: "link gray-200", "aria-label": "View dashboards for the #{workspace.name} workspace" %>
     </p>
   </div>
   <div class="stat events">
