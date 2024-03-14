@@ -71,6 +71,14 @@ table {
   .null {
     color: var(--gray-500);
   }
+
+  &.collapsible {
+    th, td {
+      overflow: hidden;
+      max-width: 1px;
+      text-overflow: ellipsis;
+    }
+  }
 }
 
 table, th, td {
