@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
 class ApplicationMailer < ActionMailer::Base
-  default from: 'The sqlbook team <noreply@sqlbook.com>'
+  default from: 'The Sqlbook Team <noreply@sqlbook.com>'
   layout 'mailer'
 end
