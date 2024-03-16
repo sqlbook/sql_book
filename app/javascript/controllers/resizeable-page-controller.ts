@@ -2,6 +2,10 @@ import { Controller } from '@hotwired/stimulus';
 
 const MIN_SIZE = 600;
 
+// Keep the last value stored so it can be
+// reset after tab changes
+let columnWidth: number | undefined = undefined;
+
 export default class extends Controller<HTMLDivElement> { 
   static targets = ['handle'];
 
@@ -14,6 +18,10 @@ export default class extends Controller<HTMLDivElement> {
 
     window.addEventListener('mouseup', this.handleMouseUp);
     window.addEventListener('mousemove', this.handleMouseMove);
+
+    if (columnWidth) {
+      this.setColumnWidth(columnWidth);
+    }
   }
 
   public disconnect(): void {
@@ -36,8 +44,12 @@ export default class extends Controller<HTMLDivElement> {
   private handleMouseMove = (event: MouseEvent): void => {
     if (this.isDragging) {
       const value = Math.min(Math.max(event.clientX, MIN_SIZE), window.innerWidth - MIN_SIZE);
-
-      document.body.style.gridTemplateColumns = `${value}px minmax(0, 1fr)`;
+      columnWidth = value;
+      this.setColumnWidth(value);
     }
   };
+
+  private setColumnWidth(width: number): void {
+    document.body.style.gridTemplateColumns = `${width}px minmax(0, 1fr)`;
+  }
 }
