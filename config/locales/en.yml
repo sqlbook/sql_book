@@ -37,11 +37,11 @@ en:
   mailers:
     data_source:
       subjects:
-        destroy: A data source has been delete from %{workspace_name}.
+        destroy: A data source has been deleted from %{workspace_name}.
     one_time_password:
       subjects:
-        login: Your log-in code for sql_book
-        signup: Your sign-up code for sql_book
+        login: Your log-in code for Sqlbook
+        signup: Your sign-up code for Sqlbook
     workspace:
       subjects:
         invite: You've been invited to join a workspace on sqlbook.

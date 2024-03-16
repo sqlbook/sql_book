@@ -12,7 +12,7 @@ RSpec.describe DataSourceMailer, type: :mailer do
     subject { described_class.destroy(deleted_by:, data_source:, member: workspace.members.first) }
 
     it 'renders the correct headers' do
-      expect(subject.subject).to eq "A data source has been delete from #{workspace.name}."
+      expect(subject.subject).to eq "A data source has been deleted from #{workspace.name}."
       expect(subject.to).to eq [owner.email]
       expect(subject.from).to eq ['noreply@sqlbook.com']
     end
