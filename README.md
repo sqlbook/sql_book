@@ -28,6 +28,8 @@ This assumes you already have Ruby, Node.js and Postgres already installed.
 ```
 $ git clone git@github.com:sqlbook/sql_book.git
 $ bundle install
+$ yarn install
+$ yarn build
 ```
 
 ## Create the databases

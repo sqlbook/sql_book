@@ -2,16 +2,16 @@
 
 source 'https://rubygems.org'
 
-ruby '3.3.0'
+ruby '3.4.2'
 
-gem 'aws-sdk-rails'
 gem 'bootsnap', require: false
 gem 'jbuilder'
 gem 'pg'
 gem 'puma'
-gem 'rails', '~> 7.1.2'
+gem 'rails', '~> 8.0.2'
 gem 'redis'
 gem 'sassc-rails'
+gem 'sidekiq'
 gem 'sprockets-rails'
 gem 'stimulus-rails'
 gem 'turbo-rails'
