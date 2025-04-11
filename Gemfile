@@ -19,6 +19,7 @@ gem 'turbo-rails'
 gem 'useragent'
 
 group :development, :test do
+  gem 'brakeman', require: false
   gem 'rspec-rails'
   gem 'rubocop-rails'
 end

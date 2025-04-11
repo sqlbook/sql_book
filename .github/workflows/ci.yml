@@ -58,7 +58,7 @@ jobs:
 
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client nodejs npm
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,6 +69,12 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Build assets
+        run: |
+          npm install -g yarn
+          yarn install
+          yarn build
+
       - name: Run tests
         env:
           RAILS_ENV: test
@@ -76,7 +82,8 @@ jobs:
           DATABASE_EVENTS_URL: postgres://postgres:postgres@localhost:5432/sql_book_events_test
           REDIS_URL: redis://localhost:6379/0
         run: |
-          bundle exe rails db:create
+          bundle exec rails db:create
+          ./db/setup.sh test
           bundle exec rspec
 
       - name: Keep screenshots from failed system tests
