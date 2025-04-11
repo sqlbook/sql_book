@@ -84,6 +84,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
         run: |
           bundle exec rails db:create
+          bundle exec rails db:migrate
           ./db/setup.sh test
           bundle exec rspec
 
