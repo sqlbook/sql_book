@@ -78,8 +78,9 @@ jobs:
       - name: Run tests
         env:
           RAILS_ENV: test
-          DATABASE_PRIMARY_URL: postgres://postgres:postgres@localhost:5432/sql_book_test
-          DATABASE_EVENTS_URL: postgres://postgres:postgres@localhost:5432/sql_book_events_test
+          DATABASE_USER: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_HOST: localhost
           REDIS_URL: redis://localhost:6379/0
         run: |
           bundle exec rails db:create
