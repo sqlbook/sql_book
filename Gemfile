@@ -6,6 +6,7 @@ ruby '3.4.2'
 
 gem 'bootsnap', require: false
 gem 'jbuilder'
+gem 'kamal'
 gem 'pg'
 gem 'puma'
 gem 'rails', '~> 8.0.2'
