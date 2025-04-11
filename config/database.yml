@@ -1,11 +1,13 @@
 default_primary: &default_primary
   adapter: postgresql
   encoding: unicode
+  url: <%= ENV["DATABASE_PRIMARY_URL"] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 default_events: &default_events
   adapter: postgresql
   encoding: unicode
+  url: <%= ENV["DATABASE_EVENTS_URL"] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   migrations_paths: db/migrate_events
 
@@ -28,7 +30,7 @@ test:
 production:
   primary:
     <<: *default_primary
-    url: <%= ENV["DATABASE_PRIMARY_URL"] %>
+    database: sql_book_production
   events:
     <<: *default_events
-    url: <%= ENV["DATABASE_EVENTS_URL"] %>
+    database: sql_book_events_production
