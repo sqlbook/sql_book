@@ -42,8 +42,13 @@ builder:
 
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
+  clear:
+    POSTGRES_USER: 'sqlbook'
+    POSTGRES_HOST: 'sqlbook-db'
+    REDIS_URL: 'redis://sqlbook-redis:6379/0'
   secret:
     - RAILS_MASTER_KEY
+    - POSTGRES_PASSWORD
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:
 # "bin/kamal app logs -r job" will tail logs from the first server in the job section.
@@ -75,21 +80,25 @@ ssh:
 #   wait: 2
 
 # Use accessory services (secrets come from .kamal/secrets).
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     port: 3306
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
-#   redis:
-#     image: redis/7-alpine
-#     port: 6379
+accessories:
+  db:
+    image: postgres:16.4
+    host: 192.168.0.1
+    port: 5432
+    env:
+      clear:
+        POSTGRES_USER: 'sqlbook'
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
+    options:
+      network: private
+  redis:
+    image: redis/7-alpine
+    host: 192.168.0.1
+    port: 6379
+    directories:
+      - data:/data
+    options:
+      network: private

@@ -1,9 +1,9 @@
 common: &common
   adapter: postgresql
   encoding: unicode
-  host: <%= ENV["DATABASE_HOST"] %>
-  username: <%= ENV["DATABASE_USER"] %>
-  password: <%= ENV["DATABASE_PASSWORD"] %>
+  host: <%= ENV["POSTGRES_HOST"] %>
+  username: <%= ENV["POSTGRES_USER"] %>
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 default_primary: &default_primary
@@ -32,9 +32,7 @@ test:
 production:
   primary:
     <<: *default_primary
-    url: <%= ENV["DATABASE_PRIMARY_URL"] %>
     database: sql_book_production
   events:
     <<: *default_events
-    url: <%= ENV["DATABASE_EVENTS_URL"] %>
     database: sql_book_events_production
