@@ -10,7 +10,57 @@
  * files in this directory. Styles in this file should be added after the last require_* statement.
  * It is generally better to create a new file per style scope.
  *
- *= require_tree .
- *= require_self
- *= require remixicon/fonts/remixicon.css
  */
+
+// These should go first
+@import "./variables";
+@import "./global";
+@import "./typography";
+@import "./utilities";
+@import "./fonts";
+
+// Components
+@import "./checkbox";
+@import "./colors";
+@import "./container";
+@import "./context";
+@import "./input";
+@import "./label";
+@import "./message";
+@import "./radio";
+@import "./select";
+@import "./table";
+
+// Shared
+@import "./shared/tabs/nav_item";
+@import "./shared/tabs/tabs";
+@import "./shared/accordion";
+@import "./shared/chart-config";
+@import "./shared/chart-gallery";
+@import "./shared/chart";
+@import "./shared/data-source-card";
+@import "./shared/data-source-query";
+@import "./shared/flash";
+@import "./shared/footer";
+@import "./shared/github-link";
+@import "./shared/grab-handle";
+@import "./shared/header";
+@import "./shared/notice";
+@import "./shared/query-results-table";
+@import "./shared/workspace-card";
+
+// Pages
+@import "./about/index";
+@import "./app/workspaces/dashboards/index";
+@import "./app/workspaces/dashboards/new";
+@import "./app/workspaces/data_sources/queries/show";
+@import "./app/workspaces/data_sources/set_up/index";
+@import "./app/workspaces/queries/index";
+@import "./app/workspaces/index";
+@import "./app/workspaces/new";
+@import "./app/workspaces/show";
+@import "./auth/invitation/show";
+@import "./auth/login/index";
+@import "./auth/login/new";
+@import "./auth/signup/index";
+@import "./auth/signup/new";
