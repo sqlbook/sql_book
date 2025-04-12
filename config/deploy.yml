@@ -83,7 +83,7 @@ ssh:
 accessories:
   db:
     image: postgres:16.4
-    host: 192.168.0.1
+    host: 135.181.44.252
     port: 5432
     env:
       clear:
@@ -96,7 +96,7 @@ accessories:
       network: private
   redis:
     image: redis/7-alpine
-    host: 192.168.0.1
+    host: 135.181.44.252
     port: 6379
     directories:
       - data:/data

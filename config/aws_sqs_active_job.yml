@@ -1,2 +1,0 @@
-queues:
-  events: <%= ENV.fetch("EVENTS_QUEUE_URL") %>
