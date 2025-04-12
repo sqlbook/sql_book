@@ -13,54 +13,54 @@
  */
 
 // These should go first
-@import "./variables";
-@import "./global";
-@import "./typography";
-@import "./utilities";
-@import "./fonts";
+@use "variables";
+@use "global";
+@use "typography";
+@use "utilities";
+@use "fonts";
 
 // Components
-@import "./checkbox";
-@import "./colors";
-@import "./container";
-@import "./context";
-@import "./input";
-@import "./label";
-@import "./message";
-@import "./radio";
-@import "./select";
-@import "./table";
+@use "checkbox";
+@use "colors";
+@use "container";
+@use "context";
+@use "input";
+@use "label";
+@use "message";
+@use "radio";
+@use "select";
+@use "table";
 
 // Shared
-@import "./shared/tabs/nav_item";
-@import "./shared/tabs/tabs";
-@import "./shared/accordion";
-@import "./shared/chart-config";
-@import "./shared/chart-gallery";
-@import "./shared/chart";
-@import "./shared/data-source-card";
-@import "./shared/data-source-query";
-@import "./shared/flash";
-@import "./shared/footer";
-@import "./shared/github-link";
-@import "./shared/grab-handle";
-@import "./shared/header";
-@import "./shared/notice";
-@import "./shared/query-results-table";
-@import "./shared/workspace-card";
+@use "shared/tabs/nav_item";
+@use "shared/tabs/tabs";
+@use "shared/accordion";
+@use "shared/chart-config";
+@use "shared/chart-gallery";
+@use "shared/chart";
+@use "shared/data-source-card";
+@use "shared/data-source-query";
+@use "shared/flash";
+@use "shared/footer";
+@use "shared/github-link";
+@use "shared/grab-handle";
+@use "shared/header";
+@use "shared/notice";
+@use "shared/query-results-table";
+@use "shared/workspace-card";
 
 // Pages
-@import "./about/index";
-@import "./app/workspaces/dashboards/index";
-@import "./app/workspaces/dashboards/new";
-@import "./app/workspaces/data_sources/queries/show";
-@import "./app/workspaces/data_sources/set_up/index";
-@import "./app/workspaces/queries/index";
-@import "./app/workspaces/index";
-@import "./app/workspaces/new";
-@import "./app/workspaces/show";
-@import "./auth/invitation/show";
-@import "./auth/login/index";
-@import "./auth/login/new";
-@import "./auth/signup/index";
-@import "./auth/signup/new";
+@use "about/index" as about_index;
+@use "app/workspaces/dashboards/index" as dashboards_index;
+@use "app/workspaces/dashboards/new" as dashboards_new;
+@use "app/workspaces/data_sources/queries/show" as queries_show;
+@use "app/workspaces/data_sources/set_up/index" as set_up_index;
+@use "app/workspaces/queries/index" as queries_index;
+@use "app/workspaces/index" as workspaces_index;
+@use "app/workspaces/new" as workspaces_new;
+@use "app/workspaces/show" as workspaces_show;
+@use "auth/invitation/show" as invitation_show;
+@use "auth/login/index" as login_index;
+@use "auth/login/new" as login_new;
+@use "auth/signup/index" as signup_index;
+@use "auth/signup/new" as signup_new;
