@@ -88,7 +88,6 @@ accessories:
     env:
       clear:
         POSTGRES_USER: 'sqlbook'
-        POSTGRES_DB: 'sql_book_production'
       secret:
         - POSTGRES_PASSWORD
     directories:
