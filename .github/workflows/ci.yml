@@ -124,4 +124,4 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Kamal deploy
-        run: bundle exec kamal deploy
+        run: bundle exec kamal setup
