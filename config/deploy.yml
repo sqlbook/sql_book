@@ -88,13 +88,14 @@ accessories:
     env:
       clear:
         POSTGRES_USER: 'sqlbook'
+        POSTGRES_DB: 'sql_book_production'
       secret:
         - POSTGRES_PASSWORD
     directories:
       - data:/var/lib/postgresql/data
   redis:
-    image: redis/7-alpine
+    image: redis:7-alpine
     host: 135.181.44.252
     port: 6379
     directories:
-      - data:/data
+      - data:/var/lib/redis/data
