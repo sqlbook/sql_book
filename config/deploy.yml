@@ -92,13 +92,9 @@ accessories:
         - POSTGRES_PASSWORD
     directories:
       - data:/var/lib/postgresql/data
-    options:
-      network: private
   redis:
     image: redis/7-alpine
     host: 135.181.44.252
     port: 6379
     directories:
       - data:/data
-    options:
-      network: private
