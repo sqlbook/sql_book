@@ -126,4 +126,4 @@ jobs:
 
       - name: Kamal deploy
         run: |
-          bundle exec kamal setup
+          bundle exec kamal deploy
