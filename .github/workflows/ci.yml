@@ -105,6 +105,7 @@ jobs:
       DOCKER_BUILDKIT: 1
       DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_READONLY_PASSWORD: ${{ secrets.POSTGRES_READONLY_PASSWORD }}
 
     steps:
       - name: Checkout code

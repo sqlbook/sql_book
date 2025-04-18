@@ -4,7 +4,7 @@ WORKDIR /app
 
 ENV RUBY_YJIT_ENABLE=1
 
-RUN apk --update add build-base ruby-dev postgresql-dev tzdata gcompat yaml-dev nodejs npm
+RUN apk --update add build-base ruby-dev postgresql-dev postgresql-client tzdata gcompat yaml-dev nodejs npm
 
 ENV RAILS_ENV=production
 ENV RAILS_LOG_TO_STDOUT=true

@@ -2,37 +2,39 @@ common: &common
   adapter: postgresql
   encoding: unicode
   host: <%= ENV["POSTGRES_HOST"] %>
-  username: <%= ENV["POSTGRES_USER"] %>
-  password: <%= ENV["POSTGRES_PASSWORD"] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 default_primary: &default_primary
   <<: *common
+  username: sqlbook
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 default_events: &default_events
   <<: *common
   migrations_paths: db/migrate_events
+  username: sqlbook
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 development:
   primary:
     <<: *default_primary
-    database: sql_book_development
+    database: sqlbook_development
   events:
     <<: *default_events
-    database: sql_book_events_development
+    database: sqlbook_events_development
 
 test:
   primary:
     <<: *default_primary
-    database: sql_book_test
+    database: sqlbook_test
   events:
     <<: *default_events
-    database: sql_book_events_test
+    database: sqlbook_events_test
 
 production:
   primary:
     <<: *default_primary
-    database: sql_book_production
+    database: sqlbook_production
   events:
     <<: *default_events
-    database: sql_book_events_production
+    database: sqlbook_events_production

@@ -43,7 +43,6 @@ builder:
 # Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
   clear:
-    POSTGRES_USER: 'sqlbook'
     POSTGRES_HOST: 'sqlbook-db'
     REDIS_URL: 'redis://sqlbook-redis:6379/0'
   secret:
@@ -91,8 +90,11 @@ accessories:
         POSTGRES_DB: 'sqlbook_production'
       secret:
         - POSTGRES_PASSWORD
+        - POSTGRES_READONLY_PASSWORD
     directories:
       - data:/var/lib/postgresql/data
+    files:
+      - db/setup.sh:/docker-entrypoint-initdb.d/setup.sh
   redis:
     image: redis:7-alpine
     host: 135.181.44.252

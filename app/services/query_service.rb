@@ -80,10 +80,10 @@ class QueryService
   end
 
   def readonly_username
-    ENV.fetch('DATABASE_READONLY_USERNAME', 'sql_book_readonly')
+    'sqlbook_readonly'
   end
 
   def readonly_password
-    ENV.fetch('DATABASE_READONLY_PASSWORD', 'password')
+    ENV.fetch('POSTGRES_READONLY_PASSWORD', 'password')
   end
 end

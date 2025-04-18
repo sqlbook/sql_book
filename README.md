@@ -32,6 +32,14 @@ $ yarn install
 $ yarn build
 ```
 
+## Create the database users
+```
+$ psql -U postgres
+
+postgres=# CREATE USER sqlbook WITH SUPERUSER;
+postgres=# CREATE ROLE sqlbook_readonly WITH LOGIN PASSWORD 'password';
+```
+
 ## Create the databases
 ```
 $ bundle exec rails db:create
@@ -45,8 +53,8 @@ $ RAILS_ENV=test bundle exec rails db:migrate
 
 ### Setup the readonly user and give permissions
 ```
-$ sb/setup.sh development
-$ sb/setup.sh test
+$ db/setup.sh development
+$ db/setup.sh test
 ```
 
 ### Running the tests
