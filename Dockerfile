@@ -16,8 +16,10 @@ WORKDIR /rails
 
 # Install base packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client nodejs npm && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+RUN npm install -g yarn
 
 # Set production environment
 ENV RAILS_ENV="production" \
@@ -34,13 +36,19 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
-COPY Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock package.json yarn.lock ./
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
+RUN yarn install
+
 # Copy application code
 COPY . .
+
+# Build assets and public script
+RUN yarn build --minify
+RUN yarn build_script --define:process.env.WEBSOCKET_URL="'https://sqlbook.com/events/in'" --minify
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
