@@ -32,7 +32,7 @@ Rails.application.configure do
   config.assets.compile = false
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
-  config.asset_host = 'https://cdn.sqlbook.com'
+  # config.asset_host = 'https://cdn.sqlbook.com'
 
   config.action_cable.disable_request_forgery_protection = true
 

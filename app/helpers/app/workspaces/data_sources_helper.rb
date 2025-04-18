@@ -14,7 +14,7 @@ module App
               a=q.createElement('script');
               a.src=l+s._sbSettings.uuid;
               e.appendChild(a);
-            })(window,document,'https://cdn.sqlbook.com/script.js?');
+            })(window,document,'https://sqlbook.com/assets/script.js?');
           </script>
         HTML
       end
