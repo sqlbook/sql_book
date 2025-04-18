@@ -75,7 +75,8 @@ Rails.application.configure do
   config.active_job.queue_adapter = :sidekiq
   # config.active_job.queue_name_prefix = "sql_book_production"
 
-  config.action_mailer.delivery_method = :ses
+  config.action_mailer.delivery_method = :ses_v2
+  config.action_mailer.ses_v2_settings = { region: ENV.fetch('AWS_REGION', 'eu-west-1') }
 
   config.action_mailer.perform_caching = false
 
