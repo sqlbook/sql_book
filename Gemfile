@@ -15,6 +15,7 @@ gem 'redis'
 gem 'sidekiq'
 gem 'sprockets-rails'
 gem 'stimulus-rails'
+gem 'thruster', require: false
 gem 'turbo-rails'
 gem 'useragent'
 
