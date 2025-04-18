@@ -3,7 +3,7 @@
 Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  get 'ping' => 'rails/health#show', as: :rails_health_check
+  get 'up' => 'rails/health#show', as: :rails_health_check
 
   root 'home#index'
 
