@@ -48,18 +48,20 @@ module Auth
       redirect_to new_app_workspace_path
     end
 
-    def signup_params # rubocop:disable Metrics/MethodLength
-      params.permit(
-        :email,
-        :first_name,
-        :last_name,
-        :accept_terms,
-        :one_time_password_1,
-        :one_time_password_2,
-        :one_time_password_3,
-        :one_time_password_4,
-        :one_time_password_5,
-        :one_time_password_6
+    def signup_params
+      params.require(
+        %i[
+          email
+          first_name
+          last_name
+          accept_terms
+          one_time_password_1
+          one_time_password_2
+          one_time_password_3
+          one_time_password_4
+          one_time_password_5
+          one_time_password_6
+        ]
       )
     end
 

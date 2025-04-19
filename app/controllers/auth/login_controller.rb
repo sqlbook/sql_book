@@ -45,14 +45,16 @@ module Auth
     end
 
     def login_params
-      params.permit(
-        :email,
-        :one_time_password_1,
-        :one_time_password_2,
-        :one_time_password_3,
-        :one_time_password_4,
-        :one_time_password_5,
-        :one_time_password_6
+      params.require(
+        %i[
+          email
+          one_time_password_1
+          one_time_password_2
+          one_time_password_3
+          one_time_password_4
+          one_time_password_5
+          one_time_password_6
+        ]
       )
     end
 

@@ -56,7 +56,7 @@ module App
       end
 
       def dashboard_params
-        params.permit(:name)
+        params.require(%i[name])
       end
     end
   end

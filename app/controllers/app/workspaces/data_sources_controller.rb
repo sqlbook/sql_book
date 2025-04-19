@@ -68,7 +68,7 @@ module App
       end
 
       def data_source_params
-        params.permit(:url)
+        params.require(%i[url])
       end
 
       def send_data_source_destroy_mailer
