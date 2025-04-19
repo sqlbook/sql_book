@@ -21,4 +21,16 @@
     <%= yield %>
     <%= render "shared/footer" %>
   </body>
+
+  <% if Rails.env.production? %>
+    <script>
+      (function(s,q,l,b,o,o,k){
+        s._sbSettings={uuid:'bed83e20-67d2-4dad-a7ef-6199c86845e8'};
+        e=q.getElementsByTagName('head')[0];
+        a=q.createElement('script');
+        a.src=l+s._sbSettings.uuid;
+        e.appendChild(a);
+      })(window,document,'https://sqlbook.com/assets/script.js?');
+    </script>
+  <% end %>
 </html>
