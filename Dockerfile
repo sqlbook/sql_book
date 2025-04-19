@@ -54,7 +54,7 @@ RUN yarn build_script --define:process.env.WEBSOCKET_URL="'https://sqlbook.com/e
 RUN bundle exec bootsnap precompile app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+RUN SECRET_KEY_BASE_DUMMY=1 SENTRY_DSN=test ./bin/rails assets:precompile
 
 
 
