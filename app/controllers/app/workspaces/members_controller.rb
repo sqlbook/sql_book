@@ -53,7 +53,7 @@ module App
       end
 
       def invite_params
-        params.require(%i[first_name last_name email role])
+        params.permit(:first_name, :last_name, :email, :role)
       end
 
       def create_invite!

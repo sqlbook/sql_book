@@ -62,7 +62,7 @@ module App
         end
 
         def query_params
-          params.require(%i[chart_type query name])
+          params.permit(:chart_type, :query, :name)
         end
 
         def chart_config_params # rubocop:disable Metrics/MethodLength

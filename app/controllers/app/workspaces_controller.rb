@@ -51,7 +51,7 @@ module App
     end
 
     def workspace_params
-      params.require(%i[name])
+      params.permit(:name)
     end
 
     def create_workspace!

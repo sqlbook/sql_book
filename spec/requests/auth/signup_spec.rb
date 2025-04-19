@@ -95,6 +95,28 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
     end
 
+    context 'when there is no first name submitted' do
+      let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:last_name) { 'Morrison' }
+
+      it 'redirects back to the index page' do
+        post '/auth/signup', params: { email:, last_name: }
+
+        expect(response).to redirect_to(auth_signup_index_path)
+      end
+    end
+
+    context 'when there is no last name submitted' do
+      let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:first_name) { 'Jim' }
+
+      it 'redirects back to the index page' do
+        post '/auth/signup', params: { email:, first_name: }
+
+        expect(response).to redirect_to(auth_signup_index_path)
+      end
+    end
+
     context 'when there is an email, but no token submitted' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
       let(:first_name) { 'Jim' }
@@ -130,7 +152,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'displays a flash message' do
-        post '/auth/signup', params: { email:, **tokens }
+        post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
 
         expect(flash[:alert]).to include('Invalid sign-up code. Please try again or')
       end
