@@ -7,7 +7,7 @@ class OneTimePasswordService
   end
 
   def create!
-    return if exists?
+    return resend! if exists?
 
     one_time_password = OneTimePassword.create!(email:, token:)
     send_token_email!(token: one_time_password.token)
