@@ -6,7 +6,11 @@ module App
       include ActiveSupport::NumberHelper
 
       def tracking_code(data_source:)
-        script_base_url = "#{ENV.fetch('APP_PROTOCOL', 'https')}://#{ENV.fetch('APP_HOST', 'sqlbook.com')}/assets/script.js?"
+        script_base_url = [
+          "#{ENV.fetch('APP_PROTOCOL', 'https')}://",
+          ENV.fetch('APP_HOST', 'sqlbook.com'),
+          '/assets/script.js?'
+        ].join
 
         <<~HTML
           <script>

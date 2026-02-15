@@ -20,7 +20,14 @@ jobs:
           bundler-cache: true
 
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager -w3
+        run: |
+          bin/brakeman --no-pager -w3 || code=$?
+          # Brakeman v7 exits non-zero when a newer Brakeman exists; don't fail CI on tool-version notice.
+          if [ "${code:-0}" -eq 5 ]; then
+            echo "Ignoring Brakeman outdated-version exit code (5)."
+            exit 0
+          fi
+          exit ${code:-0}
 
   lint:
     runs-on: ubuntu-latest
@@ -97,6 +104,7 @@ jobs:
       #     if-no-files-found: ignore
 
   deploy:
+    if: ${{ vars.ENABLE_KAMAL_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
 
     env:
