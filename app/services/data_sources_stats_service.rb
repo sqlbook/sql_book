@@ -43,19 +43,21 @@ class DataSourcesStatsService
   # by the data_source_id. Merge all of the results to get
   # a single sum by data_source_id
   def tally_events_for(method)
-    EventRecord.all_event_types.inject({}) do |result, model|
+    EventRecord.all_event_types.each_with_object({}) do |model, result|
       data = send(:"#{method}_data_for", model)
-      result.merge(data) { |_, a, b| a + b }
+      result.merge!(data) { |_, a, b| a + b }
     end
   rescue ActiveRecord::StatementInvalid => e
     # Event tables are protected by RLS policies that depend on a session variable.
     # If the variable is not set in this request path, avoid crashing workspace pages.
-    if e.message.include?('app.current_data_source_uuid')
-      Rails.logger.warn("DataSourcesStatsService: skipping event tallies because app.current_data_source_uuid is unset")
-      {}
-    else
-      raise
-    end
+    raise unless missing_data_source_uuid_setting?(e)
+
+    Rails.logger.warn('DataSourcesStatsService: skipping event tallies because app.current_data_source_uuid is unset')
+    {}
+  end
+
+  def missing_data_source_uuid_setting?(error)
+    error.message.include?('app.current_data_source_uuid')
   end
 
   # Fetch the count of events for the data sources for all time
