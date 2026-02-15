@@ -6,6 +6,8 @@ module App
       include ActiveSupport::NumberHelper
 
       def tracking_code(data_source:)
+        script_base_url = "#{ENV.fetch('APP_PROTOCOL', 'https')}://#{ENV.fetch('APP_HOST', 'sqlbook.com')}/assets/script.js?"
+
         <<~HTML
           <script>
             (function(s,q,l,b,o,o,k){
@@ -14,7 +16,7 @@ module App
               a=q.createElement('script');
               a.src=l+s._sbSettings.uuid;
               e.appendChild(a);
-            })(window,document,'https://sqlbook.com/assets/script.js?');
+            })(window,document,'#{script_base_url}');
           </script>
         HTML
       end
