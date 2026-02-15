@@ -23,9 +23,13 @@
   </body>
 
   <% if Rails.env.production? %>
+    <% websocket_protocol = Rails.application.config.x.app_protocol == 'https' ? 'wss' : 'ws' %>
     <script>
       (function(s,q,l,b,o,o,k){
-        s._sbSettings={uuid:'bed83e20-67d2-4dad-a7ef-6199c86845e8'};
+        s._sbSettings={
+          uuid:'bed83e20-67d2-4dad-a7ef-6199c86845e8',
+          websocketUrl:'<%= "#{websocket_protocol}://#{Rails.application.config.x.app_host}/events/in" %>'
+        };
         e=q.getElementsByTagName('head')[0];
         a=q.createElement('script');
         a.src=l+s._sbSettings.uuid;

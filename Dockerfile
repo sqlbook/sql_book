@@ -48,13 +48,14 @@ COPY . .
 
 # Build assets and public script
 RUN yarn build --minify
-RUN yarn build_script --define:process.env.WEBSOCKET_URL="'https://sqlbook.com/events/in'" --minify
+RUN yarn build_script --minify
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 SENTRY_DSN=test ./bin/rails assets:precompile
+# Precompiling assets for production without requiring secret RAILS_MASTER_KEY.
+# APP_HOST/APP_PROTOCOL are required at runtime and are stubbed here only for build-time boot.
+RUN SECRET_KEY_BASE_DUMMY=1 SENTRY_DSN=test APP_PROTOCOL=https APP_HOST=build.sqlbook.local ./bin/rails assets:precompile
 
 
 

@@ -46,6 +46,10 @@ export class Script {
   };
 
   private get websocketUrl() {
+    if (window._sbSettings.websocketUrl) {
+      return window._sbSettings.websocketUrl;
+    }
+
     try {
       return process.env.WEBSOCKET_URL;
     } catch {

@@ -6,16 +6,10 @@ module App
       include ActiveSupport::NumberHelper
 
       def tracking_code(data_source:)
-        script_base_url = [
-          "#{Rails.application.config.x.app_protocol}://",
-          Rails.application.config.x.app_host,
-          '/assets/script.js?'
-        ].join
-
         <<~HTML
           <script>
             (function(s,q,l,b,o,o,k){
-              s._sbSettings={uuid:'#{data_source.external_uuid}'};
+              s._sbSettings={uuid:'#{data_source.external_uuid}',websocketUrl:'#{script_websocket_url}'};
               e=q.getElementsByTagName('head')[0];
               a=q.createElement('script');
               a.src=l+s._sbSettings.uuid;
@@ -43,6 +37,15 @@ module App
         return :put if query
 
         :post
+      end
+
+      def script_base_url
+        "#{Rails.application.config.x.app_protocol}://#{Rails.application.config.x.app_host}/assets/script.js?"
+      end
+
+      def script_websocket_url
+        websocket_protocol = Rails.application.config.x.app_protocol == 'https' ? 'wss' : 'ws'
+        "#{websocket_protocol}://#{Rails.application.config.x.app_host}/events/in"
       end
     end
   end
