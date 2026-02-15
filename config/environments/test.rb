@@ -43,7 +43,9 @@ Rails.application.configure do
 
   config.action_mailer.perform_caching = false
 
-  config.action_mailer.default_url_options = { host: 'localhost:3000' }
+  config.x.app_protocol = 'http'
+  config.x.app_host = 'localhost:3000'
+  config.action_mailer.default_url_options = { protocol: config.x.app_protocol, host: config.x.app_host }
 
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the

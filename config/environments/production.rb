@@ -2,7 +2,7 @@
 
 require 'active_support/core_ext/integer/time'
 
-Rails.application.configure do
+Rails.application.configure do # rubocop:disable Metrics/BlockLength
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
@@ -84,8 +84,11 @@ Rails.application.configure do
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
 
-  app_protocol = ENV.fetch('APP_PROTOCOL', 'https')
-  app_host = ENV.fetch('APP_HOST', 'sqlbook.com')
+  # Fail fast in deploy environments if host/protocol are not explicitly configured.
+  app_protocol = ENV.fetch('APP_PROTOCOL')
+  app_host = ENV.fetch('APP_HOST')
+  config.x.app_protocol = app_protocol
+  config.x.app_host = app_host
   config.action_mailer.default_url_options = { protocol: app_protocol, host: app_host }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

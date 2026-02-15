@@ -30,7 +30,7 @@
         a=q.createElement('script');
         a.src=l+s._sbSettings.uuid;
         e.appendChild(a);
-      })(window,document,'<%= "#{ENV.fetch('APP_PROTOCOL', 'https')}://#{ENV.fetch('APP_HOST', 'sqlbook.com')}/assets/script.js?" %>');
+      })(window,document,'<%= "#{Rails.application.config.x.app_protocol}://#{Rails.application.config.x.app_host}/assets/script.js?" %>');
     </script>
   <% end %>
 </html>

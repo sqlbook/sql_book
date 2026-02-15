@@ -7,8 +7,8 @@ module App
 
       def tracking_code(data_source:)
         script_base_url = [
-          "#{ENV.fetch('APP_PROTOCOL', 'https')}://",
-          ENV.fetch('APP_HOST', 'sqlbook.com'),
+          "#{Rails.application.config.x.app_protocol}://",
+          Rails.application.config.x.app_host,
           '/assets/script.js?'
         ].join
 
