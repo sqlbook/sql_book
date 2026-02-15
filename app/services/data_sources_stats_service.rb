@@ -47,6 +47,15 @@ class DataSourcesStatsService
       data = send(:"#{method}_data_for", model)
       result.merge(data) { |_, a, b| a + b }
     end
+  rescue ActiveRecord::StatementInvalid => e
+    # Event tables are protected by RLS policies that depend on a session variable.
+    # If the variable is not set in this request path, avoid crashing workspace pages.
+    if e.message.include?('app.current_data_source_uuid')
+      Rails.logger.warn("DataSourcesStatsService: skipping event tallies because app.current_data_source_uuid is unset")
+      {}
+    else
+      raise
+    end
   end
 
   # Fetch the count of events for the data sources for all time
