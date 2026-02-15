@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target_env="${1:-}"
+if [[ -z "$target_env" ]]; then
+  if [[ "${APP_HOST:-}" == staging.* ]]; then
+    target_env="staging"
+  else
+    target_env="production"
+  fi
+fi
+
+if [[ "$target_env" != "staging" && "$target_env" != "production" ]]; then
+  echo "Usage: bin/predeploy-check [staging|production]"
+  exit 1
+fi
+
+required=(
+  RAILS_ENV
+  POSTGRES_HOST
+  POSTGRES_USER
+  POSTGRES_PASSWORD
+  POSTGRES_READONLY_PASSWORD
+  REDIS_URL
+  AWS_REGION
+  AWS_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY
+  APP_HOST
+  APP_PROTOCOL
+)
+
+missing=0
+for key in "${required[@]}"; do
+  if [[ -z "${!key:-}" ]]; then
+    echo "MISSING: $key"
+    missing=1
+  else
+    echo "OK: $key"
+  fi
+done
+
+if [[ "$missing" -eq 1 ]]; then
+  echo
+  echo "Predeploy check failed: one or more required environment variables are missing."
+  exit 1
+fi
+
+if [[ "${RAILS_ENV:-}" != "production" ]]; then
+  echo "MISMATCH: RAILS_ENV should be 'production' in Render staging/prod services."
+  exit 1
+fi
+
+if [[ "${APP_PROTOCOL:-}" != "https" ]]; then
+  echo "MISMATCH: APP_PROTOCOL should be 'https'."
+  exit 1
+fi
+
+if [[ "$target_env" == "staging" ]]; then
+  if [[ "${APP_HOST:-}" != "staging.sqlbook.com" ]]; then
+    echo "MISMATCH: staging APP_HOST must be 'staging.sqlbook.com'."
+    exit 1
+  fi
+fi
+
+if [[ "$target_env" == "production" ]]; then
+  if [[ "${APP_HOST:-}" != "sqlbook.com" ]]; then
+    echo "MISMATCH: production APP_HOST must be 'sqlbook.com'."
+    exit 1
+  fi
+fi
+
+if [[ -z "${SENTRY_DSN:-}" ]]; then
+  echo "WARN: SENTRY_DSN is not set (allowed; error monitoring disabled)."
+fi
+
+if [[ -z "${RAILS_MASTER_KEY:-}" ]]; then
+  echo "INFO: RAILS_MASTER_KEY is not set (expected for current env-only secret strategy)."
+fi
+
+echo
+echo "Predeploy check passed for ${target_env}."
