@@ -1,7 +1,7 @@
 <div class="card workspace-card" data-action="click->cards#show">
   <div class="details">
     <h4><%= link_to workspace.name, app_workspace_data_sources_path(workspace), class: "link secondary", "aria-label": "Visit the #{workspace.name} workspace" %></h4>
-    <p class="owner gray-300">Owner: <%= workspace.owner.full_name %></p>
+    <p class="owner gray-300">Owner: <%= workspace.owner&.full_name || "Unknown" %></p>
 
     <div class="settings">
       <% if request.path == app_workspace_path(workspace) %>
