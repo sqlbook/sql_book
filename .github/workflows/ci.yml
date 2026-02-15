@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   scan_ruby:
@@ -104,11 +105,13 @@ jobs:
       #     if-no-files-found: ignore
 
   deploy:
-    if: ${{ vars.ENABLE_KAMAL_DEPLOY == 'true' }}
+    if: ${{ vars.ENABLE_KAMAL_DEPLOY == 'true' && github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
 
     env:
       RAILS_ENV: production
+      APP_PROTOCOL: ${{ secrets.APP_PROTOCOL }}
+      APP_HOST: ${{ secrets.APP_HOST }}
       RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
       DOCKER_BUILDKIT: 1
       DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
@@ -135,6 +138,10 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Predeploy environment sanity check
+        run: |
+          bin/predeploy-check production
 
       - name: Kamal deploy
         run: |

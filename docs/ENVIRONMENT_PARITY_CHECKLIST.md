@@ -59,3 +59,8 @@ Expected:
 - `staging.sqlbook.com` must remain CNAME to Render staging web service.
 - Apex/root `sqlbook.com` must be intentionally pointed to the production target before go-live.
 - Do not rely on historical/unknown apex records.
+
+## Legacy Kamal safety
+- `config/deploy.yml` is treated as legacy (Render is the active deploy path).
+- Kamal host/domain values are now env-driven (`KAMAL_*`) to prevent accidental deploys to stale infra.
+- GitHub Actions Kamal deploy is manual-only (`workflow_dispatch`) and gated behind `ENABLE_KAMAL_DEPLOY=true`.
