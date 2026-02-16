@@ -8,6 +8,7 @@ module Auth
 
     def accept
       WorkspaceInvitationService.new(workspace: member.workspace).accept!(member:)
+      reset_session
       session[:current_user_id] = member.user.id
       redirect_to app_workspace_path(member.workspace)
     end

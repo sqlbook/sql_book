@@ -34,16 +34,23 @@ RSpec.describe OneTimePasswordService do
 
     context 'when the token exists' do
       before do
-        create(:one_time_password, email:)
+        create(:one_time_password, email:, token: '654321')
       end
 
-      it 'does not send another email' do
+      it 'sends a replacement code email' do
         subject
-        expect(OneTimePasswordMailer).not_to have_received(:login)
+        expect(OneTimePasswordMailer).to have_received(:login).with(email:, token: token_stub)
       end
 
       it 'does not create another OneTimePassword record' do
         expect { subject }.not_to change { OneTimePassword.count }
+      end
+
+      it 'rotates the stored token' do
+        expect { subject }
+          .to change { OneTimePassword.find_by(email:).token }
+          .from('654321')
+          .to(token_stub)
       end
     end
 
@@ -68,16 +75,23 @@ RSpec.describe OneTimePasswordService do
 
     context 'when the token does exist' do
       before do
-        create(:one_time_password, email:, token: token_stub)
+        create(:one_time_password, email:, token: '654321')
       end
 
       it 'does not create a new token' do
         expect { subject }.not_to change { OneTimePassword.count }
       end
 
-      it 'resends the existing code' do
+      it 'sends a replacement code' do
         subject
         expect(OneTimePasswordMailer).to have_received(:login).with(email:, token: token_stub)
+      end
+
+      it 'rotates the stored token' do
+        expect { subject }
+          .to change { OneTimePassword.find_by(email:).token }
+          .from('654321')
+          .to(token_stub)
       end
     end
   end

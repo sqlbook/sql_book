@@ -16,6 +16,7 @@ class OneTimePasswordService
 
   def resend!
     one_time_password = OneTimePassword.find_by!(email:)
+    one_time_password.update!(token:)
     send_token_email!(token: one_time_password.token)
     one_time_password
   end
@@ -40,7 +41,7 @@ class OneTimePasswordService
   end
 
   def token
-    rand(100_000...999_999)
+    rand(100_000...999_999).to_s
   end
 
   def exists?

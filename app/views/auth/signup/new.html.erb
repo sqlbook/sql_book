@@ -6,6 +6,7 @@
       <%= form.hidden_field :first_name, value: request.params['first_name'] %>
       <%= form.hidden_field :last_name, value: request.params['last_name'] %>
       <%= form.hidden_field :email, value: request.params['email'] %>
+      <%= form.hidden_field :accept_terms, value: request.params['accept_terms'] %>
 
       <p>We&apos;ve sent you a temporary sign-up code to <span><%= request.params['email'] %></span>. Please check your inbox to sign up.</p>
 

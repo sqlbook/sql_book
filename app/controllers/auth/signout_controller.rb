@@ -3,7 +3,7 @@
 module Auth
   class SignoutController < ApplicationController
     def index
-      session[:current_user_id] = nil
+      reset_session
       redirect_to root_path
     end
   end

@@ -24,13 +24,13 @@ RSpec.describe 'Auth::Signups', type: :request do
       let(:user) { create(:user) }
 
       it 'redirects back to the index page' do
-        get '/auth/signup/new', params: { email: user.email }
+        get '/auth/signup/new', params: { email: user.email, accept_terms: '1' }
 
         expect(response).to redirect_to(auth_signup_index_path)
       end
 
       it 'displays a flash message' do
-        get '/auth/signup/new', params: { email: user.email }
+        get '/auth/signup/new', params: { email: user.email, accept_terms: '1' }
 
         expect(flash[:alert]).to eq('An account with this email already exists')
       end
@@ -45,13 +45,13 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'creates a one time token' do
-        get '/auth/signup/new', params: { email: }
+        get '/auth/signup/new', params: { email:, accept_terms: '1' }
 
         expect(one_time_password_service).to have_received(:create!)
       end
 
       it 'renders the one time token inputs' do
-        get '/auth/signup/new', params: { email: }
+        get '/auth/signup/new', params: { email:, accept_terms: '1' }
 
         expect(response.body).to include('type="text" name="one_time_password_1"')
         expect(response.body).to include('type="text" name="one_time_password_2"')
@@ -59,6 +59,22 @@ RSpec.describe 'Auth::Signups', type: :request do
         expect(response.body).to include('type="text" name="one_time_password_4"')
         expect(response.body).to include('type="text" name="one_time_password_5"')
         expect(response.body).to include('type="text" name="one_time_password_6"')
+      end
+    end
+
+    context 'when terms are not accepted' do
+      let(:email) { "#{SecureRandom.base36}@email.com" }
+
+      it 'redirects back to the index page' do
+        get '/auth/signup/new', params: { email: }
+
+        expect(response).to redirect_to(auth_signup_index_path)
+      end
+
+      it 'displays a flash message' do
+        get '/auth/signup/new', params: { email: }
+
+        expect(flash[:alert]).to eq('You must accept the Terms Of Service to continue')
       end
     end
   end
@@ -81,7 +97,7 @@ RSpec.describe 'Auth::Signups', type: :request do
 
       it 'redirects to the new auth page' do
         get '/auth/signup/resend', params: { email: }
-        expect(response).to redirect_to(new_auth_signup_path(email:))
+        expect(response).to redirect_to(new_auth_signup_path(email:, accept_terms: '1'))
       end
     end
   end
@@ -133,6 +149,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       let(:email) { "#{SecureRandom.base36}@email.com" }
       let(:first_name) { 'Jim' }
       let(:last_name) { 'Morrison' }
+      let(:accept_terms) { '1' }
 
       let(:tokens) do
         {
@@ -146,15 +163,44 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'redirects back to the new page and includes the email' do
+        post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens }
+
+        expect(response).to redirect_to(new_auth_signup_path(email:, accept_terms: '1'))
+      end
+
+      it 'displays a flash message' do
+        post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens }
+
+        expect(flash[:alert]).to include('Invalid sign-up code. Please try again or')
+      end
+    end
+
+    context 'when terms are not accepted' do
+      let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:first_name) { 'Jim' }
+      let(:last_name) { 'Morrison' }
+
+      let(:tokens) do
+        {
+          one_time_password_1: '1',
+          one_time_password_2: '2',
+          one_time_password_3: '3',
+          one_time_password_4: '4',
+          one_time_password_5: '5',
+          one_time_password_6: '6'
+        }
+      end
+
+      it 'redirects back to the index page' do
         post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
 
-        expect(response).to redirect_to(new_auth_signup_path(email:))
+        expect(response).to redirect_to(auth_signup_index_path)
       end
 
       it 'displays a flash message' do
         post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
 
-        expect(flash[:alert]).to include('Invalid sign-up code. Please try again or')
+        expect(flash[:alert]).to eq('You must accept the Terms Of Service to continue')
       end
     end
 
@@ -162,6 +208,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       let(:email) { "#{SecureRandom.base36}@email.com" }
       let(:first_name) { 'Jim' }
       let(:last_name) { 'Morrison' }
+      let(:accept_terms) { '1' }
       let(:one_time_password) { OneTimePasswordService.new(email:, auth_type: :signup).create! }
 
       let(:tokens) do
@@ -176,22 +223,30 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'directs to the app page' do
-        post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
+        post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens }
 
         expect(response).to redirect_to(new_app_workspace_path)
       end
 
       it 'creates the user' do
-        expect { post '/auth/signup', params: { email:, first_name:, last_name:, **tokens } }
+        expect { post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens } }
           .to change { User.exists?(email:) }
           .from(false)
           .to(true)
       end
 
       it 'sets the session cookie' do
-        post '/auth/signup', params: { email:, first_name:, last_name:, **tokens }
+        post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens }
 
         expect(session[:current_user_id]).to eq(User.last.id)
+      end
+
+      it 'persists terms acceptance metadata on the user' do
+        post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens }
+
+        user = User.find_by!(email:)
+        expect(user.terms_accepted_at).to be_present
+        expect(user.terms_version).to eq(User::CURRENT_TERMS_VERSION)
       end
     end
   end

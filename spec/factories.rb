@@ -5,6 +5,8 @@ FactoryBot.define do
     email { "#{SecureRandom.base36}@email.com" }
     first_name { 'Ray' }
     last_name { 'Manzarek' }
+    terms_accepted_at { Time.current }
+    terms_version { User::CURRENT_TERMS_VERSION }
   end
 
   factory :one_time_password do

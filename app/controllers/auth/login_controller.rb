@@ -35,6 +35,7 @@ module Auth
 
     def find_and_authenticate_user!
       user = User.find_by!(email:)
+      reset_session
       session[:current_user_id] = user.id
       redirect_to app_workspaces_path
     end

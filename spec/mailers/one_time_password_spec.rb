@@ -46,13 +46,15 @@ RSpec.describe OneTimePasswordMailer, type: :mailer do
 
     it 'renders the magic link in the email' do
       url_escaped_email = email.sub('@', '%40')
-      expect(subject.body).to include("http://localhost:3000/auth/signup/magic_link?email=#{url_escaped_email}" \
-                                      '&amp;one_time_password_1=1' \
-                                      '&amp;one_time_password_2=2' \
-                                      '&amp;one_time_password_3=3' \
-                                      '&amp;one_time_password_4=4' \
-                                      '&amp;one_time_password_5=5' \
-                                      '&amp;one_time_password_6=6')
+      expect(subject.body).to include('http://localhost:3000/auth/signup/magic_link?')
+      expect(subject.body).to include("email=#{url_escaped_email}")
+      expect(subject.body).to include('one_time_password_1=1')
+      expect(subject.body).to include('one_time_password_2=2')
+      expect(subject.body).to include('one_time_password_3=3')
+      expect(subject.body).to include('one_time_password_4=4')
+      expect(subject.body).to include('one_time_password_5=5')
+      expect(subject.body).to include('one_time_password_6=6')
+      expect(subject.body).to include('accept_terms=1')
     end
   end
 end
