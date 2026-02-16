@@ -2,7 +2,9 @@
 
 class AddTermsAcceptanceToUsers < ActiveRecord::Migration[7.1]
   def change
-    add_column :users, :terms_accepted_at, :datetime
-    add_column :users, :terms_version, :string
+    change_table :users, bulk: true do |table|
+      table.datetime :terms_accepted_at
+      table.string :terms_version
+    end
   end
 end

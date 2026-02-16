@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
-  CURRENT_TERMS_VERSION = '2026-02-16'.freeze
+  CURRENT_TERMS_VERSION = '2026-02-16'
 
   has_many :queries,
            dependent: :destroy,
