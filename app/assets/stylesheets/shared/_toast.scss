@@ -14,8 +14,11 @@
   border: 1px solid var(--gray-200);
   border-radius: var(--border-radius-sm);
   box-sizing: border-box;
+  -moz-osx-font-smoothing: grayscale;
   padding: 1rem 1.5rem;
   pointer-events: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   width: min(25rem, calc(100vw - 3rem));
 
   &.error {
@@ -38,10 +41,10 @@
 
 .toast-icon {
   color: var(--red-500);
-  font-size: 1.5rem;
-  height: 1.5rem;
-  line-height: 1.5rem;
-  width: 1.5rem;
+  font-size: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  width: 1rem;
 }
 
 .toast-title {
@@ -59,11 +62,15 @@
   display: inline-flex;
   text-decoration: none;
 
+  &:hover {
+    text-decoration: none;
+  }
+
   i {
-    font-size: 1.5rem;
-    height: 1.5rem;
-    line-height: 1.5rem;
-    width: 1.5rem;
+    font-size: 1rem;
+    height: 1rem;
+    line-height: 1rem;
+    width: 1rem;
   }
 }
 
