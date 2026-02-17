@@ -5,7 +5,8 @@ require 'rails_helper'
 RSpec.describe 'App::Workspaces::DataSources', type: :request do
   describe 'GET /app/workspaces/:workspace_id/data_sources' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     before { sign_in(user) }
 
@@ -25,6 +26,17 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
         expect(response.body).to have_selector('.data-source-card h4 a', text: data_source_1.url)
         expect(response.body).to have_selector('.data-source-card h4 a', text: data_source_2.url)
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'redirects to workspace list' do
+        get "/app/workspaces/#{workspace.id}/data_sources"
+        expect(response).to redirect_to(app_workspaces_path)
       end
     end
   end
@@ -59,7 +71,8 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
   describe 'POST /app/workspaces/:workspace_id/data_sources' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     before do
       sign_in(user)
@@ -108,6 +121,23 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       it 'redirects to the set up page' do
         post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
         expect(response).to redirect_to(app_workspace_data_source_set_up_index_path(workspace, DataSource.last.id))
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+      let(:url) { 'https://sqlbook.com' }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'does not create a data source' do
+        expect { post "/app/workspaces/#{workspace.id}/data_sources", params: { url: } }
+          .not_to change(DataSource, :count)
+      end
+
+      it 'redirects to workspace list' do
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
+        expect(response).to redirect_to(app_workspaces_path)
       end
     end
   end
@@ -185,7 +215,8 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
   describe 'DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
     let(:data_source) { create(:data_source, workspace:) }
 
     before do
@@ -221,6 +252,20 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       it 'enqueues the delete job' do
         delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
         expect(ActiveRecord::DestroyAssociationAsyncJob).to have_been_enqueued.exactly(3).times
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before do
+        create(:member, workspace:, user:, role: Member::Roles::USER)
+        sign_in(user)
+      end
+
+      it 'does not delete the data source' do
+        expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}" }
+          .not_to change { DataSource.exists?(data_source.id) }
       end
     end
   end

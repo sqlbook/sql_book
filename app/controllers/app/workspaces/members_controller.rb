@@ -6,6 +6,7 @@ module App
       RESEND_COOLDOWN = 10.minutes
 
       before_action :require_authentication!
+      before_action :authorize_manage_members!
 
       def create
         return reject_owner_invite if inviting_owner?
@@ -46,7 +47,7 @@ module App
       private
 
       def allowed_to_manage_member?
-        workspace.role_for(user: current_user) < member.role
+        workspace_role_for(workspace:) < member.role
       end
 
       def resend_allowed?
@@ -192,6 +193,12 @@ module App
           title: I18n.t('toasts.workspaces.members.deleted.title'),
           body: I18n.t('toasts.workspaces.members.deleted.body', email: member.user.email)
         }
+      end
+
+      def authorize_manage_members!
+        return if can_manage_workspace_members?(workspace:)
+
+        deny_workspace_access!(workspace:, fallback_tab: 'team')
       end
     end # rubocop:enable Metrics/ClassLength
   end

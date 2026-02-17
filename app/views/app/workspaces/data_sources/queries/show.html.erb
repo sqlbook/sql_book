@@ -28,18 +28,22 @@
   <% end %>
 
   <% if active_tab?(tab: "settings") %>
-    <% unless @query.saved %>
-      <%= render "shared/notice", message: "Save your query for future use by completing the form below." %>
-    <% end %>
-
-    <div data-controller="form">
-      <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
-        <%= form.label :name, "Query name", class: "label block" %>
-        <%= form.text_field :name, type: "text", placeholder: "e.g. New Visitor Count",class: "input block fluid", required: true, value: @query.name %>
-
-        <%= form.submit "[Save Query]", class: "link primary", "data-form-target": "submit" %>
+    <% if can_write_queries?(workspace: @workspace) %>
+      <% unless @query.saved %>
+        <%= render "shared/notice", message: "Save your query for future use by completing the form below." %>
       <% end %>
-    </div>
+
+      <div data-controller="form">
+        <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
+          <%= form.label :name, "Query name", class: "label block" %>
+          <%= form.text_field :name, type: "text", placeholder: "e.g. New Visitor Count",class: "input block fluid", required: true, value: @query.name %>
+
+          <%= form.submit "[Save Query]", class: "link primary", "data-form-target": "submit" %>
+        <% end %>
+      </div>
+    <% else %>
+      <p>You have read-only access in this workspace.</p>
+    <% end %>
   <% end %>
 
   <%= render "shared/grab_handle" %>

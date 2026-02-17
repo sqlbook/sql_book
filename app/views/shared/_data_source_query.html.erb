@@ -1,4 +1,5 @@
 <div class="container md-lg data-source-query" data-controller="data-source-query">
+  <% can_write_queries = can_write_queries?(workspace: @workspace) %>
   <%= form_with url: query_form_path(workspace: @workspace, data_source: @data_source, query: @query), method: query_form_method(query: @query), html: { "data-data-source-query-target": "form" } do |form| %>
     <div class="data-sources-row source">
       <%= form.label :data_source_id, class: "label" do %>
@@ -50,8 +51,10 @@
     </div>
 
     <div class="query-form">
-      <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit",  "data-data-source-query-target": "input", value: @query&.query %>
-      <%= form.submit "Press CMD+Enter to run...", class: "link secondary submit", "data-data-source-query-target": "submit" %>
+      <%= form.text_area :query, placeholder: "Start typing your query, or type '/' to browse the query library...", required: true, rows: 1, readonly: !can_write_queries, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit",  "data-data-source-query-target": "input", value: @query&.query %>
+      <% if can_write_queries %>
+        <%= form.submit "Press CMD+Enter to run...", class: "link secondary submit", "data-data-source-query-target": "submit" %>
+      <% end %>
 
       <div class="query-library context" data-data-source-query-target="queryLibrary">
         <button type="button" class="link">

@@ -66,7 +66,8 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
 
   describe 'GET /app/workspaces/:workspace_id/dashboards/new' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     before { sign_in(user) }
 
@@ -79,11 +80,23 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
       get "/app/workspaces/#{workspace.id}/dashboards/new"
       expect(response.body).to include('Please enter the name of your dashboard')
     end
+
+    context 'when current user is read-only in the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'redirects to workspace list' do
+        get "/app/workspaces/#{workspace.id}/dashboards/new"
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+    end
   end
 
   describe 'POST /app/workspaces/:workspace_id/dashboards' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     before do
       sign_in(user)
@@ -105,6 +118,17 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
       it 'redirects to the dashboard' do
         post "/app/workspaces/#{workspace.id}/dashboards", params: { name: 'My dashboard' }
         expect(response).to redirect_to(app_workspace_dashboard_path(workspace, workspace.dashboards.last))
+      end
+    end
+
+    context 'when current user is read-only in the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'does not create the dashboard' do
+        expect { post "/app/workspaces/#{workspace.id}/dashboards", params: { name: 'My dashboard' } }
+          .not_to change(Dashboard, :count)
       end
     end
   end
@@ -135,7 +159,8 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
 
   describe 'DELETE /app/workspaces/:workspace_id/dashboards/:dashboard_id' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
     let!(:dashboard) { create(:dashboard, workspace:, author: user) }
 
     before do
@@ -158,6 +183,19 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
       it 'destroys the dashboard' do
         expect { delete "/app/workspaces/#{workspace.id}/dashboards/#{dashboard.id}" }
           .to change { Dashboard.exists?(dashboard.id) }.from(true).to(false)
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before do
+        create(:member, workspace:, user:, role: Member::Roles::USER)
+      end
+
+      it 'does not destroy the dashboard' do
+        expect { delete "/app/workspaces/#{workspace.id}/dashboards/#{dashboard.id}" }
+          .not_to change { Dashboard.exists?(dashboard.id) }
       end
     end
   end

@@ -27,12 +27,26 @@ Single source of truth for workspace routes, role permissions, delete flows, inv
 - Roles in `Member`:
   - `OWNER` (1)
   - `ADMIN` (2)
-  - `READ_ONLY` (3)
-- Current enforced rules:
-  - only owners can delete a workspace
-  - owner delete tab/action is hidden from non-owners
-  - member removal requires acting user role to outrank target role
-  - owner member cannot be removed through the member-destroy route
+  - `USER` (3)
+  - `READ_ONLY` (4)
+- Controller-level capability matrix:
+  - Workspace settings (`GET/PATCH /app/workspaces/:id`): owner/admin only
+  - Workspace delete (`DELETE /app/workspaces/:id`): owner only
+  - Team management routes (`members#create`, `members#destroy`, `members#resend`): owner/admin only
+  - Data source settings routes (`data_sources*`, `data_sources/set_up#index`): owner/admin only
+  - Query library (`GET /app/workspaces/:workspace_id/queries`): all roles
+  - Query write (`data_sources/queries#create|update|chart_config`): owner/admin/user
+  - Query destroy (`data_sources/queries#destroy`):
+    - owner/admin: any query
+    - user: own queries only
+    - read-only: forbidden
+  - Dashboard read (`dashboards#index|show`): all roles
+  - Dashboard create (`dashboards#new|create`): owner/admin/user
+  - Dashboard destroy (`dashboards#destroy`): owner/admin only
+- Authorization UX:
+  - forbidden actions redirect with error toast:
+    - title: `Action not allowed`
+    - body: `Your workspace role does not allow this action.`
 
 ## Team table actions
 - Pending invited members:
@@ -108,4 +122,3 @@ Source: `WorkspaceInvitationService`
 - Add audit log trail for workspace membership and role changes.
 - Decide long-term legal strategy for invited users before explicit terms acceptance.
 - Add dedicated request specs for invite email delivery failures.
-- Expand role model to include `USER` role and enforce capability matrix across query/dashboard/data-source operations.

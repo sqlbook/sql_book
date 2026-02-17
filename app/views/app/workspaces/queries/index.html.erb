@@ -1,15 +1,21 @@
 <main>
+  <% can_write_queries = can_write_queries?(workspace: @workspace) %>
+
   <% if @queries.empty? %>
     <h1>Query library</h1>
     <p>Any queries you&apos;ve saved will be available here.</p>
-    <%= link_to "[Create New Query]", app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link primary", "data-shortcut": "N", "aria-label": "Create new query" %>
+    <% if can_write_queries %>
+      <%= link_to "[Create New Query]", app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link primary", "data-shortcut": "N", "aria-label": "Create new query" %>
+    <% end %>
   <% else %>
     <div class="page-header">
       <div class="title">
         <h1>Query Library</h1>
-        <%= link_to app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link secondary create-query", "data-shortcut": "N", "aria-label": "Create new query" do %>
-          <i class="ri-add-line red-500"></i>
-          <span>Create New</span>
+        <% if can_write_queries %>
+          <%= link_to app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link secondary create-query", "data-shortcut": "N", "aria-label": "Create new query" do %>
+            <i class="ri-add-line red-500"></i>
+            <span>Create New</span>
+          <% end %>
         <% end %>
       </div>
       <div class="controls" data-controller="search">
@@ -50,7 +56,9 @@
               </button>
               <div class="dropdown-options context">
                 <%= link_to "Open", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
-                <%= link_to "Delete", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
+                <% if can_destroy_query?(workspace: @workspace, query:) %>
+                  <%= link_to "Delete", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
+                <% end %>
               </div>
             </td>
           </tr>

@@ -4,6 +4,7 @@ module App
   module Workspaces
     class DataSourcesController < ApplicationController
       before_action :require_authentication!
+      before_action :authorize_data_source_access!
 
       def index
         @data_sources = data_sources
@@ -75,6 +76,12 @@ module App
         workspace.members.each do |member|
           DataSourceMailer.destroy(deleted_by: current_user, data_source:, member:).deliver_now
         end
+      end
+
+      def authorize_data_source_access!
+        return if can_manage_data_sources?(workspace:)
+
+        deny_workspace_access!(workspace:)
       end
 
       def handle_invalid_data_source_create(data_source)

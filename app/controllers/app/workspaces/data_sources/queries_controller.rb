@@ -3,8 +3,10 @@
 module App
   module Workspaces
     module DataSources
-      class QueriesController < ApplicationController
+      class QueriesController < ApplicationController # rubocop:disable Metrics/ClassLength
         before_action :require_authentication!
+        before_action :authorize_query_write_access!, only: %i[create update chart_config]
+        before_action :authorize_query_destroy_access!, only: %i[destroy]
 
         def index
           @workspace = workspace
@@ -120,7 +122,19 @@ module App
 
           nil
         end
-      end
+
+        def authorize_query_write_access!
+          return if can_write_queries?(workspace:)
+
+          deny_workspace_access!(workspace:)
+        end
+
+        def authorize_query_destroy_access!
+          return if can_destroy_query?(workspace:, query:)
+
+          deny_workspace_access!(workspace:)
+        end
+      end # rubocop:enable Metrics/ClassLength
     end
   end
 end

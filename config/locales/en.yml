@@ -60,6 +60,9 @@ en:
         title: Invitation no longer valid
         body: This invitation has expired or been revoked.
     workspaces:
+      access_forbidden:
+        title: Action not allowed
+        body: Your workspace role does not allow this action.
       members:
         invited:
           title: Invitation sent

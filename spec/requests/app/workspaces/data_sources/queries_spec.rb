@@ -4,7 +4,8 @@ require 'rails_helper'
 
 RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
   let(:user) { create(:user) }
-  let(:workspace) { create(:workspace_with_owner, owner: user) }
+  let(:workspace) { create(:workspace_with_owner, owner:) }
+  let(:owner) { user }
 
   before { sign_in(user) }
 
@@ -93,6 +94,20 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       query = Query.where(data_source_id: data_source.id).last
       expect(response).to redirect_to(app_workspace_data_source_query_path(workspace, data_source, query))
     end
+
+    context 'when current user is read-only in the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'does not create a query' do
+        request_params = { query: query_string }
+
+        expect do
+          post("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries", params: request_params)
+        end.not_to change(Query, :count)
+      end
+    end
   end
 
   describe 'PUT /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query' do
@@ -141,6 +156,17 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
           .to change { query.reload.last_updated_by }
           .from(nil)
           .to(user)
+      end
+
+      context 'when current user is read-only in the workspace' do
+        let(:owner) { create(:user) }
+
+        before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+        it 'does not update the query' do
+          expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}", params: }
+            .not_to change { query.reload.query }
+        end
       end
     end
 
@@ -284,6 +310,30 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       it 'destroys the query' do
         expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}" }
           .to change { Query.exists?(query.id) }.from(true).to(false)
+      end
+
+      context 'when current user has user role permissions' do
+        let(:owner) { create(:user) }
+        let(:query_author) { create(:user) }
+        let!(:query) { create(:query, data_source:, author: query_author) }
+
+        before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+        it 'does not destroy another users query' do
+          expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}" }
+            .not_to change { Query.exists?(query.id) }
+        end
+      end
+
+      context 'when current user is read-only in the workspace' do
+        let(:owner) { create(:user) }
+
+        before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+        it 'does not destroy query' do
+          expect { delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}" }
+            .not_to change { Query.exists?(query.id) }
+        end
       end
     end
   end

@@ -55,7 +55,27 @@ RSpec.describe Member, type: :model do
     end
 
     context 'when the member is not read only' do
-      let(:instance) { Member.new(role: Member::Roles::ADMIN) }
+      let(:instance) { Member.new(role: Member::Roles::USER) }
+
+      it 'returns false' do
+        expect(subject).to eq(false)
+      end
+    end
+  end
+
+  describe '#user?' do
+    subject { instance.user? }
+
+    context 'when the member is a user' do
+      let(:instance) { Member.new(role: Member::Roles::USER) }
+
+      it 'returns true' do
+        expect(subject).to eq(true)
+      end
+    end
+
+    context 'when the member is not a user' do
+      let(:instance) { Member.new(role: Member::Roles::READ_ONLY) }
 
       it 'returns false' do
         expect(subject).to eq(false)
@@ -79,6 +99,14 @@ RSpec.describe Member, type: :model do
 
       it 'returns Admin' do
         expect(subject).to eq('Admin')
+      end
+    end
+
+    context 'when the role is user' do
+      let(:instance) { Member.new(role: Member::Roles::USER) }
+
+      it 'returns User' do
+        expect(subject).to eq('User')
       end
     end
 

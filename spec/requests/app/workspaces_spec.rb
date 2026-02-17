@@ -94,9 +94,12 @@ RSpec.describe 'App::Workspaces', type: :request do
 
   describe 'GET /app/workspaces/:workspace_id' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
-    before { sign_in(user) }
+    before do
+      sign_in(user)
+    end
 
     context 'when the workspace does not exist' do
       it 'renders the 404 page' do
@@ -111,11 +114,54 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.status).to eq(200)
       end
     end
+
+    context 'when current user is an admin of the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::ADMIN) }
+
+      it 'renders the show page' do
+        get "/app/workspaces/#{workspace.id}"
+        expect(response.status).to eq(200)
+      end
+    end
+
+    context 'when current user is a user role member of the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'redirects to workspace list' do
+        get "/app/workspaces/#{workspace.id}"
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+
+      it 'sets an error toast payload' do
+        get "/app/workspaces/#{workspace.id}"
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.access_forbidden.title'),
+          body: I18n.t('toasts.workspaces.access_forbidden.body')
+        )
+      end
+    end
+
+    context 'when current user is read-only in the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'redirects to workspace list' do
+        get "/app/workspaces/#{workspace.id}"
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+    end
   end
 
   describe 'PATCH /app/workspaces/:workspace_id' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     before { sign_in(user) }
 
@@ -127,6 +173,33 @@ RSpec.describe 'App::Workspaces', type: :request do
     it 'redirects to the general tab' do
       patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' }
       expect(response).to redirect_to(app_workspace_path(workspace, tab: 'general'))
+    end
+
+    context 'when current user is an admin of the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::ADMIN) }
+
+      it 'updates the workspace' do
+        expect { patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' } }
+          .to change { workspace.reload.name }.from(workspace.name).to('new_name')
+      end
+    end
+
+    context 'when current user is a user role member of the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'does not update the workspace' do
+        expect { patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' } }
+          .not_to change { workspace.reload.name }
+      end
+
+      it 'redirects to workspace list' do
+        patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' }
+        expect(response).to redirect_to(app_workspaces_path)
+      end
     end
   end
 

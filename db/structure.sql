@@ -473,6 +473,7 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260217221000'),
 ('20260216111500'),
 ('20240311191638'),
 ('20240122193609'),

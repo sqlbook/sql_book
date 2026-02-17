@@ -1,16 +1,23 @@
 <main>
+  <% can_write_dashboards = can_write_dashboards?(workspace: @workspace) %>
+  <% can_destroy_dashboards = can_destroy_dashboards?(workspace: @workspace) %>
+
   <% if @dashboards.empty? %>
     <h1>Dashboards</h1>
     <p>Any dashboards you&apos;ve created will be available here.</p>
 
-    <%= link_to "[Create New Dashboard]", new_app_workspace_dashboard_path(@workspace), class: "link primary", "data-shortcut": "N", "aria-label": "Create new dashboard" %>
+    <% if can_write_dashboards %>
+      <%= link_to "[Create New Dashboard]", new_app_workspace_dashboard_path(@workspace), class: "link primary", "data-shortcut": "N", "aria-label": "Create new dashboard" %>
+    <% end %>
   <% else %>
     <div class="page-header">
       <div class="title">
         <h1>Dashboards</h1>
-        <%= link_to new_app_workspace_dashboard_path(@workspace), class: "link secondary create-dashboard", "data-shortcut": "N", "aria-label": "Create new dashboard" do %>
-          <i class="ri-add-line red-500"></i>
-          <span>Create New</span>
+        <% if can_write_dashboards %>
+          <%= link_to new_app_workspace_dashboard_path(@workspace), class: "link secondary create-dashboard", "data-shortcut": "N", "aria-label": "Create new dashboard" do %>
+            <i class="ri-add-line red-500"></i>
+            <span>Create New</span>
+          <% end %>
         <% end %>
       </div>
       <div class="controls" data-controller="search">
@@ -45,7 +52,9 @@
               </button>
               <div class="dropdown-options context">
                 <%= link_to "Open", app_workspace_dashboard_path(@workspace, dashboard), class: "link", "aria-label": "View the #{dashboard.name} dashboard" %>
-                <%= link_to "Delete", app_workspace_dashboard_path(@workspace, dashboard), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{dashboard.name} dashboard" %>
+                <% if can_destroy_dashboards %>
+                  <%= link_to "Delete", app_workspace_dashboard_path(@workspace, dashboard), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{dashboard.name} dashboard" %>
+                <% end %>
               </div>
             </td>
           </tr>

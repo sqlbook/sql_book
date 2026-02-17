@@ -12,7 +12,8 @@ class Member < ApplicationRecord
   class Roles
     OWNER = 1
     ADMIN = 2
-    READ_ONLY = 3
+    USER = 3
+    READ_ONLY = 4
   end
 
   class Status
@@ -32,6 +33,10 @@ class Member < ApplicationRecord
     role == Roles::READ_ONLY
   end
 
+  def user?
+    role == Roles::USER
+  end
+
   def pending?
     status == Status::PENDING
   end
@@ -40,7 +45,8 @@ class Member < ApplicationRecord
     names = {
       1 => 'Owner',
       2 => 'Admin',
-      3 => 'Read only'
+      3 => 'User',
+      4 => 'Read only'
     }
 
     names[role]

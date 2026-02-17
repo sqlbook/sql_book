@@ -4,6 +4,8 @@ module App
   module Workspaces
     class DashboardsController < ApplicationController
       before_action :require_authentication!
+      before_action :authorize_dashboard_write_access!, only: %i[new create]
+      before_action :authorize_dashboard_destroy_access!, only: %i[destroy]
 
       def index
         @workspace = workspace
@@ -57,6 +59,18 @@ module App
 
       def dashboard_params
         params.permit(:name)
+      end
+
+      def authorize_dashboard_write_access!
+        return if can_write_dashboards?(workspace:)
+
+        deny_workspace_access!(workspace:)
+      end
+
+      def authorize_dashboard_destroy_access!
+        return if can_destroy_dashboards?(workspace:)
+
+        deny_workspace_access!(workspace:)
       end
     end
   end

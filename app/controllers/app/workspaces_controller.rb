@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 module App
-  class WorkspacesController < ApplicationController
+  class WorkspacesController < ApplicationController # rubocop:disable Metrics/ClassLength
     before_action :require_authentication!
+    before_action :authorize_workspace_settings_access!, only: %i[show update]
 
     def index
       @workspaces = workspaces
@@ -84,6 +85,12 @@ module App
       workspace.role_for(user: current_user) == Member::Roles::OWNER
     end
 
+    def authorize_workspace_settings_access!
+      return if can_manage_workspace_settings?(workspace:)
+
+      deny_workspace_access!(workspace:)
+    end
+
     def handle_forbidden_workspace_delete
       flash[:toast] = {
         type: 'error',
@@ -126,5 +133,5 @@ module App
         body: I18n.t('toasts.workspaces.deleted_partial.body')
       }
     end
-  end
+  end # rubocop:enable Metrics/ClassLength
 end

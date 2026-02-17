@@ -5,7 +5,8 @@ require 'rails_helper'
 RSpec.describe 'App::Workspaces::Members', type: :request do
   describe 'POST /app/workspaces/:workspace_id/members' do
     let(:user) { create(:user) }
-    let!(:workspace) { create(:workspace_with_owner, owner: user) }
+    let!(:workspace) { create(:workspace_with_owner, owner: owner) }
+    let(:owner) { user }
 
     let(:params) do
       {
@@ -115,6 +116,21 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       end
     end
 
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'does not create the member' do
+        expect { post "/app/workspaces/#{workspace.id}/members", params: }.not_to change(Member, :count)
+      end
+
+      it 'redirects to the team tab' do
+        post "/app/workspaces/#{workspace.id}/members", params: params
+        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+    end
+
     context 'when invite creation fails unexpectedly' do
       before do
         allow_any_instance_of(WorkspaceInvitationService).to receive(:invite!)
@@ -139,7 +155,8 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
   describe 'DELETE /app/workspaces/:workspace_id/members/:member_id' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     let(:admin) { create(:user) }
     let!(:member) { create(:member, workspace:, user: admin, role: Member::Roles::ADMIN) }
@@ -198,6 +215,25 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
       it 'redirects to the workspace settings' do
         delete "/app/workspaces/#{workspace.id}/members/#{admin_member.id}"
+        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before do
+        create(:member, workspace:, user:, role: Member::Roles::USER)
+        sign_in(user)
+      end
+
+      it 'does not destroy the member' do
+        expect { delete "/app/workspaces/#{workspace.id}/members/#{member.id}" }
+          .not_to change { Member.exists?(member.id) }
+      end
+
+      it 'redirects to team tab' do
+        delete "/app/workspaces/#{workspace.id}/members/#{member.id}"
         expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
       end
     end
@@ -260,6 +296,26 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           title: I18n.t('toasts.workspaces.members.resend_blocked.title'),
           body: I18n.t('toasts.workspaces.members.resend_blocked.body', minutes: 10)
         )
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+      let(:user) { create(:user) }
+
+      before do
+        create(:member, workspace:, user:, role: Member::Roles::USER)
+        sign_in(user)
+      end
+
+      it 'does not rotate invitation token' do
+        expect { post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend" }
+          .not_to change { member.reload.invitation }
+      end
+
+      it 'redirects to team tab' do
+        post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend"
+        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
       end
     end
   end
