@@ -89,6 +89,7 @@ Rails.application.configure do # rubocop:disable Metrics/BlockLength
   app_host = ENV.fetch('APP_HOST')
   config.x.app_protocol = app_protocol
   config.x.app_host = app_host
+  config.action_mailer.asset_host = "#{app_protocol}://#{app_host}"
   config.action_mailer.default_url_options = { protocol: app_protocol, host: app_host }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to

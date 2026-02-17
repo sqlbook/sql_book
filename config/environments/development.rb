@@ -47,6 +47,7 @@ Rails.application.configure do # rubocop:disable Metrics/BlockLength
 
   config.x.app_protocol = 'http'
   config.x.app_host = 'localhost:3000'
+  config.action_mailer.asset_host = "#{config.x.app_protocol}://#{config.x.app_host}"
   config.action_mailer.default_url_options = { protocol: config.x.app_protocol, host: config.x.app_host }
 
   # Print deprecation notices to the Rails logger.

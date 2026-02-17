@@ -29,6 +29,10 @@ RSpec.describe OneTimePasswordMailer, type: :mailer do
                                       '&amp;one_time_password_5=5' \
                                       '&amp;one_time_password_6=6')
     end
+
+    it 'renders the logo with an absolute asset URL' do
+      expect(subject.body).to include('http://localhost:3000/assets/logo')
+    end
   end
 
   describe '#signup' do

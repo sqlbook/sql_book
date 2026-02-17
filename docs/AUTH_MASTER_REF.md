@@ -113,6 +113,7 @@ Source: `WorkspaceInvitationService`
 
 ## Environment parity and host behavior
 - Production mailer URLs are env-driven by `APP_HOST` and `APP_PROTOCOL` via `config.action_mailer.default_url_options`.
+- Mailer asset URLs (for example email logo image) are env-driven by `config.action_mailer.asset_host`.
 - This prevents hardcoded staging hosts from leaking into auth links.
 - Auth changes in this cycle do not introduce staging-specific host strings.
 

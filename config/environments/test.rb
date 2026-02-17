@@ -45,6 +45,7 @@ Rails.application.configure do
 
   config.x.app_protocol = 'http'
   config.x.app_host = 'localhost:3000'
+  config.action_mailer.asset_host = "#{config.x.app_protocol}://#{config.x.app_host}"
   config.action_mailer.default_url_options = { protocol: config.x.app_protocol, host: config.x.app_host }
 
   # Tell Action Mailer not to deliver emails to the real world.
