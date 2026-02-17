@@ -15,6 +15,7 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] Web service boots without startup exceptions.
 - [ ] Worker service boots and processes jobs.
 - [ ] Postgres and Redis connectivity verified from app logs.
+- [ ] Frontend assets load without digested asset 404s (for example `/assets/application-*.css`).
 
 ## 2) Auth and sessions
 - [ ] Signup flow completes from staging UI.
@@ -43,6 +44,7 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] `bin/predeploy-check staging` passes in staging env.
 - [ ] `bin/check-no-staging-hardcodes` passes on current commit.
 - [ ] Error logs show no unresolved critical exceptions for core paths.
+- [ ] If frontend assets changed in this deploy, run `RAILS_ENV=production bundle exec rails assets:clobber assets:precompile`.
 
 ## Run notes
 - Keep evidence links/log snippets in PR description or deploy notes.

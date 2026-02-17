@@ -77,6 +77,7 @@ These must be set correctly in staging (`staging.sqlbook.com` + `https`) to avoi
 
 After deploy:
 - `GET /up` returns 200
+- Frontend CSS/JS assets load without `/assets/application-*.css` or `/assets/application-*.js` 404s
 - Sign-up/login code email is delivered
 - Login succeeds with one-time code
 - Background event jobs are consumed by worker
@@ -86,5 +87,6 @@ After deploy:
 Do not treat staging as ready until:
 - auth emails work reliably
 - DB migrations are repeatable
+- production-mode assets are precompiled when frontend changes are deployed
 - logs and errors are visible
 - rollback path is documented

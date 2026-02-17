@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-02-15
+Last updated: 2026-02-17
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -103,6 +103,19 @@ psql -d sqlbook_events_production -c "GRANT SELECT ON page_views TO sqlbook_read
 PGUSER=sqlbook PGPASSWORD="$POSTGRES_PASSWORD" PGHOST="$POSTGRES_HOST" \
 psql -d sqlbook_events_production -c "GRANT SELECT ON sessions TO sqlbook_readonly;"
 ```
+
+## Asset deploy guardrail (staging + production)
+If any frontend assets changed (SCSS/JS/views that reference assets), precompile assets in production mode before or during deploy.
+
+Run in Web service shell:
+
+```bash
+RAILS_ENV=production bundle exec rails assets:clobber assets:precompile
+```
+
+Why:
+- Production has `config.assets.compile = false`.
+- If precompile is skipped, the app can request digested assets that do not exist and render unstyled pages (`/assets/application-*.css` 404).
 
 ## Notes and decisions
 - 2026-02-15: Chose 5 GB staging Postgres storage to minimize initial cost.
