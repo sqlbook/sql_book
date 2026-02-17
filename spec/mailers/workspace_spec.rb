@@ -36,4 +36,28 @@ RSpec.describe WorkspaceMailer, type: :mailer do
       expect(subject.body).to include("/app/workspaces/#{member.workspace.id}?tab=team")
     end
   end
+
+  describe '#workspace_deleted' do
+    let(:user) { create(:user) }
+
+    subject do
+      described_class.workspace_deleted(
+        user:,
+        workspace_name: 'Acme Workspace',
+        workspace_owner_name: 'Chris Pattison'
+      )
+    end
+
+    it 'renders the correct headers' do
+      expect(subject.subject).to eq 'One of your workspaces has been deleted.'
+      expect(subject.to).to eq [user.email]
+      expect(subject.from).to eq ['noreply@sqlbook.com']
+    end
+
+    it 'includes workspace and owner details' do
+      expect(subject.body).to include('Acme Workspace has been deleted by Chris Pattison')
+      expect(subject.body).to include('the <b>Acme Workspace</b> workspace no longer exists')
+      expect(subject.body).to include('/app/workspaces')
+    end
+  end
 end

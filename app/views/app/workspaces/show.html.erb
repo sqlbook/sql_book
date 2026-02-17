@@ -1,4 +1,6 @@
 <main>
+  <% can_delete_workspace = current_user_role(workspace: @workspace, current_user: @current_user) == Member::Roles::OWNER %>
+
   <div class="page-header">
     <h1>Workspaces</h1>
     <%= link_to new_app_workspace_path, class: "link secondary create-workspace", "data-shortcut": "N", "aria-label": "Create a new workspace" do %>
@@ -18,7 +20,9 @@
     <%= render "shared/tabs/nav_item", tab: "team", name: "Team", icon_class: "ri-fire-line" %>
     <%= render "shared/tabs/nav_item", tab: "subscription", name: "Subscription", icon_class: "ri-fire-lin" %>
     <div class="seperator"></div>
-    <%= render "shared/tabs/nav_item", tab: "delete", name: "Delete Workspace", icon_class: "ri-delete-bin-line" %>
+    <% if can_delete_workspace %>
+      <%= render "shared/tabs/nav_item", tab: "delete", name: "Delete Workspace", icon_class: "ri-delete-bin-line" %>
+    <% end %>
   </div>
 
   <% if active_tab?(tab: "general", default_selected: true) %>
@@ -102,7 +106,7 @@
     -
   <% end %>
 
-   <% if active_tab?(tab: "delete") %>
+   <% if can_delete_workspace && active_tab?(tab: "delete") %>
     <div class="delete-workspace">
       <p class="cream-250">You can delete your workspace at any time:</p>
       <ul>

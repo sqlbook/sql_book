@@ -173,7 +173,7 @@ ALTER TABLE public.clicks ENABLE ROW LEVEL SECURITY;
 -- Name: clicks clicks_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY clicks_policy ON public.clicks FOR SELECT USING ((data_source_uuid = (current_setting('app.current_data_source_uuid'::text))::uuid));
+CREATE POLICY clicks_policy ON public.clicks FOR SELECT USING ((data_source_uuid = (current_setting('app.current_data_source_uuid'::text, true))::uuid));
 
 
 --
@@ -186,7 +186,7 @@ ALTER TABLE public.page_views ENABLE ROW LEVEL SECURITY;
 -- Name: page_views page_views_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY page_views_policy ON public.page_views FOR SELECT USING ((data_source_uuid = (current_setting('app.current_data_source_uuid'::text))::uuid));
+CREATE POLICY page_views_policy ON public.page_views FOR SELECT USING ((data_source_uuid = (current_setting('app.current_data_source_uuid'::text, true))::uuid));
 
 
 --
@@ -199,7 +199,7 @@ ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
 -- Name: sessions sessions_policy; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY sessions_policy ON public.sessions FOR SELECT USING ((data_source_uuid = (current_setting('app.current_data_source_uuid'::text))::uuid));
+CREATE POLICY sessions_policy ON public.sessions FOR SELECT USING ((data_source_uuid = (current_setting('app.current_data_source_uuid'::text, true))::uuid));
 
 
 --
@@ -209,6 +209,7 @@ CREATE POLICY sessions_policy ON public.sessions FOR SELECT USING ((data_source_
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260217161000'),
 ('20240120104626'),
 ('20240120104604'),
 ('20240120104545');

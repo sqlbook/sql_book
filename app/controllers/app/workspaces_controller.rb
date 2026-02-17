@@ -36,12 +36,20 @@ module App
     end
 
     def destroy
-      workspace.destroy
-      flash[:toast] = {
-        type: 'success',
-        title: I18n.t('toasts.workspaces.deleted.title'),
-        body: I18n.t('toasts.workspaces.deleted.body')
-      }
+      return handle_forbidden_workspace_delete unless current_user_owner?
+
+      users_to_notify = workspace_users_to_notify
+      workspace_name = workspace.name
+      deleted_by_name = current_user.full_name
+
+      workspace.destroy!
+      failed_notifications = notify_workspace_deleted_users!(
+        users: users_to_notify,
+        workspace_name: workspace_name,
+        workspace_owner_name: deleted_by_name
+      )
+
+      flash[:toast] = delete_workspace_toast(failed_notifications:)
       redirect_to app_workspaces_path
     end
 
@@ -70,6 +78,53 @@ module App
         role: Member::Roles::OWNER,
         status: Member::Status::ACCEPTED
       )
+    end
+
+    def current_user_owner?
+      workspace.role_for(user: current_user) == Member::Roles::OWNER
+    end
+
+    def handle_forbidden_workspace_delete
+      flash[:toast] = {
+        type: 'error',
+        title: I18n.t('toasts.workspaces.delete_forbidden.title'),
+        body: I18n.t('toasts.workspaces.delete_forbidden.body')
+      }
+      redirect_to app_workspace_path(workspace, tab: 'general')
+    end
+
+    def workspace_users_to_notify
+      workspace.members.includes(:user).map(&:user).uniq.reject { |user| user.id == current_user.id }
+    end
+
+    def notify_workspace_deleted_users!(users:, workspace_name:, workspace_owner_name:)
+      users.count do |user|
+        WorkspaceMailer.workspace_deleted(
+          user:,
+          workspace_name:,
+          workspace_owner_name:
+        ).deliver_now
+        false
+      rescue StandardError => e
+        Rails.logger.error("Workspace delete notification failed for user #{user.id}: #{e.class} #{e.message}")
+        true
+      end
+    end
+
+    def delete_workspace_toast(failed_notifications:)
+      if failed_notifications.zero?
+        return {
+          type: 'success',
+          title: I18n.t('toasts.workspaces.deleted.title'),
+          body: I18n.t('toasts.workspaces.deleted.body')
+        }
+      end
+
+      {
+        type: 'information',
+        title: I18n.t('toasts.workspaces.deleted_partial.title'),
+        body: I18n.t('toasts.workspaces.deleted_partial.body')
+      }
     end
   end
 end

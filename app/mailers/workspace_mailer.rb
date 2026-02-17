@@ -10,4 +10,11 @@ class WorkspaceMailer < ApplicationMailer
     @member = member
     mail(to: member.invited_by.email, subject: I18n.t('mailers.workspace.subjects.invite_reject'))
   end
+
+  def workspace_deleted(user:, workspace_name:, workspace_owner_name:)
+    @workspace_name = workspace_name
+    @workspace_owner_name = workspace_owner_name
+
+    mail(to: user.email, subject: I18n.t('mailers.workspace.subjects.workspace_deleted'))
+  end
 end
