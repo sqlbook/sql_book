@@ -30,6 +30,14 @@ RSpec.describe 'Auth::Invitation', type: :request do
           "#{invited_by.full_name} has invited you to join the #{workspace.name} workspace"
         )
       end
+
+      it 'renders terms acceptance content' do
+        subject
+
+        expect(response.body).to include('I have read and accept the')
+        expect(response.body).to include('Terms of Use')
+        expect(response.body).to include('Privacy Policy')
+      end
     end
   end
 
@@ -39,25 +47,57 @@ RSpec.describe 'Auth::Invitation', type: :request do
     let(:token) { member.invitation }
     let(:workspace_invitation_service) { instance_double(WorkspaceInvitationService, accept!: nil) }
 
-    subject { post "/auth/invitation/#{token}/accept" }
+    subject { post "/auth/invitation/#{token}/accept", params: params }
 
     before do
       allow(WorkspaceInvitationService).to receive(:new).and_return(workspace_invitation_service)
     end
 
-    it 'sets a session cookie' do
-      subject
-      expect(session[:current_user_id]).to eq(member.user.id)
+    context 'when terms are accepted' do
+      let(:params) { { accept_terms: '1' } }
+
+      it 'sets a session cookie' do
+        subject
+        expect(session[:current_user_id]).to eq(member.user.id)
+      end
+
+      it 'accepts the invite' do
+        subject
+        expect(workspace_invitation_service).to have_received(:accept!)
+      end
+
+      it 'redirects to the workspace' do
+        subject
+        expect(response).to redirect_to(app_workspace_path(member.workspace))
+      end
+
+      it 'persists terms acceptance metadata' do
+        member.user.update!(terms_accepted_at: 2.days.ago, terms_version: '2025-01-01')
+
+        subject
+
+        expect(member.user.reload.terms_accepted_at).to be_present
+        expect(member.user.reload.terms_version).to eq(User::CURRENT_TERMS_VERSION)
+      end
     end
 
-    it 'accepts the invite' do
-      subject
-      expect(workspace_invitation_service).to have_received(:accept!)
-    end
+    context 'when terms are not accepted' do
+      let(:params) { { accept_terms: '0' } }
 
-    it 'redirects to the workspace' do
-      subject
-      expect(response).to redirect_to(app_workspace_path(member.workspace))
+      it 'does not accept the invite' do
+        subject
+        expect(workspace_invitation_service).not_to have_received(:accept!)
+      end
+
+      it 'redirects back to invitation page' do
+        subject
+        expect(response).to redirect_to(auth_invitation_path(token))
+      end
+
+      it 'sets an alert flash' do
+        subject
+        expect(flash[:alert]).to eq(I18n.t('auth.must_accept_terms'))
+      end
     end
   end
 

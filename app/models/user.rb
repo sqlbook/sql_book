@@ -2,6 +2,7 @@
 
 class User < ApplicationRecord
   CURRENT_TERMS_VERSION = '2026-02-16'
+  attr_accessor :skip_terms_validation
 
   has_many :queries,
            dependent: :destroy,
@@ -15,7 +16,7 @@ class User < ApplicationRecord
            through: :members
 
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validates :terms_accepted_at, :terms_version, presence: true, on: :create
+  validates :terms_accepted_at, :terms_version, presence: true, on: :create, unless: :skip_terms_validation
 
   def full_name
     "#{first_name} #{last_name}"

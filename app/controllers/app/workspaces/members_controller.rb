@@ -6,12 +6,16 @@ module App
       before_action :require_authentication!
 
       def create
-        return redirect_to_team_tab if invite_params[:role].to_i == Member::Roles::OWNER
-        return redirect_to_team_tab if already_a_member?
+        return reject_owner_invite if inviting_owner?
+        return reject_existing_member if already_a_member?
 
         create_invite!
-
+        flash[:toast] = invite_success_toast
         redirect_to_team_tab
+      rescue ActiveRecord::RecordInvalid => e
+        handle_invite_failure(message: "Workspace invite failed validation: #{e.message}")
+      rescue StandardError => e
+        handle_invite_failure(message: "Workspace invite failed: #{e.class} #{e.message}")
       end
 
       def destroy
@@ -27,6 +31,26 @@ module App
 
       def allowed_to_destroy_member?
         workspace.role_for(user: current_user) < member.role
+      end
+
+      def inviting_owner?
+        invite_params[:role].to_i == Member::Roles::OWNER
+      end
+
+      def reject_owner_invite
+        flash[:toast] = invite_owner_role_not_allowed_toast
+        redirect_to_team_tab
+      end
+
+      def reject_existing_member
+        flash[:toast] = invite_existing_member_toast
+        redirect_to_team_tab
+      end
+
+      def handle_invite_failure(message:)
+        Rails.logger.error(message)
+        flash[:toast] = invite_error_toast
+        redirect_to_team_tab
       end
 
       def already_a_member?
@@ -64,6 +88,41 @@ module App
           email: invite_params[:email],
           role: invite_params[:role].to_i
         )
+      end
+
+      def invite_success_toast
+        {
+          type: 'success',
+          title: I18n.t('toasts.workspaces.members.invited.title'),
+          body: I18n.t('toasts.workspaces.members.invited.body', email: invite_params[:email])
+        }
+      end
+
+      def invite_error_toast
+        {
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.invite_failed.title'),
+          body: I18n.t('toasts.workspaces.members.invite_failed.body'),
+          actions: [
+            { label: '[Try again]', path: app_workspace_path(workspace, tab: 'team'), variant: 'primary' }
+          ]
+        }
+      end
+
+      def invite_existing_member_toast
+        {
+          type: 'information',
+          title: I18n.t('toasts.workspaces.members.already_member.title'),
+          body: I18n.t('toasts.workspaces.members.already_member.body')
+        }
+      end
+
+      def invite_owner_role_not_allowed_toast
+        {
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.owner_invite_forbidden.title'),
+          body: I18n.t('toasts.workspaces.members.owner_invite_forbidden.body')
+        }
       end
     end
   end

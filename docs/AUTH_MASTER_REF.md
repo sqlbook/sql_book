@@ -103,6 +103,9 @@ Source: `WorkspaceInvitationService`
   - `invitation: SecureRandom.base36`
   - role set by inviter
 - Accept:
+  - invited user must explicitly accept Terms of Use + Privacy Policy on invitation page
+  - server enforces `accept_terms=1` before accepting invite
+  - on accept, user `terms_accepted_at`/`terms_version` are updated to current values
   - status changes to `ACCEPTED`
   - invitation token cleared
   - session reset and set to invitee user

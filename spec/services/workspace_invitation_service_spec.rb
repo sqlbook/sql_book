@@ -38,6 +38,14 @@ RSpec.describe WorkspaceInvitationService do
         subject
         expect(workspace.reload.members.last.invited_by_id).to eq(invited_by.id)
       end
+
+      it 'does not record terms acceptance before invitation acceptance' do
+        subject
+
+        user = User.find_by!(email: email)
+        expect(user.terms_accepted_at).to be_nil
+        expect(user.terms_version).to be_nil
+      end
     end
 
     context 'when the user already exists' do

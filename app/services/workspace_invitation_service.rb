@@ -31,6 +31,7 @@ class WorkspaceInvitationService
 
   def find_or_create_user!(first_name:, last_name:, email:)
     User.find_or_create_by!(email:) do |user|
+      user.skip_terms_validation = true
       user.first_name = first_name
       user.last_name = last_name
       user.email = email

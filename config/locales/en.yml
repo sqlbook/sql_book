@@ -56,6 +56,19 @@ en:
 
   toasts:
     workspaces:
+      members:
+        invited:
+          title: Invitation sent
+          body: "%{email} has been invited to this workspace."
+        invite_failed:
+          title: Invitation failed
+          body: We couldn't send that invitation right now. Please try again.
+        already_member:
+          title: User is already a member
+          body: This user is already in the workspace team.
+        owner_invite_forbidden:
+          title: Owner invite not allowed
+          body: You can't invite a user as owner.
       deleted:
         title: Workspace successfully deleted
         body: All data has been deleted and affected users have been informed.

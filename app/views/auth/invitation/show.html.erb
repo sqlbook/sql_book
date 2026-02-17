@@ -4,9 +4,26 @@
     <% if @member %>
       <h1>Welcome to Sqlbook</h1>
       <p><%= @member.invited_by.full_name %> has invited you to join the <%= @member.workspace.name %> workspace. Please choose from the options below:</p>
-      <div class="links">
-        <%= link_to "[Accept Invitation]", accept_auth_invitation_path(params[:id]), class: "link primary", "aria-label": "Accept invitation to the #{@member.workspace.name} workspace" %>
-        <%= link_to "Reject", reject_auth_invitation_path(params[:id]), class: "link secondary", "aria-label": "Reject invitation to the #{@member.workspace.name} workspace" %>
+
+      <%= render "shared/flash" %>
+
+      <div data-controller="form">
+        <%= form_with url: accept_auth_invitation_path(params[:id]), method: :post, class: "accept-invitation-form", html: { "data-form-target": "form" } do |form| %>
+          <%= form.label :accept_terms, class: "checkbox" do %>
+            <%= form.check_box :accept_terms, required: true %>
+            <div class="check">
+              <i class="ri-check-line"></i>
+            </div>
+            <span class="checkbox-text">
+              I have read and accept the <%= link_to "Terms of Use", terms_of_service_path, class: "link secondary", "aria-label": "View the sqlbook terms of use" %> and <%= link_to "Privacy Policy", privacy_policy_path, class: "link secondary", "aria-label": "View the sqlbook privacy policy" %>.
+            </span>
+          <% end %>
+
+          <div class="links">
+            <%= form.submit "[Accept Invitation]", class: "link primary", "data-form-target": "submit", "aria-label": "Accept invitation to the #{@member.workspace.name} workspace" %>
+            <%= link_to "Reject", reject_auth_invitation_path(params[:id]), class: "link secondary", data: { turbo_method: :post }, "aria-label": "Reject invitation to the #{@member.workspace.name} workspace" %>
+          </div>
+        <% end %>
       </div>
     <% else %>
       <h1>Your invitation is invalid</h1>

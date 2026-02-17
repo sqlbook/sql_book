@@ -19,11 +19,24 @@
       margin: 0 0 2rem 0;
     }
 
-    .link {
-      margin: 0 .5rem;
+    .flash {
+      margin-top: 1rem;
+    }
 
-      &.secondary {
-        color: var(--gray-500);
+    .accept-invitation-form {
+      .checkbox {
+        justify-content: center;
+        margin: 2rem 0;
+      }
+    }
+
+    .links {
+      .link {
+        margin: 0 .5rem;
+
+        &.secondary {
+          color: var(--gray-500);
+        }
       }
     }
   }

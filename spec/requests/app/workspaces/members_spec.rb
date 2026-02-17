@@ -32,6 +32,16 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
     end
 
+    it 'sets a success toast' do
+      post("/app/workspaces/#{workspace.id}/members", params:)
+
+      expect(flash[:toast]).to include(
+        type: 'success',
+        title: I18n.t('toasts.workspaces.members.invited.title'),
+        body: I18n.t('toasts.workspaces.members.invited.body', email: params[:email])
+      )
+    end
+
     context 'when trying to create someone as an owner' do
       let(:params) do
         {
@@ -54,6 +64,16 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       it 'redirects to the workspace settings' do
         post("/app/workspaces/#{workspace.id}/members", params:)
         expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+
+      it 'sets an error toast payload' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.owner_invite_forbidden.title'),
+          body: I18n.t('toasts.workspaces.members.owner_invite_forbidden.body')
+        )
       end
     end
 
@@ -82,6 +102,37 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       it 'redirects to the workspace settings' do
         post("/app/workspaces/#{workspace.id}/members", params:)
         expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+
+      it 'sets an information toast payload' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+
+        expect(flash[:toast]).to include(
+          type: 'information',
+          title: I18n.t('toasts.workspaces.members.already_member.title'),
+          body: I18n.t('toasts.workspaces.members.already_member.body')
+        )
+      end
+    end
+
+    context 'when invite creation fails unexpectedly' do
+      before do
+        allow_any_instance_of(WorkspaceInvitationService).to receive(:invite!)
+          .and_raise(ActiveRecord::RecordInvalid.new(User.new))
+      end
+
+      it 'sets an error toast payload' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.invite_failed.title'),
+          body: I18n.t('toasts.workspaces.members.invite_failed.body')
+        )
+
+        expect(flash[:toast][:actions]).to eq(
+          [{ label: '[Try again]', path: app_workspace_path(workspace, tab: 'team'), variant: 'primary' }]
+        )
       end
     end
   end
