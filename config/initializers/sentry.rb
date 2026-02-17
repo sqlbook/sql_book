@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 if Rails.env.production?
-  sentry_dsn = ENV['SENTRY_DSN']
+  sentry_dsn = ENV.fetch('SENTRY_DSN', nil)
 
   if sentry_dsn.present?
     Sentry.init do |config|
