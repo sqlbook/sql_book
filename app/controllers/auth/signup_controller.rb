@@ -7,16 +7,9 @@ module Auth
     def new
       return redirect_to auth_signup_index_path unless email
       return handle_terms_not_accepted unless accepted_terms?
+      return handle_existing_account if User.exists?(email:)
 
-      if User.exists?(email:)
-        flash.alert = I18n.t('auth.account_already_exists')
-        return redirect_to auth_signup_index_path
-      end
-
-      one_time_password_service.create!
-    rescue OneTimePasswordService::DeliveryError
-      flash.alert = I18n.t('auth.unable_to_send_code')
-      redirect_to auth_signup_index_path
+      send_signup_code!
     end
 
     def create
@@ -39,9 +32,21 @@ module Auth
 
     private
 
+    def send_signup_code!
+      one_time_password_service.create!
+    rescue OneTimePasswordService::DeliveryError
+      flash.alert = I18n.t('auth.unable_to_send_code')
+      redirect_to auth_signup_index_path
+    end
+
     def handle_invalid_signup_code
       flash.alert = I18n.t('auth.invalid_signup_code', link: resend_auth_signup_index_path(email:, accept_terms: '1'))
       redirect_to new_auth_signup_path(email:, accept_terms: '1')
+    end
+
+    def handle_existing_account
+      flash.alert = I18n.t('auth.account_already_exists')
+      redirect_to auth_signup_index_path
     end
 
     def handle_terms_not_accepted

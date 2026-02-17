@@ -6,13 +6,13 @@ common: &common
 
 default_primary: &default_primary
   <<: *common
-  username: sqlbook
+  username: <%= ENV.fetch("POSTGRES_USER", "sqlbook") %>
   password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 default_events: &default_events
   <<: *common
   migrations_paths: db/migrate_events
-  username: sqlbook
+  username: <%= ENV.fetch("POSTGRES_USER", "sqlbook") %>
   password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 development:

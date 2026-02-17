@@ -51,9 +51,16 @@ export class Script {
     }
 
     try {
-      return process.env.WEBSOCKET_URL;
+      const environmentWebsocketUrl = process.env.WEBSOCKET_URL;
+
+      if (environmentWebsocketUrl) {
+        return environmentWebsocketUrl;
+      }
     } catch {
-      return 'ws://localhost:3000/events/in';
+      // ignore and fall back to current host
     }
+
+    const websocketProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    return `${websocketProtocol}://${window.location.host}/events/in`;
   }
 }

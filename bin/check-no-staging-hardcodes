@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+scan_paths=(
+  app
+  config
+  lib
+  script/src
+)
+
+blocked_patterns=(
+  "staging.sqlbook.com"
+  "sqlbook-staging-web.onrender.com"
+  "ws://localhost:3000/events/in"
+)
+
+ignore_globs=(
+  "!app/assets/builds/**"
+  "!public/assets/**"
+  "!**/*.md"
+  "!**/*.map"
+  "!config/environments/development.rb"
+  "!config/environments/test.rb"
+)
+
+status=0
+rg_args=()
+
+for glob in "${ignore_globs[@]}"; do
+  rg_args+=(-g "$glob")
+done
+
+for pattern in "${blocked_patterns[@]}"; do
+  if matches=$(rg -n --fixed-strings "${rg_args[@]}" -- "$pattern" "${scan_paths[@]}"); then
+    echo "BLOCKED hardcoded host string found: $pattern"
+    echo "$matches"
+    echo
+    status=1
+  fi
+done
+
+if [[ "$status" -ne 0 ]]; then
+  echo "Environment parity check failed. Replace hardcoded staging/dev host strings with APP_HOST/APP_PROTOCOL-derived values."
+  exit 1
+fi
+
+echo "Environment parity check passed."

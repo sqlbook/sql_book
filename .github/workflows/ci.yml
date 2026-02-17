@@ -42,6 +42,9 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Check environment parity hardcoded hosts
+        run: bin/check-no-staging-hardcodes
+
       - name: Lint code for consistent style
         run: bundle exec rubocop
 

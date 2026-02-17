@@ -6,16 +6,9 @@ module Auth
 
     def new
       return redirect_to auth_login_index_path unless email
+      return handle_unknown_account unless User.exists?(email:)
 
-      unless User.exists?(email:)
-        flash.alert = I18n.t('auth.account_does_not_exist')
-        return redirect_to auth_login_index_path
-      end
-
-      one_time_password_service.create!
-    rescue OneTimePasswordService::DeliveryError
-      flash.alert = I18n.t('auth.unable_to_send_code')
-      redirect_to auth_login_index_path
+      send_login_code!
     end
 
     def create
@@ -38,6 +31,18 @@ module Auth
     end
 
     private
+
+    def send_login_code!
+      one_time_password_service.create!
+    rescue OneTimePasswordService::DeliveryError
+      flash.alert = I18n.t('auth.unable_to_send_code')
+      redirect_to auth_login_index_path
+    end
+
+    def handle_unknown_account
+      flash.alert = I18n.t('auth.account_does_not_exist')
+      redirect_to auth_login_index_path
+    end
 
     def find_and_authenticate_user!
       user = User.find_by!(email:)

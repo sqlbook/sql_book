@@ -3,7 +3,7 @@
 # Usage
 # ./db/setup.sh <environment>
 
-export PGUSER="postgres"
+export PGUSER="${POSTGRES_ADMIN_USER:-${POSTGRES_USER:-postgres}}"
 export PGPASSWORD="${POSTGRES_PASSWORD:-postgres}"
 export PGHOST="${POSTGRES_HOST:-localhost}"
 

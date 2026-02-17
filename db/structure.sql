@@ -1,6 +1,7 @@
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -218,7 +219,9 @@ CREATE TABLE public.users (
     last_name character varying NOT NULL,
     email character varying NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    terms_accepted_at timestamp(6) without time zone,
+    terms_version character varying
 );
 
 
@@ -470,6 +473,7 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260216111500'),
 ('20240311191638'),
 ('20240122193609'),
 ('20240122193346'),

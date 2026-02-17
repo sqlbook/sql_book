@@ -80,7 +80,7 @@ RSpec.describe 'Auth::Signups', type: :request do
       it 'displays a flash message' do
         get '/auth/signup/new', params: { email:, accept_terms: '1' }
 
-        expect(flash[:alert]).to eq("We couldn't send your verification code right now. Please try again later or contact support.")
+        expect(flash[:alert]).to eq(I18n.t('auth.unable_to_send_code'))
       end
     end
 

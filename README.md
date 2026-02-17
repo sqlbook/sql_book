@@ -74,3 +74,24 @@ $ bundle exec rubocop
 ```
 $ bin/dev
 ```
+
+### Quick local restart
+
+Use this wrapper to run with sensible local Postgres defaults:
+
+```
+$ bin/dev-local
+```
+
+## Project docs
+
+- Architecture plan: `docs/ARCHITECTURE_PLAN.md`
+- Product context: `docs/PROJECT_CONTEXT.md`
+- Decisions log: `docs/DECISIONS.md`
+- Engineering guardrails: `docs/ENGINEERING_GUARDRAILS.md`
+- GitHub working agreement: `docs/GITHUB_WORKING_AGREEMENT.md`
+- Render staging plan: `docs/STAGING_RENDER_PLAN.md`
+- Staging core checklist: `docs/STAGING_CORE_FUNCTIONALITY_CHECKLIST.md`
+- Staging feature-surface checklist: `docs/STAGING_FEATURE_SURFACE_CHECKLIST.md`
+- Env vars reference: `docs/ENV_VARS.md`
+- Next-session handoff: `docs/NEXT_SESSION_RENDER_HANDOFF.md`
