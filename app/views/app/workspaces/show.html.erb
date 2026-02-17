@@ -52,7 +52,12 @@
             <td><%= member.status_name %></td>
             <td>
               <% if current_user_role(workspace: @workspace, current_user: @current_user) < member.role %>
-                <%= link_to "Remove", app_workspace_member_path(@workspace, member), class: "link primary", data: { turbo_method: :delete }, "aria-label": "Remove #{member.user.full_name} from the team" %>
+                <% if member.pending? %>
+                  <%= link_to "Resend Invitation", resend_app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :post }, "aria-label": "Resend invitation to #{member.user.full_name}" %>
+                  <%= link_to "Delete", app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :delete }, "aria-label": "Delete pending invitation for #{member.user.full_name}" %>
+                <% else %>
+                  <%= link_to "Delete", app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :delete }, "aria-label": "Remove #{member.user.full_name} from the team" %>
+                <% end %>
               <% end %>
             </td>
           </tr>

@@ -25,6 +25,11 @@ class WorkspaceInvitationService
     WorkspaceMailer.invite(member:).deliver_now
   end
 
+  def resend!(member:)
+    member.update!(invitation: SecureRandom.base36)
+    WorkspaceMailer.invite(member:).deliver_now
+  end
+
   private
 
   attr_reader :workspace

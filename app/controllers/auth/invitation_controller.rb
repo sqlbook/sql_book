@@ -3,11 +3,13 @@
 module Auth
   class InvitationController < ApplicationController
     def show
+      return redirect_for_invalid_invitation unless member
+
       @member = member
     end
 
     def accept
-      return redirect_to root_path unless member
+      return redirect_for_invalid_invitation unless member
       return reject_accept_without_terms unless accepted_terms?
 
       accept_invitation!
@@ -15,6 +17,8 @@ module Auth
     end
 
     def reject
+      return redirect_for_invalid_invitation unless member
+
       WorkspaceInvitationService.new(workspace: member.workspace).reject!(member:)
       redirect_to root_path
     end
@@ -32,6 +36,15 @@ module Auth
     def reject_accept_without_terms
       flash[:alert] = I18n.t('auth.must_accept_terms')
       redirect_to auth_invitation_path(params[:id])
+    end
+
+    def redirect_for_invalid_invitation
+      flash[:toast] = {
+        type: 'information',
+        title: I18n.t('toasts.invitation.invalid.title'),
+        body: I18n.t('toasts.invitation.invalid.body')
+      }
+      redirect_to root_path
     end
 
     def capture_terms_acceptance!(user:)

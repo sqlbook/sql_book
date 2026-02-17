@@ -55,11 +55,27 @@ en:
       is_not_valid: is not valid
 
   toasts:
+    invitation:
+      invalid:
+        title: Invitation no longer valid
+        body: This invitation has expired or been revoked.
     workspaces:
       members:
         invited:
           title: Invitation sent
           body: "%{email} has been invited to this workspace."
+        resent:
+          title: Invitation resent
+          body: "A new invitation has been sent to %{email}."
+        resend_failed:
+          title: Couldn't resend invitation
+          body: Please try again in a moment.
+        resend_blocked:
+          title: Please wait before resending
+          body: You can resend this invitation after %{minutes} minutes.
+        deleted:
+          title: Team member removed
+          body: "%{email} has been removed from this workspace."
         invite_failed:
           title: Invitation failed
           body: We couldn't send that invitation right now. Please try again.

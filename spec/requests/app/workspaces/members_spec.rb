@@ -160,6 +160,16 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
     end
 
+    it 'sets a success toast payload' do
+      delete "/app/workspaces/#{workspace.id}/members/#{member.id}"
+
+      expect(flash[:toast]).to include(
+        type: 'success',
+        title: I18n.t('toasts.workspaces.members.deleted.title'),
+        body: I18n.t('toasts.workspaces.members.deleted.body', email: admin.email)
+      )
+    end
+
     context 'when attempting to delete the owner' do
       it 'does not destroy the owner' do
         expect { delete "/app/workspaces/#{workspace.id}/members/#{user.id}" }
@@ -189,6 +199,67 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       it 'redirects to the workspace settings' do
         delete "/app/workspaces/#{workspace.id}/members/#{admin_member.id}"
         expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+    end
+  end
+
+  describe 'POST /app/workspaces/:workspace_id/members/:member_id/resend' do
+    let(:owner) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:invited_user) { create(:user) }
+    let(:member_updated_at) { 11.minutes.ago }
+    let!(:member) do
+      create(
+        :member,
+        workspace: workspace,
+        user: invited_user,
+        invited_by: owner,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::PENDING,
+        invitation: 'old_token',
+        created_at: member_updated_at,
+        updated_at: member_updated_at
+      )
+    end
+
+    before { sign_in(owner) }
+
+    it 'rotates the invitation token' do
+      expect { post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend" }
+        .to change { member.reload.invitation }
+    end
+
+    it 'redirects to the workspace settings' do
+      post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend"
+      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+    end
+
+    it 'sets a success toast payload' do
+      post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend"
+
+      expect(flash[:toast]).to include(
+        type: 'success',
+        title: I18n.t('toasts.workspaces.members.resent.title'),
+        body: I18n.t('toasts.workspaces.members.resent.body', email: invited_user.email)
+      )
+    end
+
+    context 'when resend is attempted within cooldown window' do
+      let(:member_updated_at) { Time.current }
+
+      it 'does not rotate the invitation token' do
+        expect { post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend" }
+          .not_to change { member.reload.invitation }
+      end
+
+      it 'sets an information toast payload' do
+        post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend"
+
+        expect(flash[:toast]).to include(
+          type: 'information',
+          title: I18n.t('toasts.workspaces.members.resend_blocked.title'),
+          body: I18n.t('toasts.workspaces.members.resend_blocked.body', minutes: 10)
+        )
       end
     end
   end

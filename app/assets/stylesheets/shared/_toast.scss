@@ -57,10 +57,14 @@
 
 .toast-close,
 .toast-close.link.secondary {
+  appearance: none;
   align-items: center;
+  background: transparent;
+  border: 0;
   color: var(--gray-300);
   cursor: pointer;
   display: inline-flex;
+  padding: 0;
   text-decoration: none;
 
   &:hover,

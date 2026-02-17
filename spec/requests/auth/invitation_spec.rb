@@ -9,11 +9,15 @@ RSpec.describe 'Auth::Invitation', type: :request do
     context 'when the token is invalid' do
       let(:token) { 'sdfsdfdsfs' }
 
-      it 'renders the error page' do
+      it 'redirects to home with an info toast' do
         subject
 
-        expect(response.status).to eq(200)
-        expect(response.body).to include('Your invitation link is no longer valid')
+        expect(response).to redirect_to(root_path)
+        expect(flash[:toast]).to include(
+          type: 'information',
+          title: I18n.t('toasts.invitation.invalid.title'),
+          body: I18n.t('toasts.invitation.invalid.body')
+        )
       end
     end
 
@@ -99,6 +103,16 @@ RSpec.describe 'Auth::Invitation', type: :request do
         expect(flash[:alert]).to eq(I18n.t('auth.must_accept_terms'))
       end
     end
+
+    context 'when the token is invalid' do
+      let(:token) { 'invalid-token' }
+      let(:params) { { accept_terms: '1' } }
+
+      it 'redirects to the home page' do
+        subject
+        expect(response).to redirect_to(root_path)
+      end
+    end
   end
 
   describe 'POST /auth/invitation/:token/reject' do
@@ -121,6 +135,15 @@ RSpec.describe 'Auth::Invitation', type: :request do
     it 'reject the invite' do
       subject
       expect(workspace_invitation_service).to have_received(:reject!)
+    end
+
+    context 'when the token is invalid' do
+      let(:token) { 'invalid-token' }
+
+      it 'redirects to the home page' do
+        subject
+        expect(response).to redirect_to(root_path)
+      end
     end
   end
 end

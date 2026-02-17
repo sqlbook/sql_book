@@ -33,6 +33,16 @@ Single source of truth for workspace routes, role permissions, delete flows, inv
   - member removal requires acting user role to outrank target role
   - owner member cannot be removed through the member-destroy route
 
+## Team table actions
+- Pending invited members:
+  - `Resend Invitation` (rotates invitation token + sends fresh invite email)
+  - `Delete` (removes pending membership without notifying invitee)
+- Accepted members:
+  - `Delete` (removes membership; user account remains)
+- Revoked/invalid invitation links:
+  - redirect to home
+  - show information toast that invitation is no longer valid
+
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.
 2. Workspace record is created.
@@ -89,7 +99,8 @@ Source: `WorkspaceInvitationService`
 - Toast action links should use `path` where possible so rendering stays environment-safe.
 
 ## Current hardening backlog (workspace)
-- Add resend-invite endpoint/flow with dedicated server-side rate limits.
+- Evaluate moving resend cooldown from app layer to explicit persisted invite-send timestamp and per-user/IP rate limiting.
 - Add audit log trail for workspace membership and role changes.
 - Decide long-term legal strategy for invited users before explicit terms acceptance.
 - Add dedicated request specs for invite email delivery failures.
+- Expand role model to include `USER` role and enforce capability matrix across query/dashboard/data-source operations.

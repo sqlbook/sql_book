@@ -2,7 +2,9 @@
 
 module App
   module Workspaces
-    class MembersController < ApplicationController
+    class MembersController < ApplicationController # rubocop:disable Metrics/ClassLength
+      RESEND_COOLDOWN = 10.minutes
+
       before_action :require_authentication!
 
       def create
@@ -20,17 +22,52 @@ module App
 
       def destroy
         return redirect_to_team_tab if member.owner?
-        return redirect_to_team_tab unless allowed_to_destroy_member?
+        return redirect_to_team_tab unless allowed_to_manage_member?
 
         member.destroy
 
+        flash[:toast] = member_deleted_toast
+        redirect_to_team_tab
+      end
+
+      def resend # rubocop:disable Metrics/AbcSize
+        return reject_unresendable_member unless resend_allowed?
+        return reject_resend_cooldown if resend_cooldown_active?
+
+        resend_invite!
+        flash[:toast] = invite_resent_toast
+        redirect_to_team_tab
+      rescue StandardError => e
+        Rails.logger.error("Workspace invite resend failed: #{e.class} #{e.message}")
+        flash[:toast] = invite_resend_failed_toast
         redirect_to_team_tab
       end
 
       private
 
-      def allowed_to_destroy_member?
+      def allowed_to_manage_member?
         workspace.role_for(user: current_user) < member.role
+      end
+
+      def resend_allowed?
+        !member.owner? && allowed_to_manage_member? && member.pending?
+      end
+
+      def reject_unresendable_member
+        redirect_to_team_tab
+      end
+
+      def resend_invite!
+        WorkspaceInvitationService.new(workspace:).resend!(member:)
+      end
+
+      def resend_cooldown_active?
+        member.updated_at > RESEND_COOLDOWN.ago
+      end
+
+      def reject_resend_cooldown
+        flash[:toast] = resend_cooldown_toast
+        redirect_to_team_tab
       end
 
       def inviting_owner?
@@ -124,6 +161,38 @@ module App
           body: I18n.t('toasts.workspaces.members.owner_invite_forbidden.body')
         }
       end
-    end
+
+      def invite_resent_toast
+        {
+          type: 'success',
+          title: I18n.t('toasts.workspaces.members.resent.title'),
+          body: I18n.t('toasts.workspaces.members.resent.body', email: member.user.email)
+        }
+      end
+
+      def invite_resend_failed_toast
+        {
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.resend_failed.title'),
+          body: I18n.t('toasts.workspaces.members.resend_failed.body')
+        }
+      end
+
+      def resend_cooldown_toast
+        {
+          type: 'information',
+          title: I18n.t('toasts.workspaces.members.resend_blocked.title'),
+          body: I18n.t('toasts.workspaces.members.resend_blocked.body', minutes: RESEND_COOLDOWN.in_minutes.to_i)
+        }
+      end
+
+      def member_deleted_toast
+        {
+          type: 'success',
+          title: I18n.t('toasts.workspaces.members.deleted.title'),
+          body: I18n.t('toasts.workspaces.members.deleted.body', email: member.user.email)
+        }
+      end
+    end # rubocop:enable Metrics/ClassLength
   end
 end

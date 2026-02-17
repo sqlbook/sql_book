@@ -32,6 +32,10 @@ class Member < ApplicationRecord
     role == Roles::READ_ONLY
   end
 
+  def pending?
+    status == Status::PENDING
+  end
+
   def role_name
     names = {
       1 => 'Owner',
