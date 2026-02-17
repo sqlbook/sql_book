@@ -68,5 +68,7 @@ export default class extends Controller<HTMLDivElement> {
     this.inputs.forEach((element, index) => {
       element.value = code[index];
     });
+
+    this.element.closest('form')?.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }

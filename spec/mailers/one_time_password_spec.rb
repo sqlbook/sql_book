@@ -56,5 +56,12 @@ RSpec.describe OneTimePasswordMailer, type: :mailer do
       expect(subject.body).to include('one_time_password_6=6')
       expect(subject.body).to include('accept_terms=1')
     end
+
+    it 'includes signup profile fields in the magic link when provided' do
+      mail = described_class.signup(email:, token:, magic_link_params: { first_name: 'Chris', last_name: 'Pattison' })
+
+      expect(mail.body).to include('first_name=Chris')
+      expect(mail.body).to include('last_name=Pattison')
+    end
   end
 end

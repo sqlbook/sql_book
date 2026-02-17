@@ -187,7 +187,9 @@ RSpec.describe 'Auth::Signups', type: :request do
       it 'redirects back to the new page and includes the email' do
         post '/auth/signup', params: { email:, first_name:, last_name:, accept_terms:, **tokens }
 
-        expect(response).to redirect_to(new_auth_signup_path(email:, accept_terms: '1'))
+        expect(response).to redirect_to(
+          new_auth_signup_path(email:, first_name:, last_name:, accept_terms: '1')
+        )
       end
 
       it 'displays a flash message' do
@@ -270,6 +272,31 @@ RSpec.describe 'Auth::Signups', type: :request do
         expect(user.terms_accepted_at).to be_present
         expect(user.terms_version).to eq(User::CURRENT_TERMS_VERSION)
       end
+    end
+  end
+
+  describe 'GET /auth/signup/magic_link' do
+    let(:email) { "#{SecureRandom.base36}@email.com" }
+    let(:first_name) { 'Jim' }
+    let(:last_name) { 'Morrison' }
+    let(:token) { OneTimePasswordService.new(email:, auth_type: :signup).create!.token }
+
+    let(:tokens) do
+      {
+        one_time_password_1: token[0],
+        one_time_password_2: token[1],
+        one_time_password_3: token[2],
+        one_time_password_4: token[3],
+        one_time_password_5: token[4],
+        one_time_password_6: token[5]
+      }
+    end
+
+    it 'creates the user and redirects to workspace setup' do
+      get '/auth/signup/magic_link', params: { email:, first_name:, last_name:, accept_terms: '1', **tokens }
+
+      expect(response).to redirect_to(new_app_workspace_path)
+      expect(User.exists?(email:)).to eq(true)
     end
   end
 end

@@ -3,9 +3,10 @@
 class OneTimePasswordService
   class DeliveryError < StandardError; end
 
-  def initialize(email:, auth_type:)
+  def initialize(email:, auth_type:, magic_link_params: {})
     @email = email
     @auth_type = auth_type
+    @magic_link_params = magic_link_params
   end
 
   def create!
@@ -36,7 +37,7 @@ class OneTimePasswordService
 
   private
 
-  attr_reader :email, :auth_type
+  attr_reader :email, :auth_type, :magic_link_params
 
   def destoy!
     OneTimePassword.find_by(email:)&.destroy
@@ -54,7 +55,7 @@ class OneTimePasswordService
     if auth_type == :login
       OneTimePasswordMailer.login(email:, token:).deliver_now
     else
-      OneTimePasswordMailer.signup(email:, token:).deliver_now
+      OneTimePasswordMailer.signup(email:, token:, magic_link_params:).deliver_now
     end
   rescue StandardError => e
     raise e unless email_delivery_error?(e)

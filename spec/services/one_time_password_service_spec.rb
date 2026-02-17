@@ -59,7 +59,7 @@ RSpec.describe OneTimePasswordService do
 
       it 'sends a signup email' do
         subject
-        expect(OneTimePasswordMailer).to have_received(:signup).with(email:, token: token_stub)
+        expect(OneTimePasswordMailer).to have_received(:signup).with(email:, token: token_stub, magic_link_params: {})
       end
     end
   end

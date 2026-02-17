@@ -13,7 +13,7 @@ module Auth
     end
 
     def create
-      return redirect_to auth_signup_index_path unless [first_name, last_name, email, token].all?
+      return redirect_to auth_signup_index_path unless create_params_present?
       return handle_terms_not_accepted unless accepted_terms?
       return create_and_authenticate_user! if one_time_password_service.verify(token:)
 
@@ -24,7 +24,7 @@ module Auth
       return redirect_to auth_signup_index_path unless email
 
       one_time_password_service.resend!
-      redirect_to new_auth_signup_path(email:, accept_terms: '1')
+      redirect_to new_auth_signup_path(signup_redirect_params)
     rescue OneTimePasswordService::DeliveryError
       flash.alert = I18n.t('auth.unable_to_send_code')
       redirect_to auth_signup_index_path
@@ -40,8 +40,8 @@ module Auth
     end
 
     def handle_invalid_signup_code
-      flash.alert = I18n.t('auth.invalid_signup_code', link: resend_auth_signup_index_path(email:, accept_terms: '1'))
-      redirect_to new_auth_signup_path(email:, accept_terms: '1')
+      flash.alert = I18n.t('auth.invalid_signup_code', link: resend_auth_signup_index_path(signup_redirect_params))
+      redirect_to new_auth_signup_path(signup_redirect_params)
     end
 
     def handle_existing_account
@@ -103,7 +103,24 @@ module Auth
     end
 
     def one_time_password_service
-      @one_time_password_service ||= OneTimePasswordService.new(email:, auth_type: :signup)
+      @one_time_password_service ||= OneTimePasswordService.new(
+        email:,
+        auth_type: :signup,
+        magic_link_params: signup_redirect_params.except(:email, :accept_terms)
+      )
+    end
+
+    def signup_redirect_params
+      {
+        email:,
+        first_name:,
+        last_name:,
+        accept_terms: '1'
+      }.compact
+    end
+
+    def create_params_present?
+      [email, token, first_name, last_name].all?
     end
   end
 end
