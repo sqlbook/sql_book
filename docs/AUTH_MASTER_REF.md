@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-02-16
+Last updated: 2026-02-17
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -48,7 +48,7 @@ Single source of truth for auth behavior, routes, email triggers, and key implem
 3. OTP service `create!` is called:
    - if OTP exists for email: resend rotated code
    - else create new 6-digit OTP and send email
-4. User submits OTP (or uses magic link with `accept_terms=1`).
+4. User submits OTP (or uses magic link with `accept_terms=1`, `first_name`, and `last_name`).
 5. `Auth::SignupController#create` verifies OTP.
 6. On success:
    - user record is created
@@ -80,10 +80,13 @@ Source: `app/services/one_time_password_service.rb`
 - `verify(token:)`:
   - compares token
   - deletes OTP on match
+- Delivery failures:
+  - SES delivery errors are rescued and re-raised as `OneTimePasswordService::DeliveryError`
+  - auth controllers handle this and redirect with a user-facing alert instead of returning 500
 
 ## Email triggers
 - Signup OTP email:
-  - `OneTimePasswordMailer.signup(email:, token:)`
+  - `OneTimePasswordMailer.signup(email:, token:, magic_link_params:)`
 - Login OTP email:
   - `OneTimePasswordMailer.login(email:, token:)`
 - Workspace invite email:
@@ -124,14 +127,20 @@ Source: `WorkspaceInvitationService`
 - In SES sandbox, recipient email must be verified for delivery tests.
 - Email URL host/protocol are environment-driven in production via `APP_HOST`/`APP_PROTOCOL`.
 - If those env vars are missing/wrong, auth emails can link to the wrong domain.
+- OTP paste/autofill behavior:
+  - filling all 6 digits does not auto-submit
+  - form validity is still recalculated so submit buttons enable correctly
 
 ## Recent auth-related fixes deployed
 - `47234d3`: resend existing OTP when one already exists.
 - `fd0f4d5`: use `APP_HOST`/`APP_PROTOCOL` for tracking script URL to avoid staging cert mismatch errors.
 - `8ec02bf`: use `APP_HOST`/`APP_PROTOCOL` for Action Mailer URL options.
-- `uncommitted`: rotate OTP on resend.
-- `uncommitted`: reset session on login/signup/invitation accept/signout.
-- `uncommitted`: enforce terms acceptance server-side and persist `terms_accepted_at`/`terms_version`.
+- Rotate OTP on resend (no OTP reuse).
+- Reset session on login/signup/invitation accept/signout.
+- Enforce terms acceptance server-side and persist `terms_accepted_at`/`terms_version`.
+- Handle SES delivery rejections without returning 500 from auth entry points.
+- Preserve signup context (`first_name`/`last_name`) through resend links and signup magic links.
+- OTP controller now scopes listeners correctly across Turbo navigations and no longer auto-submits on paste.
 
 ## Next auth hardening candidates
 - Add OTP expiration and retry/rate limits.
