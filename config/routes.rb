@@ -8,6 +8,8 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   root 'home#index'
 
   resources :about, only: %i[index]
+  get 'terms-of-service', to: 'legal#terms_of_service'
+  get 'privacy-policy', to: 'legal#privacy_policy'
 
   namespace :auth do
     resources :invitation, only: %i[show] do
