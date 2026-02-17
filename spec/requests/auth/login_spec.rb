@@ -61,6 +61,28 @@ RSpec.describe 'Auth::Logins', type: :request do
         expect(response.body).to include('type="text" name="one_time_password_6"')
       end
     end
+
+    context 'when otp delivery fails' do
+      let(:user) { create(:user) }
+      let(:one_time_password_service) { instance_double(OneTimePasswordService) }
+
+      before do
+        allow(OneTimePasswordService).to receive(:new).and_return(one_time_password_service)
+        allow(one_time_password_service).to receive(:create!).and_raise(OneTimePasswordService::DeliveryError, 'failed')
+      end
+
+      it 'redirects back to the index page' do
+        get '/auth/login/new', params: { email: user.email }
+
+        expect(response).to redirect_to(auth_login_index_path)
+      end
+
+      it 'displays a flash message' do
+        get '/auth/login/new', params: { email: user.email }
+
+        expect(flash[:alert]).to eq("We couldn't send your verification code right now. Please try again later or contact support.")
+      end
+    end
   end
 
   describe 'GET /auth/login/resend' do

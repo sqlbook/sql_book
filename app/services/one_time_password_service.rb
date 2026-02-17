@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class OneTimePasswordService
+  class DeliveryError < StandardError; end
+
   def initialize(email:, auth_type:)
     @email = email
     @auth_type = auth_type
@@ -54,5 +56,13 @@ class OneTimePasswordService
     else
       OneTimePasswordMailer.signup(email:, token:).deliver_now
     end
+  rescue StandardError => e
+    raise e unless email_delivery_error?(e)
+
+    raise DeliveryError, e.message
+  end
+
+  def email_delivery_error?(error)
+    error.class.name.start_with?('Aws::SESV2::Errors::')
   end
 end

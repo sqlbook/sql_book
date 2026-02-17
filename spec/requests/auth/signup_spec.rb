@@ -62,6 +62,28 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
     end
 
+    context 'when otp delivery fails' do
+      let(:email) { "#{SecureRandom.base36}@email.com" }
+      let(:one_time_password_service) { instance_double(OneTimePasswordService) }
+
+      before do
+        allow(OneTimePasswordService).to receive(:new).and_return(one_time_password_service)
+        allow(one_time_password_service).to receive(:create!).and_raise(OneTimePasswordService::DeliveryError, 'failed')
+      end
+
+      it 'redirects back to the index page' do
+        get '/auth/signup/new', params: { email:, accept_terms: '1' }
+
+        expect(response).to redirect_to(auth_signup_index_path)
+      end
+
+      it 'displays a flash message' do
+        get '/auth/signup/new', params: { email:, accept_terms: '1' }
+
+        expect(flash[:alert]).to eq("We couldn't send your verification code right now. Please try again later or contact support.")
+      end
+    end
+
     context 'when terms are not accepted' do
       let(:email) { "#{SecureRandom.base36}@email.com" }
 

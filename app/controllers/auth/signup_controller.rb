@@ -14,6 +14,9 @@ module Auth
       end
 
       one_time_password_service.create!
+    rescue OneTimePasswordService::DeliveryError
+      flash.alert = I18n.t('auth.unable_to_send_code')
+      redirect_to auth_signup_index_path
     end
 
     def create
@@ -29,6 +32,9 @@ module Auth
 
       one_time_password_service.resend!
       redirect_to new_auth_signup_path(email:, accept_terms: '1')
+    rescue OneTimePasswordService::DeliveryError
+      flash.alert = I18n.t('auth.unable_to_send_code')
+      redirect_to auth_signup_index_path
     end
 
     private
