@@ -55,14 +55,17 @@
   margin: 0;
 }
 
-.toast-close {
+.toast-close,
+.toast-close.link.secondary {
   align-items: center;
   color: var(--gray-300);
   cursor: pointer;
   display: inline-flex;
   text-decoration: none;
 
-  &:hover {
+  &:hover,
+  &:active,
+  &:focus-visible {
     text-decoration: none;
   }
 
