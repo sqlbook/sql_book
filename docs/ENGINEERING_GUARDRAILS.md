@@ -25,3 +25,7 @@
 - Add backup/restore runbook for Postgres before launch.
 - Add uptime + error monitoring before accepting production users.
 
+## UI Messaging Safety
+- For toast actions that link inside the app, prefer `path` (for example `/app/workspaces`) instead of absolute URLs.
+- If an internal absolute `https://*.sqlbook.com/...` URL is provided, normalize it to a relative path before rendering.
+- Reserve absolute URLs for genuinely external destinations (for example docs/help center).

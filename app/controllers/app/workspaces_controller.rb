@@ -37,6 +37,11 @@ module App
 
     def destroy
       workspace.destroy
+      flash[:toast] = {
+        type: 'success',
+        title: I18n.t('toasts.workspaces.deleted.title'),
+        body: I18n.t('toasts.workspaces.deleted.body')
+      }
       redirect_to app_workspaces_path
     end
 

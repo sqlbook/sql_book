@@ -145,5 +145,15 @@ RSpec.describe 'App::Workspaces', type: :request do
       delete "/app/workspaces/#{workspace.id}"
       expect(response).to redirect_to(app_workspaces_path)
     end
+
+    it 'sets a success toast payload' do
+      delete "/app/workspaces/#{workspace.id}"
+
+      expect(flash[:toast]).to include(
+        type: 'success',
+        title: I18n.t('toasts.workspaces.deleted.title'),
+        body: I18n.t('toasts.workspaces.deleted.body')
+      )
+    end
   end
 end

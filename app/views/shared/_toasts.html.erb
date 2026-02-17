@@ -1,0 +1,58 @@
+<% toasts = [] %>
+<% toasts.concat(Array(flash[:toasts])) if flash[:toasts].present? %>
+<% toasts << flash[:toast] if flash[:toast].present? %>
+
+<% if toasts.any? %>
+  <div class="toast-stack" data-controller="toast-stack">
+    <% toasts.each do |toast| %>
+      <% next unless toast.is_a?(Hash) %>
+      <% type = (toast['type'] || toast[:type] || 'information').to_s %>
+      <% title = toast['title'] || toast[:title] %>
+      <% body = toast['body'] || toast[:body] %>
+      <% actions = Array(toast['actions'] || toast[:actions]) %>
+      <% icon_class =
+        case type
+        when 'success'
+          'ri-checkbox-circle-line'
+        when 'error'
+          'ri-error-warning-line'
+        else
+          'ri-information-line'
+        end %>
+      <% auto_dismiss_ms = type == 'success' ? 5000 : nil %>
+
+      <div class="toast <%= type %>" data-toast-stack-target="toast" data-auto-dismiss-ms="<%= auto_dismiss_ms %>">
+        <div class="toast-head">
+          <div class="toast-title-wrap">
+            <i class="toast-icon <%= icon_class %>"></i>
+            <% if title.present? %>
+              <p class="toast-title"><%= title %></p>
+            <% end %>
+          </div>
+          <button type="button" class="toast-close link secondary" aria-label="Dismiss notification" data-action="click->toast-stack#dismiss">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+
+        <% if body.present? %>
+          <p class="toast-body"><%= body %></p>
+        <% end %>
+
+        <% if type != 'success' && actions.any? %>
+          <div class="toast-actions">
+            <% actions.each do |action| %>
+              <% next unless action.is_a?(Hash) %>
+              <% label = action['label'] || action[:label] %>
+              <% href = toast_action_href(action) %>
+              <% variant = (action['variant'] || action[:variant] || 'secondary').to_s %>
+              <% external = href.start_with?('http://', 'https://') %>
+              <% next unless label.present? %>
+
+              <%= link_to label, href, class: "link #{variant}", target: (external ? "_blank" : nil), rel: (external ? "noopener noreferrer" : nil) %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

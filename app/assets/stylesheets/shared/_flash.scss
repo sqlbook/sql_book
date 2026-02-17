@@ -1,4 +1,9 @@
 .flash {
+  &.notice {
+    color: var(--cream-200);
+    margin: 0;
+  }
+
   &.alert {
     color: var(--red-500);
     margin: 0;

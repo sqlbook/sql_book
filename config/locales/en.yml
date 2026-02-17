@@ -52,3 +52,9 @@ en:
   models:
     data_source:
       is_not_valid: is not valid
+
+  toasts:
+    workspaces:
+      deleted:
+        title: Workspace successfully deleted
+        body: All data has been deleted and affected users have been informed.

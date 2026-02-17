@@ -21,6 +21,7 @@ import QueryResultsTableController from './query-results-table-controller';
 import ResizeablePageController from './resizeable-page-controller';
 import SearchController from './search-controller';
 import TableController from './table-controller';
+import ToastStackController from './toast-stack-controller';
 
 application.register('accordion', AccordionController);
 application.register('body', BodyController);
@@ -39,3 +40,4 @@ application.register('query-results-table', QueryResultsTableController);
 application.register('resizeable-page', ResizeablePageController);
 application.register('search', SearchController);
 application.register('table', TableController);
+application.register('toast-stack', ToastStackController);

@@ -7,6 +7,8 @@
     <% end %>
   </div>
 
+  <%= render "shared/flash" %>
+
   <div class="workspaces container lg" data-controller="cards">
     <% @workspaces.each do |workspace| %>
       <%= render "shared/workspace_card", workspace: %>
