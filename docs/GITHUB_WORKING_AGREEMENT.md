@@ -12,6 +12,7 @@ Define how we use GitHub Issues/Project for planning and execution so ticket sta
   - add issue comments (status notes, clarifying questions, findings)
 - Codex must not move an issue out of `Backlog` or begin implementation until explicit user approval.
 - After explicit approval, Codex may move the issue to `In Progress`.
+- After implementation and self-review, Codex moves issues to `In Review` for user validation.
 - When blocked, move to `Blocked` with a clear blocker comment.
 - Move to `Done` only when all completion gates below are satisfied.
 

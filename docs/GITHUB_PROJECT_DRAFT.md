@@ -5,10 +5,14 @@ Last updated: 2026-02-16
 ## Purpose
 Draft configuration for GitHub Issues + Project board, aligned with `docs/GITHUB_WORKING_AGREEMENT.md`.
 
+## Current board
+- Project name: `Work Board`
+
 ## Project columns
 - `Backlog`
 - `Todo`
 - `In Progress`
+- `In Review`
 - `Blocked`
 - `Done`
 
