@@ -20,6 +20,7 @@ Single source of truth for workspace routes, role permissions, delete flows, inv
   - `DELETE /app/workspaces/:id` -> delete workspace (owner only)
 - Workspace team members:
   - `POST /app/workspaces/:workspace_id/members` -> invite member
+  - `POST /app/workspaces/:workspace_id/members/:id/resend` -> resend pending invitation
   - `DELETE /app/workspaces/:workspace_id/members/:id` -> remove member (role constrained)
 
 ## Roles and authorization
@@ -42,6 +43,9 @@ Single source of truth for workspace routes, role permissions, delete flows, inv
 - Revoked/invalid invitation links:
   - redirect to home
   - show information toast that invitation is no longer valid
+- Resend cooldown:
+  - server-enforced 10-minute cooldown before another resend is allowed
+  - when blocked, info toast explains cooldown
 
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.
@@ -62,6 +66,7 @@ Source: `WorkspaceInvitationService`
    - `invited_by` set to inviter user
 4. Service sends workspace invite email.
 5. UI redirects back to team tab with toast feedback.
+6. Invite creation + invite-email send are transactional so failed delivery does not leave orphan pending members.
 
 ### Invite constraints and UX
 - Inviting as `OWNER` is blocked server-side.

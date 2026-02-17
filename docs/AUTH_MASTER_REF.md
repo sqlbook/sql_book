@@ -38,6 +38,7 @@ Single source of truth for auth behavior, routes, email triggers, and key implem
   - `GET /auth/invitation/:id` -> show invite page
   - `POST /auth/invitation/:id/accept` -> accept invite and sign in invitee
   - `POST /auth/invitation/:id/reject` -> reject invite and notify inviter
+  - invalid/revoked invitation tokens redirect to home with information toast
 
 ## Signup flow
 1. User submits name/email on signup page.

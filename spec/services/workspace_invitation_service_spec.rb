@@ -73,6 +73,33 @@ RSpec.describe WorkspaceInvitationService do
         expect(workspace.reload.members.last.invited_by_id).to eq(invited_by.id)
       end
     end
+
+    context 'when invitation email delivery fails' do
+      before do
+        allow(WorkspaceMailer).to receive(:invite).and_raise(StandardError, 'SES failure')
+      end
+
+      context 'and the user does not exist' do
+        it 'does not persist a new user' do
+          expect { subject }.to raise_error(StandardError, 'SES failure')
+          expect(User.exists?(email: email)).to be(false)
+        end
+
+        it 'does not persist a pending member row' do
+          expect { subject }.to raise_error(StandardError, 'SES failure')
+          expect(workspace.reload.members.count).to eq(0)
+        end
+      end
+
+      context 'and the user already exists' do
+        let!(:user) { create(:user, email:) }
+
+        it 'does not create a pending member row' do
+          expect { subject }.to raise_error(StandardError, 'SES failure')
+          expect(workspace.reload.members.exists?(user_id: user.id)).to be(false)
+        end
+      end
+    end
   end
 
   describe '#reject!' do

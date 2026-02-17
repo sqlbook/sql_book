@@ -19,15 +19,19 @@ class WorkspaceInvitationService
   end
 
   def invite!(invited_by:, first_name:, last_name:, email:, role:)
-    user = find_or_create_user!(first_name:, last_name:, email:)
-    member = create_member!(user:, role:, invited_by:)
+    ActiveRecord::Base.transaction do
+      user = find_or_create_user!(first_name:, last_name:, email:)
+      member = create_member!(user:, role:, invited_by:)
 
-    WorkspaceMailer.invite(member:).deliver_now
+      WorkspaceMailer.invite(member:).deliver_now
+    end
   end
 
   def resend!(member:)
-    member.update!(invitation: SecureRandom.base36)
-    WorkspaceMailer.invite(member:).deliver_now
+    Member.transaction do
+      member.update!(invitation: SecureRandom.base36)
+      WorkspaceMailer.invite(member:).deliver_now
+    end
   end
 
   private
