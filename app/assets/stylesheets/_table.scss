@@ -97,6 +97,7 @@ table {
 
   th[data-tooltip],
   td[data-tooltip] {
+    overflow: visible;
     position: relative;
 
     &:hover::after {
@@ -121,6 +122,7 @@ table {
 
   .truncate-text {
     display: block;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

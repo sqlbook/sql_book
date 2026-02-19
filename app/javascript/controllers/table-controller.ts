@@ -11,6 +11,9 @@ export default class extends Controller<HTMLDivElement> {
     window.addEventListener('resize', this.onWindowResize);
     this.setupResizeObserver();
     this.updateTooltipsAfterLayout();
+    if ('fonts' in document) {
+      document.fonts.ready.then(() => this.updateTooltipsAfterLayout());
+    }
   }
 
   public disconnect(): void {
@@ -77,13 +80,16 @@ export default class extends Controller<HTMLDivElement> {
       const text = textNode.dataset.tooltipText?.trim();
       if (!text) {
         cell.removeAttribute('data-tooltip');
+        textNode.removeAttribute('title');
         return;
       }
 
       if (textNode.scrollWidth > textNode.clientWidth) {
         cell.setAttribute('data-tooltip', text);
+        textNode.setAttribute('title', text);
       } else {
         cell.removeAttribute('data-tooltip');
+        textNode.removeAttribute('title');
       }
     });
   }

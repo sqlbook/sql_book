@@ -25,6 +25,31 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to have_selector('.workspace-card h4 a', text: workspace_1.name)
         expect(response.body).to have_selector('.workspace-card h4 a', text: workspace_2.name)
       end
+
+      context 'when the user has a pending invitation' do
+        let(:invited_workspace) { create(:workspace, name: 'Invited Workspace') }
+        let!(:pending_member) do
+          create(
+            :member,
+            workspace: invited_workspace,
+            user: user,
+            invited_by: create(:user),
+            role: Member::Roles::USER,
+            status: Member::Status::PENDING,
+            invitation: 'pending-token'
+          )
+        end
+
+        it 'renders a pending invitation toast with accept and reject actions' do
+          get '/app/workspaces'
+
+          expect(response.body).to include(I18n.t('toasts.invitation.pending.title'))
+          expect(response.body).to include(I18n.t('toasts.invitation.pending.body', workspace_name: invited_workspace.name))
+          expect(response.body).to include(auth_invitation_path(pending_member.invitation))
+          expect(response.body).to include(reject_auth_invitation_path(pending_member.invitation))
+          expect(response.body).to include('data-turbo-method="post"')
+        end
+      end
     end
   end
 

@@ -59,10 +59,13 @@ en:
       invalid:
         title: Invitation no longer valid
         body: This invitation has expired or been revoked.
+      pending:
+        title: New workspace invitation
+        body: You've been invited to join the %{workspace_name} workspace on sqlbook.
     workspaces:
       unavailable:
         title: Workspace not available
-        body: You don&apos;t have permission to access that workspace.
+        body: You don't have permission to access that workspace.
       access_forbidden:
         title: Action not allowed
         body: Your workspace role does not allow this action.

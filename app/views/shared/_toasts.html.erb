@@ -45,10 +45,15 @@
               <% label = action['label'] || action[:label] %>
               <% href = toast_action_href(action) %>
               <% variant = (action['variant'] || action[:variant] || 'secondary').to_s %>
+              <% method = (action['method'] || action[:method]).to_s.downcase.presence %>
               <% external = href.start_with?('http://', 'https://') %>
               <% next unless label.present? %>
 
-              <%= link_to label, href, class: "link #{variant}", target: (external ? "_blank" : nil), rel: (external ? "noopener noreferrer" : nil) %>
+              <%= link_to label, href,
+                          class: "link #{variant}",
+                          data: (method.present? ? { turbo_method: method.to_sym } : nil),
+                          target: (external ? "_blank" : nil),
+                          rel: (external ? "noopener noreferrer" : nil) %>
             <% end %>
           </div>
         <% end %>

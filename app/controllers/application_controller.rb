@@ -17,7 +17,9 @@ class ApplicationController < ActionController::Base
   protected
 
   def require_authentication!
-    redirect_to auth_login_index_path unless current_user
+    return redirect_to auth_login_index_path unless current_user
+
+    show_pending_invitation_toast_if_needed
   end
 
   def redirect_authenticated_users_to_app!
@@ -92,5 +94,28 @@ class ApplicationController < ActionController::Base
       body: I18n.t('toasts.workspaces.unavailable.body')
     }
     redirect_to app_workspaces_path
+  end
+
+  def show_pending_invitation_toast_if_needed
+    return unless request.get?
+    return unless controller_path.start_with?('app/')
+    return if flash[:toast].present? || flash[:toasts].present?
+
+    pending_member = current_user.members.pending.includes(:workspace).where.not(invitation: nil).first
+    return unless pending_member
+
+    flash.now[:toasts] = Array(flash.now[:toasts]) + [pending_invitation_toast(member: pending_member)]
+  end
+
+  def pending_invitation_toast(member:)
+    {
+      type: 'information',
+      title: I18n.t('toasts.invitation.pending.title'),
+      body: I18n.t('toasts.invitation.pending.body', workspace_name: member.workspace.name),
+      actions: [
+        { label: '[Accept invitation]', path: auth_invitation_path(member.invitation), variant: 'primary' },
+        { label: 'Reject', path: reject_auth_invitation_path(member.invitation), method: 'post', variant: 'secondary' }
+      ]
+    }
   end
 end

@@ -24,6 +24,10 @@
       h1 {
         margin: 0 0 2rem 0;
       }
+
+      p {
+        margin: 0;
+      }
     }
 
     .flash {
@@ -43,7 +47,7 @@
       .checkbox {
         align-items: center;
         justify-content: flex-start;
-        margin: 2rem auto;
+        margin: .5rem auto 1rem auto;
         max-width: 60rem;
         text-align: left;
         width: fit-content;
