@@ -5,7 +5,22 @@
     }
 
     .submit {
+      align-items: flex-start;
+      display: flex;
+      height: 1.5rem;
       margin: 2rem 0 0 0;
+
+      .link.primary {
+        -webkit-appearance: none;
+        appearance: none;
+        border: 0;
+        display: block;
+        height: 1.5rem;
+        line-height: 1.5rem;
+        margin: 0;
+        padding: 0;
+        vertical-align: top;
+      }
     }
 
     .checkbox {

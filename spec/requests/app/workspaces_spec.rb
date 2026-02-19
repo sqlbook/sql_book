@@ -53,6 +53,19 @@ RSpec.describe 'App::Workspaces', type: :request do
         end
       end
     end
+
+    context 'when user cannot manage workspace settings' do
+      let(:owner) { create(:user) }
+      let!(:workspace) { create(:workspace_with_owner, name: 'Locked Workspace', owner:) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'does not render the settings link on the workspace card' do
+        get '/app/workspaces'
+
+        expect(response.body).not_to include(%(aria-label="View settings for the #{workspace.name} workspace"))
+      end
+    end
   end
 
   describe 'GET /app/workspaces/new' do
