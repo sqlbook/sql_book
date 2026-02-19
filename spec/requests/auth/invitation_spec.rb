@@ -96,9 +96,9 @@ RSpec.describe 'Auth::Invitation', type: :request do
       end
       let(:params) { { accept_terms: '1' } }
 
-      it 'redirects to query library instead of workspace settings' do
+      it 'redirects to workspaces list instead of workspace settings' do
         subject
-        expect(response).to redirect_to(app_workspace_queries_path(member.workspace))
+        expect(response).to redirect_to(app_workspaces_path)
       end
     end
 
@@ -113,9 +113,9 @@ RSpec.describe 'Auth::Invitation', type: :request do
       end
       let(:params) { { accept_terms: '1' } }
 
-      it 'redirects to query library instead of workspace settings' do
+      it 'redirects to workspaces list instead of workspace settings' do
         subject
-        expect(response).to redirect_to(app_workspace_queries_path(member.workspace))
+        expect(response).to redirect_to(app_workspaces_path)
       end
     end
 
