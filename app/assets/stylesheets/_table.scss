@@ -84,9 +84,8 @@ table {
     th.actions,
     td.actions {
       max-width: none;
-      overflow: visible;
       text-overflow: clip;
-      white-space: nowrap;
+      white-space: normal;
       width: 1%;
     }
   }
@@ -94,6 +93,10 @@ table {
   th[data-tooltip],
   td[data-tooltip] {
     position: relative;
+
+    &:hover {
+      overflow: visible;
+    }
 
     &:hover::after {
       background: var(--gray-900);

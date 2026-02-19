@@ -40,19 +40,11 @@
 
   .members-table {
     margin: 2rem 0 0 0;
+    overflow-x: hidden;
 
     table {
       table-layout: fixed;
       width: 100%;
-    }
-
-    .name {
-      width: 40%;
-    }
-
-    .role,
-    .status {
-      width: 15%;
     }
 
     .actions {
@@ -60,10 +52,11 @@
     }
 
     .actions-inline {
-      display: inline-flex;
+      display: flex;
+      flex-wrap: wrap;
       gap: .75rem;
-      justify-content: flex-end;
-      white-space: nowrap;
+      justify-content: flex-start;
+      white-space: normal;
     }
   }
 
