@@ -41,12 +41,12 @@
       flex-direction: column;
 
       .checkbox {
-        align-items: flex-start;
+        align-items: center;
         justify-content: flex-start;
-        margin: 2rem 0;
+        margin: 2rem auto;
         max-width: 60rem;
         text-align: left;
-        width: 100%;
+        width: fit-content;
       }
     }
 

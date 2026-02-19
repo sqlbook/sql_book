@@ -111,7 +111,7 @@ module App
       end
 
       def workspace
-        @workspace ||= workspaces.find(params[:workspace_id])
+        @workspace ||= find_workspace_for_current_user!(param_key: :workspace_id)
       end
 
       def invite_params

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  class WorkspaceAccessDenied < StandardError; end
+
+  rescue_from WorkspaceAccessDenied, with: :redirect_for_workspace_access_denied
+
   helper_method :workspace_role_for,
                 :can_manage_workspace_settings?,
                 :can_manage_workspace_members?,
@@ -72,5 +76,21 @@ class ApplicationController < ActionController::Base
     else
       redirect_to app_workspaces_path
     end
+  end
+
+  def find_workspace_for_current_user!(param_key:)
+    workspace = Workspace.find_by(id: params[param_key])
+    raise WorkspaceAccessDenied if workspace.nil? || !current_user.member_of?(workspace:)
+
+    workspace
+  end
+
+  def redirect_for_workspace_access_denied
+    flash[:toast] = {
+      type: 'error',
+      title: I18n.t('toasts.workspaces.unavailable.title'),
+      body: I18n.t('toasts.workspaces.unavailable.body')
+    }
+    redirect_to app_workspaces_path
   end
 end

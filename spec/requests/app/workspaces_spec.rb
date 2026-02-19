@@ -156,6 +156,29 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response).to redirect_to(app_workspaces_path)
       end
     end
+
+    context 'when current user was removed from the workspace' do
+      let(:owner) { create(:user) }
+      let!(:removed_member) { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      before do
+        removed_member.destroy
+      end
+
+      it 'redirects to workspace list' do
+        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+
+      it 'sets a workspace unavailable toast payload' do
+        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.unavailable.title'),
+          body: I18n.t('toasts.workspaces.unavailable.body')
+        )
+      end
+    end
   end
 
   describe 'PATCH /app/workspaces/:workspace_id' do

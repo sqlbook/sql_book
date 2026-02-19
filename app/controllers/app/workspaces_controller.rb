@@ -61,7 +61,7 @@ module App
     end
 
     def workspace
-      @workspace ||= workspaces.find(params[:id])
+      @workspace ||= find_workspace_for_current_user!(param_key: :id)
     end
 
     def workspace_params
