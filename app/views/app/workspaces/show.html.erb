@@ -49,9 +49,15 @@
         </tr>
         <% @workspace.members.each do |member| %>
           <tr>
-            <td class="name"><%= member.user.full_name %></td>
-            <td class="role"><%= member.role_name %></td>
-            <td class="status"><%= member.status_name %></td>
+            <td class="name">
+              <span class="truncate-text" data-tooltip-text="<%= member.user.full_name %>"><%= member.user.full_name %></span>
+            </td>
+            <td class="role">
+              <span class="truncate-text" data-tooltip-text="<%= member.role_name %>"><%= member.role_name %></span>
+            </td>
+            <td class="status">
+              <span class="truncate-text" data-tooltip-text="<%= member.status_name %>"><%= member.status_name %></span>
+            </td>
             <td class="actions">
               <% if can_manage_members && current_role < member.role %>
                 <div class="actions-inline">

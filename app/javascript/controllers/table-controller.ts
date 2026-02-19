@@ -4,16 +4,19 @@ export default class extends Controller<HTMLDivElement> {
   static targets = ['table'];
 
   declare readonly tableTarget: HTMLFormElement;
+  private resizeObserver?: ResizeObserver;
 
   public connect(): void {
     document.addEventListener('click', this.onDocumentClick);
     window.addEventListener('resize', this.onWindowResize);
-    this.updateTruncationTooltips();
+    this.setupResizeObserver();
+    this.updateTooltipsAfterLayout();
   }
 
   public disconnect(): void {
     document.removeEventListener('click', this.onDocumentClick);
     window.removeEventListener('resize', this.onWindowResize);
+    this.resizeObserver?.disconnect();
   }
 
   public toggleOptions(event: MouseEvent): void {
@@ -52,28 +55,32 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private onWindowResize = (): void => {
-    this.updateTruncationTooltips();
+    this.updateTooltipsAfterLayout();
+  }
+
+  private setupResizeObserver(): void {
+    if (!('ResizeObserver' in window)) return;
+
+    this.resizeObserver = new ResizeObserver(() => this.updateTooltipsAfterLayout());
+    this.resizeObserver.observe(this.element);
+  }
+
+  private updateTooltipsAfterLayout(): void {
+    requestAnimationFrame(() => this.updateTruncationTooltips());
   }
 
   private updateTruncationTooltips(): void {
-    this.element.querySelectorAll<HTMLTableCellElement>('th, td').forEach(cell => {
-      if (cell.classList.contains('options') || cell.classList.contains('actions')) {
-        cell.removeAttribute('data-tooltip');
-        return;
-      }
+    this.element.querySelectorAll<HTMLElement>('.truncate-text[data-tooltip-text]').forEach(textNode => {
+      const cell = textNode.closest<HTMLTableCellElement>('th, td');
+      if (!cell) return;
 
-      if (cell.querySelector('a, button, input, select, textarea')) {
-        cell.removeAttribute('data-tooltip');
-        return;
-      }
-
-      const text = cell.textContent?.trim();
+      const text = textNode.dataset.tooltipText?.trim();
       if (!text) {
         cell.removeAttribute('data-tooltip');
         return;
       }
 
-      if (cell.scrollWidth > cell.clientWidth) {
+      if (textNode.scrollWidth > textNode.clientWidth) {
         cell.setAttribute('data-tooltip', text);
       } else {
         cell.removeAttribute('data-tooltip');
