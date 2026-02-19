@@ -3,6 +3,24 @@
 require 'rails_helper'
 
 RSpec.describe Member, type: :model do
+  describe 'realtime updates' do
+    let(:owner) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:member_user) { create(:user) }
+
+    it 'refreshes workspace members and app streams when membership changes' do
+      allow(RealtimeUpdatesService).to receive(:refresh_workspace_members)
+      allow(RealtimeUpdatesService).to receive(:refresh_users_app)
+
+      member = create(:member, workspace:, user: member_user, status: Member::Status::PENDING)
+      member.update!(status: Member::Status::ACCEPTED)
+      member.destroy!
+
+      expect(RealtimeUpdatesService).to have_received(:refresh_workspace_members).at_least(:once)
+      expect(RealtimeUpdatesService).to have_received(:refresh_users_app).at_least(:once)
+    end
+  end
+
   describe '#owner?' do
     subject { instance.owner? }
 

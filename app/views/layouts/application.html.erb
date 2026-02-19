@@ -17,6 +17,9 @@
   </head>
 
   <body class="<%= body_class %>" data-controller="body">
+    <% if app_page? && @current_user.present? %>
+      <%= turbo_stream_from RealtimeUpdatesService.user_app_stream(user: @current_user) %>
+    <% end %>
     <%= render "shared/header" %>
     <%= render "shared/toasts" %>
     <%= yield %>

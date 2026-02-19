@@ -40,14 +40,16 @@ RSpec.describe 'App::Workspaces', type: :request do
           )
         end
 
-        it 'renders a pending invitation toast with accept and reject actions' do
+        it 'renders a pending invitation toast with a view invitation action' do
           get '/app/workspaces'
 
           expect(response.body).to include(I18n.t('toasts.invitation.pending.title'))
-          expect(response.body).to include(I18n.t('toasts.invitation.pending.body', workspace_name: invited_workspace.name))
+          expect(response.body).to include(
+            CGI.escapeHTML(I18n.t('toasts.invitation.pending.body', workspace_name: invited_workspace.name))
+          )
+          expect(response.body).to include('[View invitation]')
           expect(response.body).to include(auth_invitation_path(pending_member.invitation))
-          expect(response.body).to include(reject_auth_invitation_path(pending_member.invitation))
-          expect(response.body).to include('data-turbo-method="post"')
+          expect(response.body).not_to include(reject_auth_invitation_path(pending_member.invitation))
         end
       end
     end

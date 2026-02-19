@@ -97,11 +97,9 @@ class ApplicationController < ActionController::Base
   end
 
   def show_pending_invitation_toast_if_needed
-    return unless request.get?
-    return unless controller_path.start_with?('app/')
-    return if flash[:toast].present? || flash[:toasts].present?
+    return unless should_show_pending_invitation_toast?
 
-    pending_member = current_user.members.pending.includes(:workspace).where.not(invitation: nil).first
+    pending_member = pending_member_with_invitation
     return unless pending_member
 
     flash.now[:toasts] = Array(flash.now[:toasts]) + [pending_invitation_toast(member: pending_member)]
@@ -113,9 +111,16 @@ class ApplicationController < ActionController::Base
       title: I18n.t('toasts.invitation.pending.title'),
       body: I18n.t('toasts.invitation.pending.body', workspace_name: member.workspace.name),
       actions: [
-        { label: '[Accept invitation]', path: auth_invitation_path(member.invitation), variant: 'primary' },
-        { label: 'Reject', path: reject_auth_invitation_path(member.invitation), method: 'post', variant: 'secondary' }
+        { label: '[View invitation]', path: auth_invitation_path(member.invitation), variant: 'primary' }
       ]
     }
+  end
+
+  def should_show_pending_invitation_toast?
+    request.get? && controller_path.start_with?('app/') && flash[:toast].blank? && flash[:toasts].blank?
+  end
+
+  def pending_member_with_invitation
+    current_user.members.pending.includes(:workspace).where.not(invitation: nil).first
   end
 end

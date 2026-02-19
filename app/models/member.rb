@@ -24,6 +24,8 @@ class Member < ApplicationRecord
   scope :accepted, -> { where(status: Status::ACCEPTED) }
   scope :pending, -> { where(status: Status::PENDING) }
 
+  after_commit :broadcast_realtime_updates
+
   def owner?
     role == Roles::OWNER
   end
@@ -62,5 +64,17 @@ class Member < ApplicationRecord
     }
 
     names[status]
+  end
+
+  private
+
+  def broadcast_realtime_updates
+    workspace_record = Workspace.find_by(id: workspace_id)
+    return unless workspace_record
+
+    workspace_users = workspace_record.members.includes(:user).map(&:user)
+
+    RealtimeUpdatesService.refresh_workspace_members(workspace: workspace_record)
+    RealtimeUpdatesService.refresh_users_app(users: workspace_users + [user])
   end
 end
