@@ -5,7 +5,8 @@ require 'rails_helper'
 RSpec.describe 'App::Workspaces::Queries', type: :request do
   describe 'GET /app/workspaces/:workspace_id/queries' do
     let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
 
     before { sign_in(user) }
 
@@ -13,6 +14,32 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
       it 'redirects to create one' do
         get "/app/workspaces/#{workspace.id}/queries"
         expect(response).to redirect_to(new_app_workspace_data_source_path(workspace))
+      end
+    end
+
+    context 'when there are no data soures and current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'renders the query library empty state' do
+        get "/app/workspaces/#{workspace.id}/queries"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Any queries you&apos;ve saved will be available here')
+      end
+    end
+
+    context 'when there are no data soures and current user has read-only role permissions' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'renders the query library empty state' do
+        get "/app/workspaces/#{workspace.id}/queries"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Any queries you&apos;ve saved will be available here')
       end
     end
 

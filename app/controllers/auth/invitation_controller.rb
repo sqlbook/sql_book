@@ -13,7 +13,7 @@ module Auth
       return reject_accept_without_terms unless accepted_terms?
 
       accept_invitation!
-      redirect_to app_workspace_path(member.workspace)
+      redirect_to post_accept_redirect_path
     end
 
     def reject
@@ -63,6 +63,12 @@ module Auth
     def authenticate_invited_user!
       reset_session
       session[:current_user_id] = member.user.id
+    end
+
+    def post_accept_redirect_path
+      return app_workspace_path(member.workspace) if can_manage_workspace_settings?(workspace: member.workspace)
+
+      app_workspace_queries_path(member.workspace)
     end
   end
 end

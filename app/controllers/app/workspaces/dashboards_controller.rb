@@ -12,7 +12,10 @@ module App
         @data_sources = data_sources
         @dashboards = dashboards
 
-        redirect_to new_app_workspace_data_source_path(workspace) if data_sources.empty?
+        return unless data_sources.empty?
+        return unless can_manage_data_sources?(workspace:)
+
+        redirect_to new_app_workspace_data_source_path(workspace)
       end
 
       def show

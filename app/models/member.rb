@@ -21,6 +21,9 @@ class Member < ApplicationRecord
     PENDING = 2
   end
 
+  scope :accepted, -> { where(status: Status::ACCEPTED) }
+  scope :pending, -> { where(status: Status::PENDING) }
+
   def owner?
     role == Roles::OWNER
   end

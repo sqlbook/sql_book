@@ -12,8 +12,14 @@ class User < ApplicationRecord
   has_many :members,
            dependent: :destroy
 
+  has_many :accepted_members,
+           -> { accepted },
+           class_name: 'Member',
+           inverse_of: :user
+
   has_many :workspaces,
-           through: :members
+           through: :accepted_members,
+           source: :workspace
 
   normalizes :email, with: ->(email) { email.strip.downcase }
   validates :terms_accepted_at, :terms_version, presence: true, on: :create, unless: :skip_terms_validation
@@ -23,6 +29,6 @@ class User < ApplicationRecord
   end
 
   def member_of?(workspace:)
-    workspaces.exists?(id: workspace.id)
+    accepted_members.exists?(workspace_id: workspace.id)
   end
 end

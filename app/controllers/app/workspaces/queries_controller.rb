@@ -9,7 +9,10 @@ module App
         @queries = queries
         @data_sources = data_sources
 
-        redirect_to new_app_workspace_data_source_path(workspace) if data_sources.empty?
+        return unless data_sources.empty?
+        return unless can_manage_data_sources?(workspace:)
+
+        redirect_to new_app_workspace_data_source_path(workspace)
       end
 
       private

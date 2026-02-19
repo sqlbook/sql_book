@@ -85,6 +85,40 @@ RSpec.describe 'Auth::Invitation', type: :request do
       end
     end
 
+    context 'when terms are accepted for a read-only invite' do
+      let(:member) do
+        create(
+          :member,
+          workspace:,
+          invitation: SecureRandom.base36,
+          role: Member::Roles::READ_ONLY
+        )
+      end
+      let(:params) { { accept_terms: '1' } }
+
+      it 'redirects to query library instead of workspace settings' do
+        subject
+        expect(response).to redirect_to(app_workspace_queries_path(member.workspace))
+      end
+    end
+
+    context 'when terms are accepted for a user-role invite' do
+      let(:member) do
+        create(
+          :member,
+          workspace:,
+          invitation: SecureRandom.base36,
+          role: Member::Roles::USER
+        )
+      end
+      let(:params) { { accept_terms: '1' } }
+
+      it 'redirects to query library instead of workspace settings' do
+        subject
+        expect(response).to redirect_to(app_workspace_queries_path(member.workspace))
+      end
+    end
+
     context 'when terms are not accepted' do
       let(:params) { { accept_terms: '0' } }
 

@@ -72,6 +72,23 @@ RSpec.describe WorkspaceInvitationService do
         subject
         expect(workspace.reload.members.last.invited_by_id).to eq(invited_by.id)
       end
+
+      context 'when invite form names do not match existing user names' do
+        let(:first_name) { 'Different' }
+        let(:last_name) { 'Name' }
+
+        it 'keeps the existing user names unchanged' do
+          expect { subject }.not_to change { user.reload.first_name }
+          expect(user.reload.last_name).not_to eq(last_name)
+        end
+      end
+
+      it 'creates a pending membership that does not count as active workspace access' do
+        subject
+
+        expect(workspace.reload.members.last.status).to eq(Member::Status::PENDING)
+        expect(user.reload.member_of?(workspace:)).to eq(false)
+      end
     end
 
     context 'when invitation email delivery fails' do

@@ -29,5 +29,13 @@ RSpec.describe User, type: :model do
         expect(subject).to eq(true)
       end
     end
+
+    context 'when the user only has a pending invitation to the workspace' do
+      before { create(:member, workspace:, user:, status: Member::Status::PENDING) }
+
+      it 'returns false' do
+        expect(subject).to eq(false)
+      end
+    end
   end
 end
