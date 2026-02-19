@@ -15,6 +15,7 @@ class User < ApplicationRecord
   has_many :accepted_members,
            -> { accepted },
            class_name: 'Member',
+           dependent: :destroy,
            inverse_of: :user
 
   has_many :workspaces,

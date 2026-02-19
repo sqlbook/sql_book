@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-02-17
+Last updated: 2026-02-19
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -110,6 +110,9 @@ Source: `WorkspaceInvitationService`
   - status changes to `ACCEPTED`
   - invitation token cleared
   - session reset and set to invitee user
+  - redirect target is role-aware:
+    - owner/admin -> workspace settings route
+    - user/read-only -> workspaces list
 - Reject:
   - member row removed
   - inviter receives rejection email
@@ -129,6 +132,7 @@ Source: `WorkspaceInvitationService`
 ## Current known behavior and constraints
 - OTP has no explicit expiry window in current implementation.
 - Auth depends on working SES configuration in environment.
+- Pending workspace invitations do not count as active workspace membership.
 - In SES sandbox, recipient email must be verified for delivery tests.
 - Email URL host/protocol are environment-driven in production via `APP_HOST`/`APP_PROTOCOL`.
 - If those env vars are missing/wrong, auth emails can link to the wrong domain.

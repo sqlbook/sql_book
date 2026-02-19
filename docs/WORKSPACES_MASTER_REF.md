@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-17
+Last updated: 2026-02-19
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -9,6 +9,9 @@ Last updated: 2026-02-17
 
 ## Purpose
 Single source of truth for workspace routes, role permissions, delete flows, invite behavior, and known hardening gaps.
+
+Related reference:
+- `docs/ROLES_RIGHTS_MASTER_REF.md` for canonical role capability matrix and UI affordance expectations.
 
 ## Core routes
 - Workspaces:
@@ -30,6 +33,7 @@ Single source of truth for workspace routes, role permissions, delete flows, inv
   - `USER` (3)
   - `READ_ONLY` (4)
 - Controller-level capability matrix:
+  - Workspace index (`GET /app/workspaces`): all accepted members
   - Workspace settings (`GET/PATCH /app/workspaces/:id`): owner/admin only
   - Workspace delete (`DELETE /app/workspaces/:id`): owner only
   - Team management routes (`members#create`, `members#destroy`, `members#resend`): owner/admin only
@@ -92,10 +96,19 @@ Source: `WorkspaceInvitationService`
 - Accept:
   - pending member becomes accepted
   - invitation token cleared
+  - post-accept redirect:
+    - owner/admin -> workspace settings route (`/app/workspaces/:id`)
+    - user/read-only -> workspaces list (`/app/workspaces`)
 - Reject:
   - pending member row removed
   - inviter gets rejection email
   - invitee user removed only if they belong to no workspaces
+
+## Membership status behavior
+- `PENDING` membership does not grant active workspace access.
+- Only `ACCEPTED` memberships count for:
+  - workspace visibility in `/app/workspaces`
+  - role-based authorization checks across workspace features
 
 ## Workspace delete behavior
 1. Owner confirms deletion.
