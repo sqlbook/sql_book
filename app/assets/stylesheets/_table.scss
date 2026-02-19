@@ -85,7 +85,7 @@ table {
     td.actions {
       max-width: none;
       text-overflow: clip;
-      white-space: normal;
+      white-space: nowrap;
       width: 1%;
     }
   }
@@ -94,21 +94,18 @@ table {
   td[data-tooltip] {
     position: relative;
 
-    &:hover {
-      overflow: visible;
-    }
-
     &:hover::after {
       background: var(--gray-900);
       border: 1px solid var(--gray-500);
       border-radius: 2px;
-      bottom: calc(100% + .25rem);
+      top: calc(100% + .25rem);
       color: var(--gray-250);
       content: attr(data-tooltip);
-      left: 0;
+      left: 50%;
       line-height: 1.5rem;
       max-width: min(26rem, 80vw);
       padding: .125rem .5rem;
+      pointer-events: none;
       position: absolute;
       text-overflow: clip;
       white-space: nowrap;

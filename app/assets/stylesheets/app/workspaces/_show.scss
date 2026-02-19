@@ -40,23 +40,32 @@
 
   .members-table {
     margin: 2rem 0 0 0;
-    overflow-x: hidden;
 
-    table {
+    table.team-members-table {
       table-layout: fixed;
       width: 100%;
     }
 
+    .name {
+      min-width: 0;
+      width: auto;
+    }
+
+    .role,
+    .status {
+      width: 8rem;
+    }
+
     .actions {
-      width: 1%;
+      width: 16rem;
     }
 
     .actions-inline {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: .75rem;
       justify-content: flex-start;
-      white-space: normal;
+      white-space: nowrap;
     }
   }
 
