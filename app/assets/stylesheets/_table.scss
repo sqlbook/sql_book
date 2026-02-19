@@ -78,6 +78,40 @@ table {
       max-width: 1px;
       text-overflow: ellipsis;
     }
+
+    th.options,
+    td.options,
+    th.actions,
+    td.actions {
+      max-width: none;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: nowrap;
+      width: 1%;
+    }
+  }
+
+  th[data-tooltip],
+  td[data-tooltip] {
+    position: relative;
+
+    &:hover::after {
+      background: var(--gray-900);
+      border: 1px solid var(--gray-500);
+      border-radius: 2px;
+      bottom: calc(100% + .25rem);
+      color: var(--gray-250);
+      content: attr(data-tooltip);
+      left: 0;
+      line-height: 1.5rem;
+      max-width: min(26rem, 80vw);
+      padding: .125rem .5rem;
+      position: absolute;
+      text-overflow: clip;
+      white-space: nowrap;
+      width: max-content;
+      z-index: 20;
+    }
   }
 }
 

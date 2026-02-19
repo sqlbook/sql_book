@@ -66,10 +66,10 @@ en:
       members:
         invited:
           title: Invitation sent
-          body: "%{email} has been invited to this workspace."
+          body: "%{name} has been invited to this workspace."
         resent:
           title: Invitation resent
-          body: "A new invitation has been sent to %{email}."
+          body: "A new invitation has been sent to %{name}."
         resend_failed:
           title: Couldn't resend invitation
           body: Please try again in a moment.
@@ -78,7 +78,7 @@ en:
           body: You can resend this invitation after %{minutes} minutes.
         deleted:
           title: Team member removed
-          body: "%{email} has been removed from this workspace."
+          body: "%{name} has been removed from this workspace."
         invite_failed:
           title: Invitation failed
           body: We couldn't send that invitation right now. Please try again.

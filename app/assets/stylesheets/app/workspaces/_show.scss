@@ -42,11 +42,28 @@
     margin: 2rem 0 0 0;
 
     table {
+      table-layout: fixed;
       width: 100%;
     }
 
-    td {
-      width: 25%;
+    .name {
+      width: 40%;
+    }
+
+    .role,
+    .status {
+      width: 15%;
+    }
+
+    .actions {
+      width: 1%;
+    }
+
+    .actions-inline {
+      display: inline-flex;
+      gap: .75rem;
+      justify-content: flex-end;
+      white-space: nowrap;
     }
   }
 

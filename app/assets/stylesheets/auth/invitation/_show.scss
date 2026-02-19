@@ -9,27 +9,44 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding: 0 1rem;
   }
 
   .invitation {
     margin: 2rem 0;
     text-align: center;
+    width: 100%;
 
-    h1 {
-      margin: 0 0 2rem 0;
+    .invitation-copy {
+      margin: 0 auto;
+      max-width: 29rem;
+
+      h1 {
+        margin: 0 0 2rem 0;
+      }
     }
 
     .flash {
       margin-top: 1rem;
     }
 
+    .invitation-form {
+      margin: 0 auto;
+      max-width: 60rem;
+    }
+
     .accept-invitation-form {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+
       .checkbox {
         align-items: flex-start;
         justify-content: flex-start;
         margin: 2rem 0;
-        max-width: 34rem;
+        max-width: 60rem;
         text-align: left;
+        width: 100%;
       }
     }
 

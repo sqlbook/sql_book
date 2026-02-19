@@ -7,6 +7,13 @@ export default class extends Controller<HTMLDivElement> {
 
   public connect(): void {
     document.addEventListener('click', this.onDocumentClick);
+    window.addEventListener('resize', this.onWindowResize);
+    this.updateTruncationTooltips();
+  }
+
+  public disconnect(): void {
+    document.removeEventListener('click', this.onDocumentClick);
+    window.removeEventListener('resize', this.onWindowResize);
   }
 
   public toggleOptions(event: MouseEvent): void {
@@ -29,7 +36,7 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private closeAllContexts = (): void => {
-    document.querySelectorAll<HTMLTableRowElement>('table tr').forEach(row => {
+    this.element.querySelectorAll<HTMLTableRowElement>('table tr').forEach(row => {
       this.hideRowContext(row);
     });
   }
@@ -42,5 +49,35 @@ export default class extends Controller<HTMLDivElement> {
   private hideRowContext(row: HTMLTableRowElement): void {
     row.classList.remove('active');
     row.querySelector('.context')?.classList.remove('show');
+  }
+
+  private onWindowResize = (): void => {
+    this.updateTruncationTooltips();
+  }
+
+  private updateTruncationTooltips(): void {
+    this.element.querySelectorAll<HTMLTableCellElement>('th, td').forEach(cell => {
+      if (cell.classList.contains('options') || cell.classList.contains('actions')) {
+        cell.removeAttribute('data-tooltip');
+        return;
+      }
+
+      if (cell.querySelector('a, button, input, select, textarea')) {
+        cell.removeAttribute('data-tooltip');
+        return;
+      }
+
+      const text = cell.textContent?.trim();
+      if (!text) {
+        cell.removeAttribute('data-tooltip');
+        return;
+      }
+
+      if (cell.scrollWidth > cell.clientWidth) {
+        cell.setAttribute('data-tooltip', text);
+      } else {
+        cell.removeAttribute('data-tooltip');
+      }
+    });
   }
 }

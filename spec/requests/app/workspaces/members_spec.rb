@@ -39,7 +39,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       expect(flash[:toast]).to include(
         type: 'success',
         title: I18n.t('toasts.workspaces.members.invited.title'),
-        body: I18n.t('toasts.workspaces.members.invited.body', email: params[:email])
+        body: I18n.t('toasts.workspaces.members.invited.body', name: "#{params[:first_name]} #{params[:last_name]}")
       )
     end
 
@@ -183,7 +183,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       expect(flash[:toast]).to include(
         type: 'success',
         title: I18n.t('toasts.workspaces.members.deleted.title'),
-        body: I18n.t('toasts.workspaces.members.deleted.body', email: admin.email)
+        body: I18n.t('toasts.workspaces.members.deleted.body', name: admin.full_name)
       )
     end
 
@@ -276,7 +276,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       expect(flash[:toast]).to include(
         type: 'success',
         title: I18n.t('toasts.workspaces.members.resent.title'),
-        body: I18n.t('toasts.workspaces.members.resent.body', email: invited_user.email)
+        body: I18n.t('toasts.workspaces.members.resent.body', name: invited_user.full_name)
       )
     end
 

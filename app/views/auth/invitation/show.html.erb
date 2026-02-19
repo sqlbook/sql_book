@@ -1,12 +1,14 @@
 <main>
   <%= image_tag "quokka.svg", height: 54, width: 50 %>
-  <div class="container invitation md">
-    <h1>Welcome to Sqlbook</h1>
-    <p><%= @member.invited_by.full_name %> has invited you to join the <%= @member.workspace.name %> workspace. Please choose from the options below:</p>
+  <div class="container invitation lg">
+    <div class="invitation-copy">
+      <h1>Welcome to Sqlbook</h1>
+      <p><%= @member.invited_by.full_name %> has invited you to join the <%= @member.workspace.name %> workspace. Please choose from the options below:</p>
+    </div>
 
     <%= render "shared/flash" %>
 
-    <div data-controller="form">
+    <div class="invitation-form" data-controller="form">
       <%= form_with url: accept_auth_invitation_path(params[:id]), method: :post, class: "accept-invitation-form", html: { "data-form-target": "form" } do |form| %>
         <%= form.label :accept_terms, class: "checkbox" do %>
           <%= form.check_box :accept_terms, required: true %>

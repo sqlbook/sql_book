@@ -132,7 +132,7 @@ module App
         {
           type: 'success',
           title: I18n.t('toasts.workspaces.members.invited.title'),
-          body: I18n.t('toasts.workspaces.members.invited.body', email: invite_params[:email])
+          body: I18n.t('toasts.workspaces.members.invited.body', name: invitee_name)
         }
       end
 
@@ -167,7 +167,7 @@ module App
         {
           type: 'success',
           title: I18n.t('toasts.workspaces.members.resent.title'),
-          body: I18n.t('toasts.workspaces.members.resent.body', email: member.user.email)
+          body: I18n.t('toasts.workspaces.members.resent.body', name: member.user.full_name)
         }
       end
 
@@ -191,8 +191,15 @@ module App
         {
           type: 'success',
           title: I18n.t('toasts.workspaces.members.deleted.title'),
-          body: I18n.t('toasts.workspaces.members.deleted.body', email: member.user.email)
+          body: I18n.t('toasts.workspaces.members.deleted.body', name: member.user.full_name)
         }
+      end
+
+      def invitee_name
+        existing_user = User.find_by(email: invite_params[:email])
+        return existing_user.full_name if existing_user
+
+        "#{invite_params[:first_name]} #{invite_params[:last_name]}".strip
       end
 
       def authorize_manage_members!
