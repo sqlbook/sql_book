@@ -1,6 +1,6 @@
 # Staging Core Functionality Checklist
 
-Last updated: 2026-02-16
+Last updated: 2026-02-19
 
 ## Purpose
 Define the minimum stable functionality that must pass before any production cutover work proceeds.
@@ -26,12 +26,16 @@ Define the minimum stable functionality that must pass before any production cut
 ## 3) Workspace and data source lifecycle
 - [ ] Create workspace succeeds.
 - [ ] Invite member flow succeeds (if enabled in current build).
+- [ ] User/Read-only members do not see workspace card settings link/icon.
+- [ ] Direct unauthorized workspace URL redirects to `/app/workspaces` with `Workspace not available` toast.
+- [ ] Team tab member status/actions auto-refresh when invite state changes (no manual page refresh).
 - [ ] Create data source succeeds with valid site URL.
 - [ ] Data source verification flow reaches success state.
 
 ## 4) Tracking and event ingestion
 - [ ] Tracking script snippet renders with staging host/protocol values.
 - [ ] Browser connects to Action Cable at staging websocket URL.
+- [ ] Turbo Stream websocket subscriptions connect on `/cable` for app UI realtime updates.
 - [ ] Page view/session/click events arrive in staging database.
 - [ ] Event save job runs without repeated retries/failures.
 

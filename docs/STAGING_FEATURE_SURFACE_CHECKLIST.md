@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-02-16
+Last updated: 2026-02-19
 
 ## Purpose
 Track additional functionality beyond the core baseline as the product expands.
@@ -28,12 +28,19 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 ### Table and result interactions
 - [ ] Pagination controls operate correctly across pages.
 - [ ] Table row context/actions open and close correctly.
+- [ ] Team table truncated cells and headers show tooltips on overflow.
 - [ ] Copy/share interactions (where present) work in major browsers.
 
 ### Workspace navigation and management
 - [ ] Workspace switcher updates URL/state correctly.
 - [ ] Data source switcher updates query context correctly.
 - [ ] Any workspace settings/membership pages load and save changes.
+- [ ] Workspace card settings link/icon is hidden for roles without settings permission.
+- [ ] Pending invitation toast appears in-app for active sessions with `[View invitation]` action.
+- [ ] Team member table updates status/actions without manual refresh when invitation state changes.
+
+### Auth UX polish
+- [ ] Signup `[Continue]` button does not shift position when toggling disabled/enabled state.
 
 ### Background workflows
 - [ ] Async jobs tied to non-core features complete successfully.

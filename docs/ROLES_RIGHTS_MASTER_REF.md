@@ -121,6 +121,7 @@ UI should hide actions users cannot perform, but server remains source of truth.
   - Delete action hidden for User and Read-only.
 - Workspace settings:
   - Settings/edit controls visible for Owner/Admin only.
+  - Workspace card `Settings` link/icon hidden for `USER` and `READ_ONLY`.
 
 ## Enforcement and UX on deny
 - Forbidden action returns redirect with toast:
@@ -130,6 +131,11 @@ UI should hide actions users cannot perform, but server remains source of truth.
 - Invitation accept redirect behavior:
   - owner/admin -> workspace settings route
   - user/read-only -> workspaces list
+- Workspace access fallback behavior:
+  - if user requests a workspace they are not a member of (or no longer a member of), redirect to `/app/workspaces`
+  - show toast:
+    - title: `Workspace not available`
+    - body: `You don't have permission to access that workspace.`
 
 ## Environment safety constraints
 - No hardcoded staging hostnames in role-dependent links/buttons.

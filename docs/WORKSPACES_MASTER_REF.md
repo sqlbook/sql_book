@@ -52,6 +52,14 @@ Related reference:
     - title: `Action not allowed`
     - body: `Your workspace role does not allow this action.`
 
+## Unauthorized workspace access handling
+- Workspace-scoped controllers use a shared membership lookup guard.
+- If workspace id is invalid or current user is not an accepted member:
+  - redirect to `/app/workspaces`
+  - show error toast:
+    - title: `Workspace not available`
+    - body: `You don't have permission to access that workspace.`
+
 ## Team table actions
 - Pending invited members:
   - `Resend Invitation` (rotates invitation token + sends fresh invite email)
@@ -90,7 +98,7 @@ Source: `WorkspaceInvitationService`
 - Inviting as `OWNER` is blocked server-side.
 - Inviting an existing workspace member is blocked server-side.
 - Success and failure toasts are shown for invite attempts.
-- On successful invite, pending member should appear in team table on refresh/redirect.
+- On successful invite, pending member appears on refresh/redirect and via realtime updates for active viewers.
 
 ## Invitation accept/reject behavior
 - Accept:
@@ -109,6 +117,16 @@ Source: `WorkspaceInvitationService`
 - Only `ACCEPTED` memberships count for:
   - workspace visibility in `/app/workspaces`
   - role-based authorization checks across workspace features
+
+## Realtime updates (team + invitations)
+- Membership create/update/destroy events broadcast Turbo Stream refresh events.
+- Team tab (`/app/workspaces/:id?tab=team`) subscribes to a workspace-members stream:
+  - status/action cells refresh without manual page reload after accept/reject/delete/resend flows.
+- App pages subscribe to a per-user stream:
+  - pending invitation toast appears for active signed-in users when an invite is created.
+- Transport requirement:
+  - ActionCable mounted at `/cable` for Turbo Stream subscriptions.
+  - This is separate from tracking/event ingestion websocket usage.
 
 ## Workspace delete behavior
 1. Owner confirms deletion.

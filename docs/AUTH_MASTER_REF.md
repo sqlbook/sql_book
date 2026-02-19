@@ -118,6 +118,13 @@ Source: `WorkspaceInvitationService`
   - inviter receives rejection email
   - invitee user deleted if user has no remaining workspaces
 
+## In-app pending invitation notification
+- On authenticated app pages (`/app/*`), if the current user has a pending invitation token and there is no higher-priority toast already queued, the app shows an information toast:
+  - title: `New workspace invitation`
+  - body: `You've been invited to join the %{workspace_name} workspace on sqlbook.`
+  - action: `[View invitation]` -> `/auth/invitation/:token`
+- Reject is intentionally not offered in this in-app toast; reject remains available on the invitation page itself.
+
 ## Environment parity and host behavior
 - Production mailer URLs are env-driven by `APP_HOST` and `APP_PROTOCOL` via `config.action_mailer.default_url_options`.
 - Mailer asset URLs (for example email logo image) are env-driven by `config.action_mailer.asset_host`.
@@ -150,6 +157,7 @@ Source: `WorkspaceInvitationService`
 - Handle SES delivery rejections without returning 500 from auth entry points.
 - Preserve signup context (`first_name`/`last_name`) through resend links and signup magic links.
 - OTP controller now scopes listeners correctly across Turbo navigations and no longer auto-submits on paste.
+- Added in-app pending invitation toast for active signed-in sessions with `[View invitation]` action.
 
 ## Next auth hardening candidates
 - Add OTP expiration and retry/rate limits.

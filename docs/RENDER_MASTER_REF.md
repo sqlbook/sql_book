@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-02-17
+Last updated: 2026-02-19
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -124,6 +124,7 @@ Why:
 - 2026-02-15: Redis maxmemory policy was changed to `noeviction` for Sidekiq durability.
 - 2026-02-15: `SENTRY_DSN` was removed from staging services; services remained healthy.
 - 2026-02-15: Mailer URL host/protocol now comes from `APP_HOST`/`APP_PROTOCOL` in production config (no hardcoded `sqlbook.com`).
+- 2026-02-19: ActionCable route mounted at `/cable` for Turbo Stream UI refresh behavior (workspace members/in-app invitation notifications).
 
 ## Hardening checklist (next)
 - [ ] Rotate remaining setup-exposed secret (`POSTGRES_PASSWORD`)
@@ -157,3 +158,4 @@ To avoid staging URLs leaking into production:
 - 2026-02-15: `bc7a2b9` - Guard workspace UI against missing owner records.
 - 2026-02-15: `ad1b22c` - Prevent `/app/workspaces` 500 when DB setting `app.current_data_source_uuid` is missing.
 - 2026-02-15: `8ec02bf` - Use `APP_HOST`/`APP_PROTOCOL` for Action Mailer URL options.
+- 2026-02-19: Mount ActionCable at `/cable` so Turbo Stream subscriptions can receive live updates.

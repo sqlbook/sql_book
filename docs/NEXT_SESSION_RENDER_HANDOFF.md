@@ -1,6 +1,13 @@
 # Next Session Handoff: Render Staging
 
-Last updated: 2026-02-15
+Last updated: 2026-02-19
+
+## Status note
+This file is now a historical handoff snapshot from initial staging setup work.
+Use these as current sources of truth instead:
+- `docs/RENDER_MASTER_REF.md`
+- `docs/AUTH_MASTER_REF.md`
+- `docs/WORKSPACES_MASTER_REF.md`
 
 ## Service and goal
 - Service: Render hosting stack for sqlbook staging (web app, worker, Postgres, Redis, domain/TLS).

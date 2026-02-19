@@ -18,6 +18,19 @@ Use this file to record major choices and why they were made.
   - avoids premature complexity
   - fits team capacity and LLM-assisted workflow
 
+## 2026-02-19
+### Decision: Use push-based UI refresh for workspace membership/invitation state
+- Status: Accepted
+- Why:
+  - reduces stale UI states in team management and invitation UX
+  - avoids broad polling loops and unnecessary network churn
+  - aligns well with existing Rails/Turbo stack
+- Consequences:
+  - requires ActionCable route availability (`/cable`) in deployed environments
+  - member create/update/destroy now drives Turbo Stream refresh behavior
+- Revisit when:
+  - workload or connection count makes stream fan-out a bottleneck
+
 ### Decision: Prefer EU region hosting
 - Status: Accepted
 - Why:
@@ -33,4 +46,3 @@ Use this file to record major choices and why they were made.
   - <tradeoff>
 - Revisit when:
   - <trigger>
-

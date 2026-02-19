@@ -23,7 +23,7 @@
       border-color: var(--cream-100);
 
       i {
-        display: block;
+        opacity: 1;
       }
 
       &:hover {
@@ -35,7 +35,7 @@
       border-color: var(--red-500);
 
       i {
-        display: block;
+        opacity: 1;
       }
     }
 
@@ -71,9 +71,10 @@
     width: 1rem;
 
     i {
-      display: none;
+      display: block;
       font-size: .75rem;
       line-height: 1;
+      opacity: 0;
     }
 
     &:hover {
