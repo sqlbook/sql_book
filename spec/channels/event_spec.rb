@@ -17,6 +17,13 @@ RSpec.describe EventChannel, type: :channel do
   end
 
   describe '#subscribed' do
+    it 'rejects when current visitor is missing' do
+      stub_connection(current_visitor: nil)
+      subscribe
+
+      expect(subscription).to be_rejected
+    end
+
     it 'connects' do
       stub_connection(current_visitor:)
       subscribe

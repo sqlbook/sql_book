@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -125,6 +125,7 @@ Why:
 - 2026-02-15: `SENTRY_DSN` was removed from staging services; services remained healthy.
 - 2026-02-15: Mailer URL host/protocol now comes from `APP_HOST`/`APP_PROTOCOL` in production config (no hardcoded `sqlbook.com`).
 - 2026-02-19: ActionCable route mounted at `/cable` for Turbo Stream UI refresh behavior (workspace members/in-app invitation notifications).
+- 2026-02-20: Added explicit ActionCable mount for `/events/in` alongside `/cable` so tracking websocket ingestion and Turbo Stream UI updates both remain active.
 
 ## Hardening checklist (next)
 - [ ] Rotate remaining setup-exposed secret (`POSTGRES_PASSWORD`)
@@ -159,3 +160,4 @@ To avoid staging URLs leaking into production:
 - 2026-02-15: `ad1b22c` - Prevent `/app/workspaces` 500 when DB setting `app.current_data_source_uuid` is missing.
 - 2026-02-15: `8ec02bf` - Use `APP_HOST`/`APP_PROTOCOL` for Action Mailer URL options.
 - 2026-02-19: Mount ActionCable at `/cable` so Turbo Stream subscriptions can receive live updates.
+- 2026-02-20: Keep ActionCable mounted on both `/cable` (Turbo Streams) and `/events/in` (tracking script ingestion).

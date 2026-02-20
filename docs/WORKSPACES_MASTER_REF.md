@@ -134,7 +134,10 @@ Source: `WorkspaceInvitationService`
   - pending invitation toast appears for active signed-in users when an invite is created.
 - Transport requirement:
   - ActionCable mounted at `/cable` for Turbo Stream subscriptions.
-  - This is separate from tracking/event ingestion websocket usage.
+  - Tracking/event ingestion websocket remains mounted at `/events/in`.
+  - Connection auth mode is split by endpoint:
+    - `/cable`: app session-backed user auth (`session[:current_user_id]`)
+    - `/events/in`: visitor payload + origin validation for tracking ingestion
 
 ## Workspace delete behavior
 1. Owner confirms deletion.

@@ -2,13 +2,28 @@
 
 module ApplicationCable
   class Connection < ActionCable::Connection::Base
-    identified_by :current_visitor
+    identified_by :current_user, :current_visitor
 
     def connect
-      self.current_visitor = find_authorized_visitor
+      if tracking_request?
+        self.current_visitor = find_authorized_visitor
+      else
+        self.current_user = find_authorized_user
+      end
     end
 
     private
+
+    def tracking_request?
+      request.path == '/events/in' || request.params[:data_source_uuid].present?
+    end
+
+    def find_authorized_user
+      user = User.find_by(id: request.session[:current_user_id])
+      return user if user
+
+      reject_unauthorized_connection
+    end
 
     def find_authorized_visitor
       data_source = DataSource.find_by(external_uuid: data_source_uuid)

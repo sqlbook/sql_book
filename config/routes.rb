@@ -4,6 +4,7 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   mount ActionCable.server => '/cable'
+  mount ActionCable.server => '/events/in'
 
   get 'up' => 'rails/health#show', as: :rails_health_check
 

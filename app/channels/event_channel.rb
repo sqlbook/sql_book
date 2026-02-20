@@ -2,6 +2,7 @@
 
 class EventChannel < ApplicationCable::Channel
   def subscribed
+    reject if current_visitor.blank?
     Rails.logger.info "Visitor connected #{current_visitor}"
   end
 
@@ -10,6 +11,8 @@ class EventChannel < ApplicationCable::Channel
   end
 
   def event(data)
+    return if current_visitor.blank?
+
     EventSaveJob.perform_later(data)
   end
 end

@@ -3,6 +3,20 @@
 require 'rails_helper'
 
 RSpec.describe ApplicationCable::Connection, type: :channel do
+  describe 'when connecting from app realtime path' do
+    let(:user) { create(:user) }
+
+    it 'rejects unauthenticated connections' do
+      expect { connect '/cable' }.to have_rejected_connection
+    end
+
+    it 'connects authenticated users' do
+      connection = connect('/cable', session: { current_user_id: user.id })
+
+      expect(connection.current_user).to eq(user)
+    end
+  end
+
   describe 'when no params are provided' do
     it 'rejects the connection' do
       expect { connect '/events/in' }.to have_rejected_connection
