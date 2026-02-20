@@ -140,10 +140,7 @@ module App
         {
           type: 'error',
           title: I18n.t('toasts.workspaces.members.invite_failed.title'),
-          body: I18n.t('toasts.workspaces.members.invite_failed.body'),
-          actions: [
-            { label: '[Try again]', path: app_workspace_path(workspace, tab: 'team'), variant: 'primary' }
-          ]
+          body: I18n.t('toasts.workspaces.members.invite_failed.body')
         }
       end
 

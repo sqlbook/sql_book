@@ -11,6 +11,36 @@ RSpec.describe 'Auth::Signups', type: :request do
     end
   end
 
+  describe 'authenticated user redirects' do
+    let(:user) { create(:user) }
+
+    before { sign_in(user) }
+
+    it 'redirects /auth/signup to app workspaces' do
+      get '/auth/signup'
+
+      expect(response).to redirect_to(app_workspaces_path)
+    end
+
+    it 'redirects /auth/signup/new to app workspaces' do
+      get '/auth/signup/new', params: { email: 'new-user@example.com', accept_terms: '1' }
+
+      expect(response).to redirect_to(app_workspaces_path)
+    end
+
+    it 'redirects /auth/signup/resend to app workspaces' do
+      get '/auth/signup/resend', params: { email: 'new-user@example.com' }
+
+      expect(response).to redirect_to(app_workspaces_path)
+    end
+
+    it 'redirects /auth/signup/magic_link to app workspaces' do
+      get '/auth/signup/magic_link'
+
+      expect(response).to redirect_to(app_workspaces_path)
+    end
+  end
+
   describe 'GET /auth/signup/new' do
     context 'when there is no email submitted' do
       it 'redirects back to the index page' do

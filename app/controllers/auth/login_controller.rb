@@ -2,6 +2,8 @@
 
 module Auth
   class LoginController < ApplicationController
+    before_action :redirect_authenticated_users_to_app!
+
     def index; end
 
     def new

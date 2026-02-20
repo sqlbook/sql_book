@@ -145,10 +145,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           title: I18n.t('toasts.workspaces.members.invite_failed.title'),
           body: I18n.t('toasts.workspaces.members.invite_failed.body')
         )
-
-        expect(flash[:toast][:actions]).to eq(
-          [{ label: '[Try again]', path: app_workspace_path(workspace, tab: 'team'), variant: 'primary' }]
-        )
+        expect(flash[:toast][:actions]).to be_nil
       end
     end
   end
