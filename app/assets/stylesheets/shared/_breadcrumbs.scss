@@ -10,7 +10,6 @@
   gap: .5rem;
   list-style: none;
   margin: 0;
-  overflow: hidden;
   padding: 0;
 }
 
@@ -23,7 +22,7 @@
   }
 
   &.middle {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 3ch;
 
     .breadcrumbs-link {
