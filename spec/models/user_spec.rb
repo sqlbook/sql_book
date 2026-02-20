@@ -54,11 +54,22 @@ RSpec.describe User, type: :model do
       end
     end
 
-    context 'when the workspace still has other members' do
+    context 'when the deleted user was the only owner and non-owner members remain' do
       let(:user) { create(:user) }
       let!(:workspace) { create(:workspace_with_owner, owner: user) }
       let!(:teammate) { create(:user) }
       let!(:teammate_member) { create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN) }
+
+      it 'deletes the workspace to prevent ownerless workspaces' do
+        expect { user.destroy! }.to change { Workspace.exists?(workspace.id) }.from(true).to(false)
+      end
+    end
+
+    context 'when another accepted owner remains in the workspace' do
+      let(:user) { create(:user) }
+      let!(:workspace) { create(:workspace_with_owner, owner: user) }
+      let!(:co_owner) { create(:user) }
+      let!(:co_owner_member) { create(:member, workspace:, user: co_owner, role: Member::Roles::OWNER) }
 
       it 'does not delete the workspace' do
         expect { user.destroy! }.not_to change { Workspace.exists?(workspace.id) }.from(true)

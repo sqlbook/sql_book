@@ -5,7 +5,7 @@ class User < ApplicationRecord
   attr_accessor :skip_terms_validation
 
   before_destroy :capture_workspace_ids_for_cleanup
-  after_destroy_commit :destroy_empty_workspaces
+  after_destroy_commit :destroy_unowned_or_empty_workspaces
 
   has_many :queries,
            dependent: :destroy,
@@ -42,11 +42,11 @@ class User < ApplicationRecord
     @workspace_ids_for_cleanup = members.pluck(:workspace_id).uniq
   end
 
-  def destroy_empty_workspaces
+  def destroy_unowned_or_empty_workspaces
     Array(@workspace_ids_for_cleanup).each do |workspace_id|
       workspace = Workspace.find_by(id: workspace_id)
       next unless workspace
-      next if workspace.members.exists?
+      next if workspace.members.accepted.exists?(role: Member::Roles::OWNER)
 
       workspace.destroy!
     end

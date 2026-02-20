@@ -121,7 +121,8 @@ Source: `WorkspaceInvitationService`
 
 ## User deletion cleanup
 - When a user is deleted and that user was the final member of a workspace, the workspace is automatically destroyed.
-- If a deleted user was not the final member, the workspace remains.
+- When a user is deleted and that user was the final accepted owner of a workspace, the workspace is automatically destroyed (even if non-owner members remain).
+- If an accepted owner still remains after the user is deleted, the workspace remains.
 - This prevents orphaned workspaces with zero members when user deletion cascades through `members`.
 
 ## Realtime updates (team + invitations)
