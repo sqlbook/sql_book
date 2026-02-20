@@ -90,8 +90,14 @@ RSpec.describe 'App::AccountSettings', type: :request do
         expect(flash[:toast]).to include(
           type: 'information',
           title: I18n.t('toasts.account_settings.email_verification_pending.title'),
-          body: I18n.t('toasts.account_settings.email_verification_pending.body')
+          body: I18n.t(
+            'toasts.account_settings.email_verification_pending.body',
+            email_current: 'hello@sitelabs.ai',
+            email_new: 'new@sitelabs.ai'
+          )
         )
+        expect(flash[:toast][:body_html]).to include('<strong>hello@sitelabs.ai</strong>')
+        expect(flash[:toast][:body_html]).to include('<strong>new@sitelabs.ai</strong>')
       end
     end
 
@@ -137,11 +143,45 @@ RSpec.describe 'App::AccountSettings', type: :request do
 
         expect(user.reload.email).to eq('verified@sitelabs.ai')
         expect(user.pending_email).to be_nil
-        expect(user.email_change_verification_token).to be_nil
-        expect(user.email_change_verification_sent_at).to be_nil
+        expect(user.email_change_verification_token).to eq('verify-token')
+        expect(user.email_change_verification_sent_at).to be_present
       end
 
       it 'redirects to workspaces with a success toast' do
+        get app_verify_email_account_settings_path(token: user.email_change_verification_token)
+
+        expect(response).to redirect_to(app_workspaces_path)
+        expect(flash[:toast]).to include(
+          type: 'success',
+          title: I18n.t('toasts.account_settings.email_verified.title'),
+          body: I18n.t('toasts.account_settings.email_verified.body')
+        )
+      end
+
+      it 'accepts token casing variations' do
+        user.update!(email_change_verification_token: 'abc123token')
+
+        get app_verify_email_account_settings_path(token: 'ABC123TOKEN')
+
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+
+      it 'is idempotent for repeated clicks while token is still valid' do
+        get app_verify_email_account_settings_path(token: user.email_change_verification_token)
+        get app_verify_email_account_settings_path(token: user.email_change_verification_token)
+
+        expect(response).to redirect_to(app_workspaces_path)
+        expect(flash[:toast]).to include(
+          type: 'success',
+          title: I18n.t('toasts.account_settings.email_verified.title'),
+          body: I18n.t('toasts.account_settings.email_verified.body')
+        )
+      end
+
+      it 'remains successful on repeated clicks after verification window passes' do
+        get app_verify_email_account_settings_path(token: user.email_change_verification_token)
+        user.update!(email_change_verification_sent_at: 2.hours.ago)
+
         get app_verify_email_account_settings_path(token: user.email_change_verification_token)
 
         expect(response).to redirect_to(app_workspaces_path)
@@ -184,6 +224,19 @@ RSpec.describe 'App::AccountSettings', type: :request do
         get app_verify_email_account_settings_path(token: 'invalid-token')
 
         expect(response).to redirect_to(auth_login_index_path)
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.account_settings.email_verification_expired.title'),
+          body: I18n.t('toasts.account_settings.email_verification_expired.body')
+        )
+      end
+
+      it 'redirects to account settings with an error toast when user is signed in' do
+        sign_in(user)
+
+        get app_verify_email_account_settings_path(token: 'invalid-token')
+
+        expect(response).to redirect_to(app_account_settings_path)
         expect(flash[:toast]).to include(
           type: 'error',
           title: I18n.t('toasts.account_settings.email_verification_expired.title'),

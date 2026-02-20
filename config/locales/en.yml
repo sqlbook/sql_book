@@ -67,8 +67,8 @@ en:
         title: Couldn't save account settings
         body: Please check your details and try again.
       email_verification_pending:
-        title: Confirm your new email
-        body: Please click the verification link we&apos;ve sent to your current email address.
+        title: Email verification required
+        body: "We've sent a verification email to the existing email address associated with this account to confirm the change from %{email_current} to %{email_new}."
       email_verified:
         title: Email address updated
         body: Your email address has been successfully changed.

@@ -1,4 +1,14 @@
-<h1>Confirm your email address change</h1>
-<p>We received a request to change the email address on your sqlbook account.</p>
-<p>For security, please confirm this by clicking the link below within 1 hour. If this wasn&apos;t you, you can ignore this email and no changes will be made.</p>
-<%= link_to "[Confirm email change]", @verification_url, style: "margin: 0; text-decoration: none;" %>
+<h1>Verify your change of email address</h1>
+
+<p>
+  We've recently received a request to change your sqlbook user account
+  email address from <strong><%= @current_email %></strong> to <strong><%= @new_email %></strong>.
+</p>
+
+<p>
+  <%= link_to "[Confirm Change]", @verification_url, style: "margin: 0; text-decoration: none;" %>
+</p>
+
+<p>This verification email will expire in 1 hour.</p>
+
+<p><strong>(If you did not try to change your sqlbook email address, then you can safely ignore this email.)</strong></p>

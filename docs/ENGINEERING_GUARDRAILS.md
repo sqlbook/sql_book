@@ -29,3 +29,5 @@
 - For toast actions that link inside the app, prefer `path` (for example `/app/workspaces`) instead of absolute URLs.
 - If an internal absolute `https://*.sqlbook.com/...` URL is provided, normalize it to a relative path before rendering.
 - Reserve absolute URLs for genuinely external destinations (for example docs/help center).
+- Toast locale copy is plain text; do not use HTML entities like `&apos;` in toast translation strings.
+- See `docs/TOASTS_MASTER_REF.md` for toast-specific copy/encoding/interpolation rules.

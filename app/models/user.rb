@@ -41,7 +41,7 @@ class User < ApplicationRecord
   def begin_email_change_verification!(new_email:)
     update!(
       pending_email: new_email,
-      email_change_verification_token: SecureRandom.base58(24),
+      email_change_verification_token: SecureRandom.hex(24),
       email_change_verification_sent_at: Time.current
     )
   end
@@ -53,7 +53,7 @@ class User < ApplicationRecord
 
   def verify_email_change_token?(token:)
     stored_token = email_change_verification_token.to_s
-    submitted_token = token.to_s
+    submitted_token = token.to_s.downcase
     return false if stored_token.blank?
     return false if stored_token.bytesize != submitted_token.bytesize
 
@@ -61,20 +61,14 @@ class User < ApplicationRecord
   end
 
   def confirm_email_change!(token:)
-    return false unless verify_email_change_token?(token:)
-    return false if email_change_verification_expired?
-    return false if pending_email.blank?
+    return :invalid unless verify_email_change_token?(token:)
+    return :already_confirmed if pending_email.blank?
+    return :expired if email_change_verification_expired?
 
-    update!(
-      email: pending_email,
-      pending_email: nil,
-      email_change_verification_token: nil,
-      email_change_verification_sent_at: nil
-    )
-
-    true
+    update!(email: pending_email, pending_email: nil)
+    :updated
   rescue ActiveRecord::RecordNotUnique
-    false
+    :invalid
   end
 
   def clear_email_change_verification!

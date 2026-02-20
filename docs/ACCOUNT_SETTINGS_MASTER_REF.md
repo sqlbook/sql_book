@@ -46,9 +46,10 @@ Email changes use a pending-verification state on `users`:
 - Token lifetime: 1 hour.
 - Valid + unexpired token:
   - `users.email` is replaced with `users.pending_email`.
-  - pending verification fields are cleared.
+  - `users.pending_email` is cleared.
   - user is redirected to `/app/workspaces`.
   - success toast is shown.
+- Repeated clicks on the same valid token (within the 1-hour window) are treated as successful/idempotent.
 - Expired token:
   - pending verification fields are cleared.
   - user is redirected to `/app/account-settings`.
@@ -69,7 +70,7 @@ Email changes use a pending-verification state on `users`:
 
 ## Toast behavior
 - Success: profile updated
-- Information: verification pending
+- Information: verification pending (includes `%{email_current}` and `%{email_new}` with emphasized variable styling in toast body)
 - Success: email verified
 - Error: verification expired/invalid
 - Error: email unavailable
@@ -78,6 +79,7 @@ Email changes use a pending-verification state on `users`:
 ## Environment safety rules
 - No hardcoded staging/production hostnames in account-settings links.
 - Verification email URL uses route URL helpers with env-driven Action Mailer host/protocol (`APP_PROTOCOL`, `APP_HOST`).
+- Email variable values (`current email` / `new email`) are rendered with emphasized text styling in verification email content.
 
 ## Known constraints
 - No dedicated resend-verification endpoint yet.

@@ -12,6 +12,7 @@ Single source of truth for auth behavior, routes, email triggers, and key implem
 
 Related reference:
 - `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for authenticated account profile settings and email-change verification rules.
+- `docs/TOASTS_MASTER_REF.md` for toast copy/encoding/interpolation rules.
 
 ## Auth architecture summary
 - Session-based auth using `session[:current_user_id]`.

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module App
-  class AccountSettingsController < ApplicationController
+  class AccountSettingsController < ApplicationController # rubocop:disable Metrics/ClassLength
     before_action :require_authentication!, except: %i[verify_email]
 
     def show
@@ -26,16 +26,26 @@ module App
     end
 
     def verify_email
-      user = User.find_by(email_change_verification_token: params[:token].to_s)
-      return redirect_with_toast(path: auth_login_index_path, toast: toast(type: 'error', key: 'email_verification_expired')) unless user # rubocop:disable Layout/LineLength
+      token = params[:token].to_s.downcase
+      user = User.find_by(email_change_verification_token: token)
+      return verification_failure_redirect unless user
 
-      authenticate_user!(user:)
-      return complete_email_verification! if user.confirm_email_change!(token: params[:token].to_s)
-
-      expire_email_verification!(user:)
+      handle_verification_result(user:, result: user.confirm_email_change!(token:))
     end
 
     private
+
+    def handle_verification_result(user:, result:)
+      case result
+      when :updated
+        authenticate_user!(user:) unless current_user&.id == user.id
+        complete_email_verification!
+      when :already_confirmed
+        complete_email_verification!
+      else
+        expire_email_verification!(user:)
+      end
+    end
 
     def account_settings_params
       params.permit(:first_name, :last_name, :email)
@@ -83,7 +93,18 @@ module App
     def update_success_toast(requested_email:)
       return toast(type: 'success', key: 'updated') unless requested_email
 
-      toast(type: 'information', key: 'email_verification_pending')
+      toast(
+        type: 'information',
+        key: 'email_verification_pending',
+        interpolation: {
+          email_current: current_user.email,
+          email_new: requested_email
+        },
+        html_interpolation: {
+          email_current: toast_emphasis(current_user.email),
+          email_new: toast_emphasis(requested_email)
+        }
+      )
     end
 
     def complete_email_verification!
@@ -103,17 +124,34 @@ module App
       session[:current_user_id] = user.id
     end
 
-    def toast(type:, key:)
+    def verification_failure_redirect
+      redirect_with_toast(
+        path: current_user.present? ? app_account_settings_path : auth_login_index_path,
+        toast: toast(type: 'error', key: 'email_verification_expired')
+      )
+    end
+
+    def toast(type:, key:, interpolation: {}, html_interpolation: nil)
+      body_key = "toasts.account_settings.#{key}.body"
+      body = I18n.t(body_key, **interpolation)
       {
         type:,
         title: I18n.t("toasts.account_settings.#{key}.title"),
-        body: I18n.t("toasts.account_settings.#{key}.body")
-      }
+        body:
+      }.tap do |toast_payload|
+        next unless html_interpolation
+
+        toast_payload[:body_html] = I18n.t(body_key, **html_interpolation)
+      end
     end
 
     def redirect_with_toast(path:, toast:)
       flash[:toast] = toast
       redirect_to path
     end
-  end
+
+    def toast_emphasis(value)
+      helpers.content_tag(:strong, value.to_s)
+    end
+  end # rubocop:enable Metrics/ClassLength
 end

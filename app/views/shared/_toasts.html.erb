@@ -9,6 +9,7 @@
       <% type = (toast['type'] || toast[:type] || 'information').to_s %>
       <% title = toast['title'] || toast[:title] %>
       <% body = toast['body'] || toast[:body] %>
+      <% body_html = toast['body_html'] || toast[:body_html] %>
       <% actions = Array(toast['actions'] || toast[:actions]) %>
       <% icon_class =
         case type
@@ -34,7 +35,9 @@
           </button>
         </div>
 
-        <% if body.present? %>
+        <% if body_html.present? %>
+          <p class="toast-body"><%= sanitize(body_html, tags: %w[strong], attributes: []) %></p>
+        <% elsif body.present? %>
           <p class="toast-body"><%= body %></p>
         <% end %>
 

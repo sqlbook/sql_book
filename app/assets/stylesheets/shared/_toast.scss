@@ -87,6 +87,11 @@
   font-weight: var(--font-weight-normal);
   line-height: 1.5rem;
   margin: .5rem 0 0 0;
+
+  strong {
+    color: var(--cream-250);
+    font-weight: var(--font-weight-bold);
+  }
 }
 
 .toast-actions {
