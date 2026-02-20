@@ -4,6 +4,9 @@ class User < ApplicationRecord
   CURRENT_TERMS_VERSION = '2026-02-16'
   attr_accessor :skip_terms_validation
 
+  before_destroy :capture_workspace_ids_for_cleanup
+  after_destroy_commit :destroy_empty_workspaces
+
   has_many :queries,
            dependent: :destroy,
            primary_key: :author_id,
@@ -31,5 +34,21 @@ class User < ApplicationRecord
 
   def member_of?(workspace:)
     accepted_members.exists?(workspace_id: workspace.id)
+  end
+
+  private
+
+  def capture_workspace_ids_for_cleanup
+    @workspace_ids_for_cleanup = members.pluck(:workspace_id).uniq
+  end
+
+  def destroy_empty_workspaces
+    Array(@workspace_ids_for_cleanup).each do |workspace_id|
+      workspace = Workspace.find_by(id: workspace_id)
+      next unless workspace
+      next if workspace.members.exists?
+
+      workspace.destroy!
+    end
   end
 end

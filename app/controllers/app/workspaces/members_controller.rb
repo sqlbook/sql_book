@@ -25,8 +25,7 @@ module App
         return redirect_to_team_tab if member.owner?
         return redirect_to_team_tab unless allowed_to_manage_member?
 
-        member.destroy
-
+        remove_member_with_notification!
         flash[:toast] = member_deleted_toast
         redirect_to_team_tab
       end
@@ -93,6 +92,20 @@ module App
         Rails.logger.error(message)
         flash[:toast] = invite_error_toast
         redirect_to_team_tab
+      end
+
+      def remove_member_with_notification!
+        removed_user = member.user
+        removed_member_was_accepted = member.status == Member::Status::ACCEPTED
+
+        member.destroy
+        notify_member_removed(user: removed_user) if removed_member_was_accepted
+      end
+
+      def notify_member_removed(user:)
+        WorkspaceMailer.workspace_member_removed(user:, workspace_name: workspace.name).deliver_now
+      rescue StandardError => e
+        Rails.logger.error("Workspace member removal notification failed for user #{user.id}: #{e.class} #{e.message}")
       end
 
       def already_a_member?

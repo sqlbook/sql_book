@@ -38,4 +38,31 @@ RSpec.describe User, type: :model do
       end
     end
   end
+
+  describe 'workspace cleanup on user deletion' do
+    context 'when the deleted user was the final member of a workspace' do
+      let(:user) { create(:user) }
+      let!(:workspace) { create(:workspace_with_owner, owner: user) }
+      let!(:data_source) { create(:data_source, workspace:) }
+
+      it 'deletes the now-empty workspace' do
+        expect { user.destroy! }.to change { Workspace.exists?(workspace.id) }.from(true).to(false)
+      end
+
+      it 'deletes workspace-related data through workspace cleanup' do
+        expect { user.destroy! }.to change { DataSource.exists?(data_source.id) }.from(true).to(false)
+      end
+    end
+
+    context 'when the workspace still has other members' do
+      let(:user) { create(:user) }
+      let!(:workspace) { create(:workspace_with_owner, owner: user) }
+      let!(:teammate) { create(:user) }
+      let!(:teammate_member) { create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN) }
+
+      it 'does not delete the workspace' do
+        expect { user.destroy! }.not_to change { Workspace.exists?(workspace.id) }.from(true)
+      end
+    end
+  end
 end

@@ -14,4 +14,9 @@ class WorkspacePreview < ActionMailer::Preview
     member.invited_by_id = member.user.id
     WorkspaceMailer.invite_reject(member:)
   end
+
+  def workspace_member_removed
+    member = Member.first
+    WorkspaceMailer.workspace_member_removed(user: member.user, workspace_name: member.workspace.name)
+  end
 end

@@ -195,8 +195,12 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
     let(:admin) { create(:user) }
     let!(:member) { create(:member, workspace:, user: admin, role: Member::Roles::ADMIN) }
+    let(:mail_delivery) { instance_double(ActionMailer::MessageDelivery, deliver_now: true) }
 
-    before { sign_in(user) }
+    before do
+      sign_in(user)
+      allow(WorkspaceMailer).to receive(:workspace_member_removed).and_return(mail_delivery)
+    end
 
     it 'destroys the member record' do
       expect { delete "/app/workspaces/#{workspace.id}/members/#{member.id}" }
@@ -222,6 +226,15 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       )
     end
 
+    it 'sends a removed-from-workspace email to the deleted accepted member' do
+      delete "/app/workspaces/#{workspace.id}/members/#{member.id}"
+
+      expect(WorkspaceMailer).to have_received(:workspace_member_removed).with(
+        user: admin,
+        workspace_name: workspace.name
+      )
+    end
+
     context 'when attempting to delete the owner' do
       it 'does not destroy the owner' do
         expect { delete "/app/workspaces/#{workspace.id}/members/#{user.id}" }
@@ -231,6 +244,25 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       it 'redirects to the workspace settings' do
         delete "/app/workspaces/#{workspace.id}/members/#{user.id}"
         expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+    end
+
+    context 'when deleting a pending invitation member' do
+      let!(:member) do
+        create(
+          :member,
+          workspace:,
+          user: admin,
+          role: Member::Roles::ADMIN,
+          status: Member::Status::PENDING,
+          invitation: 'pending-token'
+        )
+      end
+
+      it 'does not send a removed-from-workspace email' do
+        delete "/app/workspaces/#{workspace.id}/members/#{member.id}"
+
+        expect(WorkspaceMailer).not_to have_received(:workspace_member_removed)
       end
     end
 

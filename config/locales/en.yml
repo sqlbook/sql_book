@@ -49,6 +49,7 @@ en:
         invite: You've been invited to join a workspace on sqlbook.
         invite_reject: Invitation rejected.
         workspace_deleted: One of your workspaces has been deleted.
+        workspace_member_removed: You've been removed from a workspace.
 
   models:
     data_source:

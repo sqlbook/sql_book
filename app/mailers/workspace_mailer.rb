@@ -17,4 +17,11 @@ class WorkspaceMailer < ApplicationMailer
 
     mail(to: user.email, subject: I18n.t('mailers.workspace.subjects.workspace_deleted'))
   end
+
+  def workspace_member_removed(user:, workspace_name:)
+    @workspace_name = workspace_name
+    @unsubscribable = true
+
+    mail(to: user.email, subject: I18n.t('mailers.workspace.subjects.workspace_member_removed'))
+  end
 end

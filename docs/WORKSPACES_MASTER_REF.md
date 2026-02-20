@@ -119,6 +119,11 @@ Source: `WorkspaceInvitationService`
   - workspace visibility in `/app/workspaces`
   - role-based authorization checks across workspace features
 
+## User deletion cleanup
+- When a user is deleted and that user was the final member of a workspace, the workspace is automatically destroyed.
+- If a deleted user was not the final member, the workspace remains.
+- This prevents orphaned workspaces with zero members when user deletion cascades through `members`.
+
 ## Realtime updates (team + invitations)
 - Membership create/update/destroy events broadcast Turbo Stream refresh events.
 - Team tab (`/app/workspaces/:id?tab=team`) subscribes to a workspace-members stream:
@@ -139,6 +144,7 @@ Source: `WorkspaceInvitationService`
 ## Email behaviors (workspace domain)
 - Invite email: `WorkspaceMailer.invite`
 - Invite rejection email: `WorkspaceMailer.invite_reject`
+- Member removed email: `WorkspaceMailer.workspace_member_removed` (sent for accepted member removals in team management flow)
 - Workspace deleted notification email: `WorkspaceMailer.workspace_deleted`
 - Sender defaults to `noreply@sqlbook.com` via `ApplicationMailer`.
 - Internal links in mailers should always be generated from route helpers + env-driven host/protocol config.

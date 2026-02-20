@@ -312,6 +312,7 @@ RSpec.describe 'App::Workspaces', type: :request do
 
       mail_delivery = instance_double(ActionMailer::MessageDelivery, deliver_now: true)
       allow(WorkspaceMailer).to receive(:workspace_deleted).and_return(mail_delivery)
+      allow(WorkspaceMailer).to receive(:workspace_member_removed).and_return(mail_delivery)
 
       delete "/app/workspaces/#{workspace.id}"
 
@@ -328,6 +329,7 @@ RSpec.describe 'App::Workspaces', type: :request do
       expect(WorkspaceMailer).not_to have_received(:workspace_deleted).with(
         hash_including(user:)
       )
+      expect(WorkspaceMailer).not_to have_received(:workspace_member_removed)
     end
 
     context 'when current user is not the owner' do

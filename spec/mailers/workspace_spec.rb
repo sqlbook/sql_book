@@ -60,4 +60,28 @@ RSpec.describe WorkspaceMailer, type: :mailer do
       expect(subject.body).to include('/app/workspaces')
     end
   end
+
+  describe '#workspace_member_removed' do
+    let(:user) { create(:user) }
+
+    subject do
+      described_class.workspace_member_removed(
+        user:,
+        workspace_name: 'Acme Workspace'
+      )
+    end
+
+    it 'renders the correct headers' do
+      expect(subject.subject).to eq "You've been removed from a workspace."
+      expect(subject.to).to eq [user.email]
+      expect(subject.from).to eq ['noreply@sqlbook.com']
+    end
+
+    it 'includes the workspace name and app link' do
+      expect(subject.body).to include('You have been removed from the Acme Workspace workspace team')
+      expect(subject.body).to include('you will no longer have access to the <b>Acme Workspace</b> workspace')
+      expect(subject.body).to include('/app/workspaces')
+      expect(subject.body).to include('Unsubscribe')
+    end
+  end
 end
