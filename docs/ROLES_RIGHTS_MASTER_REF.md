@@ -41,8 +41,8 @@ Roles are workspace-scoped via `members.role`.
   - `POST /app/workspaces/:workspace_id/members`
   - `POST /app/workspaces/:workspace_id/members/:id/resend`
   - `DELETE /app/workspaces/:workspace_id/members/:id`
-- Owner: allow (except owner row cannot be deleted)
-- Admin: allow (cannot manage equal/higher role members)
+- Owner: allow (can invite additional owners; owner rows cannot be deleted)
+- Admin: allow (cannot manage equal/higher role members and cannot invite owner role)
 - User: deny
 - Read-only: deny
 
@@ -112,6 +112,9 @@ UI should hide actions users cannot perform, but server remains source of truth.
 
 - Team tab:
   - Invite form visible for Owner/Admin only.
+  - Invite role options:
+    - Owner sees `Owner`, `Admin`, `User`, `Read only`.
+    - Admin sees `Admin`, `User`, `Read only`.
   - Member row actions visible only when acting role outranks target member role.
 - Query library:
   - Create-new affordance hidden for Read-only.

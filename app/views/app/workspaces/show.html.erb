@@ -111,7 +111,9 @@
               <div>
                 <%= form.label :role, "Role", class: "label block" %>
                 <div class="select">
-                  <%= form.select :role, options_for_select([["Admin", Member::Roles::ADMIN], ["User", Member::Roles::USER], ["Read only", Member::Roles::READ_ONLY]]), {} %>
+                  <% role_options = [["Admin", Member::Roles::ADMIN], ["User", Member::Roles::USER], ["Read only", Member::Roles::READ_ONLY]] %>
+                  <% role_options.unshift(["Owner", Member::Roles::OWNER]) if current_role == Member::Roles::OWNER %>
+                  <%= form.select :role, options_for_select(role_options), {} %>
                   <i class="ri-arrow-drop-down-line"></i>
                 </div>
               </div>

@@ -95,7 +95,8 @@ Source: `WorkspaceInvitationService`
 6. Invite creation + invite-email send are transactional so failed delivery does not leave orphan pending members.
 
 ### Invite constraints and UX
-- Inviting as `OWNER` is blocked server-side.
+- Inviting as `OWNER` is allowed only when inviter is an `OWNER`.
+- Inviting as `OWNER` is blocked server-side for `ADMIN` inviters.
 - Inviting an existing workspace member is blocked server-side.
 - Success and failure toasts are shown for invite attempts.
 - On successful invite, pending member appears on refresh/redirect and via realtime updates for active viewers.

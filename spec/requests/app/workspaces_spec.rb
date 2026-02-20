@@ -153,6 +153,12 @@ RSpec.describe 'App::Workspaces', type: :request do
         get "/app/workspaces/#{workspace.id}"
         expect(response.status).to eq(200)
       end
+
+      it 'shows owner role as an invite option for owners on team tab' do
+        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+
+        expect(response.body).to include('<option value="1">Owner</option>')
+      end
     end
 
     context 'when current user is an admin of the workspace' do
@@ -163,6 +169,12 @@ RSpec.describe 'App::Workspaces', type: :request do
       it 'renders the show page' do
         get "/app/workspaces/#{workspace.id}"
         expect(response.status).to eq(200)
+      end
+
+      it 'does not show owner role as an invite option on team tab' do
+        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+
+        expect(response.body).not_to include('<option value="1">Owner</option>')
       end
     end
 

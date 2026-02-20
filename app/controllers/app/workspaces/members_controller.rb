@@ -9,7 +9,7 @@ module App
       before_action :authorize_manage_members!
 
       def create
-        return reject_owner_invite if inviting_owner?
+        return reject_owner_invite if inviting_owner_without_permission?
         return reject_existing_member if already_a_member?
 
         create_invite!
@@ -71,8 +71,12 @@ module App
         redirect_to_team_tab
       end
 
-      def inviting_owner?
-        invite_params[:role].to_i == Member::Roles::OWNER
+      def inviting_owner_without_permission?
+        invite_params[:role].to_i == Member::Roles::OWNER && !current_user_owner?
+      end
+
+      def current_user_owner?
+        workspace_role_for(workspace:) == Member::Roles::OWNER
       end
 
       def reject_owner_invite

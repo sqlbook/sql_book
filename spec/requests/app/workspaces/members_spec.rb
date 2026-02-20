@@ -43,7 +43,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
       )
     end
 
-    context 'when trying to create someone as an owner' do
+    context 'when owner tries to create someone as an owner' do
       let(:params) do
         {
           first_name: 'Bob',
@@ -52,6 +52,44 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           role: Member::Roles::OWNER
         }
       end
+
+      it 'creates the user' do
+        expect { post "/app/workspaces/#{workspace.id}/members", params: }
+          .to change { User.exists?(email: params[:email]) }.from(false).to(true)
+      end
+
+      it 'creates the member' do
+        expect { post "/app/workspaces/#{workspace.id}/members", params: }.to change { Member.count }.by(1)
+      end
+
+      it 'redirects to the workspace settings' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+
+      it 'sets a success toast payload' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+
+        expect(flash[:toast]).to include(
+          type: 'success',
+          title: I18n.t('toasts.workspaces.members.invited.title'),
+          body: I18n.t('toasts.workspaces.members.invited.body', name: "#{params[:first_name]} #{params[:last_name]}")
+        )
+      end
+    end
+
+    context 'when admin tries to create someone as an owner' do
+      let(:owner) { create(:user) }
+      let(:params) do
+        {
+          first_name: 'Bob',
+          last_name: 'Dylan',
+          email: 'bobdylan@gmail.com',
+          role: Member::Roles::OWNER
+        }
+      end
+
+      before { create(:member, workspace:, user:, role: Member::Roles::ADMIN) }
 
       it 'does not create the user' do
         expect { post "/app/workspaces/#{workspace.id}/members", params: }
