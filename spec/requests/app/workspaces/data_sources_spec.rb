@@ -27,7 +27,7 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
         expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
         expect(response.body)
           .to have_selector(
-            ".breadcrumbs-link[href='#{app_workspace_data_sources_path(workspace)}']",
+            ".breadcrumbs-link[href='#{app_workspace_path(workspace)}']",
             text: workspace.name
           )
         expect(response.body).to have_selector('.breadcrumbs-current', text: 'Data Sources')

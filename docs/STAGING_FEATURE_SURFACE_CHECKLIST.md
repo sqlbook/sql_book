@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
 
 ## Purpose
 Track additional functionality beyond the core baseline as the product expands.
@@ -36,6 +36,12 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 - [ ] Data source switcher updates query context correctly.
 - [ ] Any workspace settings/membership pages load and save changes.
 - [ ] Workspace card settings link/icon is hidden for roles without settings permission.
+- [ ] Workspace breadcrumbs render on workspace-scoped pages and do not render on `/app/workspaces`.
+- [ ] Breadcrumb `Workspaces` link routes to `/app/workspaces`.
+- [ ] Breadcrumb workspace-name link routes to `/app/workspaces/:id` for Owner/Admin.
+- [ ] Breadcrumb workspace-name item is non-link text for User/Read-only roles.
+- [ ] Breadcrumb narrow viewport behavior keeps first/last items and separators visible while middle items truncate.
+- [ ] Truncated middle breadcrumb items show tooltip text and remain clickable.
 - [ ] Pending invitation toast appears in-app for active sessions with `[View invitation]` action.
 - [ ] Team member table updates status/actions without manual refresh when invitation state changes.
 

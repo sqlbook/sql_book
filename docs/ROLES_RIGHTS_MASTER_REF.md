@@ -1,6 +1,6 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
@@ -125,6 +125,7 @@ UI should hide actions users cannot perform, but server remains source of truth.
 - Workspace settings:
   - Settings/edit controls visible for Owner/Admin only.
   - Workspace card `Settings` link/icon hidden for `USER` and `READ_ONLY`.
+  - Workspace breadcrumb (`<Workspace Name>`) is a settings link for Owner/Admin only; it is non-link text for `USER` and `READ_ONLY`.
 
 ## Enforcement and UX on deny
 - Forbidden action returns redirect with toast:

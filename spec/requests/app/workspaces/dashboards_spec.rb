@@ -22,6 +22,13 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
 
       before { create(:member, workspace:, user:, role: Member::Roles::USER) }
 
+      it 'renders the workspace breadcrumb as non-link text' do
+        get "/app/workspaces/#{workspace.id}/dashboards"
+
+        expect(response.body).not_to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']")
+        expect(response.body).to have_selector('.breadcrumbs-current', text: workspace.name)
+      end
+
       it 'renders the dashboards empty state' do
         get "/app/workspaces/#{workspace.id}/dashboards"
 
@@ -35,6 +42,13 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
 
       before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
 
+      it 'renders the workspace breadcrumb as non-link text' do
+        get "/app/workspaces/#{workspace.id}/dashboards"
+
+        expect(response.body).not_to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']")
+        expect(response.body).to have_selector('.breadcrumbs-current', text: workspace.name)
+      end
+
       it 'renders the dashboards empty state' do
         get "/app/workspaces/#{workspace.id}/dashboards"
 
@@ -47,6 +61,13 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
       let!(:data_source) { create(:data_source, workspace:) }
 
       context 'and there are no dashboards' do
+        it 'renders the workspace breadcrumb as a settings link for owners/admins' do
+          get "/app/workspaces/#{workspace.id}/dashboards"
+
+          expect(response.body)
+            .to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
+        end
+
         it 'returns an empty state' do
           get "/app/workspaces/#{workspace.id}/dashboards"
           expect(response.body).to include('Any dashboards you&apos;ve created will be available here')

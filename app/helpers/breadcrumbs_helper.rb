@@ -21,18 +21,18 @@ module BreadcrumbsHelper
 
     [
       breadcrumb_item(label: 'Workspaces', path: app_workspaces_path),
-      breadcrumb_item(label: workspace_for_breadcrumbs.name, path: workspace_home_breadcrumb_path),
+      breadcrumb_item(label: workspace_for_breadcrumbs.name, path: workspace_settings_breadcrumb_path),
       *workspace_section_breadcrumb_items
     ]
   end
 
   private
 
-  def workspace_home_breadcrumb_path
+  def workspace_settings_breadcrumb_path
     workspace = workspace_for_breadcrumbs
-    return app_workspace_data_sources_path(workspace) if can_manage_data_sources?(workspace:)
+    return nil unless can_manage_workspace_settings?(workspace:)
 
-    app_workspace_queries_path(workspace)
+    app_workspace_path(workspace)
   end
 
   def workspace_section_breadcrumb_items

@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -72,6 +72,21 @@ Related reference:
 - Resend cooldown:
   - server-enforced 10-minute cooldown before another resend is allowed
   - when blocked, info toast explains cooldown
+
+## Workspace breadcrumbs
+- Breadcrumbs render on workspace-scoped app pages where workspace context exists (for example `/app/workspaces/:workspace_id/*`).
+- Breadcrumbs do not render on workspace home/list route (`/app/workspaces`).
+- Standard structure:
+  - `Workspaces` / `<Workspace Name>` / `<Section>` / `<Optional Item>`
+- Link behavior:
+  - `Workspaces` is always a link to `/app/workspaces`.
+  - `<Workspace Name>` links to `/app/workspaces/:id` only for roles with workspace settings access (owner/admin).
+  - For `USER` and `READ_ONLY`, `<Workspace Name>` is rendered as non-link text.
+  - Section and item links use internal route helpers only (no hardcoded hostnames).
+- Narrow viewport behavior:
+  - first item, last item, and `/` separators stay visible and are not clipped.
+  - middle breadcrumb items can truncate with ellipsis (down to `...`) while preserving clickability.
+  - truncated middle breadcrumb items show tooltip text on hover.
 
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.
