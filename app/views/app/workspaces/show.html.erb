@@ -2,6 +2,8 @@
   <% current_role = current_user_role(workspace: @workspace, current_user: @current_user) %>
   <% can_manage_members = can_manage_workspace_members?(workspace: @workspace) %>
   <% can_delete_workspace = current_role == Member::Roles::OWNER %>
+  <% editable_role_options = [["Admin", Member::Roles::ADMIN], ["User", Member::Roles::USER], ["Read only", Member::Roles::READ_ONLY]] %>
+  <% editable_role_options.unshift(["Owner", Member::Roles::OWNER]) if current_role == Member::Roles::OWNER %>
 
   <div class="page-header">
     <h1>Workspaces</h1>
@@ -57,18 +59,31 @@
           </th>
         </tr>
         <% @workspace.members.each do |member| %>
+          <% can_edit_member = can_manage_members && current_role < member.role %>
           <tr>
             <td class="name">
               <span class="truncate-text" data-tooltip-text="<%= member.user.full_name %>"><%= member.user.full_name %></span>
             </td>
             <td class="role">
-              <span class="truncate-text" data-tooltip-text="<%= member.role_name %>"><%= member.role_name %></span>
+              <% if can_edit_member %>
+                <%= form_with url: app_workspace_member_path(@workspace, member), method: :patch, class: "member-role-form" do |form| %>
+                  <div class="select member-role-select">
+                    <%= form.select :role,
+                                    options_for_select(editable_role_options, member.role),
+                                    {},
+                                    { "aria-label": "Change role for #{member.user.full_name}", onchange: "this.form.requestSubmit();" } %>
+                    <i class="ri-arrow-drop-down-line"></i>
+                  </div>
+                <% end %>
+              <% else %>
+                <span class="truncate-text" data-tooltip-text="<%= member.role_name %>"><%= member.role_name %></span>
+              <% end %>
             </td>
             <td class="status">
               <span class="truncate-text" data-tooltip-text="<%= member.status_name %>"><%= member.status_name %></span>
             </td>
             <td class="actions">
-              <% if can_manage_members && current_role < member.role %>
+              <% if can_edit_member %>
                 <div class="actions-inline">
                   <% if member.pending? %>
                     <%= link_to "Resend Invitation", resend_app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :post }, "aria-label": "Resend invitation to #{member.user.full_name}" %>
@@ -111,9 +126,7 @@
               <div>
                 <%= form.label :role, "Role", class: "label block" %>
                 <div class="select">
-                  <% role_options = [["Admin", Member::Roles::ADMIN], ["User", Member::Roles::USER], ["Read only", Member::Roles::READ_ONLY]] %>
-                  <% role_options.unshift(["Owner", Member::Roles::OWNER]) if current_role == Member::Roles::OWNER %>
-                  <%= form.select :role, options_for_select(role_options), {} %>
+                  <%= form.select :role, options_for_select(editable_role_options), {} %>
                   <i class="ri-arrow-drop-down-line"></i>
                 </div>
               </div>

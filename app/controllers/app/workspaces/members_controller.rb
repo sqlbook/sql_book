@@ -21,6 +21,15 @@ module App
         handle_invite_failure(message: "Workspace invite failed: #{e.class} #{e.message}")
       end
 
+      def update
+        return redirect_to_team_tab unless allowed_to_manage_member?
+        return reject_invalid_role_change unless role_change_allowed?
+
+        update_member_role!
+      rescue StandardError => e
+        handle_role_update_failure(error: e)
+      end
+
       def destroy
         return redirect_to_team_tab if member.owner?
         return redirect_to_team_tab unless allowed_to_manage_member?
@@ -88,6 +97,23 @@ module App
         redirect_to_team_tab
       end
 
+      def reject_invalid_role_change
+        flash[:toast] = member_role_update_failed_toast
+        redirect_to_team_tab
+      end
+
+      def update_member_role!
+        member.update!(role: role_change_params[:role].to_i)
+        flash[:toast] = member_role_updated_toast
+        redirect_to_team_tab
+      end
+
+      def handle_role_update_failure(error:)
+        Rails.logger.error("Workspace member role change failed: #{error.class} #{error.message}")
+        flash[:toast] = member_role_update_failed_toast
+        redirect_to_team_tab
+      end
+
       def handle_invite_failure(message:)
         Rails.logger.error(message)
         flash[:toast] = invite_error_toast
@@ -133,6 +159,20 @@ module App
 
       def invite_params
         params.permit(:first_name, :last_name, :email, :role)
+      end
+
+      def role_change_params
+        params.permit(:role)
+      end
+
+      def role_change_allowed?
+        editable_role_options.include?(role_change_params[:role].to_i)
+      end
+
+      def editable_role_options
+        roles = [Member::Roles::ADMIN, Member::Roles::USER, Member::Roles::READ_ONLY]
+        roles.unshift(Member::Roles::OWNER) if current_user_owner?
+        roles
       end
 
       def create_invite!
@@ -206,6 +246,26 @@ module App
           type: 'success',
           title: I18n.t('toasts.workspaces.members.deleted.title'),
           body: I18n.t('toasts.workspaces.members.deleted.body', name: member.user.full_name)
+        }
+      end
+
+      def member_role_updated_toast
+        {
+          type: 'success',
+          title: I18n.t('toasts.workspaces.members.role_updated.title'),
+          body: I18n.t(
+            'toasts.workspaces.members.role_updated.body',
+            name: member.user.full_name,
+            role: member.role_name
+          )
+        }
+      end
+
+      def member_role_update_failed_toast
+        {
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.role_update_failed.title'),
+          body: I18n.t('toasts.workspaces.members.role_update_failed.body')
         }
       end
 

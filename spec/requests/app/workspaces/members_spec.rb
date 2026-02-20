@@ -306,6 +306,99 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
     end
   end
 
+  describe 'PATCH /app/workspaces/:workspace_id/members/:member_id' do
+    let(:owner) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:member_user) { create(:user) }
+    let!(:member) { create(:member, workspace:, user: member_user, role: Member::Roles::ADMIN) }
+
+    before { sign_in(owner) }
+
+    it 'updates the member role' do
+      expect { patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER } }
+        .to change { member.reload.role }.from(Member::Roles::ADMIN).to(Member::Roles::USER)
+    end
+
+    it 'redirects to the workspace settings' do
+      patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER }
+      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+    end
+
+    it 'sets a success toast payload' do
+      patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER }
+
+      expect(flash[:toast]).to include(
+        type: 'success',
+        title: I18n.t('toasts.workspaces.members.role_updated.title'),
+        body: I18n.t('toasts.workspaces.members.role_updated.body', name: member_user.full_name, role: 'User')
+      )
+    end
+
+    context 'when admin updates a lower role member' do
+      let(:owner) { create(:user) }
+      let(:admin) { create(:user) }
+      let(:member_user) { create(:user) }
+      let!(:member) { create(:member, workspace:, user: member_user, role: Member::Roles::USER) }
+
+      before do
+        create(:member, workspace:, user: admin, role: Member::Roles::ADMIN)
+        sign_in(admin)
+      end
+
+      it 'allows changing role to admin' do
+        expect { patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::ADMIN } }
+          .to change { member.reload.role }.from(Member::Roles::USER).to(Member::Roles::ADMIN)
+      end
+    end
+
+    context 'when admin attempts to promote someone to owner' do
+      let(:owner) { create(:user) }
+      let(:admin) { create(:user) }
+      let(:member_user) { create(:user) }
+      let!(:member) { create(:member, workspace:, user: member_user, role: Member::Roles::USER) }
+
+      before do
+        create(:member, workspace:, user: admin, role: Member::Roles::ADMIN)
+        sign_in(admin)
+      end
+
+      it 'does not update the member role' do
+        expect { patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::OWNER } }
+          .not_to change { member.reload.role }
+      end
+
+      it 'sets an error toast payload' do
+        patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::OWNER }
+
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.members.role_update_failed.title'),
+          body: I18n.t('toasts.workspaces.members.role_update_failed.body')
+        )
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+      let(:user) { create(:user) }
+
+      before do
+        create(:member, workspace:, user:, role: Member::Roles::USER)
+        sign_in(user)
+      end
+
+      it 'does not update the member role' do
+        expect { patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER } }
+          .not_to change { member.reload.role }
+      end
+
+      it 'redirects to team tab' do
+        patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER }
+        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      end
+    end
+  end
+
   describe 'POST /app/workspaces/:workspace_id/members/:member_id/resend' do
     let(:owner) { create(:user) }
     let(:workspace) { create(:workspace_with_owner, owner:) }

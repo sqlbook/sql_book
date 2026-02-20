@@ -86,6 +86,12 @@ en:
         deleted:
           title: Team member removed
           body: "%{name} has been removed from this workspace."
+        role_updated:
+          title: Role change complete
+          body: "%{name} is now %{role}."
+        role_update_failed:
+          title: Role change failure
+          body: There was an unexpected error when changing the role of your team member. Please try again.
         invite_failed:
           title: Invitation failed
           body: We couldn't send that invitation right now. Please try again.

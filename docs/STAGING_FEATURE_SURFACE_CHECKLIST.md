@@ -44,6 +44,8 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 - [ ] Truncated middle breadcrumb items show tooltip text and remain clickable.
 - [ ] Pending invitation toast appears in-app for active sessions with `[View invitation]` action.
 - [ ] Team member table updates status/actions without manual refresh when invitation state changes.
+- [ ] Team member role select is shown only for editable rows (owner/admin hierarchy rules) and updates role successfully.
+- [ ] Team member role change success/failure toasts render with expected copy.
 
 ### Auth UX polish
 - [ ] Signup `[Continue]` button does not shift position when toggling disabled/enabled state.

@@ -40,7 +40,7 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
     resources :workspaces do
       resources :queries, only: %i[index], controller: 'workspaces/queries'
       resources :dashboards, controller: 'workspaces/dashboards'
-      resources :members, only: %i[create destroy], controller: 'workspaces/members' do
+      resources :members, only: %i[create update destroy], controller: 'workspaces/members' do
         member { post 'resend' }
       end
 

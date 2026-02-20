@@ -23,6 +23,7 @@ Related reference:
   - `DELETE /app/workspaces/:id` -> delete workspace (owner only)
 - Workspace team members:
   - `POST /app/workspaces/:workspace_id/members` -> invite member
+  - `PATCH /app/workspaces/:workspace_id/members/:id` -> update member role (role constrained)
   - `POST /app/workspaces/:workspace_id/members/:id/resend` -> resend pending invitation
   - `DELETE /app/workspaces/:workspace_id/members/:id` -> remove member (role constrained)
 
@@ -36,7 +37,7 @@ Related reference:
   - Workspace index (`GET /app/workspaces`): all accepted members
   - Workspace settings (`GET/PATCH /app/workspaces/:id`): owner/admin only
   - Workspace delete (`DELETE /app/workspaces/:id`): owner only
-  - Team management routes (`members#create`, `members#destroy`, `members#resend`): owner/admin only
+  - Team management routes (`members#create`, `members#update`, `members#destroy`, `members#resend`): owner/admin only
   - Data source settings routes (`data_sources*`, `data_sources/set_up#index`): owner/admin only
   - Query library (`GET /app/workspaces/:workspace_id/queries`): all roles
   - Query write (`data_sources/queries#create|update|chart_config`): owner/admin/user
@@ -62,9 +63,11 @@ Related reference:
 
 ## Team table actions
 - Pending invited members:
+  - `Role` select (when acting role outranks target role; options constrained by acting role)
   - `Resend Invitation` (rotates invitation token + sends fresh invite email)
   - `Delete` (removes pending membership without notifying invitee)
 - Accepted members:
+  - `Role` select (when acting role outranks target role; options constrained by acting role)
   - `Delete` (removes membership; user account remains)
 - Revoked/invalid invitation links:
   - redirect to home
@@ -115,6 +118,15 @@ Source: `WorkspaceInvitationService`
 - Inviting an existing workspace member is blocked server-side.
 - Success and failure toasts are shown for invite attempts.
 - On successful invite, pending member appears on refresh/redirect and via realtime updates for active viewers.
+
+### Role change constraints and UX
+- Role updates are allowed only when acting role outranks target member role.
+- Allowed role targets:
+  - owner can set `OWNER`, `ADMIN`, `USER`, `READ_ONLY`
+  - admin can set `ADMIN`, `USER`, `READ_ONLY`
+- Invalid role updates are blocked server-side and return an error toast.
+- Successful role updates return a success toast with updated user name and role.
+- Role updates do not currently send an email notification.
 
 ## Invitation accept/reject behavior
 - Accept:
