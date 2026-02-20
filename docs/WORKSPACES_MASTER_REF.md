@@ -79,6 +79,7 @@ Related reference:
 ## Workspace breadcrumbs
 - Breadcrumbs render on workspace-scoped app pages where workspace context exists (for example `/app/workspaces/:workspace_id/*`).
 - Breadcrumbs do not render on workspace home/list route (`/app/workspaces`).
+- Breadcrumbs also do not render on workspace settings side-panel route (`/app/workspaces/:id`).
 - Standard structure:
   - `Workspaces` / `<Workspace Name>` / `<Section>` / `<Optional Item>`
 - Link behavior:

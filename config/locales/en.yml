@@ -37,6 +37,9 @@ en:
     invalid_signup_code: Invalid sign-up code. Please try again or <a class="link primary" href="%{link}">click here</a> for a replacement code.
 
   mailers:
+    account:
+      subjects:
+        verify_email_change: Confirm your email change on sqlbook.
     data_source:
       subjects:
         destroy: A data source has been deleted from %{workspace_name}.
@@ -56,6 +59,25 @@ en:
       is_not_valid: is not valid
 
   toasts:
+    account_settings:
+      updated:
+        title: Account settings saved
+        body: Your account details have been updated.
+      update_failed:
+        title: Couldn't save account settings
+        body: Please check your details and try again.
+      email_verification_pending:
+        title: Confirm your new email
+        body: Please click the verification link we&apos;ve sent to your current email address.
+      email_verified:
+        title: Email address updated
+        body: Your email address has been successfully changed.
+      email_verification_expired:
+        title: Verification link expired
+        body: Your verification link has expired. Please re-submit your email change.
+      email_unavailable:
+        title: Email address unavailable
+        body: That email address is already in use. Please choose another.
     invitation:
       invalid:
         title: Invitation no longer valid

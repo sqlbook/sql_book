@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -9,6 +9,9 @@ Last updated: 2026-02-19
 
 ## Purpose
 Single source of truth for auth behavior, routes, email triggers, and key implementation rules.
+
+Related reference:
+- `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for authenticated account profile settings and email-change verification rules.
 
 ## Auth architecture summary
 - Session-based auth using `session[:current_user_id]`.
@@ -39,6 +42,11 @@ Single source of truth for auth behavior, routes, email triggers, and key implem
   - `POST /auth/invitation/:id/accept` -> accept invite and sign in invitee
   - `POST /auth/invitation/:id/reject` -> reject invite and notify inviter
   - invalid/revoked invitation tokens redirect to home with information toast
+
+## Routes (authenticated account settings)
+- `GET /app/account-settings` -> `App::AccountSettingsController#show`
+- `PATCH /app/account-settings` -> `App::AccountSettingsController#update`
+- `GET /app/account-settings/verify-email/:token` -> `App::AccountSettingsController#verify_email`
 
 ## Signup flow
 1. User submits name/email on signup page.
@@ -125,11 +133,17 @@ Source: `WorkspaceInvitationService`
   - action: `[View invitation]` -> `/auth/invitation/:token`
 - Reject is intentionally not offered in this in-app toast; reject remains available on the invitation page itself.
 
+## Account settings update flow
+- Authenticated account-settings routes exist under `/app/account-settings`.
+- Email-change verification links are tokenized and expire after 1 hour.
+- Detailed behavior, constraints, and follow-up backlog are maintained in `docs/ACCOUNT_SETTINGS_MASTER_REF.md`.
+
 ## Environment parity and host behavior
 - Production mailer URLs are env-driven by `APP_HOST` and `APP_PROTOCOL` via `config.action_mailer.default_url_options`.
 - Mailer asset URLs (for example email logo image) are env-driven by `config.action_mailer.asset_host`.
 - This prevents hardcoded staging hosts from leaking into auth links.
 - Auth changes in this cycle do not introduce staging-specific host strings.
+- Account settings email-verification links also use route URL helpers + env-driven Action Mailer host/protocol (no hardcoded domains).
 
 ## Multi-environment session behavior (staging + production)
 - With host-only cookies (current default behavior), `staging.sqlbook.com` and `sqlbook.com` keep separate browser sessions.

@@ -160,10 +160,16 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.status).to eq(200)
       end
 
-      it 'shows owner role as an invite option for owners on team tab' do
+      it 'does not render breadcrumbs on the workspace settings panel route' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).not_to have_selector('.breadcrumbs')
+      end
+
+      it 'does not show owner role as an invite option for owners on team tab' do
         get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
 
-        expect(response.body).to include('<option value="1">Owner</option>')
+        expect(response.body).not_to include('<option value="1">Owner</option>')
       end
     end
 

@@ -27,7 +27,7 @@
             <i class="ri-dashboard-line"></i> Dashboards
           <% end %>
           <label class="text-small category">Account</label>
-          <%= link_to "#", class: "link secondary menu-item", "aria-label": "View account settings" do %>
+          <%= link_to app_account_settings_path, class: "link secondary menu-item", "aria-label": "View account settings" do %>
             <i class="ri-settings-3-line"></i> Settings
           <% end %>
           <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>

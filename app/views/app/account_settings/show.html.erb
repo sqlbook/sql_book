@@ -1,0 +1,37 @@
+<main>
+  <h1>Account settings</h1>
+
+  <div class="container md" data-controller="form" data-form-require-change-value="true">
+    <%= form_with url: app_account_settings_path, method: :patch, class: "account-settings-form", html: { "data-form-target": "form" } do |form| %>
+      <p>Use the settings below to update your personal account details.</p>
+
+      <%= form.label :first_name, "First name", class: "label block" %>
+      <%= form.text_field :first_name,
+                          class: "input block fluid",
+                          autocomplete: "given-name",
+                          value: @account_user.first_name,
+                          placeholder: "e.g. Jess",
+                          required: true %>
+
+      <%= form.label :last_name, "Last name", class: "label block" %>
+      <%= form.text_field :last_name,
+                          class: "input block fluid",
+                          autocomplete: "family-name",
+                          value: @account_user.last_name,
+                          placeholder: "e.g. Smith",
+                          required: true %>
+
+      <%= form.label :email, "Email", class: "label block" %>
+      <%= form.email_field :email,
+                           class: "input block fluid",
+                           autocomplete: "email",
+                           value: @account_user.email,
+                           placeholder: "email@example.com",
+                           required: true %>
+
+      <div class="submit">
+        <%= form.submit "[Save Changes]", class: "link primary", "data-form-target": "submit", disabled: true %>
+      </div>
+    <% end %>
+  </div>
+</main>

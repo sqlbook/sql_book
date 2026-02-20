@@ -36,7 +36,7 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 - [ ] Data source switcher updates query context correctly.
 - [ ] Any workspace settings/membership pages load and save changes.
 - [ ] Workspace card settings link/icon is hidden for roles without settings permission.
-- [ ] Workspace breadcrumbs render on workspace-scoped pages and do not render on `/app/workspaces`.
+- [ ] Workspace breadcrumbs render on workspace-scoped pages and do not render on `/app/workspaces` or `/app/workspaces/:id`.
 - [ ] Breadcrumb `Workspaces` link routes to `/app/workspaces`.
 - [ ] Breadcrumb workspace-name link routes to `/app/workspaces/:id` for Owner/Admin.
 - [ ] Breadcrumb workspace-name item is non-link text for User/Read-only roles.
@@ -50,6 +50,10 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 
 ### Auth UX polish
 - [ ] Signup `[Continue]` button does not shift position when toggling disabled/enabled state.
+- [ ] Account settings page (`/app/account-settings`) loads and saves first/last name changes.
+- [ ] Account settings email change keeps current email unchanged until verification link is used.
+- [ ] Email-change verification link succeeds within 1 hour and redirects to `/app/workspaces` with success toast.
+- [ ] Expired email-change verification link redirects to `/app/account-settings` with error toast.
 
 ### Background workflows
 - [ ] Async jobs tied to non-core features complete successfully.

@@ -55,6 +55,7 @@
 
 // Pages
 @use "about/index" as about_index;
+@use "app/account_settings/show" as account_settings_show;
 @use "app/workspaces/dashboards/index" as dashboards_index;
 @use "app/workspaces/dashboards/new" as dashboards_new;
 @use "app/workspaces/data_sources/queries/show" as queries_show;

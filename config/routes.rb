@@ -37,6 +37,11 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   end
 
   namespace :app do
+    resource :account_settings, only: %i[show update], path: 'account-settings', controller: 'account_settings'
+    get 'account-settings/verify-email/:token',
+        to: 'account_settings#verify_email',
+        as: :verify_email_account_settings
+
     resources :workspaces do
       resources :queries, only: %i[index], controller: 'workspaces/queries'
       resources :dashboards, controller: 'workspaces/dashboards'

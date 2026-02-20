@@ -13,7 +13,8 @@ module BreadcrumbsHelper
   def show_workspace_breadcrumbs?
     app_page? &&
       workspace_for_breadcrumbs.present? &&
-      !(controller_path == 'app/workspaces' && action_name == 'index')
+      !workspace_home_page? &&
+      !workspace_settings_panel_page?
   end
 
   def workspace_breadcrumb_items
@@ -113,4 +114,12 @@ module BreadcrumbsHelper
   def view_assign(name) = controller.view_assigns[name.to_s]
 
   def breadcrumb_item(label:, path: nil) = { label:, path: }
+
+  def workspace_home_page?
+    controller_path == 'app/workspaces' && action_name == 'index'
+  end
+
+  def workspace_settings_panel_page?
+    controller_path == 'app/workspaces' && action_name == 'show'
+  end
 end

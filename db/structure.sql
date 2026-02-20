@@ -221,7 +221,10 @@ CREATE TABLE public.users (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     terms_accepted_at timestamp(6) without time zone,
-    terms_version character varying
+    terms_version character varying,
+    pending_email character varying,
+    email_change_verification_token character varying,
+    email_change_verification_sent_at timestamp(6) without time zone
 );
 
 
@@ -467,12 +470,20 @@ CREATE UNIQUE INDEX index_users_on_email ON public.users USING btree (email);
 
 
 --
+-- Name: index_users_on_email_change_verification_token; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_users_on_email_change_verification_token ON public.users USING btree (email_change_verification_token);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260220153000'),
 ('20260217221000'),
 ('20260216111500'),
 ('20240311191638'),
