@@ -21,6 +21,18 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       let!(:data_source_1) { create(:data_source, workspace:) }
       let!(:data_source_2) { create(:data_source, workspace:) }
 
+      it 'renders workspace breadcrumbs' do
+        get "/app/workspaces/#{workspace.id}/data_sources"
+
+        expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
+        expect(response.body)
+          .to have_selector(
+            ".breadcrumbs-link[href='#{app_workspace_data_sources_path(workspace)}']",
+            text: workspace.name
+          )
+        expect(response.body).to have_selector('.breadcrumbs-current', text: 'Data Sources')
+      end
+
       it 'renders a list of data_sources' do
         get "/app/workspaces/#{workspace.id}/data_sources"
 

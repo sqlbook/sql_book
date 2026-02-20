@@ -1,0 +1,30 @@
+<% items = workspace_breadcrumb_items %>
+<% if items.any? %>
+  <nav class="breadcrumbs" aria-label="Breadcrumb" data-controller="breadcrumbs">
+    <ol class="breadcrumbs-list">
+      <% total_items = items.length %>
+      <% items.each_with_index do |item, index| %>
+        <% position_class =
+          if index.zero?
+            'first'
+          elsif index == total_items - 1
+            'last'
+          else
+            'middle'
+          end %>
+        <% if index.positive? %>
+          <li class="breadcrumbs-separator" aria-hidden="true">/</li>
+        <% end %>
+        <li class="breadcrumbs-item <%= position_class %>">
+          <% if item[:path].present? %>
+            <%= link_to item[:label], item[:path],
+                        class: class_names("breadcrumbs-link text-small", "truncate-text": position_class == 'middle'),
+                        data: (position_class == 'middle' ? { tooltip_text: item[:label] } : nil) %>
+          <% else %>
+            <span class="breadcrumbs-current text-small"><%= item[:label] %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ol>
+  </nav>
+<% end %>

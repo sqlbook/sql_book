@@ -21,6 +21,7 @@
       <%= turbo_stream_from RealtimeUpdatesService.user_app_stream(user: @current_user) %>
     <% end %>
     <%= render "shared/header" %>
+    <%= render "shared/breadcrumbs" if show_workspace_breadcrumbs? %>
     <%= render "shared/toasts" %>
     <%= yield %>
     <%= render "shared/footer" %>

@@ -20,6 +20,20 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
     context 'when the data source exists' do
       let(:data_source) { create(:data_source, workspace:) }
 
+      it 'renders query breadcrumbs' do
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries"
+
+        expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
+        expect(response.body)
+          .to have_selector(
+            ".breadcrumbs-link[href='#{app_workspace_data_sources_path(workspace)}']",
+            text: workspace.name
+          )
+        expect(response.body)
+          .to have_selector(".breadcrumbs-link[href='#{app_workspace_queries_path(workspace)}']", text: 'Query Library')
+        expect(response.body).to have_selector('.breadcrumbs-current', text: 'Query')
+      end
+
       it 'renders the query form' do
         get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries"
         expect(response.body).to include('data-source-query')

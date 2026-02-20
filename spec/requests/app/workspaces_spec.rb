@@ -19,6 +19,12 @@ RSpec.describe 'App::Workspaces', type: :request do
       let!(:workspace_1) { create(:workspace_with_owner, name: 'Workspace 1', owner: user) }
       let!(:workspace_2) { create(:workspace_with_owner, name: 'Workspace 1', owner: user) }
 
+      it 'does not render breadcrumbs on the workspace home page' do
+        get '/app/workspaces'
+
+        expect(response.body).not_to have_selector('.breadcrumbs')
+      end
+
       it 'renders a list of workspaces' do
         get '/app/workspaces'
 

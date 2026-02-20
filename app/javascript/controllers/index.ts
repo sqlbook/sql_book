@@ -6,6 +6,7 @@ import { application } from './application';
 
 import AccordionController from './accordion-controller';
 import BodyController from './body-controller';
+import BreadcrumbsController from './breadcrumbs-controller';
 import CardsController from './cards-controller';
 import ChartConfigController from './chart-config-controller';
 import ChartController from './chart-controller';
@@ -25,6 +26,7 @@ import ToastStackController from './toast-stack-controller';
 
 application.register('accordion', AccordionController);
 application.register('body', BodyController);
+application.register('breadcrumbs', BreadcrumbsController);
 application.register('cards', CardsController);
 application.register('chart-config', ChartConfigController);
 application.register('chart', ChartController);
