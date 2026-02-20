@@ -124,6 +124,7 @@ Source: `WorkspaceInvitationService`
 - When a user is deleted and that user was the final accepted owner of a workspace, the workspace is automatically destroyed (even if non-owner members remain).
 - If an accepted owner still remains after the user is deleted, the workspace remains.
 - This prevents orphaned workspaces with zero members when user deletion cascades through `members`.
+- When auto-deleting a workspace due ownerless state, remaining workspace users are notified via the existing workspace-deleted email.
 
 ## Realtime updates (team + invitations)
 - Membership create/update/destroy events broadcast Turbo Stream refresh events.

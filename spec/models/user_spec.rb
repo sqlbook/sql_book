@@ -59,9 +59,24 @@ RSpec.describe User, type: :model do
       let!(:workspace) { create(:workspace_with_owner, owner: user) }
       let!(:teammate) { create(:user) }
       let!(:teammate_member) { create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN) }
+      let(:mail_delivery) { instance_double(ActionMailer::MessageDelivery, deliver_now: true) }
+
+      before do
+        allow(WorkspaceMailer).to receive(:workspace_deleted).and_return(mail_delivery)
+      end
 
       it 'deletes the workspace to prevent ownerless workspaces' do
         expect { user.destroy! }.to change { Workspace.exists?(workspace.id) }.from(true).to(false)
+      end
+
+      it 'notifies remaining workspace users about workspace deletion' do
+        user.destroy!
+
+        expect(WorkspaceMailer).to have_received(:workspace_deleted).with(
+          user: teammate,
+          workspace_name: workspace.name,
+          workspace_owner_name: user.full_name
+        )
       end
     end
 
@@ -70,9 +85,20 @@ RSpec.describe User, type: :model do
       let!(:workspace) { create(:workspace_with_owner, owner: user) }
       let!(:co_owner) { create(:user) }
       let!(:co_owner_member) { create(:member, workspace:, user: co_owner, role: Member::Roles::OWNER) }
+      let(:mail_delivery) { instance_double(ActionMailer::MessageDelivery, deliver_now: true) }
+
+      before do
+        allow(WorkspaceMailer).to receive(:workspace_deleted).and_return(mail_delivery)
+      end
 
       it 'does not delete the workspace' do
         expect { user.destroy! }.not_to change { Workspace.exists?(workspace.id) }.from(true)
+      end
+
+      it 'does not send workspace deleted notifications' do
+        user.destroy!
+
+        expect(WorkspaceMailer).not_to have_received(:workspace_deleted)
       end
     end
   end

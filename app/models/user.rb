@@ -48,7 +48,20 @@ class User < ApplicationRecord
       next unless workspace
       next if workspace.members.accepted.exists?(role: Member::Roles::OWNER)
 
+      notify_workspace_deleted_users!(workspace:)
       workspace.destroy!
+    end
+  end
+
+  def notify_workspace_deleted_users!(workspace:)
+    workspace.members.includes(:user).map(&:user).uniq.each do |workspace_user|
+      WorkspaceMailer.workspace_deleted(
+        user: workspace_user,
+        workspace_name: workspace.name,
+        workspace_owner_name: full_name
+      ).deliver_now
+    rescue StandardError => e
+      Rails.logger.error("Workspace delete notification failed for user #{workspace_user.id}: #{e.class} #{e.message}")
     end
   end
 end
