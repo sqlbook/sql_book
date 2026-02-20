@@ -23,7 +23,7 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
   - plain `body` string for fallback/logging
   - sanitized `body_html` with `<strong>` wrappers around interpolated variables
 - Only allow minimal inline markup in toast HTML (`<strong>` currently) and sanitize at render time.
-- Emphasized variables should use the existing bold/semi-bold visual treatment from toast styles.
+- Emphasized variables should use darker-color emphasis in toast body copy, without heavier font weight.
 
 ## Link/action rules
 - Toast action links inside the app should use internal paths (`/app/...`) not hardcoded absolute hosts.
