@@ -3,7 +3,6 @@
   <% can_manage_members = can_manage_workspace_members?(workspace: @workspace) %>
   <% can_delete_workspace = current_role == Member::Roles::OWNER %>
   <% editable_role_options = [["Admin", Member::Roles::ADMIN], ["User", Member::Roles::USER], ["Read only", Member::Roles::READ_ONLY]] %>
-  <% editable_role_options.unshift(["Owner", Member::Roles::OWNER]) if current_role == Member::Roles::OWNER %>
 
   <div class="page-header">
     <h1>Workspaces</h1>

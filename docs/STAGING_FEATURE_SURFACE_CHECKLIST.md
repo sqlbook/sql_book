@@ -46,6 +46,7 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 - [ ] Team member table updates status/actions without manual refresh when invitation state changes.
 - [ ] Team member role select is shown only for editable rows (owner/admin hierarchy rules) and updates role successfully.
 - [ ] Team member role change success/failure toasts render with expected copy.
+- [ ] Team role dropdowns do not surface `Owner` as an option (ownership transfer flow remains deferred).
 
 ### Auth UX polish
 - [ ] Signup `[Continue]` button does not shift position when toggling disabled/enabled state.

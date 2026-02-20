@@ -115,15 +115,20 @@ Source: `WorkspaceInvitationService`
 ### Invite constraints and UX
 - Inviting as `OWNER` is allowed only when inviter is an `OWNER`.
 - Inviting as `OWNER` is blocked server-side for `ADMIN` inviters.
+- `OWNER` is intentionally hidden in the current invite-form dropdown UI.
 - Inviting an existing workspace member is blocked server-side.
 - Success and failure toasts are shown for invite attempts.
 - On successful invite, pending member appears on refresh/redirect and via realtime updates for active viewers.
 
 ### Role change constraints and UX
 - Role updates are allowed only when acting role outranks target member role.
-- Allowed role targets:
+- Allowed role targets (server):
   - owner can set `OWNER`, `ADMIN`, `USER`, `READ_ONLY`
   - admin can set `ADMIN`, `USER`, `READ_ONLY`
+- Current dropdown UI targets:
+  - owner sees `ADMIN`, `USER`, `READ_ONLY`
+  - admin sees `ADMIN`, `USER`, `READ_ONLY`
+  - `OWNER` is intentionally hidden in UI for now (ownership transfer UX deferred).
 - Invalid role updates are blocked server-side and return an error toast.
 - Successful role updates return a success toast with updated user name and role.
 - Role updates do not currently send an email notification.

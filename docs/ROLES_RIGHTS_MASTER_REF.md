@@ -114,12 +114,13 @@ UI should hide actions users cannot perform, but server remains source of truth.
 - Team tab:
   - Invite form visible for Owner/Admin only.
   - Invite role options:
-    - Owner sees `Owner`, `Admin`, `User`, `Read only`.
+    - Owner sees `Admin`, `User`, `Read only`.
     - Admin sees `Admin`, `User`, `Read only`.
   - In-table role select visible only when acting role outranks target member role.
   - In-table role-select options:
-    - Owner sees `Owner`, `Admin`, `User`, `Read only`.
+    - Owner sees `Admin`, `User`, `Read only`.
     - Admin sees `Admin`, `User`, `Read only`.
+  - `Owner` is intentionally hidden in current UI dropdowns; ownership transfer/promote flows are deferred.
   - Member row actions visible only when acting role outranks target member role.
 - Query library:
   - Create-new affordance hidden for Read-only.
