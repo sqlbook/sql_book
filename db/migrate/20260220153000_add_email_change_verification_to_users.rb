@@ -2,9 +2,11 @@
 
 class AddEmailChangeVerificationToUsers < ActiveRecord::Migration[7.1]
   def change
-    add_column :users, :pending_email, :string
-    add_column :users, :email_change_verification_token, :string
-    add_column :users, :email_change_verification_sent_at, :datetime
+    change_table :users, bulk: true do |table|
+      table.string :pending_email
+      table.string :email_change_verification_token
+      table.datetime :email_change_verification_sent_at
+    end
 
     add_index :users, :email_change_verification_token, unique: true
   end
