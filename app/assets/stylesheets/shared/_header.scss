@@ -2,7 +2,7 @@
   align-items: center;
   display: flex;
   grid-area: header;
-  padding: 3rem;
+  padding: 1.5rem;
 
   &.split {
     justify-content: space-between;
@@ -41,16 +41,23 @@
     display: block;
   }
 
+  .menu-actions {
+    display: flex;
+    gap: 1rem;
+    margin: 0 0 0 auto;
+  }
+
   .dropdown {
     background: var(--gray-800);
     border: 1px solid var(--gray-900);
     border-radius: var(--border-radius-sm);
     display: none;
     flex-direction: column;
-    left: 2rem;
+    left: auto;
     padding: 1rem;
     position: absolute;
-    top: 1.5rem;
+    right: 0;
+    top: calc(100% + .5rem);
     width: 11.25rem;
     z-index: 1;
 
@@ -64,6 +71,10 @@
 
       &:first-of-type {
         margin-top: 0;
+      }
+
+      &.heading {
+        margin: 0 0 .5rem 0;
       }
     }
 
@@ -90,7 +101,7 @@
   .toggle-menu {
     cursor: pointer;
     font-size: 1rem;
-    margin: 0 0 0 2rem;
+    margin: 0;
     text-decoration: none;
 
     i {
@@ -102,5 +113,13 @@
         display: none;
       }
     }
+  }
+
+  .workspace-menu .dropdown {
+    width: 11.25rem;
+  }
+
+  .account-menu .dropdown {
+    width: 10rem;
   }
 }

@@ -5,36 +5,52 @@
     <% end %>
 
     <% if @workspace %>
-      <menu data-controller="menu">
-        <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle">
-          <i class="ri-menu-line"></i>
-          <i class="ri-close-line"></i>
-        </button>
+      <div class="menu-actions">
+        <menu data-controller="menu" class="workspace-menu">
+          <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle" aria-label="Toggle workspace menu">
+            <i class="ri-menu-line"></i>
+            <i class="ri-close-line"></i>
+          </button>
 
-        <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->close" tabinde="0">
-          <div class="select">
-            <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: params[:workspace_id]), { "data-action": "menu#changeWorkspace" } %>
-            <i class="ri-arrow-drop-down-line"></i>
+          <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->menu#close" tabindex="0">
+            <label class="text-small category heading">Workspace</label>
+            <div class="select">
+              <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: params[:workspace_id]), { "data-action": "menu#changeWorkspace" } %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+
+            <%= link_to app_workspace_data_sources_path(@workspace), class: "link secondary menu-item", "aria-label": "View datasources for the #{@workspace.name} workspace" do %>
+              <i class="ri-database-2-line"></i> Data Sources
+            <% end %>
+            <%= link_to app_workspace_queries_path(@workspace), class: "link secondary menu-item", "aria-label": "View queries for the #{@workspace.name} workspace" do %>
+              <i class="ri-book-open-line"></i> Query Library
+            <% end %>
+            <%= link_to app_workspace_dashboards_path(@workspace), class: "link secondary menu-item", "aria-label": "View dashboards for the #{@workspace.name} workspace" do %>
+              <i class="ri-dashboard-line"></i> Dashboards
+            <% end %>
+            <%= link_to app_workspace_settings_path(@workspace), class: "link secondary menu-item", "aria-label": "View workspace settings for the #{@workspace.name} workspace" do %>
+              <i class="ri-settings-3-line"></i> Settings
+            <% end %>
           </div>
+        </menu>
 
-          <%= link_to app_workspace_data_sources_path(@workspace), class: "link secondary menu-item", "aria-label": "View datasources for the #{@workspace.name} workspace" do %>
-            <i class="ri-database-2-line"></i> Data Sources
-          <% end %>
-          <%= link_to app_workspace_queries_path(@workspace), class: "link secondary menu-item", "aria-label": "View queries for the #{@workspace.name} workspace" do %>
-            <i class="ri-book-open-line"></i> Query Library
-          <% end %>
-          <%= link_to app_workspace_dashboards_path(@workspace), class: "link secondary menu-item", "aria-label": "View dashboards for the #{@workspace.name} workspace" do %>
-            <i class="ri-dashboard-line"></i> Dashboards
-          <% end %>
-          <label class="text-small category">Account</label>
-          <%= link_to app_account_settings_path, class: "link secondary menu-item", "aria-label": "View account settings" do %>
-            <i class="ri-settings-3-line"></i> Settings
-          <% end %>
-          <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>
-            <i class="ri-logout-box-r-line"></i> Log out
-          <% end %>
-        </div>
-      </menu>
+        <menu data-controller="menu" class="account-menu">
+          <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle" aria-label="Toggle account menu">
+            <i class="ri-account-circle-line"></i>
+            <i class="ri-close-line"></i>
+          </button>
+
+          <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->menu#close" tabindex="0">
+            <label class="text-small category heading">Account</label>
+            <%= link_to app_account_settings_path, class: "link secondary menu-item", "aria-label": "View account settings" do %>
+              <i class="ri-settings-3-line"></i> Settings
+            <% end %>
+            <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>
+              <i class="ri-logout-box-r-line"></i> Log out
+            <% end %>
+          </div>
+        </menu>
+      </div>
     <% end %>
   </header>
 <% else %>

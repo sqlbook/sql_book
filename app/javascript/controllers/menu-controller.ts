@@ -4,7 +4,17 @@ export default class extends Controller<HTMLMenuElement> {
   static targets = ['button', 'dropdown'];
 
   public toggle(): void {
-    this.element.classList.toggle('open');
+    if (this.element.classList.contains('open')) {
+      this.close();
+      return;
+    }
+
+    this.closeOtherMenus();
+    this.element.classList.add('open');
+  }
+
+  public close(): void {
+    this.element.classList.remove('open');
   }
 
   public changeWorkspace(event: Event): void {
@@ -17,5 +27,12 @@ export default class extends Controller<HTMLMenuElement> {
     parts[3] = target.value;
 
     window.Turbo.visit(parts.join('/'), { action: 'replace' });
+  }
+
+  private closeOtherMenus(): void {
+    const menus = document.querySelectorAll('menu[data-controller~="menu"].open');
+    menus.forEach((menu) => {
+      if (menu !== this.element) menu.classList.remove('open');
+    });
   }
 }
