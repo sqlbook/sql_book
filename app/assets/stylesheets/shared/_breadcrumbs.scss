@@ -1,4 +1,6 @@
 .breadcrumbs {
+  // Temporary: hide breadcrumbs globally during navigation IA transition.
+  display: none;
   margin: 0 0 1.5rem 0;
   padding: 0 3rem;
 }
