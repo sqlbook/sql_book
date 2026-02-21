@@ -142,7 +142,7 @@ module App
       end
 
       def redirect_to_team_tab
-        redirect_to app_workspace_path(workspace, tab: 'team')
+        redirect_to app_workspace_settings_path(workspace, tab: 'team')
       end
 
       def member
@@ -279,7 +279,7 @@ module App
       def authorize_manage_members!
         return if can_manage_workspace_members?(workspace:)
 
-        deny_workspace_access!(workspace:, fallback_tab: 'team')
+        deny_workspace_access!(workspace:, fallback_path: app_workspace_path(workspace))
       end
     end # rubocop:enable Metrics/ClassLength
   end

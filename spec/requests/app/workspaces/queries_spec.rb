@@ -22,11 +22,11 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
 
       before { create(:member, workspace:, user:, role: Member::Roles::USER) }
 
-      it 'renders the workspace breadcrumb as non-link text' do
+      it 'renders the workspace breadcrumb as a workspace-home link' do
         get "/app/workspaces/#{workspace.id}/queries"
 
-        expect(response.body).not_to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']")
-        expect(response.body).to have_selector('.breadcrumbs-current', text: workspace.name)
+        expect(response.body)
+          .to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
       end
 
       it 'renders the query library empty state' do
@@ -42,11 +42,11 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
 
       before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
 
-      it 'renders the workspace breadcrumb as non-link text' do
+      it 'renders the workspace breadcrumb as a workspace-home link' do
         get "/app/workspaces/#{workspace.id}/queries"
 
-        expect(response.body).not_to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']")
-        expect(response.body).to have_selector('.breadcrumbs-current', text: workspace.name)
+        expect(response.body)
+          .to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
       end
 
       it 'renders the query library empty state' do
@@ -61,7 +61,7 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
       context 'and there are no queries' do
         let!(:data_source) { create(:data_source, workspace:) }
 
-        it 'renders the workspace breadcrumb as a settings link for owners/admins' do
+        it 'renders the workspace breadcrumb as a workspace-home link' do
           get "/app/workspaces/#{workspace.id}/queries"
 
           expect(response.body)

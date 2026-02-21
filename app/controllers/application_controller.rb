@@ -66,15 +66,17 @@ class ApplicationController < ActionController::Base
     [Member::Roles::OWNER, Member::Roles::ADMIN].include?(workspace_role_for(workspace:))
   end
 
-  def deny_workspace_access!(workspace:, fallback_tab: nil)
+  def deny_workspace_access!(workspace:, fallback_tab: nil, fallback_path: nil)
     flash[:toast] = {
       type: 'error',
       title: I18n.t('toasts.workspaces.access_forbidden.title'),
       body: I18n.t('toasts.workspaces.access_forbidden.body')
     }
 
-    if fallback_tab
-      redirect_to app_workspace_path(workspace, tab: fallback_tab)
+    if fallback_path
+      redirect_to fallback_path
+    elsif fallback_tab
+      redirect_to app_workspace_settings_path(workspace, tab: fallback_tab)
     else
       redirect_to app_workspaces_path
     end

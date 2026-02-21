@@ -1,6 +1,6 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-02-20
+Last updated: 2026-02-21
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
@@ -22,8 +22,15 @@ Roles are workspace-scoped via `members.role`.
 - User: allow
 - Read-only: allow
 
+### Workspace home
+- Route scope: `GET /app/workspaces/:id`
+- Owner: allow
+- Admin: allow
+- User: allow
+- Read-only: allow
+
 ### Workspace settings
-- Route scope: `GET/PATCH /app/workspaces/:id`
+- Route scope: `GET/PATCH /app/workspaces/:id/workspace-settings`
 - Owner: allow
 - Admin: allow
 - User: deny
@@ -131,7 +138,8 @@ UI should hide actions users cannot perform, but server remains source of truth.
 - Workspace settings:
   - Settings/edit controls visible for Owner/Admin only.
   - Workspace card `Settings` link/icon hidden for `USER` and `READ_ONLY`.
-  - Workspace breadcrumb (`<Workspace Name>`) is a settings link for Owner/Admin only; it is non-link text for `USER` and `READ_ONLY`.
+  - On `/app/workspaces/:id`, workspace breadcrumb is current non-link text.
+  - On workspace child pages (including workspace settings), workspace breadcrumb links to `/app/workspaces/:id` for all workspace roles.
 
 ## Enforcement and UX on deny
 - Forbidden action returns redirect with toast:
@@ -139,7 +147,7 @@ UI should hide actions users cannot perform, but server remains source of truth.
   - body: `Your workspace role does not allow this action.`
 - Deny behavior is implemented server-side in controller guards, independent of UI visibility.
 - Invitation accept redirect behavior:
-  - owner/admin -> workspace settings route
+  - owner/admin -> workspace settings route (`/app/workspaces/:id/workspace-settings`)
   - user/read-only -> workspaces list
 - Workspace access fallback behavior:
   - if user requests a workspace they are not a member of (or no longer a member of), redirect to `/app/workspaces`

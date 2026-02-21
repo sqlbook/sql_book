@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-02-20
+Last updated: 2026-02-21
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -120,7 +120,7 @@ Source: `WorkspaceInvitationService`
   - invitation token cleared
   - session reset and set to invitee user
   - redirect target is role-aware:
-    - owner/admin -> workspace settings route
+    - owner/admin -> workspace settings route (`/app/workspaces/:id/workspace-settings`)
     - user/read-only -> workspaces list
 - Reject:
   - member row removed

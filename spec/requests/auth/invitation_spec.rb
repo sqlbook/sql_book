@@ -72,7 +72,7 @@ RSpec.describe 'Auth::Invitation', type: :request do
 
       it 'redirects to the workspace' do
         subject
-        expect(response).to redirect_to(app_workspace_path(member.workspace))
+        expect(response).to redirect_to(app_workspace_settings_path(member.workspace))
       end
 
       it 'persists terms acceptance metadata' do

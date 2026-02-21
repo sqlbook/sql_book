@@ -64,6 +64,7 @@
 @use "app/workspaces/data_sources/new" as data_sources_new;
 @use "app/workspaces/data_sources/show" as data_sources_show;
 @use "app/workspaces/queries/index" as queries_index;
+@use "app/workspaces/settings/show" as workspace_settings_show;
 @use "app/workspaces/index" as workspaces_index;
 @use "app/workspaces/new" as workspaces_new;
 @use "app/workspaces/show" as workspaces_show;

@@ -1,0 +1,153 @@
+<div class="tabs">
+  <%= render "shared/tabs/nav_item", tab: "general", name: "General", icon_class: "ri-global-line", default_selected: true %>
+  <%= render "shared/tabs/nav_item", tab: "team", name: "Team", icon_class: "ri-fire-line" %>
+  <%= render "shared/tabs/nav_item", tab: "subscription", name: "Subscription", icon_class: "ri-fire-lin" %>
+  <div class="seperator"></div>
+  <% if can_delete_workspace %>
+    <%= render "shared/tabs/nav_item", tab: "delete", name: "Delete Workspace", icon_class: "ri-delete-bin-line" %>
+  <% end %>
+</div>
+
+<% if active_tab?(tab: "general", default_selected: true) %>
+  <div data-controller="form">
+    <%= form_with url: app_workspace_settings_path(@workspace), method: :patch, class: "workspace-update-form", html: { "data-form-target": "form" } do |form| %>
+      <%= form.label :name, "Workspace name", class: "label block" %>
+      <%= form.text_field :name, class: "input block fluid", value: @workspace.name, required: true %>
+      <%= form.submit "[Save Changes]", class: "link primary", "data-form-target": "submit" %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if active_tab?(tab: "team") %>
+  <%= turbo_stream_from RealtimeUpdatesService.workspace_members_stream(workspace: @workspace) %>
+  <p>Use the settings below to view, invite and manage the roles of any team members associated with this workspace. Adding members is always free of charge, regardless of their role.</p>
+  <div class="members-table" data-controller="table">
+    <table class="collapsible team-members-table">
+      <tr>
+        <th class="name">
+          <span class="truncate-text" data-tooltip-text="Name">Name</span>
+        </th>
+        <th class="role">
+          <span class="truncate-text" data-tooltip-text="Role">Role</span>
+        </th>
+        <th class="status">
+          <span class="truncate-text" data-tooltip-text="Status">Status</span>
+        </th>
+        <th class="actions">
+          <span class="truncate-text" data-tooltip-text="Actions">Actions</span>
+        </th>
+      </tr>
+      <% @workspace.members.each do |member| %>
+        <% can_edit_member = can_manage_members && current_role < member.role %>
+        <tr>
+          <td class="name">
+            <span class="truncate-text" data-tooltip-text="<%= member.user.full_name %>"><%= member.user.full_name %></span>
+          </td>
+          <td class="role">
+            <% if can_edit_member %>
+              <%= form_with url: app_workspace_member_path(@workspace, member), method: :patch, class: "member-role-form" do |form| %>
+                <div class="select member-role-select">
+                  <%= form.select :role,
+                                  options_for_select(editable_role_options, member.role),
+                                  {},
+                                  { "aria-label": "Change role for #{member.user.full_name}", onchange: "this.form.requestSubmit();" } %>
+                  <i class="ri-arrow-drop-down-line"></i>
+                </div>
+              <% end %>
+            <% else %>
+              <span class="truncate-text" data-tooltip-text="<%= member.role_name %>"><%= member.role_name %></span>
+            <% end %>
+          </td>
+          <td class="status">
+            <span class="truncate-text" data-tooltip-text="<%= member.status_name %>"><%= member.status_name %></span>
+          </td>
+          <td class="actions">
+            <% if can_edit_member %>
+              <div class="actions-inline">
+                <% if member.pending? %>
+                  <%= link_to "Resend Invitation", resend_app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :post }, "aria-label": "Resend invitation to #{member.user.full_name}" %>
+                  <%= link_to "Delete", app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :delete }, "aria-label": "Delete pending invitation for #{member.user.full_name}" %>
+                <% else %>
+                  <%= link_to "Delete", app_workspace_member_path(@workspace, member), class: "link secondary", data: { turbo_method: :delete }, "aria-label": "Remove #{member.user.full_name} from the team" %>
+                <% end %>
+              </div>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+
+  <% if can_manage_members %>
+    <div data-controller="member-invite">
+      <button class="link secondary invite show" type="button" data-member-invite-target="button" data-action="member-invite#show">
+        <i class="ri-add-line"></i>
+        <span>Invite team member</span>
+      </button>
+
+      <div data-controller="form">
+        <%= form_with url: app_workspace_members_path(@workspace), method: :post, class: "invite-team-member-form", html: { "data-form-target": "form", "data-member-invite-target": "form" } do |form| %>
+          <div class="split">
+            <div>
+              <%= form.label :first_name, "First name", class: "label block" %>
+              <%= form.text_field :first_name, class: "input block fluid", placeholder: "Jess", required: true %>
+            </div>
+            <div>
+              <%= form.label :last_name, "Last name", class: "label block" %>
+              <%= form.text_field :last_name, class: "input block fluid", placeholder: "Smith", required: true %>
+            </div>
+          </div>
+          <div class="split">
+            <div>
+              <%= form.label :email, "Email", class: "label block" %>
+              <%= form.email_field :email, class: "input block fluid", autocomplete: "email", placeholder: "email@example.com", required: true %>
+            </div>
+            <div>
+              <%= form.label :role, "Role", class: "label block" %>
+              <div class="select">
+                <%= form.select :role, options_for_select(editable_role_options), {} %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <%= form.submit "[Send invitation]", class: "link primary", "data-form-target": "submit" %>
+            <button type="button" class="link secondary" data-action="member-invite#hide">
+              Cancel
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<% if active_tab?(tab: "subscription") %>
+  -
+<% end %>
+
+<% if can_delete_workspace && active_tab?(tab: "delete") %>
+  <div class="delete-workspace">
+    <p class="cream-250">You can delete your workspace at any time:</p>
+    <ul>
+      <li>The workspace, along with all related data sources, queries and dashboards, will be deleted immediately for all users in your workspace.</li>
+      <li>Workspace deletion is irreversible.</li>
+    </ul>
+
+    <% if params[:confirm_delete] %>
+      <div class="message">
+        <i class="ri-error-warning-line ri-lg red-500"></i>
+        <div class="body">
+          <p class="title cream-250"><b>Are you sure you wish to delete your workspace</b></p>
+          <p>If so, all data sources, data, queries and dashboards will be deleted permanently.</p>
+          <div class="actions">
+            <%= link_to "[Delete Workspace]", app_workspace_path(@workspace), class: "link primary", data: { turbo_method: :delete }, "aria-label": "Confirm deletion of workspace" %>
+            <%= link_to "Cancel", add_params(confirm_delete: nil), class: "link secondary", "aria-label": "Cancel deleting the workspace" %>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <%= link_to "[Delete Workspace]", add_params(confirm_delete: 1), class: "link primary", "aria-label": "Delete workspace" %>
+    <% end %>
+  </div>
+<% end %>

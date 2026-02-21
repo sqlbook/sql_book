@@ -30,7 +30,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
     it 'redirects to the workspace settings' do
       post("/app/workspaces/#{workspace.id}/members", params:)
-      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
     end
 
     it 'sets a success toast' do
@@ -64,7 +64,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
       it 'redirects to the workspace settings' do
         post("/app/workspaces/#{workspace.id}/members", params:)
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
       end
 
       it 'sets a success toast payload' do
@@ -102,7 +102,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
       it 'redirects to the workspace settings' do
         post("/app/workspaces/#{workspace.id}/members", params:)
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
       end
 
       it 'sets an error toast payload' do
@@ -140,7 +140,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
       it 'redirects to the workspace settings' do
         post("/app/workspaces/#{workspace.id}/members", params:)
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
       end
 
       it 'sets an information toast payload' do
@@ -163,9 +163,9 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
         expect { post "/app/workspaces/#{workspace.id}/members", params: }.not_to change(Member, :count)
       end
 
-      it 'redirects to the team tab' do
+      it 'redirects to workspace home' do
         post "/app/workspaces/#{workspace.id}/members", params: params
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
 
@@ -213,7 +213,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
     it 'redirects to the workspace settings' do
       delete "/app/workspaces/#{workspace.id}/members/#{member.id}"
-      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
     end
 
     it 'sets a success toast payload' do
@@ -243,7 +243,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
       it 'redirects to the workspace settings' do
         delete "/app/workspaces/#{workspace.id}/members/#{user.id}"
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
       end
     end
 
@@ -280,9 +280,9 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           .not_to change { Member.exists?(workspace.owner.id) }
       end
 
-      it 'redirects to the workspace settings' do
+      it 'redirects to workspace home' do
         delete "/app/workspaces/#{workspace.id}/members/#{admin_member.id}"
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
 
@@ -299,9 +299,9 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           .not_to change { Member.exists?(member.id) }
       end
 
-      it 'redirects to team tab' do
+      it 'redirects to workspace home' do
         delete "/app/workspaces/#{workspace.id}/members/#{member.id}"
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
   end
@@ -321,7 +321,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
     it 'redirects to the workspace settings' do
       patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER }
-      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
     end
 
     it 'sets a success toast payload' do
@@ -392,9 +392,9 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           .not_to change { member.reload.role }
       end
 
-      it 'redirects to team tab' do
+      it 'redirects to workspace home' do
         patch "/app/workspaces/#{workspace.id}/members/#{member.id}", params: { role: Member::Roles::USER }
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
   end
@@ -427,7 +427,7 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
 
     it 'redirects to the workspace settings' do
       post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend"
-      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+      expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'team'))
     end
 
     it 'sets a success toast payload' do
@@ -473,9 +473,9 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
           .not_to change { member.reload.invitation }
       end
 
-      it 'redirects to team tab' do
+      it 'redirects to workspace home' do
         post "/app/workspaces/#{workspace.id}/members/#{member.id}/resend"
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'team'))
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
   end

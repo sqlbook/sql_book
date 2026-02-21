@@ -42,7 +42,10 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
         to: 'account_settings#verify_email',
         as: :verify_email_account_settings
 
-    resources :workspaces do
+    get 'workspaces/:id/workspace-settings', to: 'workspaces/settings#show', as: :workspace_settings
+    patch 'workspaces/:id/workspace-settings', to: 'workspaces/settings#update', as: nil
+
+    resources :workspaces, except: %i[edit update] do
       resources :queries, only: %i[index], controller: 'workspaces/queries'
       resources :dashboards, controller: 'workspaces/dashboards'
       resources :members, only: %i[create update destroy], controller: 'workspaces/members' do

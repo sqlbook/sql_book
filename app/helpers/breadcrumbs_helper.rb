@@ -2,7 +2,7 @@
 
 module BreadcrumbsHelper
   SECTION_BREADCRUMB_BUILDERS = {
-    'app/workspaces' => :workspace_settings_breadcrumb_items,
+    'app/workspaces/settings' => :workspace_settings_breadcrumb_items,
     'app/workspaces/data_sources' => :data_source_section_breadcrumb_items,
     'app/workspaces/data_sources/set_up' => :data_source_setup_breadcrumb_items,
     'app/workspaces/queries' => :query_library_breadcrumb_items,
@@ -13,16 +13,17 @@ module BreadcrumbsHelper
   def show_workspace_breadcrumbs?
     app_page? &&
       workspace_for_breadcrumbs.present? &&
-      !workspace_home_page? &&
-      !workspace_settings_panel_page?
+      !workspace_home_page?
   end
 
   def workspace_breadcrumb_items
     return [] unless show_workspace_breadcrumbs?
 
+    workspace_path = workspace_root_page? ? nil : workspace_settings_breadcrumb_path
+
     [
       breadcrumb_item(label: 'Workspaces', path: app_workspaces_path),
-      breadcrumb_item(label: workspace_for_breadcrumbs.name, path: workspace_settings_breadcrumb_path),
+      breadcrumb_item(label: workspace_for_breadcrumbs.name, path: workspace_path),
       *workspace_section_breadcrumb_items
     ]
   end
@@ -30,10 +31,7 @@ module BreadcrumbsHelper
   private
 
   def workspace_settings_breadcrumb_path
-    workspace = workspace_for_breadcrumbs
-    return nil unless can_manage_workspace_settings?(workspace:)
-
-    app_workspace_path(workspace)
+    app_workspace_path(workspace_for_breadcrumbs)
   end
 
   def workspace_section_breadcrumb_items
@@ -119,7 +117,7 @@ module BreadcrumbsHelper
     controller_path == 'app/workspaces' && action_name == 'index'
   end
 
-  def workspace_settings_panel_page?
+  def workspace_root_page?
     controller_path == 'app/workspaces' && action_name == 'show'
   end
 end

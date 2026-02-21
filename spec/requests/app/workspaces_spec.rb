@@ -160,16 +160,19 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.status).to eq(200)
       end
 
-      it 'does not render breadcrumbs on the workspace settings panel route' do
+      it 'renders the workspace name' do
         get "/app/workspaces/#{workspace.id}"
 
-        expect(response.body).not_to have_selector('.breadcrumbs')
+        expect(response.body).to have_selector('h1', text: workspace.name)
       end
 
-      it 'does not show owner role as an invite option for owners on team tab' do
-        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+      it 'renders breadcrumbs with workspace as the current page' do
+        get "/app/workspaces/#{workspace.id}"
 
-        expect(response.body).not_to include('<option value="1">Owner</option>')
+        expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
+        expect(response.body)
+          .not_to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
+        expect(response.body).to have_selector('.breadcrumbs-current', text: workspace.name)
       end
     end
 
@@ -182,9 +185,101 @@ RSpec.describe 'App::Workspaces', type: :request do
         get "/app/workspaces/#{workspace.id}"
         expect(response.status).to eq(200)
       end
+    end
+
+    context 'when current user is a user role member of the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'renders the show page' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to have_selector('h1', text: workspace.name)
+      end
+    end
+
+    context 'when current user is read-only in the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
+
+      it 'renders the show page' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to have_selector('h1', text: workspace.name)
+      end
+    end
+
+    context 'when current user was removed from the workspace' do
+      let(:owner) { create(:user) }
+      let!(:removed_member) { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      before do
+        removed_member.destroy
+      end
+
+      it 'redirects to workspace list' do
+        get "/app/workspaces/#{workspace.id}"
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+
+      it 'sets a workspace unavailable toast payload' do
+        get "/app/workspaces/#{workspace.id}"
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.unavailable.title'),
+          body: I18n.t('toasts.workspaces.unavailable.body')
+        )
+      end
+    end
+  end
+
+  describe 'GET /app/workspaces/:workspace_id/workspace-settings' do
+    let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner:) }
+    let(:owner) { user }
+
+    before { sign_in(user) }
+
+    it 'renders the show page' do
+      get app_workspace_settings_path(workspace)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Workspace settings')
+    end
+
+    it 'renders workspace settings breadcrumbs' do
+      get app_workspace_settings_path(workspace)
+
+      expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
+      expect(response.body)
+        .to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
+      expect(response.body).to have_selector('.breadcrumbs-current', text: 'Workspace Settings')
+    end
+
+    it 'does not show owner role as an invite option for owners on team tab' do
+      get app_workspace_settings_path(workspace), params: { tab: 'team' }
+
+      expect(response.body).not_to include('<option value="1">Owner</option>')
+    end
+
+    context 'when current user is an admin of the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::ADMIN) }
+
+      it 'renders the show page' do
+        get app_workspace_settings_path(workspace)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Workspace settings')
+      end
 
       it 'does not show owner role as an invite option on team tab' do
-        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+        get app_workspace_settings_path(workspace), params: { tab: 'team' }
 
         expect(response.body).not_to include('<option value="1">Owner</option>')
       end
@@ -195,13 +290,15 @@ RSpec.describe 'App::Workspaces', type: :request do
 
       before { create(:member, workspace:, user:, role: Member::Roles::USER) }
 
-      it 'redirects to workspace list' do
-        get "/app/workspaces/#{workspace.id}"
-        expect(response).to redirect_to(app_workspaces_path)
+      it 'redirects to workspace home' do
+        get app_workspace_settings_path(workspace)
+
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
 
       it 'sets an error toast payload' do
-        get "/app/workspaces/#{workspace.id}"
+        get app_workspace_settings_path(workspace)
+
         expect(flash[:toast]).to include(
           type: 'error',
           title: I18n.t('toasts.workspaces.access_forbidden.title'),
@@ -215,27 +312,30 @@ RSpec.describe 'App::Workspaces', type: :request do
 
       before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
 
-      it 'redirects to workspace list' do
-        get "/app/workspaces/#{workspace.id}"
-        expect(response).to redirect_to(app_workspaces_path)
+      it 'redirects to workspace home' do
+        get app_workspace_settings_path(workspace)
+
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
 
     context 'when current user was removed from the workspace' do
       let(:owner) { create(:user) }
-      let!(:removed_member) { create(:member, workspace:, user:, role: Member::Roles::USER) }
+      let!(:removed_member) { create(:member, workspace:, user:, role: Member::Roles::ADMIN) }
 
       before do
         removed_member.destroy
       end
 
       it 'redirects to workspace list' do
-        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+        get app_workspace_settings_path(workspace)
+
         expect(response).to redirect_to(app_workspaces_path)
       end
 
       it 'sets a workspace unavailable toast payload' do
-        get "/app/workspaces/#{workspace.id}", params: { tab: 'team' }
+        get app_workspace_settings_path(workspace)
+
         expect(flash[:toast]).to include(
           type: 'error',
           title: I18n.t('toasts.workspaces.unavailable.title'),
@@ -245,7 +345,7 @@ RSpec.describe 'App::Workspaces', type: :request do
     end
   end
 
-  describe 'PATCH /app/workspaces/:workspace_id' do
+  describe 'PATCH /app/workspaces/:workspace_id/workspace-settings' do
     let(:user) { create(:user) }
     let(:workspace) { create(:workspace_with_owner, owner:) }
     let(:owner) { user }
@@ -253,13 +353,14 @@ RSpec.describe 'App::Workspaces', type: :request do
     before { sign_in(user) }
 
     it 'updates the workspace' do
-      expect { patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' } }
+      expect { patch app_workspace_settings_path(workspace), params: { name: 'new_name' } }
         .to change { workspace.reload.name }.from(workspace.name).to('new_name')
     end
 
     it 'redirects to the general tab' do
-      patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' }
-      expect(response).to redirect_to(app_workspace_path(workspace, tab: 'general'))
+      patch app_workspace_settings_path(workspace), params: { name: 'new_name' }
+
+      expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'general'))
     end
 
     context 'when current user is an admin of the workspace' do
@@ -268,7 +369,7 @@ RSpec.describe 'App::Workspaces', type: :request do
       before { create(:member, workspace:, user:, role: Member::Roles::ADMIN) }
 
       it 'updates the workspace' do
-        expect { patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' } }
+        expect { patch app_workspace_settings_path(workspace), params: { name: 'new_name' } }
           .to change { workspace.reload.name }.from(workspace.name).to('new_name')
       end
     end
@@ -279,13 +380,14 @@ RSpec.describe 'App::Workspaces', type: :request do
       before { create(:member, workspace:, user:, role: Member::Roles::USER) }
 
       it 'does not update the workspace' do
-        expect { patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' } }
+        expect { patch app_workspace_settings_path(workspace), params: { name: 'new_name' } }
           .not_to change { workspace.reload.name }
       end
 
-      it 'redirects to workspace list' do
-        patch "/app/workspaces/#{workspace.id}", params: { name: 'new_name' }
-        expect(response).to redirect_to(app_workspaces_path)
+      it 'redirects to workspace home' do
+        patch app_workspace_settings_path(workspace), params: { name: 'new_name' }
+
+        expect(response).to redirect_to(app_workspace_path(workspace))
       end
     end
   end
@@ -361,7 +463,7 @@ RSpec.describe 'App::Workspaces', type: :request do
       it 'redirects to workspace settings' do
         delete "/app/workspaces/#{workspace.id}"
 
-        expect(response).to redirect_to(app_workspace_path(workspace, tab: 'general'))
+        expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'general'))
       end
 
       it 'sets an error toast payload' do

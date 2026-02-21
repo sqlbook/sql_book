@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-20
+Last updated: 2026-02-21
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -18,8 +18,9 @@ Related reference:
   - `GET /app/workspaces` -> list user workspaces
   - `GET /app/workspaces/new` -> new workspace screen
   - `POST /app/workspaces` -> create workspace (+ owner membership)
-  - `GET /app/workspaces/:id` -> workspace settings/details tabs
-  - `PATCH /app/workspaces/:id` -> update workspace name
+  - `GET /app/workspaces/:id` -> workspace home page
+  - `GET /app/workspaces/:id/workspace-settings` -> workspace settings/details tabs
+  - `PATCH /app/workspaces/:id/workspace-settings` -> update workspace name
   - `DELETE /app/workspaces/:id` -> delete workspace (owner only)
 - Workspace team members:
   - `POST /app/workspaces/:workspace_id/members` -> invite member
@@ -35,7 +36,8 @@ Related reference:
   - `READ_ONLY` (4)
 - Controller-level capability matrix:
   - Workspace index (`GET /app/workspaces`): all accepted members
-  - Workspace settings (`GET/PATCH /app/workspaces/:id`): owner/admin only
+  - Workspace home (`GET /app/workspaces/:id`): all accepted members
+  - Workspace settings (`GET/PATCH /app/workspaces/:id/workspace-settings`): owner/admin only
   - Workspace delete (`DELETE /app/workspaces/:id`): owner only
   - Team management routes (`members#create`, `members#update`, `members#destroy`, `members#resend`): owner/admin only
   - Data source settings routes (`data_sources*`, `data_sources/set_up#index`): owner/admin only
@@ -79,13 +81,12 @@ Related reference:
 ## Workspace breadcrumbs
 - Breadcrumbs render on workspace-scoped app pages where workspace context exists (for example `/app/workspaces/:workspace_id/*`).
 - Breadcrumbs do not render on workspace home/list route (`/app/workspaces`).
-- Breadcrumbs also do not render on workspace settings side-panel route (`/app/workspaces/:id`).
 - Standard structure:
   - `Workspaces` / `<Workspace Name>` / `<Section>` / `<Optional Item>`
 - Link behavior:
   - `Workspaces` is always a link to `/app/workspaces`.
-  - `<Workspace Name>` links to `/app/workspaces/:id` only for roles with workspace settings access (owner/admin).
-  - For `USER` and `READ_ONLY`, `<Workspace Name>` is rendered as non-link text.
+  - On workspace home route (`/app/workspaces/:id`), `<Workspace Name>` is the current non-link breadcrumb item.
+  - On workspace settings and child workspace routes, `<Workspace Name>` links to `/app/workspaces/:id` for all workspace roles.
   - Section and item links use internal route helpers only (no hardcoded hostnames).
 - Narrow viewport behavior:
   - first item, last item, and `/` separators stay visible and are not clipped.
@@ -139,7 +140,7 @@ Source: `WorkspaceInvitationService`
   - pending member becomes accepted
   - invitation token cleared
   - post-accept redirect:
-    - owner/admin -> workspace settings route (`/app/workspaces/:id`)
+    - owner/admin -> workspace settings route (`/app/workspaces/:id/workspace-settings`)
     - user/read-only -> workspaces list (`/app/workspaces`)
 - Reject:
   - pending member row removed
@@ -161,7 +162,7 @@ Source: `WorkspaceInvitationService`
 
 ## Realtime updates (team + invitations)
 - Membership create/update/destroy events broadcast Turbo Stream refresh events.
-- Team tab (`/app/workspaces/:id?tab=team`) subscribes to a workspace-members stream:
+- Team tab (`/app/workspaces/:id/workspace-settings?tab=team`) subscribes to a workspace-members stream:
   - status/action cells refresh without manual page reload after accept/reject/delete/resend flows.
 - App pages subscribe to a per-user stream:
   - pending invitation toast appears for active signed-in users when an invite is created.
@@ -189,7 +190,7 @@ Source: `WorkspaceInvitationService`
 
 ## Environment safety rules
 - Do not hardcode staging/production hostnames in workspace controllers/mailers/views.
-- Use internal path helpers (`app_workspace_path`, `app_workspaces_path`, etc.) for in-app navigation.
+- Use internal path helpers (`app_workspace_path`, `app_workspace_settings_path`, `app_workspaces_path`, etc.) for in-app navigation.
 - For absolute links (emails), use route URL helpers with Action Mailer host/protocol from env config.
 - Toast action links should use `path` where possible so rendering stays environment-safe.
 

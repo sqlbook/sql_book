@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 module App
-  class WorkspacesController < ApplicationController # rubocop:disable Metrics/ClassLength
+  class WorkspacesController < ApplicationController
     before_action :require_authentication!
-    before_action :authorize_workspace_settings_access!, only: %i[show update]
 
     def index
       @workspaces = workspaces
@@ -14,7 +13,6 @@ module App
 
     def show
       @workspace = workspace
-      @workspaces_stats = WorkspacesStatsService.new(workspaces: [workspace])
     end
 
     def new; end
@@ -29,11 +27,6 @@ module App
       return redirect_to new_app_workspace_data_source_path(workspace) if current_user.workspaces.size == 1
 
       redirect_to app_workspaces_path
-    end
-
-    def update
-      workspace.update(name: workspace_params[:name])
-      redirect_to app_workspace_path(workspace, tab: 'general')
     end
 
     def destroy
@@ -85,19 +78,19 @@ module App
       workspace.role_for(user: current_user) == Member::Roles::OWNER
     end
 
-    def authorize_workspace_settings_access!
-      return if can_manage_workspace_settings?(workspace:)
-
-      deny_workspace_access!(workspace:)
-    end
-
     def handle_forbidden_workspace_delete
       flash[:toast] = {
         type: 'error',
         title: I18n.t('toasts.workspaces.delete_forbidden.title'),
         body: I18n.t('toasts.workspaces.delete_forbidden.body')
       }
-      redirect_to app_workspace_path(workspace, tab: 'general')
+      redirect_to(forbidden_delete_redirect_path)
+    end
+
+    def forbidden_delete_redirect_path
+      return app_workspace_settings_path(workspace, tab: 'general') if can_manage_workspace_settings?(workspace:)
+
+      app_workspace_path(workspace)
     end
 
     def workspace_users_to_notify
@@ -133,5 +126,5 @@ module App
         body: I18n.t('toasts.workspaces.deleted_partial.body')
       }
     end
-  end # rubocop:enable Metrics/ClassLength
+  end
 end

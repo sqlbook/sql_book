@@ -33,7 +33,7 @@ RSpec.describe WorkspaceMailer, type: :mailer do
     end
 
     it 'includes a link to manage the team' do
-      expect(subject.body).to include("/app/workspaces/#{member.workspace.id}?tab=team")
+      expect(subject.body).to include("/app/workspaces/#{member.workspace.id}/workspace-settings?tab=team")
     end
   end
 
