@@ -1,6 +1,6 @@
 # Toasts Master Reference
 
-Last updated: 2026-02-20
+Last updated: 2026-02-21
 
 ## Purpose
 Define copy and rendering rules for in-app toasts so messaging stays consistent and safe.
@@ -8,6 +8,9 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
 ## Source of truth
 - Locale keys: `/Users/chrispattison/sql_book/config/locales/en.yml`
 - Toast renderer: `/Users/chrispattison/sql_book/app/views/shared/_toasts.html.erb`
+- Current workspace-settings save toasts:
+  - `toasts.workspaces.updated`
+  - `toasts.workspaces.update_failed`
 
 ## Copy and encoding rules
 - Toast `title` and default `body` values are rendered as plain text.

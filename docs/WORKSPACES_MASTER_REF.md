@@ -61,7 +61,7 @@ Related reference:
   - redirect to `/app/workspaces`
   - show error toast:
     - title: `Workspace not available`
-    - body: `You don't have permission to access that workspace.`
+    - body: `You don't have permission to access this workspace.`
 
 ## Team table actions
 - Pending invited members:
@@ -77,6 +77,19 @@ Related reference:
 - Resend cooldown:
   - server-enforced 10-minute cooldown before another resend is allowed
   - when blocked, info toast explains cooldown
+
+## Workspace settings save behavior
+- General tab workspace-name form uses change detection:
+  - `[Save Changes]` is disabled on initial render and only enables when the name value differs from the persisted value.
+  - Form validity is still required before submit can enable.
+- On successful workspace-name save:
+  - success toast:
+    - title: `Workspace settings saved`
+    - body: `Your workspace name has been updated.`
+- On unexpected save failure:
+  - error toast:
+    - title: `Couldn't save workspace settings`
+    - body: `Please check your workspace name and try again.`
 
 ## Workspace breadcrumbs
 - Breadcrumbs render on workspace-scoped app pages where workspace context exists (for example `/app/workspaces/:workspace_id/*`).
@@ -140,8 +153,7 @@ Source: `WorkspaceInvitationService`
   - pending member becomes accepted
   - invitation token cleared
   - post-accept redirect:
-    - owner/admin -> workspace settings route (`/app/workspaces/:id/workspace-settings`)
-    - user/read-only -> workspaces list (`/app/workspaces`)
+    - all roles -> workspace home route (`/app/workspaces/:id`)
 - Reject:
   - pending member row removed
   - inviter gets rejection email

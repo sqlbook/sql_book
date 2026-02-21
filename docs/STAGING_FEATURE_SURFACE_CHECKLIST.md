@@ -35,6 +35,8 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 - [ ] Workspace switcher updates URL/state correctly.
 - [ ] Data source switcher updates query context correctly.
 - [ ] Any workspace settings/membership pages load and save changes.
+- [ ] Workspace settings `[Save Changes]` is disabled until the workspace name field has an unsaved change.
+- [ ] Workspace settings name save shows success toast (and error toast on forced/failed save paths).
 - [ ] Workspace card settings link/icon is hidden for roles without settings permission.
 - [ ] Workspace breadcrumbs render on workspace-scoped pages and do not render on `/app/workspaces`.
 - [ ] Breadcrumb `Workspaces` link routes to `/app/workspaces`.

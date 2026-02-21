@@ -260,6 +260,15 @@ RSpec.describe 'App::Workspaces', type: :request do
       expect(response.body).to have_selector('.breadcrumbs-current', text: 'Workspace Settings')
     end
 
+    it 'renders workspace name save form with change detection gating' do
+      get app_workspace_settings_path(workspace)
+
+      expect(response.body)
+        .to have_selector('[data-controller="form"][data-form-require-change-value="true"]')
+      expect(response.body)
+        .to have_selector('form.workspace-update-form input[type="submit"][disabled="disabled"]')
+    end
+
     it 'does not show owner role as an invite option for owners on team tab' do
       get app_workspace_settings_path(workspace), params: { tab: 'team' }
 
@@ -363,6 +372,16 @@ RSpec.describe 'App::Workspaces', type: :request do
       expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'general'))
     end
 
+    it 'sets a success toast payload' do
+      patch app_workspace_settings_path(workspace), params: { name: 'new_name' }
+
+      expect(flash[:toast]).to include(
+        type: 'success',
+        title: I18n.t('toasts.workspaces.updated.title'),
+        body: I18n.t('toasts.workspaces.updated.body')
+      )
+    end
+
     context 'when current user is an admin of the workspace' do
       let(:owner) { create(:user) }
 
@@ -388,6 +407,23 @@ RSpec.describe 'App::Workspaces', type: :request do
         patch app_workspace_settings_path(workspace), params: { name: 'new_name' }
 
         expect(response).to redirect_to(app_workspace_path(workspace))
+      end
+    end
+
+    context 'when updating workspace settings fails unexpectedly' do
+      before do
+        allow_any_instance_of(Workspace).to receive(:update!).and_raise(StandardError, 'boom')
+      end
+
+      it 'redirects to the general tab with an error toast' do
+        patch app_workspace_settings_path(workspace), params: { name: 'new_name' }
+
+        expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'general'))
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.update_failed.title'),
+          body: I18n.t('toasts.workspaces.update_failed.body')
+        )
       end
     end
   end

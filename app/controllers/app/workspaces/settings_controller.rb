@@ -11,8 +11,11 @@ module App
       end
 
       def update
-        workspace.update(name: workspace_params[:name])
-        redirect_to app_workspace_settings_path(workspace, tab: 'general')
+        if update_workspace_name
+          redirect_to_general_with_toast(workspace_updated_toast)
+        else
+          redirect_to_general_with_toast(workspace_update_failed_toast)
+        end
       end
 
       private
@@ -29,6 +32,34 @@ module App
         return if can_manage_workspace_settings?(workspace:)
 
         deny_workspace_access!(workspace:, fallback_path: app_workspace_path(workspace))
+      end
+
+      def update_workspace_name
+        workspace.update!(name: workspace_params[:name])
+      rescue StandardError => e
+        Rails.logger.error("Workspace settings update failed: #{e.class} #{e.message}")
+        false
+      end
+
+      def redirect_to_general_with_toast(toast)
+        flash[:toast] = toast
+        redirect_to app_workspace_settings_path(workspace, tab: 'general')
+      end
+
+      def workspace_updated_toast
+        {
+          type: 'success',
+          title: I18n.t('toasts.workspaces.updated.title'),
+          body: I18n.t('toasts.workspaces.updated.body')
+        }
+      end
+
+      def workspace_update_failed_toast
+        {
+          type: 'error',
+          title: I18n.t('toasts.workspaces.update_failed.title'),
+          body: I18n.t('toasts.workspaces.update_failed.body')
+        }
       end
     end
   end

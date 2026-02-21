@@ -66,11 +66,7 @@ module Auth
     end
 
     def post_accept_redirect_path
-      if can_manage_workspace_settings?(workspace: member.workspace)
-        return app_workspace_settings_path(member.workspace)
-      end
-
-      app_workspaces_path
+      app_workspace_path(member.workspace)
     end
   end
 end

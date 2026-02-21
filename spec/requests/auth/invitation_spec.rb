@@ -72,7 +72,7 @@ RSpec.describe 'Auth::Invitation', type: :request do
 
       it 'redirects to the workspace' do
         subject
-        expect(response).to redirect_to(app_workspace_settings_path(member.workspace))
+        expect(response).to redirect_to(app_workspace_path(member.workspace))
       end
 
       it 'persists terms acceptance metadata' do
@@ -96,9 +96,9 @@ RSpec.describe 'Auth::Invitation', type: :request do
       end
       let(:params) { { accept_terms: '1' } }
 
-      it 'redirects to workspaces list instead of workspace settings' do
+      it 'redirects to workspace home' do
         subject
-        expect(response).to redirect_to(app_workspaces_path)
+        expect(response).to redirect_to(app_workspace_path(member.workspace))
       end
     end
 
@@ -113,9 +113,9 @@ RSpec.describe 'Auth::Invitation', type: :request do
       end
       let(:params) { { accept_terms: '1' } }
 
-      it 'redirects to workspaces list instead of workspace settings' do
+      it 'redirects to workspace home' do
         subject
-        expect(response).to redirect_to(app_workspaces_path)
+        expect(response).to redirect_to(app_workspace_path(member.workspace))
       end
     end
 

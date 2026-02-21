@@ -86,9 +86,15 @@ en:
         title: New workspace invitation
         body: You've been invited to join the %{workspace_name} workspace on sqlbook.
     workspaces:
+      updated:
+        title: Workspace settings saved
+        body: Your workspace name has been updated.
+      update_failed:
+        title: Couldn't save workspace settings
+        body: Please check your workspace name and try again.
       unavailable:
         title: Workspace not available
-        body: You don't have permission to access that workspace.
+        body: You don't have permission to access this workspace.
       access_forbidden:
         title: Action not allowed
         body: Your workspace role does not allow this action.

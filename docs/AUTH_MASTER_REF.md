@@ -119,9 +119,8 @@ Source: `WorkspaceInvitationService`
   - status changes to `ACCEPTED`
   - invitation token cleared
   - session reset and set to invitee user
-  - redirect target is role-aware:
-    - owner/admin -> workspace settings route (`/app/workspaces/:id/workspace-settings`)
-    - user/read-only -> workspaces list
+  - redirect target after accept:
+    - all roles -> workspace home route (`/app/workspaces/:id`)
 - Reject:
   - member row removed
   - inviter receives rejection email

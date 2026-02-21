@@ -147,13 +147,12 @@ UI should hide actions users cannot perform, but server remains source of truth.
   - body: `Your workspace role does not allow this action.`
 - Deny behavior is implemented server-side in controller guards, independent of UI visibility.
 - Invitation accept redirect behavior:
-  - owner/admin -> workspace settings route (`/app/workspaces/:id/workspace-settings`)
-  - user/read-only -> workspaces list
+  - all roles -> workspace home route (`/app/workspaces/:id`)
 - Workspace access fallback behavior:
   - if user requests a workspace they are not a member of (or no longer a member of), redirect to `/app/workspaces`
   - show toast:
     - title: `Workspace not available`
-    - body: `You don't have permission to access that workspace.`
+    - body: `You don't have permission to access this workspace.`
 
 ## Environment safety constraints
 - No hardcoded staging hostnames in role-dependent links/buttons.
