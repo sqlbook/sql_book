@@ -49,6 +49,8 @@
   }
 
   .desktop-workspace-switcher {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
     display: none;
     width: 10rem;
   }
@@ -79,6 +81,8 @@
     z-index: 5;
 
     .select {
+      background: var(--gray-850);
+      border-color: var(--gray-700);
       margin: 0 0 1rem 0;
     }
 
