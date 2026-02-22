@@ -174,6 +174,23 @@ RSpec.describe 'App::Workspaces', type: :request do
           .not_to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
         expect(response.body).to have_selector('.breadcrumbs-current', text: workspace.name)
       end
+
+      it 'renders workspace header navigation links' do
+        get "/app/workspaces/#{workspace.id}"
+
+        nav_links = {
+          app_workspace_path(workspace) => 'Chat',
+          app_workspace_data_sources_path(workspace) => 'Data Sources',
+          app_workspace_queries_path(workspace) => 'Query Library',
+          app_workspace_dashboards_path(workspace) => 'Dashboards',
+          app_workspace_settings_path(workspace) => 'Settings'
+        }
+
+        nav_links.each do |path, label|
+          selector = "a.workspace-desktop-nav-item[href='#{path}']"
+          expect(response.body).to have_selector(selector, text: label)
+        end
+      end
     end
 
     context 'when current user is an admin of the workspace' do

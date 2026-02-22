@@ -1,10 +1,79 @@
 <% if signed_in? %>
-  <header class="header">
-    <%= link_to app_workspaces_path, "aria-label": "Return to the workspaces page" do %>
-      <%= render "shared/logo" %>
-    <% end %>
+  <% if @workspace %>
+    <% workspace_nav_section = case controller_path
+                               when 'app/workspaces'
+                                 action_name == 'show' ? :chat : nil
+                               when 'app/workspaces/data_sources', 'app/workspaces/data_sources/set_up'
+                                 :data_sources
+                               when 'app/workspaces/queries', 'app/workspaces/data_sources/queries'
+                                 :queries
+                               when 'app/workspaces/dashboards'
+                                 :dashboards
+                               when 'app/workspaces/settings'
+                                 :settings
+                               end %>
+    <% workspace_navigation_items = [
+         {
+           key: :chat,
+           path: app_workspace_path(@workspace),
+           icon: 'ri-message-ai-3-line',
+           label: 'Chat',
+           aria_label: "Open chat for the #{@workspace.name} workspace"
+         },
+         {
+           key: :data_sources,
+           path: app_workspace_data_sources_path(@workspace),
+           icon: 'ri-database-2-line',
+           label: 'Data Sources',
+           aria_label: "View datasources for the #{@workspace.name} workspace"
+         },
+         {
+           key: :queries,
+           path: app_workspace_queries_path(@workspace),
+           icon: 'ri-book-open-line',
+           label: 'Query Library',
+           aria_label: "View queries for the #{@workspace.name} workspace"
+         },
+         {
+           key: :dashboards,
+           path: app_workspace_dashboards_path(@workspace),
+           icon: 'ri-dashboard-line',
+           label: 'Dashboards',
+           aria_label: "View dashboards for the #{@workspace.name} workspace"
+         },
+         {
+           key: :settings,
+           path: app_workspace_settings_path(@workspace),
+           icon: 'ri-settings-3-line',
+           label: 'Settings',
+           aria_label: "View workspace settings for the #{@workspace.name} workspace"
+         }
+       ] %>
+  <% end %>
 
+  <header class="header <%= 'with-workspace' if @workspace %>">
     <% if @workspace %>
+      <div class="workspace-header-left">
+        <%= link_to app_workspaces_path, "aria-label": "Return to the workspaces page" do %>
+          <%= render "shared/logo" %>
+        <% end %>
+
+        <div class="select desktop-workspace-switcher" data-controller="menu">
+          <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: @workspace.id), { "data-action": "change->menu#changeWorkspace" } %>
+          <i class="ri-arrow-drop-down-line"></i>
+        </div>
+      </div>
+
+      <nav class="workspace-desktop-nav" aria-label="Workspace navigation">
+        <% workspace_navigation_items.each do |item| %>
+          <% active_class = "workspace-desktop-nav-item#{' active' if workspace_nav_section == item[:key]}" %>
+          <%= link_to item[:path], class: active_class, "aria-label": item[:aria_label] do %>
+            <i class="<%= item[:icon] %>"></i>
+            <span><%= item[:label] %></span>
+          <% end %>
+        <% end %>
+      </nav>
+
       <div class="menu-actions">
         <menu data-controller="menu" class="workspace-menu">
           <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle" aria-label="Toggle workspace menu">
@@ -15,21 +84,14 @@
           <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->menu#close" tabindex="0">
             <label class="text-small category heading">Workspace</label>
             <div class="select">
-              <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: params[:workspace_id]), { "data-action": "menu#changeWorkspace" } %>
+              <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: @workspace.id), { "data-action": "change->menu#changeWorkspace" } %>
               <i class="ri-arrow-drop-down-line"></i>
             </div>
 
-            <%= link_to app_workspace_data_sources_path(@workspace), class: "link secondary menu-item", "aria-label": "View datasources for the #{@workspace.name} workspace" do %>
-              <i class="ri-database-2-line"></i> Data Sources
-            <% end %>
-            <%= link_to app_workspace_queries_path(@workspace), class: "link secondary menu-item", "aria-label": "View queries for the #{@workspace.name} workspace" do %>
-              <i class="ri-book-open-line"></i> Query Library
-            <% end %>
-            <%= link_to app_workspace_dashboards_path(@workspace), class: "link secondary menu-item", "aria-label": "View dashboards for the #{@workspace.name} workspace" do %>
-              <i class="ri-dashboard-line"></i> Dashboards
-            <% end %>
-            <%= link_to app_workspace_settings_path(@workspace), class: "link secondary menu-item", "aria-label": "View workspace settings for the #{@workspace.name} workspace" do %>
-              <i class="ri-settings-3-line"></i> Settings
+            <% workspace_navigation_items.each do |item| %>
+              <%= link_to item[:path], class: "link secondary menu-item", "aria-label": item[:aria_label] do %>
+                <i class="<%= item[:icon] %>"></i> <%= item[:label] %>
+              <% end %>
             <% end %>
           </div>
         </menu>
@@ -51,6 +113,10 @@
           </div>
         </menu>
       </div>
+    <% else %>
+      <%= link_to app_workspaces_path, "aria-label": "Return to the workspaces page" do %>
+        <%= render "shared/logo" %>
+      <% end %>
     <% end %>
   </header>
 <% else %>

@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-21
+Last updated: 2026-02-22
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -94,6 +94,7 @@ Related reference:
 ## Workspace breadcrumbs
 - Breadcrumbs render on workspace-scoped app pages where workspace context exists (for example `/app/workspaces/:workspace_id/*`).
 - Breadcrumbs do not render on workspace home/list route (`/app/workspaces`).
+- Breadcrumb component is currently intentionally hidden in UI during navigation IA transition.
 - Standard structure:
   - `Workspaces` / `<Workspace Name>` / `<Section>` / `<Optional Item>`
 - Link behavior:
@@ -105,6 +106,46 @@ Related reference:
   - first item, last item, and `/` separators stay visible and are not clipped.
   - middle breadcrumb items can truncate with ellipsis (down to `...`) while preserving clickability.
   - truncated middle breadcrumb items show tooltip text on hover.
+
+## Header navigation menus
+- Header behavior is responsive by viewport width:
+  - `<1024px`:
+    - two right-aligned top-level menu icons are shown with 16px gap:
+      - workspace menu icon: `ri-menu-line`
+      - account menu icon: `ri-account-circle-line`
+    - icon interaction model:
+      - tapping icon opens dropdown and swaps icon to close (`ri-close-line`)
+      - only one menu remains open at a time
+      - `Esc` closes the open dropdown
+    - workspace menu dropdown:
+      - width: 180px
+      - aligned so dropdown right edge matches workspace-menu icon right edge
+      - opens 8px below icon
+      - content:
+        - `Workspace` heading
+        - workspace switcher select
+        - links: `Chat`, `Data Sources`, `Query Library`, `Dashboards`, `Settings`
+    - account menu dropdown:
+      - width: 160px
+      - aligned so dropdown right edge matches account-menu icon right edge
+      - opens 8px below icon
+      - content:
+        - `Account` heading
+        - links: `Settings` (account settings), `Log out`
+  - `>=1024px`:
+    - workspace menu icon is hidden; account icon remains on the right
+    - persistent workspace switcher is shown in header, 16px right of logo, width 160px
+    - centered top nav link group is shown with routes:
+      - `Chat` -> `/app/workspaces/:id`
+      - `Data Sources` -> `/app/workspaces/:id/data_sources`
+      - `Query Library` -> `/app/workspaces/:id/queries` (also active on nested query routes)
+      - `Dashboards` -> `/app/workspaces/:id/dashboards`
+      - `Settings` -> `/app/workspaces/:id/workspace-settings`
+    - top nav styling:
+      - 32px height items with 12px horizontal padding and 8px icon/text gap
+      - inactive: gray-800 background, gray-700 border, gray-250 label, gray-500 icon
+      - hover/active: gray-700 background, gray-500 border, cream-250 label, red-500 icon
+      - first/last items use 8px outer corner radius
 
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.

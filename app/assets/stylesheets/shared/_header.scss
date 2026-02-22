@@ -41,7 +41,23 @@
     display: block;
   }
 
+  .workspace-header-left {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+  }
+
+  .desktop-workspace-switcher {
+    display: none;
+    width: 10rem;
+  }
+
+  .workspace-desktop-nav {
+    display: none;
+  }
+
   .menu-actions {
+    align-items: center;
     display: flex;
     gap: 1rem;
     margin: 0 0 0 auto;
@@ -59,7 +75,7 @@
     right: 0;
     top: calc(100% + .5rem);
     width: 11.25rem;
-    z-index: 1;
+    z-index: 5;
 
     .select {
       margin: 0 0 1rem 0;
@@ -121,5 +137,74 @@
 
   .account-menu .dropdown {
     width: 10rem;
+  }
+
+  @media (min-width: 64rem) {
+    &.with-workspace {
+      position: relative;
+    }
+
+    .desktop-workspace-switcher {
+      display: block;
+    }
+
+    .workspace-desktop-nav {
+      display: flex;
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+
+      .workspace-desktop-nav-item {
+        align-items: center;
+        background: var(--gray-800);
+        border: 1px solid var(--gray-700);
+        color: var(--gray-250);
+        display: inline-flex;
+        font-size: 1rem;
+        gap: .5rem;
+        height: 2rem;
+        line-height: 1.5rem;
+        padding: 0 .75rem;
+        position: relative;
+        text-decoration: none;
+        z-index: 1;
+
+        &:first-of-type {
+          border-bottom-left-radius: var(--border-radius-lg);
+          border-top-left-radius: var(--border-radius-lg);
+        }
+
+        &:last-of-type {
+          border-bottom-right-radius: var(--border-radius-lg);
+          border-top-right-radius: var(--border-radius-lg);
+        }
+
+        & + .workspace-desktop-nav-item {
+          margin-left: -1px;
+        }
+
+        i {
+          color: var(--gray-500);
+        }
+
+        &:hover,
+        &.active {
+          background: var(--gray-700);
+          border-color: var(--gray-500);
+          color: var(--cream-250);
+          z-index: 2;
+
+          i {
+            color: var(--red-500);
+          }
+        }
+      }
+    }
+
+    .workspace-menu {
+      display: none;
+    }
   }
 }
