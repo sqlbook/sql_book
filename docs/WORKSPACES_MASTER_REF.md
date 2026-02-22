@@ -111,6 +111,9 @@ Related reference:
 - On signed-in app pages without workspace context (`@workspace` not present), header shows:
   - logo (left)
   - account menu icon (right) with `Account` dropdown containing `Settings` and `Log out`
+- Header shell is fixed-height across app pages:
+  - height: 64px
+  - padding: 16px top/bottom, 24px left/right
 - Header behavior is responsive by viewport width:
   - `<1024px`:
     - two right-aligned top-level menu icons are shown with 16px gap:
@@ -146,8 +149,10 @@ Related reference:
       - `Settings` -> `/app/workspaces/:id/workspace-settings`
     - top nav styling:
       - 32px height items with 12px horizontal padding and 8px icon/text gap
+      - medium body size font (14px, regular)
       - inactive: gray-800 background, gray-700 border, gray-250 label, gray-500 icon
-      - hover/active: gray-700 background, gray-500 border, cream-250 label, red-500 icon
+      - active: gray-850 background, gray-700 border, cream-250 label, red-500 icon
+      - hover: gray-850 background, gray-500 border, cream-250 label, red-500 icon
       - first/last items use 8px outer corner radius
 
 ## Workspace creation flow

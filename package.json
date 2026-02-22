@@ -11,7 +11,7 @@
     "@rails/actioncable": "^7.1.2",
     "chart.js": "^4.4.1",
     "esbuild": "^0.19.11",
-    "remixicon": "^4.0.1"
+    "remixicon": "^4.9.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",

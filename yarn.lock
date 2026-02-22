@@ -193,10 +193,10 @@ esbuild@^0.19.11:
     "@esbuild/win32-ia32" "0.19.11"
     "@esbuild/win32-x64" "0.19.11"
 
-remixicon@^4.0.1:
-  version "4.0.1"
-  resolved "https://registry.npmjs.org/remixicon/-/remixicon-4.0.1.tgz#734b20b5efcfc2e10325242616de7fe8493efd58"
-  integrity sha512-Apa13Q01mFIuQEMvSVni8NnF9cV0vud9YXb2prQ+g3jmWpxKoFCL+yIiQ+9JCeLptdGKyoqVjCYOwwBQVHdciQ==
+remixicon@^4.9.1:
+  version "4.9.1"
+  resolved "https://registry.yarnpkg.com/remixicon/-/remixicon-4.9.1.tgz#9b3193ac7c1aa290822f9976692d4b45028128d3"
+  integrity sha512-36gLSoujkabnCFZFDyP17VNh9piuBA/rsXUb4auSJWLGsHVXtmxLj/EM5FjaEAGnk8oIAj1Azob/DZ2N+90lAQ==
 
 undici-types@~5.26.4:
   version "5.26.5"
