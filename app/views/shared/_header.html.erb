@@ -117,6 +117,25 @@
       <%= link_to app_workspaces_path, "aria-label": "Return to the workspaces page" do %>
         <%= render "shared/logo" %>
       <% end %>
+
+      <div class="menu-actions">
+        <menu data-controller="menu" class="account-menu">
+          <button class="link secondary toggle-menu" data-menu-target="button" data-action="menu#toggle" aria-label="Toggle account menu">
+            <i class="ri-account-circle-line"></i>
+            <i class="ri-close-line"></i>
+          </button>
+
+          <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->menu#close" tabindex="0">
+            <label class="text-small category heading">Account</label>
+            <%= link_to app_account_settings_path, class: "link secondary menu-item", "aria-label": "View account settings" do %>
+              <i class="ri-settings-3-line"></i> Settings
+            <% end %>
+            <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>
+              <i class="ri-logout-box-r-line"></i> Log out
+            <% end %>
+          </div>
+        </menu>
+      </div>
     <% end %>
   </header>
 <% else %>

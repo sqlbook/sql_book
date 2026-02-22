@@ -108,6 +108,9 @@ Related reference:
   - truncated middle breadcrumb items show tooltip text on hover.
 
 ## Header navigation menus
+- On signed-in app pages without workspace context (`@workspace` not present), header shows:
+  - logo (left)
+  - account menu icon (right) with `Account` dropdown containing `Settings` and `Log out`
 - Header behavior is responsive by viewport width:
   - `<1024px`:
     - two right-aligned top-level menu icons are shown with 16px gap:

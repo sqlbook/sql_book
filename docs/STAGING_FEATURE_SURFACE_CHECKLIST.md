@@ -34,6 +34,7 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 ### Workspace navigation and management
 - [ ] Workspace switcher updates URL/state correctly.
 - [ ] Data source switcher updates query context correctly.
+- [ ] Signed-in app pages without workspace context show logo + account icon menu (with account settings/log out).
 - [ ] Header shows two right-aligned menu icons below `1024px` (`ri-menu-line` and `ri-account-circle-line`) with 16px gap.
 - [ ] Header shows desktop layout at `>=1024px`:
   - persistent workspace switcher (160px) 16px right of logo

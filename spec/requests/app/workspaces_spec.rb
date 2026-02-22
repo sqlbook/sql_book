@@ -32,6 +32,12 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to have_selector('.workspace-card h4 a', text: workspace_2.name)
       end
 
+      it 'renders the account menu toggle in the header' do
+        get '/app/workspaces'
+
+        expect(response.body).to have_selector('button[aria-label="Toggle account menu"]')
+      end
+
       context 'when the user has a pending invitation' do
         let(:invited_workspace) { create(:workspace, name: 'Invited Workspace') }
         let!(:pending_member) do
@@ -87,6 +93,12 @@ RSpec.describe 'App::Workspaces', type: :request do
     it 'shows a welcome message' do
       get '/app/workspaces/new'
       expect(response.body).to include('Welcome to sqlbook')
+    end
+
+    it 'renders the account menu toggle in the header' do
+      get '/app/workspaces/new'
+
+      expect(response.body).to have_selector('button[aria-label="Toggle account menu"]')
     end
 
     context 'if the user already has workspaces' do
