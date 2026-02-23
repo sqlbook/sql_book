@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-02-20
+Last updated: 2026-02-22
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -62,8 +62,24 @@ Single source of truth for Render setup decisions, actual configured values, and
 - Status: created and healthy
 - Service name: `sqlbook-staging-worker`
 - Runtime target: Docker
+- Branch: `main`
 - Start command: `bundle exec sidekiq -q events` (set via Docker Command)
 - Health signal: Sidekiq booted and connected to Redis
+
+## Deploy branch policy (critical)
+- Staging services (`sqlbook-staging-web`, `sqlbook-staging-worker`) auto-deploy from `main`.
+- Do not push to a separate `staging` branch for deploys in this repository.
+- Correct deploy command:
+
+```bash
+git push origin main
+```
+
+- Incorrect for this setup (will not trigger configured auto-deploy branch):
+
+```bash
+git push origin main:staging
+```
 
 ## Environment variables (staging target)
 Set on both Web and Worker unless noted otherwise:

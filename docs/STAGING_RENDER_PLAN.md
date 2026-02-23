@@ -16,11 +16,22 @@ Use the same GitHub repo for both app services.
 
 Web service:
 - Runtime: Docker (use existing `Dockerfile`)
+- Branch: `main`
 - Start command: default from image is OK
 
 Worker service:
 - Runtime: Docker (same image)
+- Branch: `main`
 - Start command: `bundle exec sidekiq -q events`
+
+Deploy branch policy:
+- This repo deploys staging from `main`.
+- Do not use `main:staging` for deploys.
+- Deploy with:
+
+```bash
+git push origin main
+```
 
 ## 3) Required environment variables
 

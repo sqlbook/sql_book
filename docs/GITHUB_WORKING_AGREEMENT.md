@@ -1,6 +1,6 @@
 # GitHub Working Agreement
 
-Last updated: 2026-02-16
+Last updated: 2026-02-22
 
 ## Purpose
 Define how we use GitHub Issues/Project for planning and execution so ticket state always reflects real status.
@@ -30,6 +30,16 @@ Define how we use GitHub Issues/Project for planning and execution so ticket sta
 - Tokens should be short-lived and treated as disposable session credentials.
 - When token access is revoked, Codex cannot operate GitHub issues/projects until a new temporary token is provided.
 - Prefer secure handoff methods (for example local temp file) over posting tokens in chat.
+
+## Branch and deploy policy
+- Work is performed on `main` for this repository.
+- Staging deploys are triggered from `main` (Render services track `main`).
+- Do not deploy via `main:staging` in this repo.
+- Deploy command:
+
+```bash
+git push origin main
+```
 
 ## Completion gates (required before `Done`)
 - Codex has completed a self-review of the implementation.
