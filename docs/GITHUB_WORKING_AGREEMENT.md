@@ -1,6 +1,6 @@
 # GitHub Working Agreement
 
-Last updated: 2026-02-22
+Last updated: 2026-02-23
 
 ## Purpose
 Define how we use GitHub Issues/Project for planning and execution so ticket state always reflects real status.
@@ -35,10 +35,18 @@ Define how we use GitHub Issues/Project for planning and execution so ticket sta
 - Work is performed on `main` for this repository.
 - Staging deploys are triggered from `main` (Render services track `main`).
 - Do not deploy via `main:staging` in this repo.
+- Hard rule: Codex must never provide `git push origin main:staging` as a deploy command for this repository.
 - Deploy command:
 
 ```bash
 git push origin main
+```
+
+- If `main:staging` is pushed accidentally, recover with:
+
+```bash
+git push origin main
+git push origin --delete staging
 ```
 
 ## Completion gates (required before `Done`)

@@ -46,8 +46,8 @@ body[class*=' app-'] {
     > main {
       background: var(--gray-800);
       border-radius: var(--app-shell-radius);
-      margin: var(--app-shell-spacing);
-      min-height: calc(100dvh - var(--app-header-height) - (var(--app-shell-spacing) * 2));
+      margin: 0 var(--app-shell-spacing) var(--app-shell-spacing);
+      min-height: calc(100dvh - var(--app-header-height) - var(--app-shell-spacing));
       padding: var(--app-shell-padding);
     }
 
@@ -64,8 +64,8 @@ body[class*=' app-'] {
       display: grid;
       gap: var(--app-shell-spacing);
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      margin: var(--app-shell-spacing);
-      min-height: calc(100dvh - var(--app-header-height) - (var(--app-shell-spacing) * 2));
+      margin: 0 var(--app-shell-spacing) var(--app-shell-spacing);
+      min-height: calc(100dvh - var(--app-header-height) - var(--app-shell-spacing));
 
       > main,
       > aside {

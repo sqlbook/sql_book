@@ -27,10 +27,18 @@ Worker service:
 Deploy branch policy:
 - This repo deploys staging from `main`.
 - Do not use `main:staging` for deploys.
+- Hard rule: never run `git push origin main:staging` in this repository.
 - Deploy with:
 
 ```bash
 git push origin main
+```
+
+If pushed to `main:staging` by mistake, recover immediately:
+
+```bash
+git push origin main
+git push origin --delete staging
 ```
 
 ## 3) Required environment variables

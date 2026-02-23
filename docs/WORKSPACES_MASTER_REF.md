@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-23
+Last updated: 2026-02-24
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -158,7 +158,8 @@ Related reference:
 ## App content surfaces (signed-in app)
 - App pages render content below the 64px header inside rounded surface containers.
 - Shared surface geometry:
-  - outer spacing from viewport edges (left/right/top/bottom): 24px
+  - no top margin below header (surfaces start directly under header)
+  - outer spacing from viewport edges (left/right/bottom): 24px
   - split gap between main and aside surfaces: 24px
   - border radius: 24px
   - internal padding for main and aside content: 32px

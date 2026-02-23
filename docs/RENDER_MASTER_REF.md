@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-02-22
+Last updated: 2026-02-23
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -69,6 +69,7 @@ Single source of truth for Render setup decisions, actual configured values, and
 ## Deploy branch policy (critical)
 - Staging services (`sqlbook-staging-web`, `sqlbook-staging-worker`) auto-deploy from `main`.
 - Do not push to a separate `staging` branch for deploys in this repository.
+- Hard rule: never use `main:staging` for deploy commands in this repo.
 - Correct deploy command:
 
 ```bash
@@ -80,6 +81,21 @@ git push origin main
 ```bash
 git push origin main:staging
 ```
+
+- If `main:staging` is pushed accidentally:
+  1. Push the same commit(s) to `main` immediately:
+
+  ```bash
+  git push origin main
+  ```
+
+  2. Optional cleanup of accidental remote branch:
+
+  ```bash
+  git push origin --delete staging
+  ```
+
+  3. Verify Render web + worker services are configured to branch `main` and auto-deploy is enabled.
 
 ## Environment variables (staging target)
 Set on both Web and Worker unless noted otherwise:
