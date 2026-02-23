@@ -23,7 +23,13 @@
     <%= render "shared/header" %>
     <%= render "shared/breadcrumbs" if show_workspace_breadcrumbs? %>
     <%= render "shared/toasts" %>
-    <%= yield %>
+    <% if app_page? %>
+      <div class="<%= class_names('app-content-layout', content_for(:app_content_layout_class)) %>">
+        <%= yield %>
+      </div>
+    <% else %>
+      <%= yield %>
+    <% end %>
     <%= render "shared/footer" %>
   </body>
 

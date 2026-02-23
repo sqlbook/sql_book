@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-02-22
+Last updated: 2026-02-23
 
 ## Purpose
 Track additional functionality beyond the core baseline as the product expands.
@@ -41,6 +41,10 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
   - persistent workspace switcher (160px) 16px right of logo
   - centered workspace nav links (`Chat`, `Data Sources`, `Query Library`, `Dashboards`, `Settings`)
   - account icon on right
+- [ ] Signed-in app pages render a main `gray-800` rounded surface below header with 24px outer spacing and 32px internal padding.
+- [ ] Split workspace pages (`data source show`, `query show`, `data source setup`) render `main + aside` below header with 24px gap, 24px radius, and full-height layout.
+- [ ] Split-page aside does not push/shift header layout.
+- [ ] Workspace settings page uses main-surface layout (no nested aside-style panel wrapper styling).
 - [ ] Workspace menu dropdown aligns right edge to workspace-menu icon and opens 8px below it.
 - [ ] Account menu dropdown aligns right edge to account-menu icon and opens 8px below it.
 - [ ] Workspace menu width is 180px and includes `Workspace` heading, workspace switcher, `Chat`, `Data Sources`, `Query Library`, `Dashboards`, and `Settings`.

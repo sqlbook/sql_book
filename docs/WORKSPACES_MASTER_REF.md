@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-22
+Last updated: 2026-02-23
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -154,6 +154,22 @@ Related reference:
       - active: gray-850 background, gray-700 border, cream-250 label, red-500 icon
       - hover: gray-850 background, gray-500 border, cream-250 label, red-500 icon
       - first/last items use 8px outer corner radius
+
+## App content surfaces (signed-in app)
+- App pages render content below the 64px header inside rounded surface containers.
+- Shared surface geometry:
+  - outer spacing from viewport edges (left/right/top/bottom): 24px
+  - split gap between main and aside surfaces: 24px
+  - border radius: 24px
+  - internal padding for main and aside content: 32px
+- Pages without aside:
+  - single full-width `main` surface (`gray-800`) within the 24px outer spacing.
+- Split pages with aside (data source settings, query editor, data source setup):
+  - `main` + `aside` render in a two-column split below header.
+  - split layout fills available viewport height under header.
+  - `aside` no longer participates in header layout; it sits entirely below header.
+- Workspace settings page (`/app/workspaces/:id/workspace-settings`):
+  - treated as a main-surface page (not an aside-style panel layout).
 
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.

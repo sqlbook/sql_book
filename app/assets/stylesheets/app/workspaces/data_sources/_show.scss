@@ -1,10 +1,4 @@
 .app-workspaces-data_sources-show {
-  display: grid;
-  grid-template-areas: 'header aside'
-                       'main aside';
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto 1fr;
-
   .page-header {
     align-items: center;
     display: flex;
