@@ -2,7 +2,6 @@
   <%= render "shared/tabs/nav_item", tab: "general", name: "General", icon_class: "ri-global-line", default_selected: true %>
   <%= render "shared/tabs/nav_item", tab: "team", name: "Team", icon_class: "ri-fire-line" %>
   <%= render "shared/tabs/nav_item", tab: "subscription", name: "Subscription", icon_class: "ri-fire-lin" %>
-  <div class="seperator"></div>
   <% if can_delete_workspace %>
     <%= render "shared/tabs/nav_item", tab: "delete", name: "Delete Workspace", icon_class: "ri-delete-bin-line" %>
   <% end %>
