@@ -61,6 +61,9 @@ en:
       is_not_valid: is not valid
 
   toasts:
+    generic_error:
+      title: Something went wrong
+      body: We couldn't complete your request, please try again. If the problem continues, contact hello@sqlbook.com.
     account_settings:
       account_deleted_success:
         title: Account successfully deleted

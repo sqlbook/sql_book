@@ -441,7 +441,7 @@ RSpec.describe 'App::Workspaces', type: :request do
 
     context 'when updating workspace settings fails unexpectedly' do
       before do
-        allow_any_instance_of(Workspace).to receive(:update!).and_raise(StandardError, 'boom')
+        allow_any_instance_of(Workspace).to receive(:update).and_raise(StandardError, 'boom')
       end
 
       it 'redirects to the general tab with an error toast' do
@@ -450,8 +450,8 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response).to redirect_to(app_workspace_settings_path(workspace, tab: 'general'))
         expect(flash[:toast]).to include(
           type: 'error',
-          title: I18n.t('toasts.workspaces.update_failed.title'),
-          body: I18n.t('toasts.workspaces.update_failed.body')
+          title: I18n.t('toasts.generic_error.title'),
+          body: I18n.t('toasts.generic_error.body')
         )
       end
     end

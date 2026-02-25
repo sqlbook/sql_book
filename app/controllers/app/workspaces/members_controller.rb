@@ -18,7 +18,7 @@ module App
       rescue ActiveRecord::RecordInvalid => e
         handle_invite_failure(message: "Workspace invite failed validation: #{e.message}")
       rescue StandardError => e
-        handle_invite_failure(message: "Workspace invite failed: #{e.class} #{e.message}")
+        handle_unexpected_failure(message: "Workspace invite failed: #{e.class} #{e.message}")
       end
 
       def update
@@ -27,7 +27,7 @@ module App
 
         update_member_role!
       rescue StandardError => e
-        handle_role_update_failure(error: e)
+        handle_unexpected_failure(message: "Workspace member role change failed: #{e.class} #{e.message}")
       end
 
       def destroy
@@ -39,7 +39,7 @@ module App
         redirect_to_team_tab
       end
 
-      def resend # rubocop:disable Metrics/AbcSize
+      def resend
         return reject_unresendable_member unless resend_allowed?
         return reject_resend_cooldown if resend_cooldown_active?
 
@@ -47,9 +47,7 @@ module App
         flash[:toast] = invite_resent_toast
         redirect_to_team_tab
       rescue StandardError => e
-        Rails.logger.error("Workspace invite resend failed: #{e.class} #{e.message}")
-        flash[:toast] = invite_resend_failed_toast
-        redirect_to_team_tab
+        handle_unexpected_failure(message: "Workspace invite resend failed: #{e.class} #{e.message}")
       end
 
       private
@@ -108,9 +106,9 @@ module App
         redirect_to_team_tab
       end
 
-      def handle_role_update_failure(error:)
-        Rails.logger.error("Workspace member role change failed: #{error.class} #{error.message}")
-        flash[:toast] = member_role_update_failed_toast
+      def handle_unexpected_failure(message:)
+        Rails.logger.error(message)
+        flash[:toast] = generic_error_toast
         redirect_to_team_tab
       end
 

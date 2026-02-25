@@ -23,7 +23,7 @@ module App
       redirect_with_toast(path: app_account_settings_path, toast: update_success_toast(requested_email:))
     rescue StandardError => e
       Rails.logger.error("Account settings update failed: #{e.class} #{e.message}")
-      redirect_with_toast(path: app_account_settings_path, toast: toast(type: 'error', key: 'update_failed'))
+      redirect_with_toast(path: app_account_settings_path, toast: generic_error_toast)
     end
 
     def destroy

@@ -143,6 +143,24 @@ RSpec.describe 'App::AccountSettings', type: :request do
         )
       end
     end
+
+    context 'when update fails unexpectedly' do
+      let(:params) { { first_name: 'Christopher', last_name: 'Pattison', email: user.email } }
+
+      before do
+        allow_any_instance_of(User).to receive(:update!).and_raise(StandardError, 'boom')
+      end
+
+      it 'sets the generic error toast' do
+        patch '/app/account-settings', params: params
+
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.generic_error.title'),
+          body: I18n.t('toasts.generic_error.body')
+        )
+      end
+    end
   end
 
   describe 'GET /app/account-settings/verify-email/:token' do

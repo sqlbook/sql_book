@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ApplicationController < ActionController::Base
+class ApplicationController < ActionController::Base # rubocop:disable Metrics/ClassLength
   class WorkspaceAccessDenied < StandardError; end
 
   rescue_from WorkspaceAccessDenied, with: :redirect_for_workspace_access_denied
@@ -125,4 +125,12 @@ class ApplicationController < ActionController::Base
   def pending_member_with_invitation
     current_user.members.pending.includes(:workspace).where.not(invitation: nil).first
   end
-end
+
+  def generic_error_toast
+    {
+      type: 'error',
+      title: I18n.t('toasts.generic_error.title'),
+      body: I18n.t('toasts.generic_error.body')
+    }
+  end
+end # rubocop:enable Metrics/ClassLength

@@ -15,6 +15,8 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
   - `toasts.account_settings.account_deleted_success`
   - `toasts.account_settings.account_delete_unresolved_workspaces`
   - `toasts.account_settings.account_delete_failed`
+- Global fallback toast:
+  - `toasts.generic_error`
 
 ## Copy and encoding rules
 - Toast `title` and default `body` values are rendered as plain text.
@@ -35,3 +37,9 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
 ## Link/action rules
 - Toast action links inside the app should use internal paths (`/app/...`) not hardcoded absolute hosts.
 - Use absolute URLs only for truly external destinations.
+
+## Fallback policy
+- For unexpected server-side failures (for example unhandled infrastructure/service errors in controller actions), use the global fallback toast:
+  - title: `Something went wrong`
+  - body: `We couldn't complete your request, please try again. If the problem continues, contact hello@sqlbook.com.`
+- Keep domain-specific error toasts for known business/validation cases (permissions, missing required selection, role constraints, etc.).

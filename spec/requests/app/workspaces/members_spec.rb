@@ -186,6 +186,23 @@ RSpec.describe 'App::Workspaces::Members', type: :request do
         expect(flash[:toast][:actions]).to be_nil
       end
     end
+
+    context 'when invite creation fails due to an unexpected server error' do
+      before do
+        allow_any_instance_of(WorkspaceInvitationService).to receive(:invite!)
+          .and_raise(StandardError, 'boom')
+      end
+
+      it 'sets the generic error toast payload' do
+        post("/app/workspaces/#{workspace.id}/members", params:)
+
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.generic_error.title'),
+          body: I18n.t('toasts.generic_error.body')
+        )
+      end
+    end
   end
 
   describe 'DELETE /app/workspaces/:workspace_id/members/:member_id' do
