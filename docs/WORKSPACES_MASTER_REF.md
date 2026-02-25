@@ -263,6 +263,7 @@ Source: `WorkspaceInvitationService`
 - Invite rejection email: `WorkspaceMailer.invite_reject`
 - Member removed email: `WorkspaceMailer.workspace_member_removed` (sent for accepted member removals in team management flow)
 - Workspace deleted notification email: `WorkspaceMailer.workspace_deleted`
+- Workspace ownership transfer notification email: `WorkspaceMailer.workspace_owner_transferred` (sent when account-deletion flow reassigns workspace ownership)
 - Sender defaults to `noreply@sqlbook.com` via `ApplicationMailer`.
 - Internal links in mailers should always be generated from route helpers + env-driven host/protocol config.
 

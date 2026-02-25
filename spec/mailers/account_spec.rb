@@ -28,4 +28,22 @@ RSpec.describe AccountMailer, type: :mailer do
       expect(subject.body).to include('expire in 1 hour')
     end
   end
+
+  describe '#account_deletion_confirmed' do
+    let(:user_email) { 'deleted-user@sitelabs.ai' }
+
+    subject { described_class.account_deletion_confirmed(user_email:) }
+
+    it 'renders the correct headers' do
+      expect(subject.subject).to eq 'Account Deletion Confirmed.'
+      expect(subject.to).to eq [user_email]
+      expect(subject.from).to eq ['noreply@sqlbook.com']
+    end
+
+    it 'includes confirmation copy' do
+      expect(subject.body).to include('Following your request to delete your sqlbook account')
+      expect(subject.body).to include('ownership has been successfully transferred')
+      expect(subject.body).to include('hello@sqlbook.com')
+    end
+  end
 end

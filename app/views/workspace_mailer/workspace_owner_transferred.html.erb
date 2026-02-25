@@ -1,0 +1,5 @@
+<h1>You've been made the Owner of <%= @workspace_name %></h1>
+
+<p><%= @previous_owner_name %> has made you the Owner of the <%= @workspace_name %> team as they have deleted their sqlbook account. You are now responsible for managing billing and have full administrator privileges.</p>
+
+<%= link_to "[Visit Sqlbook]", app_workspace_url(@workspace), style: "margin: 0; text-decoration: none;" %>

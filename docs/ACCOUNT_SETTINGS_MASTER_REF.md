@@ -17,16 +17,38 @@ Related references:
 ## Core routes
 - `GET /app/account-settings` -> `App::AccountSettingsController#show`
 - `PATCH /app/account-settings` -> `App::AccountSettingsController#update`
+- `DELETE /app/account-settings` -> `App::AccountSettingsController#destroy`
 - `GET /app/account-settings/verify-email/:token` -> `App::AccountSettingsController#verify_email`
 
 ## Current form scope
 - Account settings UI now uses tabs:
   - `General` (default) -> first name, last name, email update form
   - `Notifications` -> placeholder tab (no editable controls yet)
-  - `Delete Account` -> placeholder tab (no delete flow yet)
+  - `Delete Account` -> account deletion guidance and confirmation flow
 - Tabs use shared tab component behavior:
   - top spacing: `0`
   - spacing below tabs: `40px`
+
+## Delete account behavior
+- Delete account is confirmed via an inline message dialog in the `Delete Account` tab.
+- Dialog includes a per-workspace decision table for all workspaces where the current user is an `accepted owner`.
+- Transfer candidates are restricted to `accepted` members only.
+- Per owned workspace:
+  - if at least one accepted non-owner member exists, actor must choose:
+    - a `New owner` member, or
+    - `Delete workspace`
+  - if no accepted non-owner member exists, workspace is automatically marked:
+    - `No team members, workspace will be deleted.`
+- Confirm CTA remains disabled until all required workspace decisions are selected.
+- On success:
+  - account is deleted
+  - workspaces are deleted or transferred per selection
+  - user session is reset
+  - redirect goes to `/`
+  - success toast is shown
+- On unresolved or failure states:
+  - redirect returns to `/app/account-settings?tab=delete_account`
+  - error toast is shown
 
 ## Email change data model
 Email changes use a pending-verification state on `users`:
@@ -79,6 +101,20 @@ Email changes use a pending-verification state on `users`:
 - Error: verification expired/invalid
 - Error: email unavailable
 - Error: generic update failure
+- Success: account deleted (`account_deleted_success`)
+- Error: account deletion unresolved workspace actions (`account_delete_unresolved_workspaces`)
+- Error: generic account deletion failure (`account_delete_failed`)
+
+## Account deletion emails
+- Confirmation to deleted user:
+  - mailer: `AccountMailer.account_deletion_confirmed`
+  - recipient: deleted account email (captured before delete)
+  - subject: `Account Deletion Confirmed.`
+- Ownership transfer notice to new owner:
+  - mailer: `WorkspaceMailer.workspace_owner_transferred`
+  - recipient: selected new owner
+  - subject: `You've been made the Owner of %{workspace_name}`
+  - destination link: workspace home (`/app/workspaces/:id`)
 
 ## Environment safety rules
 - No hardcoded staging/production hostnames in account-settings links.
@@ -93,4 +129,4 @@ Email changes use a pending-verification state on `users`:
 ## Follow-up candidates
 - Add explicit resend verification action with cooldown/rate limit.
 - Add account-level audit log for profile/email changes.
-- Add settings areas for notification preferences and account deletion controls.
+- Add settings area for notification preferences.

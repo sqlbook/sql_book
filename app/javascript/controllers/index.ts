@@ -4,6 +4,7 @@
 
 import { application } from './application';
 
+import AccountDeleteController from './account-delete-controller';
 import AccordionController from './accordion-controller';
 import BodyController from './body-controller';
 import BreadcrumbsController from './breadcrumbs-controller';
@@ -24,6 +25,7 @@ import SearchController from './search-controller';
 import TableController from './table-controller';
 import ToastStackController from './toast-stack-controller';
 
+application.register('account-delete', AccountDeleteController);
 application.register('accordion', AccordionController);
 application.register('body', BodyController);
 application.register('breadcrumbs', BreadcrumbsController);

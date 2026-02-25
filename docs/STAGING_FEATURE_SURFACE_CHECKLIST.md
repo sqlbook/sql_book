@@ -70,7 +70,18 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 - [ ] Signup `[Continue]` button does not shift position when toggling disabled/enabled state.
 - [ ] Account settings page (`/app/account-settings`) loads and saves first/last name changes.
 - [ ] Account settings tabs render (`General`, `Notifications`, `Delete Account`) and switch by `tab` param.
-- [ ] Account settings `General` tab contains current profile/email form; `Notifications` and `Delete Account` tabs are blank placeholders.
+- [ ] Account settings `General` tab contains current profile/email form and unchanged save behavior.
+- [ ] Account settings `Delete Account` tab shows guidance copy and opens the workspace-options confirmation dialog.
+- [ ] Delete Account dialog requires per-workspace outcomes before enabling `[Yes, I'm leaving]`.
+- [ ] Delete Account workspace-options table behavior:
+  - rows with no accepted transfer candidates show `No team members, workspace will be deleted.`
+  - rows with accepted transfer candidates require selection of `New owner` or `Delete workspace`
+- [ ] Successful account deletion redirects to `/` and shows:
+  - title: `Account successfully deleted`
+  - body: `Your account has been deleted and your workspaces have been transferred or destroyed.`
+- [ ] Account deletion sends:
+  - deleted-user confirmation email (`Account Deletion Confirmed.`)
+  - one ownership-transfer email per transferred workspace (`You've been made the Owner of <Workspace Name>`)
 - [ ] Account settings email change keeps current email unchanged until verification link is used.
 - [ ] Email-change verification link succeeds within 1 hour and redirects to `/app/workspaces` with success toast.
 - [ ] Expired email-change verification link redirects to `/app/account-settings` with error toast.

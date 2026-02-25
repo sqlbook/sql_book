@@ -1,6 +1,6 @@
 # Toasts Master Reference
 
-Last updated: 2026-02-21
+Last updated: 2026-02-25
 
 ## Purpose
 Define copy and rendering rules for in-app toasts so messaging stays consistent and safe.
@@ -11,6 +11,10 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
 - Current workspace-settings save toasts:
   - `toasts.workspaces.updated`
   - `toasts.workspaces.update_failed`
+- Current account-settings delete flow toasts:
+  - `toasts.account_settings.account_deleted_success`
+  - `toasts.account_settings.account_delete_unresolved_workspaces`
+  - `toasts.account_settings.account_delete_failed`
 
 ## Copy and encoding rules
 - Toast `title` and default `body` values are rendered as plain text.

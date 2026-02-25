@@ -42,6 +42,13 @@ RSpec.describe 'App::AccountSettings', type: :request do
 
         expect(response.body).not_to include('Use the settings below to update your personal account details.')
       end
+
+      it 'renders account deletion guidance when delete account tab is selected' do
+        get '/app/account-settings', params: { tab: 'delete_account' }
+
+        expect(response.body).to include('You can delete your account at any time:')
+        expect(response.body).to include('Account deletion workspace options')
+      end
     end
   end
 
@@ -256,6 +263,68 @@ RSpec.describe 'App::AccountSettings', type: :request do
           title: I18n.t('toasts.account_settings.email_verification_expired.title'),
           body: I18n.t('toasts.account_settings.email_verification_expired.body')
         )
+      end
+    end
+  end
+
+  describe 'DELETE /app/account-settings' do
+    let(:user) { create(:user, first_name: 'Chris', last_name: 'Pattison', email: 'owner@sitelabs.ai') }
+
+    context 'when user is not authenticated' do
+      it 'redirects to login' do
+        delete '/app/account-settings'
+
+        expect(response).to redirect_to(auth_login_index_path)
+      end
+    end
+
+    context 'when user is authenticated' do
+      before { sign_in(user) }
+
+      it 'deletes account when ownership can transfer and action is provided' do
+        workspace = create(:workspace, name: 'Bananas Ltd')
+        create(:member, user:, workspace:, role: Member::Roles::OWNER)
+        eligible_member = create(:member, workspace:, role: Member::Roles::ADMIN)
+
+        delete '/app/account-settings', params: { workspace_actions: { workspace.id.to_s => eligible_member.id.to_s } }
+
+        expect(response).to redirect_to(root_path)
+        expect(User.find_by(id: user.id)).to be_nil
+        expect(Workspace.find_by(id: workspace.id)).to be_present
+        expect(eligible_member.reload.role).to eq(Member::Roles::OWNER)
+        expect(flash[:toast]).to include(
+          type: 'success',
+          title: I18n.t('toasts.account_settings.account_deleted_success.title'),
+          body: I18n.t('toasts.account_settings.account_deleted_success.body')
+        )
+      end
+
+      it 'returns unresolved toast when transfer action is missing' do
+        workspace = create(:workspace, name: 'Alphabet Inc')
+        create(:member, user:, workspace:, role: Member::Roles::OWNER)
+        create(:member, workspace:, role: Member::Roles::ADMIN)
+
+        delete '/app/account-settings', params: { workspace_actions: { workspace.id.to_s => '' } }
+
+        expect(response).to redirect_to(app_account_settings_path(tab: 'delete_account'))
+        expect(User.find_by(id: user.id)).to be_present
+        expect(flash[:toast]).to include(
+          type: 'error',
+          title: I18n.t('toasts.account_settings.account_delete_unresolved_workspaces.title'),
+          body: I18n.t('toasts.account_settings.account_delete_unresolved_workspaces.body')
+        )
+      end
+
+      it 'allows deletion without transfer when no accepted team members exist' do
+        workspace = create(:workspace, name: 'Solo Workspace')
+        create(:member, user:, workspace:, role: Member::Roles::OWNER)
+        create(:member, workspace:, role: Member::Roles::USER, status: Member::Status::PENDING)
+
+        delete '/app/account-settings', params: { workspace_actions: {} }
+
+        expect(response).to redirect_to(root_path)
+        expect(User.find_by(id: user.id)).to be_nil
+        expect(Workspace.find_by(id: workspace.id)).to be_nil
       end
     end
   end

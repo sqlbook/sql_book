@@ -39,6 +39,7 @@ en:
   mailers:
     account:
       subjects:
+        account_deletion_confirmed: Account Deletion Confirmed.
         verify_email_change: Confirm your email change on sqlbook.
     data_source:
       subjects:
@@ -51,6 +52,7 @@ en:
       subjects:
         invite: You've been invited to join a workspace on sqlbook.
         invite_reject: Invitation rejected.
+        workspace_owner_transferred: You've been made the Owner of %{workspace_name}
         workspace_deleted: One of your workspaces has been deleted.
         workspace_member_removed: You've been removed from a workspace.
 
@@ -60,6 +62,15 @@ en:
 
   toasts:
     account_settings:
+      account_deleted_success:
+        title: Account successfully deleted
+        body: Your account has been deleted and your workspaces have been transferred or destroyed.
+      account_delete_failed:
+        title: Couldn't delete account
+        body: We couldn't delete your account right now. Please try again.
+      account_delete_unresolved_workspaces:
+        title: Workspace actions required
+        body: Please choose a new owner or delete workspace for each listed workspace.
       updated:
         title: Account settings saved
         body: Your account details have been updated.

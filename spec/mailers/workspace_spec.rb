@@ -84,4 +84,29 @@ RSpec.describe WorkspaceMailer, type: :mailer do
       expect(subject.body).to include('Unsubscribe')
     end
   end
+
+  describe '#workspace_owner_transferred' do
+    let(:new_owner) { create(:user, email: 'new-owner@sitelabs.ai') }
+    let(:workspace) { create(:workspace, name: 'Quokka Inc') }
+
+    subject do
+      described_class.workspace_owner_transferred(
+        new_owner:,
+        workspace:,
+        previous_owner_name: 'Chris Pattison'
+      )
+    end
+
+    it 'renders the correct headers' do
+      expect(subject.subject).to eq "You've been made the Owner of Quokka Inc"
+      expect(subject.to).to eq [new_owner.email]
+      expect(subject.from).to eq ['noreply@sqlbook.com']
+    end
+
+    it 'includes workspace ownership transfer details and workspace link' do
+      expect(subject.body).to include('Chris Pattison has made you the Owner of the Quokka Inc team')
+      expect(subject.body).to include('full administrator privileges')
+      expect(subject.body).to include("/app/workspaces/#{workspace.id}")
+    end
+  end
 end

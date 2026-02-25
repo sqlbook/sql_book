@@ -12,4 +12,86 @@
       margin: 2rem 0 0 0;
     }
   }
+
+  .delete-account-tab {
+    .label {
+      margin: 0;
+    }
+
+    .delete-account-guidance {
+      color: var(--gray-250);
+      margin: .5rem 0 0 0;
+      padding: 0 0 0 1rem;
+
+      li {
+        margin: 0;
+      }
+    }
+
+    .delete-account-trigger {
+      display: none;
+      margin: 2rem 0 0 0;
+      text-decoration: none;
+
+      &.show {
+        display: inline-block;
+      }
+    }
+
+    .account-delete-dialog {
+      display: none;
+      margin: 2rem 0 0 0;
+
+      &.show {
+        display: flex;
+      }
+
+      .body {
+        p {
+          margin: 0 0 1.5rem 0;
+        }
+      }
+
+      .title {
+        margin: 0 0 1rem 0;
+      }
+
+      .account-delete-workspaces-table {
+        margin: 0 0 2rem 0;
+        table-layout: fixed;
+        width: 100%;
+
+        th,
+        td {
+          vertical-align: middle;
+        }
+
+        td {
+          white-space: normal;
+        }
+      }
+
+      .account-delete-select {
+        width: 15rem;
+
+        &.placeholder-selected {
+          select {
+            color: var(--gray-300);
+            font-style: italic;
+          }
+        }
+
+        &.danger-selected {
+          select {
+            color: var(--red-500);
+            font-style: normal;
+          }
+        }
+      }
+
+      .actions {
+        margin: 0;
+      }
+    }
+  }
 }

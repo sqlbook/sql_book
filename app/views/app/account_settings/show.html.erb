@@ -48,6 +48,77 @@
   <% end %>
 
   <% if active_tab?(tab: "delete_account") %>
-    <div class="container md"></div>
+    <div class="container lg delete-account-tab" data-controller="account-delete">
+      <p class="label">You can delete your account at any time:</p>
+      <ul class="delete-account-guidance">
+        <li>For any workspace where you are the only team member the workspace will be deleted immediately.</li>
+        <li>If you are the Owner of any workspaces with other team members you will have the opportunity to view and transfer ownership, or delete the workspace, once you click the 'Delete Account' button below.</li>
+        <li>Once your account and workspace(s) have been deleted we will email you to confirm.</li>
+        <li>Account and workspace deletion are irreversible.</li>
+      </ul>
+
+      <button type="button" class="link primary delete-account-trigger show" data-account-delete-target="openButton" data-action="account-delete#show">
+        [Delete Account]
+      </button>
+
+      <div class="message account-delete-dialog" data-account-delete-target="dialog">
+        <i class="ri-error-warning-line ri-lg red-500"></i>
+        <div class="body">
+          <p class="title cream-250"><b>Account deletion workspace options</b></p>
+          <p>We're sorry to see you go. Use the table below to review what will happen to any workspaces you own when you delete your account.</p>
+
+          <%= form_with url: app_account_settings_path, method: :delete, class: "account-delete-form", html: { "data-account-delete-target": "form" } do %>
+            <% if @owned_workspace_rows.any? %>
+              <table class="account-delete-workspaces-table">
+                <tr>
+                  <th>Workspace name</th>
+                  <th>Current owner</th>
+                  <th>New owner</th>
+                </tr>
+                <% @owned_workspace_rows.each do |row| %>
+                  <% workspace = row[:workspace] %>
+                  <% eligible_members = row[:eligible_members] %>
+                  <tr>
+                    <td><%= workspace.name %></td>
+                    <td><%= @account_user.full_name %> <span class="gray-300">(you)</span></td>
+                    <td>
+                      <% if eligible_members.empty? %>
+                        <%= hidden_field_tag "workspace_actions[#{workspace.id}]", AccountDeletionService::DELETE_WORKSPACE_ACTION %>
+                        No team members, workspace will be deleted.
+                      <% else %>
+                        <div class="select account-delete-select">
+                          <%= select_tag "workspace_actions[#{workspace.id}]",
+                                         options_for_select(
+                                           [["Please select", ""]] +
+                                           eligible_members.map { |member| [member.user.full_name, member.id] } +
+                                           [["Delete workspace", AccountDeletionService::DELETE_WORKSPACE_ACTION]]
+                                         ),
+                                         class: "account-delete-select-input",
+                                         required: true,
+                                         data: {
+                                           account_delete_target: "actionSelect",
+                                           action: "change->account-delete#updateConfirmState"
+                                         } %>
+                          <i class="ri-arrow-drop-down-line"></i>
+                        </div>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </table>
+            <% else %>
+              <p>You do not own any workspaces. Deleting your account will only remove your account data.</p>
+            <% end %>
+
+            <p class="title cream-250"><b>Delete account and transfer workspaces (if relevant)?</b></p>
+
+            <div class="actions">
+              <%= submit_tag "[Yes, I'm leaving]", class: "link primary", disabled: true, "data-account-delete-target": "submit" %>
+              <button type="button" class="link secondary" data-action="account-delete#hide">Cancel</button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
   <% end %>
 </main>

@@ -24,4 +24,15 @@ class WorkspaceMailer < ApplicationMailer
 
     mail(to: user.email, subject: I18n.t('mailers.workspace.subjects.workspace_member_removed'))
   end
+
+  def workspace_owner_transferred(new_owner:, workspace:, previous_owner_name:)
+    @workspace = workspace
+    @workspace_name = workspace.name
+    @previous_owner_name = previous_owner_name
+
+    mail(
+      to: new_owner.email,
+      subject: I18n.t('mailers.workspace.subjects.workspace_owner_transferred', workspace_name: workspace.name)
+    )
+  end
 end

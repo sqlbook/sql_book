@@ -6,6 +6,7 @@ module App
 
     def show
       @account_user = current_user
+      @owned_workspace_rows = owned_workspace_rows
     end
 
     def update
@@ -23,6 +24,20 @@ module App
     rescue StandardError => e
       Rails.logger.error("Account settings update failed: #{e.class} #{e.message}")
       redirect_with_toast(path: app_account_settings_path, toast: toast(type: 'error', key: 'update_failed'))
+    end
+
+    def destroy
+      result = AccountDeletionService.new(
+        user: current_user,
+        workspace_actions: workspace_actions_params
+      ).call
+
+      return handle_successful_account_deletion if result.success?
+
+      redirect_with_toast(
+        path: app_account_settings_path(tab: 'delete_account'),
+        toast: toast(type: 'error', key: result.error_key || 'account_delete_failed')
+      )
     end
 
     def verify_email
@@ -56,6 +71,13 @@ module App
       return nil if submitted_email.blank? || submitted_email == current_user.email
 
       submitted_email
+    end
+
+    def workspace_actions_params
+      raw_workspace_actions = params[:workspace_actions]
+      return {} unless raw_workspace_actions.respond_to?(:to_unsafe_h)
+
+      raw_workspace_actions.to_unsafe_h.transform_values { |value| value.to_s.strip }
     end
 
     def email_taken?(email:)
@@ -148,6 +170,36 @@ module App
     def redirect_with_toast(path:, toast:)
       flash[:toast] = toast
       redirect_to path
+    end
+
+    def owned_workspace_rows
+      current_user.members
+        .accepted
+        .where(role: Member::Roles::OWNER)
+        .includes(workspace: { members: :user })
+        .map(&:workspace)
+        .uniq(&:id)
+        .sort_by { |workspace| workspace.name.downcase }
+        .map do |workspace|
+          {
+            workspace:,
+            eligible_members: eligible_transfer_members_for(workspace:)
+          }
+        end
+    end
+
+    def eligible_transfer_members_for(workspace:)
+      workspace.members
+        .select { |member| member.status == Member::Status::ACCEPTED && member.user_id != current_user.id }
+        .sort_by { |member| [member.user.first_name, member.user.last_name] }
+    end
+
+    def handle_successful_account_deletion
+      reset_session
+      redirect_with_toast(
+        path: root_path,
+        toast: toast(type: 'success', key: 'account_deleted_success')
+      )
     end
 
     def toast_emphasis(value)

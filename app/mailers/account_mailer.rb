@@ -9,4 +9,8 @@ class AccountMailer < ApplicationMailer
 
     mail(to: user.email, subject: I18n.t('mailers.account.subjects.verify_email_change'))
   end
+
+  def account_deletion_confirmed(user_email:)
+    mail(to: user_email, subject: I18n.t('mailers.account.subjects.account_deletion_confirmed'))
+  end
 end
