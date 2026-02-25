@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-02-24
+Last updated: 2026-02-25
 
 ## Purpose
 Track additional functionality beyond the core baseline as the product expands.
@@ -69,6 +69,8 @@ This checklist is intentionally dynamic. Add items whenever new user-facing beha
 ### Auth UX polish
 - [ ] Signup `[Continue]` button does not shift position when toggling disabled/enabled state.
 - [ ] Account settings page (`/app/account-settings`) loads and saves first/last name changes.
+- [ ] Account settings tabs render (`General`, `Notifications`, `Delete Account`) and switch by `tab` param.
+- [ ] Account settings `General` tab contains current profile/email form; `Notifications` and `Delete Account` tabs are blank placeholders.
 - [ ] Account settings email change keeps current email unchanged until verification link is used.
 - [ ] Email-change verification link succeeds within 1 hour and redirects to `/app/workspaces` with success toast.
 - [ ] Expired email-change verification link redirects to `/app/account-settings` with error toast.

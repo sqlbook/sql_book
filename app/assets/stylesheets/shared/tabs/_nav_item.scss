@@ -3,16 +3,20 @@
     align-items: center;
     color: var(--gray-300);
     display: flex;
+    line-height: 1.5rem;
     margin: 0 1.5rem 0 0;
     text-decoration: none;
 
     span {
       border-bottom: 1px solid transparent;
+      display: block;
       font-weight: var(--font-weight-bold);
     }
     
     i {
       color: var(--gray-500);
+      display: block;
+      line-height: 1;
       margin: 0 .25rem 0 0;
     }
     

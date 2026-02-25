@@ -28,6 +28,20 @@ RSpec.describe 'App::AccountSettings', type: :request do
 
         expect(response.body).not_to have_selector('.breadcrumbs')
       end
+
+      it 'renders account settings tabs' do
+        get '/app/account-settings'
+
+        expect(response.body).to include('General')
+        expect(response.body).to include('Notifications')
+        expect(response.body).to include('Delete Account')
+      end
+
+      it 'hides the general form when another tab is selected' do
+        get '/app/account-settings', params: { tab: 'notifications' }
+
+        expect(response.body).not_to include('Use the settings below to update your personal account details.')
+      end
     end
   end
 

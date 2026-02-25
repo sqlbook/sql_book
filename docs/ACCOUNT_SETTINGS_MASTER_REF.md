@@ -1,6 +1,6 @@
 # Account Settings Master Reference
 
-Last updated: 2026-02-20
+Last updated: 2026-02-25
 
 ## Service and goal
 - Service: authenticated user account settings in sqlbook.
@@ -20,9 +20,13 @@ Related references:
 - `GET /app/account-settings/verify-email/:token` -> `App::AccountSettingsController#verify_email`
 
 ## Current form scope
-- First name
-- Last name
-- Email address
+- Account settings UI now uses tabs:
+  - `General` (default) -> first name, last name, email update form
+  - `Notifications` -> placeholder tab (no editable controls yet)
+  - `Delete Account` -> placeholder tab (no delete flow yet)
+- Tabs use shared tab component behavior:
+  - top spacing: `0`
+  - spacing below tabs: `40px`
 
 ## Email change data model
 Email changes use a pending-verification state on `users`:
