@@ -16,6 +16,7 @@ export default class extends Controller<HTMLDivElement> {
     this.openButtonTarget.classList.remove('show');
     this.dialogTarget.classList.add('show');
     this.updateConfirmState();
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
   }
 
   public hide(): void {
@@ -33,6 +34,13 @@ export default class extends Controller<HTMLDivElement> {
         'danger-selected',
         select.value === 'delete'
       );
+
+      const selectedOption = select.selectedOptions.item(0);
+      if (selectedOption && selectedOption.value !== '') {
+        select.setAttribute('title', selectedOption.text);
+      } else {
+        select.removeAttribute('title');
+      }
     });
 
     const unresolvedSelect = this.actionSelectTargets.some((select) => select.value === '');

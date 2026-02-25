@@ -14,6 +14,9 @@
   }
 
   .delete-account-tab {
+    max-width: 44.5rem;
+    width: 100%;
+
     .label {
       margin: 0;
     }
@@ -39,6 +42,7 @@
     }
 
     .account-delete-dialog {
+      background: var(--gray-850);
       display: none;
       margin: 2rem 0 0 0;
 
@@ -47,32 +51,74 @@
       }
 
       .body {
+        padding: 0;
+        width: 100%;
+
         p {
           margin: 0 0 1.5rem 0;
         }
       }
 
-      .title {
+      .account-delete-dialog-heading {
+        align-items: center;
+        display: flex;
+        gap: .5rem;
+        margin: 0 0 .5rem 0;
+
+        i {
+          margin: 0;
+        }
+      }
+
+      .account-delete-dialog-title {
+        margin: 0;
+      }
+
+      .account-delete-dialog-description {
+        margin: 0 0 1.5rem 0;
+      }
+
+      .account-delete-confirm-label {
         margin: 0 0 1rem 0;
       }
 
       .account-delete-workspaces-table {
+        background: var(--gray-800);
         margin: 0 0 2rem 0;
         table-layout: fixed;
         width: 100%;
 
+        tr {
+          &:hover,
+          &.active {
+            background: var(--gray-800);
+          }
+        }
+
         th,
         td {
+          max-width: none;
+          padding: .5rem 1rem;
           vertical-align: middle;
+          width: 25%;
+
+          &:last-child {
+            width: 50%;
+          }
         }
 
         td {
-          white-space: normal;
+          white-space: nowrap;
+        }
+
+        .truncate-text {
+          display: block;
         }
       }
 
       .account-delete-select {
-        width: 15rem;
+        max-width: 15rem;
+        width: 100%;
 
         &.placeholder-selected {
           select {
