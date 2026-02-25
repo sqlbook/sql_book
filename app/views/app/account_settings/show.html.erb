@@ -64,7 +64,7 @@
       <div class="message account-delete-dialog" data-account-delete-target="dialog">
         <div class="body">
           <div class="account-delete-dialog-heading">
-            <i class="ri-error-warning-line ri-lg red-500"></i>
+            <i class="ri-error-warning-line red-500" aria-hidden="true"></i>
             <p class="account-delete-dialog-title cream-250"><b>Account deletion workspace options</b></p>
           </div>
           <p class="account-delete-dialog-description">We're sorry to see you go. Use the table below to review what will happen to any workspaces you own when you delete your account.</p>
@@ -121,7 +121,7 @@
                 </table>
               </div>
             <% else %>
-              <p>You do not own any workspaces. Deleting your account will only remove your account data.</p>
+              <p class="account-delete-empty-state">You do not own any workspaces. Deleting your account will only remove your account data.</p>
             <% end %>
 
             <p class="account-delete-confirm-label cream-250"><b>Delete account and transfer workspaces (if relevant)?</b></p>
