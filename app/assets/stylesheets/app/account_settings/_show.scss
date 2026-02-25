@@ -64,13 +64,16 @@
 
         i {
           display: block;
-          font-size: 1.5rem;
+          font-size: 1rem;
+          height: 1rem;
           line-height: 1;
           margin: 0;
+          width: 1rem;
         }
       }
 
       .account-delete-dialog-title {
+        color: var(--cream-250);
         margin: 0;
       }
 

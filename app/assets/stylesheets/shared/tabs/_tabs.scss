@@ -1,6 +1,11 @@
 .tabs {
   align-items: center;
   display: flex;
+  flex-wrap: nowrap;
   margin: 0 0 2.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 0;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
