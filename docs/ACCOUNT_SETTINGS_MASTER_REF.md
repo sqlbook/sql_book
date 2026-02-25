@@ -13,6 +13,7 @@ Single source of truth for account-settings routes, behavior, verification rules
 Related references:
 - `docs/AUTH_MASTER_REF.md` for login/signup/invitation flows.
 - `docs/WORKSPACES_MASTER_REF.md` for workspace-scoped settings and role behavior.
+- `docs/EMAILS_MASTER_REF.md` for full email inventory, trigger locations, and template mapping.
 
 ## Core routes
 - `GET /app/account-settings` -> `App::AccountSettingsController#show`
@@ -115,6 +116,7 @@ Email changes use a pending-verification state on `users`:
   - recipient: selected new owner
   - subject: `You've been made the Owner of %{workspace_name}`
   - destination link: workspace home (`/app/workspaces/:id`)
+- Full cross-domain email catalog and trigger map: `docs/EMAILS_MASTER_REF.md`.
 
 ## Environment safety rules
 - No hardcoded staging/production hostnames in account-settings links.

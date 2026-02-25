@@ -1,14 +1,17 @@
 # AWS SES Master Reference (Staging)
 
-Last updated: 2026-02-15
+Last updated: 2026-02-25
 
 ## Service and goal
 - Service: Amazon SES (Simple Email Service) in AWS.
-- Why we use it: send transactional auth emails (one-time login codes) from sqlbook in staging/production.
+- Why we use it: send transactional sqlbook emails (auth, invitations, account/workspace lifecycle) in staging/production.
 - Outcome we need: reliable email delivery from `sqlbook.com` identities, wired into Render app env vars.
 
 ## Purpose
-Single source of truth for AWS SES setup required for staging auth/login email delivery.
+Single source of truth for AWS SES setup and infrastructure prerequisites for transactional email delivery.
+
+Related reference:
+- `docs/EMAILS_MASTER_REF.md` for application-level mailer inventory, triggers, and templates.
 
 ## Scope
 - Environment: staging

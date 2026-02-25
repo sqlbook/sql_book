@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-02-21
+Last updated: 2026-02-25
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -10,9 +10,10 @@ Last updated: 2026-02-21
 ## Purpose
 Single source of truth for auth behavior, routes, email triggers, and key implementation rules.
 
-Related reference:
+Related references:
 - `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for authenticated account profile settings and email-change verification rules.
 - `docs/TOASTS_MASTER_REF.md` for toast copy/encoding/interpolation rules.
+- `docs/EMAILS_MASTER_REF.md` for complete mailer inventory, templates, and trigger locations.
 
 ## Auth architecture summary
 - Session-based auth using `session[:current_user_id]`.
@@ -103,6 +104,7 @@ Source: `app/services/one_time_password_service.rb`
   - `WorkspaceMailer.invite(member:)` to invitee
 - Workspace invite rejection email:
   - `WorkspaceMailer.invite_reject(member:)` to inviter
+- Full email inventory (including non-auth flows): `docs/EMAILS_MASTER_REF.md`.
 
 ## Invitation flow rules
 Source: `WorkspaceInvitationService`

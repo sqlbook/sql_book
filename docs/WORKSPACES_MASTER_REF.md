@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-24
+Last updated: 2026-02-25
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -10,8 +10,9 @@ Last updated: 2026-02-24
 ## Purpose
 Single source of truth for workspace routes, role permissions, delete flows, invite behavior, and known hardening gaps.
 
-Related reference:
+Related references:
 - `docs/ROLES_RIGHTS_MASTER_REF.md` for canonical role capability matrix and UI affordance expectations.
+- `docs/EMAILS_MASTER_REF.md` for full mailer inventory and trigger ownership.
 
 ## Core routes
 - Workspaces:
@@ -266,6 +267,7 @@ Source: `WorkspaceInvitationService`
 - Workspace ownership transfer notification email: `WorkspaceMailer.workspace_owner_transferred` (sent when account-deletion flow reassigns workspace ownership)
 - Sender defaults to `noreply@sqlbook.com` via `ApplicationMailer`.
 - Internal links in mailers should always be generated from route helpers + env-driven host/protocol config.
+- Full cross-domain email catalog and template mapping: `docs/EMAILS_MASTER_REF.md`.
 
 ## Environment safety rules
 - Do not hardcode staging/production hostnames in workspace controllers/mailers/views.
