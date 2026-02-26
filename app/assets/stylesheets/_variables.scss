@@ -6,6 +6,7 @@
   --palette-gray-850: #1C1C1C;
   --palette-gray-800: #222222;
   --palette-gray-700: #333333;
+  --palette-gray-600: #505050;
   --palette-gray-500: #777777;
   --palette-gray-300: #A1A1A1;
   --palette-gray-250: #BBBBBB;
@@ -29,6 +30,7 @@
   --gray-850: var(--palette-gray-850);
   --gray-800: var(--palette-gray-800);
   --gray-700: var(--palette-gray-700);
+  --gray-600: var(--palette-gray-600);
   --gray-500: var(--palette-gray-500);
   --gray-300: var(--palette-gray-300);
   --gray-250: var(--palette-gray-250);
@@ -63,6 +65,7 @@
     --gray-850: var(--palette-cream-200);
     --gray-800: var(--palette-cream-100);
     --gray-700: var(--palette-gray-200);
+    --gray-600: var(--palette-gray-300);
     --gray-500: var(--palette-gray-250);
     --gray-250: var(--palette-gray-500);
     --gray-200: var(--palette-gray-700);
