@@ -1,6 +1,7 @@
 .data-source-card {
   background: var(--gray-850);
-  border: 1px solid var(--gray-900);
+  border: 1px solid var(--gray-700);
+  border-radius: 1rem;
   cursor: pointer;
   display: grid;
   grid-template-areas: 'details total-events monthly-events queries';
@@ -75,6 +76,7 @@
 
   .stat {
     background: var(--gray-800);
+    border-radius: .75rem;
     padding: 1rem;
 
     .title {
