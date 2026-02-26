@@ -35,7 +35,7 @@
       grid-template-columns: 1fr auto;
     }
 
-    @media (max-width: 64rem) {
+    @media (max-width: 63.9375rem) {
       grid-template-areas: 'details details'
                            'total-events monthly-events'
                            'queries queries';
