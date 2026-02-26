@@ -9,7 +9,7 @@
     }
 
     .create-workspace {
-      margin: 0 0 0 1.5rem;
+      margin: 0 0 0 1rem;
       text-decoration: none;
       
       &:hover {
@@ -18,5 +18,9 @@
         }
       }
     }
+  }
+
+  .workspaces.container.lg {
+    max-width: none;
   }
 }

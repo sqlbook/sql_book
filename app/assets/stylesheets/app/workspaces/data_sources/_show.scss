@@ -9,7 +9,7 @@
     }
 
     .create-data-source {
-      margin: 0 0 0 1.5rem;
+      margin: 0 0 0 1rem;
       text-decoration: none;
       
       &:hover {
@@ -33,6 +33,28 @@
       grid-template-areas: 'url settings'
                            'owner owner';
       grid-template-columns: 1fr auto;
+    }
+
+    @media (max-width: 64rem) {
+      grid-template-areas: 'details details'
+                           'total-events monthly-events'
+                           'queries queries';
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 40rem) {
+      grid-template-areas: 'details'
+                           'total-events'
+                           'monthly-events'
+                           'queries';
+      grid-template-columns: 1fr;
+
+      .details {
+        grid-template-areas: 'url'
+                             'owner'
+                             'settings';
+        grid-template-columns: 1fr;
+      }
     }
   }
 

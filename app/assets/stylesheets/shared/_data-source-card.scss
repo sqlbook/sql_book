@@ -9,6 +9,7 @@
   grid-gap: 1.5rem;
   margin: 0 0 .75rem 0;
   padding: 1.5rem;
+  width: 100%;
 
   &:hover {
     border: 1px solid var(--gray-600);
@@ -91,5 +92,26 @@
       font-size: .75rem;
       margin: 0;
     }
+  }
+
+  @media (max-width: 87.5rem) {
+    grid-template-areas: 'details details details'
+                         'total-events monthly-events queries';
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 64rem) {
+    grid-template-areas: 'details details'
+                         'total-events monthly-events'
+                         'queries queries';
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 40rem) {
+    grid-template-areas: 'details'
+                         'total-events'
+                         'monthly-events'
+                         'queries';
+    grid-template-columns: 1fr;
   }
 }
