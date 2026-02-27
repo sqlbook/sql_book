@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-25
+Last updated: 2026-02-26
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -172,6 +172,25 @@ Related references:
   - `aside` no longer participates in header layout; it sits entirely below header.
 - Workspace settings page (`/app/workspaces/:id/workspace-settings`):
   - treated as a main-surface page (not an aside-style panel layout).
+
+## Workspace and data-source cards
+- Workspace list cards and data-source list cards are full-width within their surface container.
+- Card visual treatment:
+  - background: `gray-850`
+  - default border: `gray-700`
+  - hover border: `gray-600`
+  - card radius: `16px`
+- Stat tile visual treatment inside cards:
+  - background: `gray-800`
+  - radius: `12px`
+  - spacing between tiles uses 24px columns and 16px rows.
+- Responsive behavior:
+  - `>=1024px`: detail column + stat tiles share row (desktop split favors details while reserving 3/5 width for stat region).
+  - `<1024px`: details on first row, all stat tiles on the next row.
+  - `<720px`: stat tiles stack vertically in a single column.
+
+## Page header CTA spacing
+- On workspace and data-source pages, inline `[+ Create New]` links beside `h1` use `16px` left spacing from the heading.
 
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.
