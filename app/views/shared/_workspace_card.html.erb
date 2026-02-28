@@ -1,6 +1,6 @@
 <div class="card workspace-card" data-action="click->cards#show">
   <div class="details">
-    <h4><%= link_to workspace.name, app_workspace_path(workspace), class: "link secondary", "aria-label": "Visit the #{workspace.name} workspace" %></h4>
+    <h3><%= link_to workspace.name, app_workspace_path(workspace), class: "link secondary", "aria-label": "Visit the #{workspace.name} workspace" %></h3>
     <p class="owner gray-300">Owner: <%= workspace.owner&.full_name || "Unknown" %></p>
 
     <% if can_manage_workspace_settings?(workspace:) %>
