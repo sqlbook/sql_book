@@ -2,6 +2,8 @@
   <h1><%= I18n.t('admin.translations.title') %></h1>
 
   <div class="container lg translations-admin" data-controller="translations-admin">
+    <% selected_status = params[:status].presence || 'all' %>
+    <% target_locale = params[:target_locale].presence || 'es' %>
     <%= form_with url: app_admin_translations_path, method: :get, class: 'translations-filters' do %>
       <div class="translations-filters-grid">
         <div>
@@ -34,20 +36,28 @@
             <i class="ri-arrow-drop-down-line"></i>
           </div>
         </div>
-      </div>
 
-      <div class="translations-filter-actions">
-        <label class="checkbox">
-          <input type="checkbox" name="missing_only" value="1" <%= 'checked' if ActiveModel::Type::Boolean.new.cast(params[:missing_only]) %> />
-          <span><%= I18n.t('admin.translations.filters.missing_only') %></span>
-        </label>
+        <div>
+          <label class="label block" for="translations-status"><%= I18n.t('admin.translations.filters.status') %></label>
+          <div class="select block fluid">
+            <select id="translations-status" name="status">
+              <option value="all" <%= 'selected' if selected_status == 'all' %>><%= I18n.t('admin.translations.filters.status_options.all') %></option>
+              <option value="fully_translated" <%= 'selected' if selected_status == 'fully_translated' %>><%= I18n.t('admin.translations.filters.status_options.fully_translated') %></option>
+              <option value="missing_translations" <%= 'selected' if selected_status == 'missing_translations' %>><%= I18n.t('admin.translations.filters.status_options.missing_translations') %></option>
+            </select>
+            <i class="ri-arrow-drop-down-line"></i>
+          </div>
+        </div>
 
-        <button type="submit" class="link secondary"><%= I18n.t('admin.translations.filters.apply') %></button>
+        <div class="translations-filter-submit">
+          <button type="submit" class="link secondary"><%= I18n.t('admin.translations.filters.apply') %></button>
+        </div>
       </div>
+      <%= hidden_field_tag :target_locale, target_locale %>
     <% end %>
 
     <%= form_with url: app_admin_translations_path, method: :patch, class: 'translations-form', html: { "data-translations-admin-target": "form" } do %>
-      <% preserved_filter_params = params.permit(:q, :area_tag, :type_tag, :missing_only, :target_locale).to_h %>
+      <% preserved_filter_params = params.permit(:q, :area_tag, :type_tag, :status, :target_locale).to_h %>
       <% preserved_filter_params.each do |key, value| %>
         <%= hidden_field_tag key, value %>
       <% end %>
@@ -61,20 +71,32 @@
         </button>
       </div>
 
-      <div data-controller="table">
+      <div class="translations-table-wrapper" data-controller="table">
         <table class="collapsible translations-table">
+          <colgroup>
+            <col />
+            <col />
+            <col />
+            <col class="translations-col-wide" />
+            <col class="translations-col-wide" />
+            <% @target_locales.each do %>
+              <col class="translations-col-wide" />
+            <% end %>
+            <col />
+          </colgroup>
           <tr>
             <th><%= I18n.t('admin.translations.table.key') %></th>
             <th><%= I18n.t('admin.translations.table.area_tags') %></th>
             <th><%= I18n.t('admin.translations.table.type_tags') %></th>
             <th><%= I18n.t('admin.translations.table.english') %></th>
             <th><%= I18n.t('admin.translations.table.used_in') %></th>
-            <th><%= I18n.t('admin.translations.table.spanish') %></th>
+            <% @target_locales.each do |locale| %>
+              <th><%= I18n.t("locales.#{locale}", default: locale.upcase) %></th>
+            <% end %>
             <th class="actions"><%= I18n.t('admin.translations.table.actions') %></th>
           </tr>
           <% @translation_keys.each do |translation_key| %>
             <% english_value = translation_value_for(translation_key:, locale: 'en', suggestions: @translation_suggestions) %>
-            <% spanish_value = translation_value_for(translation_key:, locale: 'es', suggestions: @translation_suggestions) %>
             <tr>
               <td>
                 <span class="truncate-text" data-tooltip-text="<%= translation_key.key %>"><%= translation_key.key %></span>
@@ -101,21 +123,34 @@
                           data-translations-admin-target="field"><%= english_value %></textarea>
               </td>
               <td>
-                <textarea class="input block fluid translations-used-in"
-                          name="rows[<%= translation_key.id %>][used_in]"
-                          rows="3"
-                          data-translations-admin-target="field"><%= used_in_lines(translation_key:) %></textarea>
+                <% entries = used_in_entries(translation_key:) %>
+                <div class="translations-used-in-list">
+                  <% if entries.empty? %>
+                    <span class="grey-500">-</span>
+                  <% else %>
+                    <% entries.each do |entry| %>
+                      <% if used_in_path_linkable?(path: entry[:path]) %>
+                        <%= link_to entry[:label], entry[:path], class: 'link secondary' %>
+                      <% else %>
+                        <span><%= entry[:label] %></span>
+                      <% end %>
+                    <% end %>
+                  <% end %>
+                </div>
               </td>
-              <td>
-                <textarea class="input block fluid translations-value"
-                          name="rows[<%= translation_key.id %>][es]"
-                          rows="3"
-                          data-translations-admin-target="field"><%= spanish_value %></textarea>
-              </td>
+              <% @target_locales.each do |locale| %>
+                <% value = translation_value_for(translation_key:, locale:, suggestions: @translation_suggestions) %>
+                <td>
+                  <textarea class="input block fluid translations-value"
+                            name="rows[<%= translation_key.id %>][<%= locale %>]"
+                            rows="3"
+                            data-translations-admin-target="field"><%= value %></textarea>
+                </td>
+              <% end %>
               <td class="actions">
                 <div class="translations-row-actions">
                   <%= link_to I18n.t('admin.translations.actions.translate_missing'),
-                              translate_missing_app_admin_translation_path(translation_key, preserved_filter_params.merge(target_locale: 'es')),
+                              translate_missing_app_admin_translation_path(translation_key, preserved_filter_params.merge(target_locale: target_locale)),
                               class: 'link secondary',
                               data: { turbo_method: :post } %>
                   <%= link_to I18n.t('admin.translations.actions.history'),

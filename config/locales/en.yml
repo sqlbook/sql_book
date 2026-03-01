@@ -39,9 +39,13 @@ en:
         search: Search
         area_tag: Area tag
         type_tag: Type tag
+        status: Status
         any: Any
-        missing_only: Show missing translations only
         apply: Apply filters
+        status_options:
+          all: All
+          fully_translated: Fully translated
+          missing_translations: Missing translations
       table:
         key: Key
         area_tags: Area tags

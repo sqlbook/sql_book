@@ -88,7 +88,6 @@ RSpec.describe 'App::Admin::Translations', type: :request do
             id: translation_key.id,
             area_tags: 'toasts,global',
             type_tags: 'title,toast',
-            used_in: 'Global toast | /app/workspaces',
             en: 'Something went wrong',
             es: 'Algo salió mal'
           }
@@ -98,7 +97,7 @@ RSpec.describe 'App::Admin::Translations', type: :request do
       expect(response).to redirect_to(app_admin_translations_path)
       expect(translation_key.reload.area_tags).to contain_exactly('toasts', 'global')
       expect(translation_key.type_tags).to contain_exactly('title', 'toast')
-      expect(translation_key.used_in).to eq([{ 'label' => 'Global toast', 'path' => '/app/workspaces' }])
+      expect(translation_key.used_in).to eq([{ 'label' => 'Toast' }])
       expect(TranslationValue.find_by(translation_key:, locale: 'es')&.value).to eq('Algo salió mal')
       expect(TranslationValueRevision.exists?(locale: 'es')).to be(true)
     end

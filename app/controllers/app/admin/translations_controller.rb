@@ -52,6 +52,7 @@ module App
         @translation_keys = filtered_translation_keys
         @area_tags = available_tags(:area_tags)
         @type_tags = available_tags(:type_tags)
+        @target_locales = TranslationValue::SUPPORTED_LOCALES - [I18n.default_locale.to_s]
       end
 
       def available_tags(column)
@@ -62,7 +63,7 @@ module App
         scope = TranslationKey.includes(:translation_values).ordered
         scope = apply_tag_filters(scope)
         scope = apply_search_filter(scope)
-        apply_missing_filter(scope)
+        apply_status_filter(scope)
       end
 
       def apply_tag_filters(scope)
@@ -83,14 +84,18 @@ module App
           ).distinct
       end
 
-      def apply_missing_filter(scope)
-        return scope unless ActiveModel::Type::Boolean.new.cast(filter_params[:missing_only])
+      def apply_status_filter(scope)
+        status = filter_params[:status].presence || 'all'
+        return scope.where.not(id: translated_value_ids) if status == 'missing_translations'
+        return scope.where(id: translated_value_ids) if status == 'fully_translated'
 
-        scope.where.not(
-          id: TranslationValue.where(locale: requested_target_locale)
-                              .where.not(value: [nil, ''])
-                              .select(:translation_key_id)
-        )
+        scope
+      end
+
+      def translated_value_ids
+        TranslationValue.where(locale: requested_target_locale)
+          .where.not(value: [nil, ''])
+          .select(:translation_key_id)
       end
 
       def source_translation_for(translation_key:)
@@ -187,7 +192,7 @@ module App
       end
 
       def filter_params
-        @filter_params ||= params.permit(:q, :area_tag, :type_tag, :missing_only, :target_locale)
+        @filter_params ||= params.permit(:q, :area_tag, :type_tag, :status, :target_locale)
       end
 
       def redirect_with_filters

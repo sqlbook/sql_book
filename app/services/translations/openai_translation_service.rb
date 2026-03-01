@@ -82,7 +82,8 @@ module Translations
     def parse_response(response)
       ensure_success_response!(response)
 
-      text = JSON.parse(response.body).fetch('output_text', '').to_s.strip
+      parsed = JSON.parse(response.body)
+      text = extract_translated_text(parsed)
       raise RequestError, 'OpenAI response was empty' if text.blank?
 
       text
@@ -92,6 +93,28 @@ module Translations
       return if response.is_a?(Net::HTTPSuccess)
 
       raise RequestError, "OpenAI request failed: #{response.code}"
+    end
+
+    def extract_translated_text(parsed)
+      direct = direct_output_text(parsed)
+      return direct if direct.present?
+
+      nested = nested_output_text(parsed)
+      return nested if nested.present?
+
+      nil
+    end
+
+    def direct_output_text(parsed)
+      parsed.fetch('output_text', '').to_s.strip
+    end
+
+    def nested_output_text(parsed)
+      Array(parsed['output']).flat_map { |output_item| content_texts(output_item) }.join("\n").strip
+    end
+
+    def content_texts(output_item)
+      Array(output_item['content']).filter_map { |content_item| content_item['text'].to_s.strip.presence }
     end
 
     def api_key

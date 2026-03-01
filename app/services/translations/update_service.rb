@@ -30,8 +30,7 @@ module Translations
       translation_key = TranslationKey.find(row.fetch('id'))
       translation_key.update!(
         area_tags: normalize_tags(row['area_tags']),
-        type_tags: normalize_tags(row['type_tags']),
-        used_in: normalize_used_in(row['used_in'])
+        type_tags: normalize_tags(row['type_tags'])
       )
 
       PERMITTED_LOCALES.each do |locale|
@@ -72,27 +71,6 @@ module Translations
         .map(&:strip)
         .compact_blank
         .uniq
-    end
-
-    def normalize_used_in(raw_value)
-      raw_value.to_s
-        .lines
-        .map(&:strip)
-        .compact_blank
-        .filter_map { |line| parse_used_in_line(line) }
-    end
-
-    def parse_used_in_line(line)
-      return nil unless line.include?('|')
-
-      label, path = line.split('|', 2).map(&:strip)
-      return nil if label.blank? || path.blank?
-
-      { label:, path: normalize_path(path) }
-    end
-
-    def normalize_path(path)
-      path.start_with?('/') ? path : "/#{path}"
     end
   end
 end

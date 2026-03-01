@@ -8,17 +8,16 @@
   }
 
   .translations-filters-grid {
+    align-items: end;
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin: 0 0 1rem 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    width: 100%;
   }
 
-  .translations-filter-actions {
-    align-items: center;
-    display: flex;
-    gap: 1rem;
-    justify-content: space-between;
+  .translations-filter-submit {
+    align-self: end;
+    justify-self: end;
   }
 
   .translations-form-actions {
@@ -28,19 +27,38 @@
     margin: 0 0 1rem 0;
   }
 
-  .translations-table {
-    table-layout: fixed;
+  .translations-table-wrapper {
+    overflow-x: auto;
     width: 100%;
+  }
+
+  .translations-table {
+    min-width: 100%;
+    table-layout: fixed;
+    width: max-content;
 
     th,
     td {
       vertical-align: top;
     }
 
+    .translations-col-wide {
+      min-width: 20rem;
+      width: 20rem;
+    }
+
     .translations-value,
     .translations-used-in {
       min-height: 5rem;
       resize: vertical;
+    }
+
+    .translations-used-in-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 5rem;
+      padding: 0.25rem 0;
     }
 
     .actions {
@@ -55,6 +73,16 @@
   }
 
   @media (max-width: 64rem) {
+    .translations-filters-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .translations-filter-submit {
+      justify-self: start;
+    }
+  }
+
+  @media (max-width: 48rem) {
     .translations-filters-grid {
       grid-template-columns: 1fr;
     }

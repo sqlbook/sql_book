@@ -10,9 +10,13 @@ es:
         search: Buscar
         area_tag: Etiqueta de área
         type_tag: Etiqueta de tipo
+        status: Estado
         any: Cualquiera
-        missing_only: Mostrar solo traducciones faltantes
         apply: Aplicar filtros
+        status_options:
+          all: Todas
+          fully_translated: Completamente traducidas
+          missing_translations: Traducciones faltantes
       table:
         key: Clave
         area_tags: Etiquetas de área

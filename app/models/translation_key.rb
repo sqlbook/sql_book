@@ -13,19 +13,21 @@ class TranslationKey < ApplicationRecord
 
   private
 
-  def validate_used_in_entries # rubocop:disable Metrics/AbcSize
+  def validate_used_in_entries # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     Array(used_in).each do |entry|
       label = entry['label'] || entry[:label]
       path = entry['path'] || entry[:path]
 
-      if label.to_s.strip.blank? || path.to_s.strip.blank?
-        errors.add(:used_in, 'must include label and path values')
+      if label.to_s.strip.blank?
+        errors.add(:used_in, 'must include label')
         next
       end
+
+      next if path.blank?
 
       next if path.to_s.start_with?('/')
 
       errors.add(:used_in, 'paths must be internal absolute paths starting with "/"')
     end
-  end # rubocop:enable Metrics/AbcSize
+  end # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 end
