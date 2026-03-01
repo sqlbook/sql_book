@@ -63,7 +63,7 @@ module App
     end
 
     def account_settings_params
-      params.permit(:first_name, :last_name, :email)
+      params.permit(:first_name, :last_name, :email, :preferred_locale)
     end
 
     def requested_email_change
@@ -91,8 +91,18 @@ module App
     def update_profile_names!
       current_user.update!(
         first_name: account_settings_params[:first_name],
-        last_name: account_settings_params[:last_name]
+        last_name: account_settings_params[:last_name],
+        preferred_locale: normalized_preferred_locale
       )
+
+      session[:locale] = current_user.preferred_locale if current_user.preferred_locale.present?
+    end
+
+    def normalized_preferred_locale
+      requested_locale = account_settings_params[:preferred_locale].to_s.strip.downcase
+      return current_user.preferred_locale if requested_locale.blank?
+
+      requested_locale
     end
 
     def queue_email_change_verification!(requested_email:)

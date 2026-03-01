@@ -1,43 +1,50 @@
 <main>
-  <h1>Account settings</h1>
+  <h1><%= I18n.t('app.account_settings.title') %></h1>
 
   <div class="tabs">
-    <%= render "shared/tabs/nav_item", tab: "general", name: "General", icon_class: "ri-account-circle-line", default_selected: true %>
-    <%= render "shared/tabs/nav_item", tab: "notifications", name: "Notifications", icon_class: "ri-notification-2-line" %>
-    <%= render "shared/tabs/nav_item", tab: "delete_account", name: "Delete Account", icon_class: "ri-delete-bin-line" %>
+    <%= render "shared/tabs/nav_item", tab: "general", name: I18n.t('app.account_settings.tabs.general'), icon_class: "ri-account-circle-line", default_selected: true %>
+    <%= render "shared/tabs/nav_item", tab: "notifications", name: I18n.t('app.account_settings.tabs.notifications'), icon_class: "ri-notification-2-line" %>
+    <%= render "shared/tabs/nav_item", tab: "delete_account", name: I18n.t('app.account_settings.tabs.delete_account'), icon_class: "ri-delete-bin-line" %>
   </div>
 
   <% if active_tab?(tab: "general", default_selected: true) %>
     <div class="container md" data-controller="form" data-form-require-change-value="true">
       <%= form_with url: app_account_settings_path, method: :patch, class: "account-settings-form", html: { "data-form-target": "form" } do |form| %>
-        <p>Use the settings below to update your personal account details.</p>
+        <p><%= I18n.t('app.account_settings.general.description') %></p>
 
-        <%= form.label :first_name, "First name", class: "label block" %>
+        <%= form.label :first_name, I18n.t('app.account_settings.general.fields.first_name'), class: "label block" %>
         <%= form.text_field :first_name,
                             class: "input block fluid",
                             autocomplete: "given-name",
                             value: @account_user.first_name,
-                            placeholder: "e.g. Jess",
+                            placeholder: I18n.t('app.account_settings.general.placeholders.first_name'),
                             required: true %>
 
-        <%= form.label :last_name, "Last name", class: "label block" %>
+        <%= form.label :last_name, I18n.t('app.account_settings.general.fields.last_name'), class: "label block" %>
         <%= form.text_field :last_name,
                             class: "input block fluid",
                             autocomplete: "family-name",
                             value: @account_user.last_name,
-                            placeholder: "e.g. Smith",
+                            placeholder: I18n.t('app.account_settings.general.placeholders.last_name'),
                             required: true %>
 
-        <%= form.label :email, "Email", class: "label block" %>
+        <%= form.label :email, I18n.t('app.account_settings.general.fields.email'), class: "label block" %>
         <%= form.email_field :email,
                              class: "input block fluid",
                              autocomplete: "email",
                              value: @account_user.email,
-                             placeholder: "email@example.com",
+                             placeholder: I18n.t('app.account_settings.general.placeholders.email'),
                              required: true %>
 
+        <%= form.label :preferred_locale, I18n.t('app.account_settings.general.fields.language'), class: "label block" %>
+        <div class="select block fluid">
+          <%= form.select :preferred_locale,
+                          options_for_select([[I18n.t('locales.en'), 'en'], [I18n.t('locales.es'), 'es']], @account_user.preferred_locale || I18n.default_locale.to_s) %>
+          <i class="ri-arrow-drop-down-line"></i>
+        </div>
+
         <div class="submit">
-          <%= form.submit "[Save Changes]", class: "link primary", "data-form-target": "submit", disabled: true %>
+          <%= form.submit I18n.t('app.account_settings.actions.save'), class: "link primary", "data-form-target": "submit", disabled: true %>
         </div>
       <% end %>
     </div>
@@ -49,25 +56,25 @@
 
   <% if active_tab?(tab: "delete_account") %>
     <div class="container lg delete-account-tab" data-controller="account-delete">
-      <p class="label">You can delete your account at any time:</p>
+      <p class="label"><%= I18n.t('app.account_settings.delete_account.title') %></p>
       <ul class="delete-account-guidance">
-        <li>For any workspace where you are the only team member the workspace will be deleted immediately.</li>
-        <li>If you are the Owner of any workspaces with other team members you will have the opportunity to view and transfer ownership, or delete the workspace, once you click the 'Delete Account' button below.</li>
-        <li>Once your account and workspace(s) have been deleted we will email you to confirm.</li>
-        <li>Account and workspace deletion are irreversible.</li>
+        <li><%= I18n.t('app.account_settings.delete_account.guidance.only_member') %></li>
+        <li><%= I18n.t('app.account_settings.delete_account.guidance.owner_options') %></li>
+        <li><%= I18n.t('app.account_settings.delete_account.guidance.confirmation_email') %></li>
+        <li><%= I18n.t('app.account_settings.delete_account.guidance.irreversible') %></li>
       </ul>
 
       <button type="button" class="link primary delete-account-trigger show" data-account-delete-target="openButton" data-action="account-delete#show">
-        [Delete Account]
+        <%= I18n.t('app.account_settings.actions.delete_account') %>
       </button>
 
       <div class="message account-delete-dialog" data-account-delete-target="dialog">
         <div class="body">
           <div class="account-delete-dialog-heading">
             <i class="ri-error-warning-line red-500" aria-hidden="true"></i>
-            <p class="account-delete-dialog-title cream-250"><b>Account deletion workspace options</b></p>
+            <p class="account-delete-dialog-title cream-250"><b><%= I18n.t('app.account_settings.delete_account.dialog.title') %></b></p>
           </div>
-          <p class="account-delete-dialog-description">We're sorry to see you go. Use the table below to review what will happen to any workspaces you own when you delete your account.</p>
+          <p class="account-delete-dialog-description"><%= I18n.t('app.account_settings.delete_account.dialog.description') %></p>
 
           <%= form_with url: app_account_settings_path, method: :delete, class: "account-delete-form", html: { "data-account-delete-target": "form" } do %>
             <% if @owned_workspace_rows.any? %>
@@ -75,13 +82,13 @@
                 <table class="collapsible account-delete-workspaces-table">
                   <tr>
                     <th>
-                      <span class="truncate-text" data-tooltip-text="Workspace name">Workspace name</span>
+                      <span class="truncate-text" data-tooltip-text="<%= I18n.t('app.account_settings.delete_account.table.workspace_name') %>"><%= I18n.t('app.account_settings.delete_account.table.workspace_name') %></span>
                     </th>
                     <th>
-                      <span class="truncate-text" data-tooltip-text="Current owner">Current owner</span>
+                      <span class="truncate-text" data-tooltip-text="<%= I18n.t('app.account_settings.delete_account.table.current_owner') %>"><%= I18n.t('app.account_settings.delete_account.table.current_owner') %></span>
                     </th>
                     <th>
-                      <span class="truncate-text" data-tooltip-text="New owner">New owner</span>
+                      <span class="truncate-text" data-tooltip-text="<%= I18n.t('app.account_settings.delete_account.table.new_owner') %>"><%= I18n.t('app.account_settings.delete_account.table.new_owner') %></span>
                     </th>
                   </tr>
                   <% @owned_workspace_rows.each do |row| %>
@@ -92,19 +99,19 @@
                         <span class="truncate-text" data-tooltip-text="<%= workspace.name %>"><%= workspace.name %></span>
                       </td>
                       <td>
-                        <span class="truncate-text" data-tooltip-text="<%= "#{@account_user.full_name} (you)" %>"><%= @account_user.full_name %> <span class="gray-300">(you)</span></span>
+                        <span class="truncate-text" data-tooltip-text="<%= "#{@account_user.full_name} #{I18n.t('app.account_settings.delete_account.table.you')}" %>"><%= @account_user.full_name %> <span class="gray-300"><%= I18n.t('app.account_settings.delete_account.table.you') %></span></span>
                       </td>
                       <td>
                         <% if eligible_members.empty? %>
                           <%= hidden_field_tag "workspace_actions[#{workspace.id}]", AccountDeletionService::DELETE_WORKSPACE_ACTION %>
-                          <span class="truncate-text" data-tooltip-text="No team members, workspace will be deleted.">No team members, workspace will be deleted.</span>
+                          <span class="truncate-text" data-tooltip-text="<%= I18n.t('app.account_settings.delete_account.table.no_team_members') %>"><%= I18n.t('app.account_settings.delete_account.table.no_team_members') %></span>
                         <% else %>
                           <div class="select account-delete-select">
                             <%= select_tag "workspace_actions[#{workspace.id}]",
                                            options_for_select(
-                                             [["Please select", ""]] +
+                                             [[I18n.t('app.account_settings.delete_account.table.please_select'), ""]] +
                                              eligible_members.map { |member| [member.user.full_name, member.id] } +
-                                             [["Delete workspace", AccountDeletionService::DELETE_WORKSPACE_ACTION]]
+                                             [[I18n.t('app.account_settings.delete_account.table.delete_workspace'), AccountDeletionService::DELETE_WORKSPACE_ACTION]]
                                            ),
                                            class: "account-delete-select-input",
                                            required: true,
@@ -121,14 +128,14 @@
                 </table>
               </div>
             <% else %>
-              <p class="account-delete-empty-state">You do not own any workspaces. Deleting your account will only remove your account data.</p>
+              <p class="account-delete-empty-state"><%= I18n.t('app.account_settings.delete_account.empty_state') %></p>
             <% end %>
 
-            <p class="account-delete-confirm-label cream-250"><b>Delete account and transfer workspaces (if relevant)?</b></p>
+            <p class="account-delete-confirm-label cream-250"><b><%= I18n.t('app.account_settings.delete_account.confirm_label') %></b></p>
 
             <div class="actions">
-              <%= submit_tag "[Yes, I'm leaving]", class: "link primary", disabled: true, "data-account-delete-target": "submit" %>
-              <button type="button" class="link secondary" data-action="account-delete#hide">Cancel</button>
+              <%= submit_tag I18n.t('app.account_settings.actions.confirm_delete'), class: "link primary", disabled: true, "data-account-delete-target": "submit" %>
+              <button type="button" class="link secondary" data-action="account-delete#hide"><%= I18n.t('app.account_settings.actions.cancel') %></button>
             </div>
           <% end %>
         </div>

@@ -1,0 +1,62 @@
+.app-admin-translations-index {
+  .translations-admin {
+    width: 100%;
+  }
+
+  .translations-filters {
+    margin: 0 0 2rem 0;
+  }
+
+  .translations-filters-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 0 1rem 0;
+  }
+
+  .translations-filter-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .translations-form-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    margin: 0 0 1rem 0;
+  }
+
+  .translations-table {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+      vertical-align: top;
+    }
+
+    .translations-value,
+    .translations-used-in {
+      min-height: 5rem;
+      resize: vertical;
+    }
+
+    .actions {
+      width: 10rem;
+    }
+  }
+
+  .translations-row-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 64rem) {
+    .translations-filters-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

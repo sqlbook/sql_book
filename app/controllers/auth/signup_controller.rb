@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Auth
-  class SignupController < ApplicationController
+  class SignupController < ApplicationController # rubocop:disable Metrics/ClassLength
     before_action :redirect_authenticated_users_to_app!
 
     def index; end
@@ -61,6 +61,7 @@ module Auth
         email:,
         first_name: signup_params[:first_name],
         last_name: signup_params[:last_name],
+        preferred_locale: I18n.locale.to_s,
         terms_accepted_at: Time.current,
         terms_version: User::CURRENT_TERMS_VERSION
       )
@@ -124,5 +125,5 @@ module Auth
     def create_params_present?
       [email, token, first_name, last_name].all?
     end
-  end
+  end # rubocop:enable Metrics/ClassLength
 end

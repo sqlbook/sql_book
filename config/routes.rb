@@ -36,7 +36,17 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
     end
   end
 
-  namespace :app do
+  namespace :app do # rubocop:disable Metrics/BlockLength
+    namespace :admin do
+      patch 'translations', to: 'translations#update'
+      resources :translations, only: %i[index] do
+        member do
+          post 'translate-missing', to: 'translations#translate_missing'
+          get 'history', to: 'translations#history'
+        end
+      end
+    end
+
     resource :account_settings, only: %i[show update destroy], path: 'account-settings', controller: 'account_settings'
     get 'account-settings/verify-email/:token',
         to: 'account_settings#verify_email',
@@ -59,5 +69,5 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
         end
       end
     end
-  end
+  end # rubocop:enable Metrics/BlockLength
 end

@@ -1,6 +1,6 @@
 # Account Settings Master Reference
 
-Last updated: 2026-02-25
+Last updated: 2026-03-01
 
 ## Service and goal
 - Service: authenticated user account settings in sqlbook.
@@ -14,6 +14,7 @@ Related references:
 - `docs/AUTH_MASTER_REF.md` for login/signup/invitation flows.
 - `docs/WORKSPACES_MASTER_REF.md` for workspace-scoped settings and role behavior.
 - `docs/EMAILS_MASTER_REF.md` for full email inventory, trigger locations, and template mapping.
+- `docs/TRANSLATIONS_MASTER_REF.md` for locale preference and translation architecture details.
 
 ## Core routes
 - `GET /app/account-settings` -> `App::AccountSettingsController#show`
@@ -24,6 +25,7 @@ Related references:
 ## Current form scope
 - Account settings UI now uses tabs:
   - `General` (default) -> first name, last name, email update form
+    - includes `Language` preference field (`en`/`es`)
   - `Notifications` -> placeholder tab (no editable controls yet)
   - `Delete Account` -> account deletion guidance and confirmation flow
 - Tabs use shared tab component behavior:
@@ -61,6 +63,10 @@ Email changes use a pending-verification state on `users`:
 - Name-only update:
   - applies immediately via `PATCH /app/account-settings`
   - success toast is shown
+- Locale-only update:
+  - applies immediately via `PATCH /app/account-settings`
+  - stores selected locale in `users.preferred_locale`
+  - updates current session locale for immediate UI change
 - Email-change request:
   1. User submits updated email on account settings page.
   2. Current `users.email` remains unchanged.

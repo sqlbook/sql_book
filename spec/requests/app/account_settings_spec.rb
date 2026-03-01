@@ -58,7 +58,7 @@ RSpec.describe 'App::AccountSettings', type: :request do
     before { sign_in(user) }
 
     context 'when only name fields are changed' do
-      let(:params) { { first_name: 'Christopher', last_name: 'Pattison', email: user.email } }
+      let(:params) { { first_name: 'Christopher', last_name: 'Pattison', email: user.email, preferred_locale: 'en' } }
 
       it 'updates the user profile' do
         patch '/app/account-settings', params: params
@@ -81,7 +81,9 @@ RSpec.describe 'App::AccountSettings', type: :request do
 
     context 'when email is changed' do
       let(:mail_delivery) { instance_double(ActionMailer::MessageDelivery, deliver_now: true) }
-      let(:params) { { first_name: 'Christopher', last_name: 'Pattison', email: 'new@sitelabs.ai' } }
+      let(:params) do
+        { first_name: 'Christopher', last_name: 'Pattison', email: 'new@sitelabs.ai', preferred_locale: 'en' }
+      end
 
       before do
         allow(AccountMailer).to receive(:verify_email_change).and_return(mail_delivery)
@@ -124,7 +126,9 @@ RSpec.describe 'App::AccountSettings', type: :request do
 
     context 'when requested email is already in use' do
       let!(:existing_user) { create(:user, email: 'existing@sitelabs.ai') }
-      let(:params) { { first_name: 'Chris', last_name: 'Pattison', email: existing_user.email } }
+      let(:params) do
+        { first_name: 'Chris', last_name: 'Pattison', email: existing_user.email, preferred_locale: 'en' }
+      end
 
       it 'does not queue an email change request' do
         patch '/app/account-settings', params: params
@@ -145,7 +149,7 @@ RSpec.describe 'App::AccountSettings', type: :request do
     end
 
     context 'when update fails unexpectedly' do
-      let(:params) { { first_name: 'Christopher', last_name: 'Pattison', email: user.email } }
+      let(:params) { { first_name: 'Christopher', last_name: 'Pattison', email: user.email, preferred_locale: 'en' } }
 
       before do
         allow_any_instance_of(User).to receive(:update!).and_raise(StandardError, 'boom')
@@ -160,6 +164,23 @@ RSpec.describe 'App::AccountSettings', type: :request do
           body: I18n.t('toasts.generic_error.body')
         )
       end
+    end
+  end
+
+  describe 'PATCH /app/account-settings locale selection' do
+    let(:user) { create(:user, preferred_locale: 'en') }
+
+    before { sign_in(user) }
+
+    it 'persists a preferred locale update' do
+      patch '/app/account-settings', params: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        preferred_locale: 'es'
+      }
+
+      expect(user.reload.preferred_locale).to eq('es')
     end
   end
 

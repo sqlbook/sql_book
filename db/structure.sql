@@ -210,6 +210,113 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: translation_keys; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.translation_keys (
+    id bigint NOT NULL,
+    key character varying NOT NULL,
+    notes text,
+    area_tags text[] DEFAULT '{}'::text[] NOT NULL,
+    type_tags text[] DEFAULT '{}'::text[] NOT NULL,
+    used_in jsonb DEFAULT '[]'::jsonb NOT NULL,
+    content_scope character varying DEFAULT 'system'::character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: translation_keys_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.translation_keys_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: translation_keys_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.translation_keys_id_seq OWNED BY public.translation_keys.id;
+
+
+--
+-- Name: translation_value_revisions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.translation_value_revisions (
+    id bigint NOT NULL,
+    translation_value_id bigint NOT NULL,
+    locale character varying NOT NULL,
+    old_value text,
+    new_value text,
+    changed_by_id bigint,
+    change_source character varying DEFAULT 'manual'::character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: translation_value_revisions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.translation_value_revisions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: translation_value_revisions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.translation_value_revisions_id_seq OWNED BY public.translation_value_revisions.id;
+
+
+--
+-- Name: translation_values; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.translation_values (
+    id bigint NOT NULL,
+    translation_key_id bigint NOT NULL,
+    locale character varying NOT NULL,
+    value text,
+    source character varying DEFAULT 'seed'::character varying NOT NULL,
+    updated_by_id bigint,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: translation_values_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.translation_values_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: translation_values_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.translation_values_id_seq OWNED BY public.translation_values.id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -224,7 +331,9 @@ CREATE TABLE public.users (
     terms_version character varying,
     pending_email character varying,
     email_change_verification_token character varying,
-    email_change_verification_sent_at timestamp(6) without time zone
+    email_change_verification_sent_at timestamp(6) without time zone,
+    super_admin boolean DEFAULT false NOT NULL,
+    preferred_locale character varying
 );
 
 
@@ -314,6 +423,27 @@ ALTER TABLE ONLY public.queries ALTER COLUMN id SET DEFAULT nextval('public.quer
 
 
 --
+-- Name: translation_keys id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_keys ALTER COLUMN id SET DEFAULT nextval('public.translation_keys_id_seq'::regclass);
+
+
+--
+-- Name: translation_value_revisions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_value_revisions ALTER COLUMN id SET DEFAULT nextval('public.translation_value_revisions_id_seq'::regclass);
+
+
+--
+-- Name: translation_values id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_values ALTER COLUMN id SET DEFAULT nextval('public.translation_values_id_seq'::regclass);
+
+
+--
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -381,6 +511,30 @@ ALTER TABLE ONLY public.queries
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: translation_keys translation_keys_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_keys
+    ADD CONSTRAINT translation_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: translation_value_revisions translation_value_revisions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_value_revisions
+    ADD CONSTRAINT translation_value_revisions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: translation_values translation_values_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_values
+    ADD CONSTRAINT translation_values_pkey PRIMARY KEY (id);
 
 
 --
@@ -463,6 +617,62 @@ CREATE INDEX index_queries_on_data_source_id ON public.queries USING btree (data
 
 
 --
+-- Name: index_translation_keys_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_translation_keys_on_key ON public.translation_keys USING btree (key);
+
+
+--
+-- Name: index_translation_value_revisions_on_changed_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_value_revisions_on_changed_by_id ON public.translation_value_revisions USING btree (changed_by_id);
+
+
+--
+-- Name: index_translation_value_revisions_on_locale; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_value_revisions_on_locale ON public.translation_value_revisions USING btree (locale);
+
+
+--
+-- Name: index_translation_value_revisions_on_translation_value_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_value_revisions_on_translation_value_id ON public.translation_value_revisions USING btree (translation_value_id);
+
+
+--
+-- Name: index_translation_values_on_locale; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_values_on_locale ON public.translation_values USING btree (locale);
+
+
+--
+-- Name: index_translation_values_on_translation_key_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_values_on_translation_key_id ON public.translation_values USING btree (translation_key_id);
+
+
+--
+-- Name: index_translation_values_on_translation_key_id_and_locale; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_translation_values_on_translation_key_id_and_locale ON public.translation_values USING btree (translation_key_id, locale);
+
+
+--
+-- Name: index_translation_values_on_updated_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_translation_values_on_updated_by_id ON public.translation_values USING btree (updated_by_id);
+
+
+--
 -- Name: index_users_on_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -477,12 +687,46 @@ CREATE UNIQUE INDEX index_users_on_email_change_verification_token ON public.use
 
 
 --
+-- Name: translation_value_revisions fk_rails_6dd91d72ee; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_value_revisions
+    ADD CONSTRAINT fk_rails_6dd91d72ee FOREIGN KEY (translation_value_id) REFERENCES public.translation_values(id);
+
+
+--
+-- Name: translation_values fk_rails_78f391b731; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_values
+    ADD CONSTRAINT fk_rails_78f391b731 FOREIGN KEY (translation_key_id) REFERENCES public.translation_keys(id);
+
+
+--
+-- Name: translation_value_revisions fk_rails_a84de18dce; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_value_revisions
+    ADD CONSTRAINT fk_rails_a84de18dce FOREIGN KEY (changed_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: translation_values fk_rails_d2e300e7c2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.translation_values
+    ADD CONSTRAINT fk_rails_d2e300e7c2 FOREIGN KEY (updated_by_id) REFERENCES public.users(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260301100100'),
+('20260301100000'),
 ('20260220153000'),
 ('20260217221000'),
 ('20260216111500'),

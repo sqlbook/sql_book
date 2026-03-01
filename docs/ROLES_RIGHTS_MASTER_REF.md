@@ -1,9 +1,13 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-02-21
+Last updated: 2026-03-01
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
+
+Related references:
+- `docs/ADMIN_MASTER_REF.md` for super-admin controls under `/app/admin/*`.
+- `docs/TRANSLATIONS_MASTER_REF.md` for translation manager access and behavior.
 
 ## Role model
 Roles are workspace-scoped via `members.role`.
@@ -12,6 +16,10 @@ Roles are workspace-scoped via `members.role`.
 - `ADMIN` (2)
 - `USER` (3)
 - `READ_ONLY` (4)
+
+Super-admin is separate from workspace roles:
+- `users.super_admin` grants access to admin namespace.
+- It does not replace or bypass workspace membership checks.
 
 ## Capability matrix
 

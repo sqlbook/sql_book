@@ -28,6 +28,94 @@
 #       enabled: "ON"
 
 en:
+  locales:
+    en: English
+    es: Spanish
+
+  admin:
+    translations:
+      title: Translations Manager
+      filters:
+        search: Search
+        area_tag: Area tag
+        type_tag: Type tag
+        any: Any
+        missing_only: Show missing translations only
+        apply: Apply filters
+      table:
+        key: Key
+        area_tags: Area tags
+        type_tags: Type tags
+        english: English
+        used_in: Used in
+        spanish: Spanish
+        actions: Actions
+      actions:
+        save: "[Save]"
+        discard: Discard changes
+        translate_missing: Translate missing
+        history: View history
+
+  app:
+    navigation:
+      workspace: Workspace
+      account: Account
+      admin: Admin
+      chat: Chat
+      data_sources: Data Sources
+      query_library: Query Library
+      dashboards: Dashboards
+      settings: Settings
+      log_out: Log out
+      aria:
+        chat: Open chat for the %{workspace_name} workspace
+        data_sources: View datasources for the %{workspace_name} workspace
+        query_library: View queries for the %{workspace_name} workspace
+        dashboards: View dashboards for the %{workspace_name} workspace
+        settings: View workspace settings for the %{workspace_name} workspace
+    account_settings:
+      title: Account settings
+      tabs:
+        general: General
+        notifications: Notifications
+        delete_account: Delete Account
+      general:
+        description: Use the settings below to update your personal account details.
+        fields:
+          first_name: First name
+          last_name: Last name
+          email: Email
+          language: Language
+        placeholders:
+          first_name: e.g. Jess
+          last_name: e.g. Smith
+          email: email@example.com
+      delete_account:
+        title: "You can delete your account at any time:"
+        guidance:
+          only_member: For any workspace where you are the only team member the workspace will be deleted immediately.
+          owner_options: If you are the Owner of any workspaces with other team members you will have the opportunity to view and transfer ownership, or delete the workspace, once you click the 'Delete Account' button below.
+          confirmation_email: Once your account and workspace(s) have been deleted we will email you to confirm.
+          irreversible: Account and workspace deletion are irreversible.
+        dialog:
+          title: Account deletion workspace options
+          description: We're sorry to see you go. Use the table below to review what will happen to any workspaces you own when you delete your account.
+        table:
+          workspace_name: Workspace name
+          current_owner: Current owner
+          new_owner: New owner
+          no_team_members: No team members, workspace will be deleted.
+          please_select: Please select
+          delete_workspace: Delete workspace
+          you: "(you)"
+        empty_state: You do not own any workspaces. Deleting your account will only remove your account data.
+        confirm_label: Delete account and transfer workspaces (if relevant)?
+      actions:
+        save: "[Save Changes]"
+        delete_account: "[Delete Account]"
+        confirm_delete: "[Yes, I'm leaving]"
+        cancel: Cancel
+
   auth:
     account_already_exists: An account with this email already exists
     account_does_not_exist: An account with this email does not exist
@@ -61,6 +149,30 @@ en:
       is_not_valid: is not valid
 
   toasts:
+    admin:
+      access_forbidden:
+        title: Admin access denied
+        body: You don't have access to the admin area.
+      translations:
+        saved:
+          title: Translations saved
+          body: Translation updates were saved successfully.
+        save_failed:
+          title: Could not save translations
+          body: Please review your changes and try again.
+        translate_missing_success:
+          title: Translation draft generated
+          body: A translation draft has been added to the row. Review and save when ready.
+        translate_missing_failed:
+          title: Translation generation failed
+          body: We couldn't generate that translation right now. Please try again.
+        translate_not_needed:
+          title: Translation already exists
+          body: This row already has a translation for the selected locale.
+        placeholder_mismatch:
+          body: The generated translation changed required placeholder tokens. No draft was applied.
+        openai_missing_config:
+          body: Translation generation is not configured yet. Please set OPENAI_API_KEY.
     generic_error:
       title: Something went wrong
       body: We couldn't complete your request, please try again. If the problem continues, contact hello@sqlbook.com.

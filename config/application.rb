@@ -37,5 +37,9 @@ module SqlBook
 
     config.assets.paths << Rails.root.join('app/assets/fonts')
     config.assets.paths << Rails.root.join('node_modules')
+
+    config.i18n.available_locales = %i[en es]
+    config.i18n.default_locale = :en
+    config.i18n.fallbacks = [:en]
   end
 end

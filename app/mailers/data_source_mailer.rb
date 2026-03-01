@@ -7,6 +7,8 @@ class DataSourceMailer < ApplicationMailer
 
     subject = I18n.t('mailers.data_source.subjects.destroy', workspace_name: data_source.workspace.name)
 
-    mail(to: member.user.email, subject:)
+    with_recipient_locale(recipient: member.user) do
+      mail(to: member.user.email, subject:)
+    end
   end
 end

@@ -1,6 +1,6 @@
 # Emails Master Reference
 
-Last updated: 2026-02-25
+Last updated: 2026-03-01
 
 ## Service and goal
 - Service: transactional email delivery in sqlbook.
@@ -15,6 +15,7 @@ Related references:
 - `docs/AUTH_MASTER_REF.md` for auth and invitation user flows.
 - `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for account settings and email-change/account-deletion flows.
 - `docs/WORKSPACES_MASTER_REF.md` for workspace membership and lifecycle flows.
+- `docs/TRANSLATIONS_MASTER_REF.md` for locale resolution and translation backend rules.
 
 ## Delivery architecture
 - Base mailer: `app/mailers/application_mailer.rb`
@@ -50,6 +51,12 @@ Subject strings are defined in `config/locales/en.yml` under `en.mailers.*.subje
 - Account-deletion confirmation and ownership-transfer emails are sent after transaction completion.
 - Notification sends in account/workspace deletion flows are best-effort: send failures are logged and do not roll back deletes.
 - `WorkspaceMailer.workspace_member_removed` sets `@unsubscribable = true`, enabling the footer unsubscribe link in `mailer` layout.
+
+## Locale behavior for email rendering
+- Mailers render in recipient locale when available (`users.preferred_locale`).
+- Supported locales in V1: `en`, `es`.
+- Unknown/blank recipient locale falls back to `en`.
+- Locale selection does not change trigger logic; it only changes rendered copy.
 
 ## Test coverage and previews
 - Mailer specs:

@@ -1,0 +1,94 @@
+es:
+  locales:
+    en: Inglés
+    es: Español
+
+  admin:
+    translations:
+      title: Gestor de traducciones
+      filters:
+        search: Buscar
+        area_tag: Etiqueta de área
+        type_tag: Etiqueta de tipo
+        any: Cualquiera
+        missing_only: Mostrar solo traducciones faltantes
+        apply: Aplicar filtros
+      table:
+        key: Clave
+        area_tags: Etiquetas de área
+        type_tags: Etiquetas de tipo
+        english: Inglés
+        used_in: Usado en
+        spanish: Español
+        actions: Acciones
+      actions:
+        save: "[Guardar]"
+        discard: Descartar cambios
+        translate_missing: Traducir faltantes
+        history: Ver historial
+
+  app:
+    navigation:
+      workspace: Espacio de trabajo
+      account: Cuenta
+      admin: Administración
+      chat: Chat
+      data_sources: Fuentes de datos
+      query_library: Biblioteca de consultas
+      dashboards: Paneles
+      settings: Configuración
+      log_out: Cerrar sesión
+      aria:
+        chat: Abrir chat del espacio de trabajo %{workspace_name}
+        data_sources: Ver fuentes de datos del espacio de trabajo %{workspace_name}
+        query_library: Ver consultas del espacio de trabajo %{workspace_name}
+        dashboards: Ver paneles del espacio de trabajo %{workspace_name}
+        settings: Ver configuración del espacio de trabajo %{workspace_name}
+    account_settings:
+      title: Configuración de la cuenta
+      tabs:
+        general: General
+        notifications: Notificaciones
+        delete_account: Eliminar cuenta
+      general:
+        description: Usa la configuración de abajo para actualizar los datos de tu cuenta.
+        fields:
+          first_name: Nombre
+          last_name: Apellido
+          email: Correo electrónico
+          language: Idioma
+        placeholders:
+          first_name: p. ej. Jess
+          last_name: p. ej. Smith
+          email: correo@ejemplo.com
+      actions:
+        save: "[Guardar cambios]"
+        delete_account: "[Eliminar cuenta]"
+        confirm_delete: "[Sí, me voy]"
+        cancel: Cancelar
+
+  toasts:
+    admin:
+      access_forbidden:
+        title: Acceso de administrador denegado
+        body: No tienes acceso al área de administración.
+      translations:
+        saved:
+          title: Traducciones guardadas
+          body: Las traducciones se guardaron correctamente.
+        save_failed:
+          title: No se pudieron guardar las traducciones
+          body: Revisa tus cambios e inténtalo de nuevo.
+        translate_missing_success:
+          title: Borrador de traducción generado
+          body: Se añadió un borrador de traducción en la fila. Revísalo y guárdalo cuando quieras.
+        translate_missing_failed:
+          title: Falló la generación de traducción
+          body: No pudimos generar esa traducción ahora. Inténtalo de nuevo.
+        translate_not_needed:
+          title: La traducción ya existe
+          body: Esta fila ya tiene traducción para el idioma seleccionado.
+        placeholder_mismatch:
+          body: La traducción generada cambió los placeholders requeridos. No se aplicó ningún borrador.
+        openai_missing_config:
+          body: La generación de traducciones aún no está configurada. Define OPENAI_API_KEY.

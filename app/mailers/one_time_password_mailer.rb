@@ -4,13 +4,17 @@ class OneTimePasswordMailer < ApplicationMailer
   def login(email:, token:)
     @token = token
     @magic_link_params = magic_link_params(email:, token:)
-    mail(to: email, subject: I18n.t('mailers.one_time_password.subjects.login'))
+    with_recipient_locale(email:) do
+      mail(to: email, subject: I18n.t('mailers.one_time_password.subjects.login'))
+    end
   end
 
   def signup(email:, token:, magic_link_params: {})
     @token = token
     @magic_link_params = magic_link_params(email:, token:).merge(magic_link_params).merge(accept_terms: '1')
-    mail(to: email, subject: I18n.t('mailers.one_time_password.subjects.signup'))
+    with_recipient_locale(email:) do
+      mail(to: email, subject: I18n.t('mailers.one_time_password.subjects.signup'))
+    end
   end
 
   private

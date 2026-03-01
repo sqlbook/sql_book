@@ -15,9 +15,9 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
   def call
     return failure(:account_delete_unresolved_workspaces) unless all_owned_workspaces_resolved?
 
-    deleted_user_email, deleted_user_name, transferred_workspaces = perform_account_deletion!
+    deleted_user_email, deleted_user_name, deleted_user_locale, transferred_workspaces = perform_account_deletion!
 
-    deliver_account_deletion_confirmation!(email: deleted_user_email)
+    deliver_account_deletion_confirmation!(email: deleted_user_email, locale: deleted_user_locale)
     deliver_workspace_transfer_emails!(transferred_workspaces:, deleted_user_name:)
 
     success
@@ -35,6 +35,7 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
   def perform_account_deletion!
     deleted_user_email = user.email
     deleted_user_name = user.full_name
+    deleted_user_locale = user.preferred_locale
     transferred_workspaces = []
 
     ActiveRecord::Base.transaction do
@@ -45,7 +46,7 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
       user.destroy!
     end
 
-    [deleted_user_email, deleted_user_name, transferred_workspaces]
+    [deleted_user_email, deleted_user_name, deleted_user_locale, transferred_workspaces]
   end
 
   def process_owned_workspaces!(deleted_user_name:, transferred_workspaces:)
@@ -158,8 +159,8 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
     end
   end
 
-  def deliver_account_deletion_confirmation!(email:)
-    AccountMailer.account_deletion_confirmed(user_email: email).deliver_now
+  def deliver_account_deletion_confirmation!(email:, locale:)
+    AccountMailer.account_deletion_confirmed(user_email: email, fallback_locale: locale).deliver_now
   rescue StandardError => e
     Rails.logger.error("Account deletion confirmation email failed for #{email}: #{e.class} #{e.message}")
   end

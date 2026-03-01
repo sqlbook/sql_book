@@ -3,6 +3,7 @@
 class User < ApplicationRecord
   CURRENT_TERMS_VERSION = '2026-02-16'
   EMAIL_CHANGE_VERIFICATION_WINDOW = 1.hour
+  SUPPORTED_LOCALES = %w[en es].freeze
   attr_accessor :skip_terms_validation
 
   before_destroy :capture_workspace_ids_for_cleanup
@@ -26,9 +27,23 @@ class User < ApplicationRecord
            through: :accepted_members,
            source: :workspace
 
+  has_many :translation_value_updates,
+           class_name: 'TranslationValue',
+           foreign_key: :updated_by_id,
+           inverse_of: :updated_by,
+           dependent: :nullify
+
+  has_many :translation_value_changes,
+           class_name: 'TranslationValueRevision',
+           foreign_key: :changed_by_id,
+           inverse_of: :changed_by,
+           dependent: :nullify
+
   normalizes :email, with: ->(email) { email.strip.downcase }
   normalizes :pending_email, with: ->(email) { email.strip.downcase }
+  normalizes :preferred_locale, with: ->(locale) { locale.to_s.strip.downcase.presence }
   validates :terms_accepted_at, :terms_version, presence: true, on: :create, unless: :skip_terms_validation
+  validates :preferred_locale, inclusion: { in: SUPPORTED_LOCALES }, allow_nil: true
 
   def full_name
     "#{first_name} #{last_name}"

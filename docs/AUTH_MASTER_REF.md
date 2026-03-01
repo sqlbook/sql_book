@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-02-25
+Last updated: 2026-03-01
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -14,6 +14,7 @@ Related references:
 - `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for authenticated account profile settings and email-change verification rules.
 - `docs/TOASTS_MASTER_REF.md` for toast copy/encoding/interpolation rules.
 - `docs/EMAILS_MASTER_REF.md` for complete mailer inventory, templates, and trigger locations.
+- `docs/TRANSLATIONS_MASTER_REF.md` for locale resolution and translation backend behavior.
 
 ## Auth architecture summary
 - Session-based auth using `session[:current_user_id]`.
@@ -151,6 +152,14 @@ Source: `WorkspaceInvitationService`
 - With host-only cookies (current default behavior), `staging.sqlbook.com` and `sqlbook.com` keep separate browser sessions.
 - You can be logged into both at the same time in separate tabs.
 - This would only change if cookie domain is intentionally widened to `.sqlbook.com`.
+
+## Locale behavior in auth routes
+- Auth routes now use the same locale resolver used by the signed-in app:
+  - `preferred_locale` (signed-in users)
+  - session locale
+  - first `Accept-Language` detection
+  - default `en`
+- Supported locales in V1 are `en` and `es`.
 
 ## Current known behavior and constraints
 - OTP has no explicit expiry window in current implementation.

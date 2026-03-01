@@ -30,7 +30,10 @@ RSpec.describe AccountDeletionService, type: :service do
         expect(new_owner_membership.reload.role).to eq(Member::Roles::OWNER)
         expect(Workspace.find_by(id: workspace.id)).to be_present
 
-        expect(AccountMailer).to have_received(:account_deletion_confirmed).with(user_email: 'owner@sitelabs.ai')
+        expect(AccountMailer).to have_received(:account_deletion_confirmed).with(
+          user_email: 'owner@sitelabs.ai',
+          fallback_locale: nil
+        )
         expect(WorkspaceMailer).to have_received(:workspace_owner_transferred).with(
           new_owner: new_owner_user,
           workspace:,
@@ -57,7 +60,10 @@ RSpec.describe AccountDeletionService, type: :service do
         expect(User.find_by(id: user.id)).to be_nil
         expect(Workspace.find_by(id: workspace.id)).to be_nil
 
-        expect(AccountMailer).to have_received(:account_deletion_confirmed).with(user_email: 'owner@sitelabs.ai')
+        expect(AccountMailer).to have_received(:account_deletion_confirmed).with(
+          user_email: 'owner@sitelabs.ai',
+          fallback_locale: nil
+        )
         expect(WorkspaceMailer).to have_received(:workspace_deleted).with(
           user: member_user,
           workspace_name: 'Bananas Ltd',
@@ -100,7 +106,10 @@ RSpec.describe AccountDeletionService, type: :service do
         expect(User.find_by(id: user.id)).to be_nil
         expect(Workspace.find_by(id: workspace.id)).to be_nil
 
-        expect(AccountMailer).to have_received(:account_deletion_confirmed).with(user_email: user.email)
+        expect(AccountMailer).to have_received(:account_deletion_confirmed).with(
+          user_email: user.email,
+          fallback_locale: nil
+        )
       end
     end
   end

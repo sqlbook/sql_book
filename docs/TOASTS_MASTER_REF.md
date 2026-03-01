@@ -1,12 +1,14 @@
 # Toasts Master Reference
 
-Last updated: 2026-02-25
+Last updated: 2026-03-01
 
 ## Purpose
 Define copy and rendering rules for in-app toasts so messaging stays consistent and safe.
 
 ## Source of truth
-- Locale keys: `/Users/chrispattison/sql_book/config/locales/en.yml`
+- Locale keys:
+  - `/Users/chrispattison/sql_book/config/locales/en.yml`
+  - `/Users/chrispattison/sql_book/config/locales/es.yml`
 - Toast renderer: `/Users/chrispattison/sql_book/app/views/shared/_toasts.html.erb`
 - Current workspace-settings save toasts:
   - `toasts.workspaces.updated`
@@ -17,6 +19,11 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
   - `toasts.account_settings.account_delete_failed`
 - Global fallback toast:
   - `toasts.generic_error`
+- Admin translation toasts:
+  - `toasts.admin.*`
+
+Related references:
+- `docs/TRANSLATIONS_MASTER_REF.md` for DB-backed locale runtime and key management.
 
 ## Copy and encoding rules
 - Toast `title` and default `body` values are rendered as plain text.
