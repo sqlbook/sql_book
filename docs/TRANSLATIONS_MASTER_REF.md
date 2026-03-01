@@ -42,7 +42,27 @@ Persistence behavior:
 - Runtime lookup service:
   - `Translations::RuntimeLookupService`
   - locale-aware fetch with default-locale fallback
+  - duplicate reuse fallback (Phase 2):
+    - when a locale value is missing for a key, runtime attempts an exact-English-text match on another key
+    - requires type-tag overlap to reduce false-positive context reuse
+    - only applies before final fallback to default locale
   - cache key versioning (`translations:version`) for invalidation after updates
+
+## Canonical shared copy (Phase 2)
+- Introduced `common.actions.*` keys for repeated interface strings to reduce redundant translation work.
+- Current canonical shared keys include:
+  - `common.actions.create_new`
+  - `common.actions.save`
+  - `common.actions.save_changes`
+  - `common.actions.cancel`
+  - `common.actions.settings`
+  - `common.actions.view`
+  - `common.actions.open`
+  - `common.actions.delete`
+  - `common.actions.delete_workspace`
+  - `common.actions.delete_workspace_label`
+  - `common.actions.apply_filters`
+- Rule: prefer `common.*` for globally repeated UI labels; keep domain-specific phrasing under local namespaces.
 
 ## Data model
 - `translation_keys`
@@ -75,12 +95,17 @@ Main capabilities:
   - search (`q`)
   - `area_tag`
   - `type_tag`
-  - `missing_only`
+  - status (`all`, `fully_translated`, `missing_translations`, `duplicate_english`)
+  - optional duplicate drill-in via `duplicate_value`
 - actions:
   - bulk `Save`
   - `Discard` unsaved edits
   - row-level `Translate missing`
   - row-level revision `History`
+ - table behavior:
+   - full-width within admin content area
+   - horizontal scroll
+   - fixed minimum widths per column for readability
 
 ## Metadata format
 `used_in` shape:

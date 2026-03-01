@@ -3,7 +3,7 @@
     <h1>Workspaces</h1>
     <%= link_to new_app_workspace_path, class: "link secondary create-workspace", "data-shortcut": "N", "aria-label": "Create a new workspace" do %>
       <i class="ri-add-line red-500"></i>
-      <span>Create New</span>
+      <span><%= I18n.t('common.actions.create_new') %></span>
     <% end %>
   </div>
 

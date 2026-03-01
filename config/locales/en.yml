@@ -28,6 +28,20 @@
 #       enabled: "ON"
 
 en:
+  common:
+    actions:
+      apply_filters: Apply filters
+      cancel: Cancel
+      create_new: Create New
+      delete: Delete
+      delete_workspace_label: Delete Workspace
+      delete_workspace: "[Delete Workspace]"
+      open: Open
+      save: "[Save]"
+      save_changes: "[Save Changes]"
+      settings: Settings
+      view: View
+
   locales:
     en: English
     es: Spanish
@@ -41,11 +55,11 @@ en:
         type_tag: Type tag
         status: Status
         any: Any
-        apply: Apply filters
         status_options:
           all: All
           fully_translated: Fully translated
           missing_translations: Missing translations
+          duplicate_english: Duplicate English text
       table:
         key: Key
         area_tags: Area tags
@@ -54,8 +68,11 @@ en:
         used_in: Used in
         spanish: Spanish
         actions: Actions
+        duplicate_text_count:
+          one: Shared text (%{count} key)
+          other: Shared text (%{count} keys)
+        show_duplicates: Show duplicates
       actions:
-        save: "[Save]"
         discard: Discard changes
         translate_missing: Translate missing
         history: View history

@@ -41,6 +41,38 @@ RSpec.describe 'App::Admin::Translations', type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include(I18n.t('admin.translations.title'))
       end
+
+      it 'filters to duplicate english text when requested' do
+        duplicate_one = TranslationKey.create!(
+          key: 'test.duplicate.one',
+          area_tags: ['admin'],
+          type_tags: ['copy'],
+          used_in: []
+        )
+        duplicate_two = TranslationKey.create!(
+          key: 'test.duplicate.two',
+          area_tags: ['admin'],
+          type_tags: ['copy'],
+          used_in: []
+        )
+        unique_key = TranslationKey.create!(
+          key: 'test.unique',
+          area_tags: ['admin'],
+          type_tags: ['copy'],
+          used_in: []
+        )
+
+        TranslationValue.create!(translation_key: duplicate_one, locale: 'en', value: 'Shared label')
+        TranslationValue.create!(translation_key: duplicate_two, locale: 'en', value: 'Shared label')
+        TranslationValue.create!(translation_key: unique_key, locale: 'en', value: 'Unique label')
+
+        get '/app/admin/translations', params: { status: 'duplicate_english' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('test.duplicate.one')
+        expect(response.body).to include('test.duplicate.two')
+        expect(response.body).not_to include('test.unique')
+      end
     end
 
     context 'when user is in bootstrap allowlist' do

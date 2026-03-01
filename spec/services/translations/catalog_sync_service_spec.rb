@@ -22,7 +22,7 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
     it 'tags action copy as button and title copy with heading tags where mapped' do
       described_class.sync_from_locale_file!
 
-      button_key = TranslationKey.find_by!(key: 'admin.translations.actions.save')
+      button_key = TranslationKey.find_by!(key: 'common.actions.save')
       heading_key = TranslationKey.find_by!(key: 'admin.translations.title')
 
       expect(button_key.type_tags).to include('button')
@@ -36,6 +36,14 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
       expect(key.used_in).to include(
         a_hash_including('label' => 'Account settings page', 'path' => '/app/account-settings')
       )
+    end
+
+    it 'marks common keys as shared copy' do
+      described_class.sync_from_locale_file!
+
+      key = TranslationKey.find_by!(key: 'common.actions.save')
+      expect(key.area_tags).to include('common')
+      expect(key.used_in).to include(a_hash_including('label' => 'Shared copy'))
     end
   end
 end

@@ -4,6 +4,7 @@ module Translations
   class CatalogSyncService
     LOCALE_FILE_PATH = Rails.root.join('config/locales/en.yml').freeze
     USED_IN_RULES = [
+      { pattern: /\Acommon\./, entries: [{ label: 'Shared copy' }] },
       { pattern: /\Aadmin\.translations\./, entries: [{ label: 'Admin page', path: '/app/admin/translations' }] },
       {
         pattern: /\Aapp\.account_settings\./,
@@ -15,6 +16,7 @@ module Translations
       { pattern: /\Amailers\./, entries: [{ label: 'Email' }] }
     ].freeze
     AREA_TAG_PREFIXES = {
+      'common' => 'common.',
       'email' => 'mailers.',
       'toast' => 'toasts.',
       'authentication' => 'auth.',

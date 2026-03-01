@@ -15,7 +15,7 @@
         <% if can_create_queries %>
           <%= link_to app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link secondary create-query", "data-shortcut": "N", "aria-label": "Create new query" do %>
             <i class="ri-add-line red-500"></i>
-            <span>Create New</span>
+            <span><%= I18n.t('common.actions.create_new') %></span>
           <% end %>
         <% end %>
       </div>
@@ -56,9 +56,9 @@
                 <i class="ri-more-2-fill ri-xl gray-250"></i>
               </button>
               <div class="dropdown-options context">
-                <%= link_to "Open", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
+                <%= link_to I18n.t('common.actions.open'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
                 <% if can_destroy_query?(workspace: @workspace, query:) %>
-                  <%= link_to "Delete", app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
+                  <%= link_to I18n.t('common.actions.delete'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
                 <% end %>
               </div>
             </td>

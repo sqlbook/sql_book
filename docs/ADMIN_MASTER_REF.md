@@ -43,6 +43,11 @@ Related references:
 - `POST /app/admin/translations/:id/translate-missing`
 - `GET /app/admin/translations/:id/history`
 
+## Admin UI layout conventions
+- Admin pages should use full-width content within app shell spacing (no `container.lg` cap).
+- Filter rows on admin management pages should span full content width.
+- Large admin tables should prefer horizontal scrolling with explicit column minimum widths.
+
 ## Environment separation guardrails
 - `SUPER_ADMIN_BOOTSTRAP_EMAILS` must be set per environment (staging and production independently).
 - Never copy staging bootstrap emails into production by default.

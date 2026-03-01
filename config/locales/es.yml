@@ -1,4 +1,18 @@
 es:
+  common:
+    actions:
+      apply_filters: Aplicar filtros
+      cancel: Cancelar
+      create_new: Crear nuevo
+      delete: Eliminar
+      delete_workspace_label: Eliminar espacio de trabajo
+      delete_workspace: "[Eliminar espacio de trabajo]"
+      open: Abrir
+      save: "[Guardar]"
+      save_changes: "[Guardar cambios]"
+      settings: Configuración
+      view: Ver
+
   locales:
     en: Inglés
     es: Español
@@ -12,11 +26,11 @@ es:
         type_tag: Etiqueta de tipo
         status: Estado
         any: Cualquiera
-        apply: Aplicar filtros
         status_options:
           all: Todas
           fully_translated: Completamente traducidas
           missing_translations: Traducciones faltantes
+          duplicate_english: Texto duplicado en inglés
       table:
         key: Clave
         area_tags: Etiquetas de área
@@ -25,8 +39,11 @@ es:
         used_in: Usado en
         spanish: Español
         actions: Acciones
+        duplicate_text_count:
+          one: Texto compartido (%{count} clave)
+          other: Texto compartido (%{count} claves)
+        show_duplicates: Ver duplicados
       actions:
-        save: "[Guardar]"
         discard: Descartar cambios
         translate_missing: Traducir faltantes
         history: Ver historial
