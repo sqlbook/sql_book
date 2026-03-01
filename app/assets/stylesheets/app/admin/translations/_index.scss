@@ -5,6 +5,19 @@
 
   .translations-filters {
     margin: 0 0 2rem 0;
+    width: 100%;
+  }
+
+  .translations-header-row {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin: 0 0 2rem 0;
+  }
+
+  .translations-header-row h1 {
+    margin-bottom: 0;
   }
 
   .translations-filters-grid {
@@ -24,7 +37,6 @@
     align-items: center;
     display: flex;
     gap: 1rem;
-    margin: 0 0 1rem 0;
   }
 
   .translations-table-wrapper {
@@ -69,11 +81,16 @@
     }
 
     .translations-used-in-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0;
       min-height: 5rem;
       padding: 0.25rem 0;
+      white-space: normal;
+    }
+
+    .translations-used-in-separator {
+      margin-right: 0.25rem;
     }
 
     .actions {
@@ -95,6 +112,11 @@
   }
 
   @media (max-width: 64rem) {
+    .translations-header-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
     .translations-filters-grid {
       grid-template-columns: 1fr 1fr;
     }

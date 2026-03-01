@@ -12,12 +12,18 @@ export default class extends Controller<HTMLDivElement> {
 
   public connect(): void {
     this.captureInitialState();
-    this.fieldTargets.forEach((field) => field.addEventListener('input', this.onInput));
+    this.fieldTargets.forEach((field) => {
+      field.addEventListener('input', this.onInput);
+      field.addEventListener('change', this.onInput);
+    });
     this.updateActionState();
   }
 
   public disconnect(): void {
-    this.fieldTargets.forEach((field) => field.removeEventListener('input', this.onInput));
+    this.fieldTargets.forEach((field) => {
+      field.removeEventListener('input', this.onInput);
+      field.removeEventListener('change', this.onInput);
+    });
   }
 
   public discard(): void {
@@ -37,7 +43,7 @@ export default class extends Controller<HTMLDivElement> {
   private captureInitialState(): void {
     this.initialState.clear();
     this.fieldTargets.forEach((field) => {
-      this.initialState.set(this.fieldKey(field), field.value);
+      this.initialState.set(this.fieldKey(field), this.initialFieldValue(field));
     });
   }
 
@@ -53,5 +59,10 @@ export default class extends Controller<HTMLDivElement> {
 
   private fieldKey(field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): string {
     return field.name;
+  }
+
+  private initialFieldValue(field: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): string {
+    const value = field.dataset.initialValue;
+    return value === undefined ? field.value : value;
   }
 }

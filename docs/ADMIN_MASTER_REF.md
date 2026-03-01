@@ -47,6 +47,7 @@ Related references:
 - Admin pages should use full-width content within app shell spacing (no `container.lg` cap).
 - Filter rows on admin management pages should span full content width.
 - Large admin tables should prefer horizontal scrolling with explicit column minimum widths.
+- Page-level primary/secondary actions can live in the top-right header row when they apply to the table/form below.
 
 ## Environment separation guardrails
 - `SUPER_ADMIN_BOOTSTRAP_EMAILS` must be set per environment (staging and production independently).

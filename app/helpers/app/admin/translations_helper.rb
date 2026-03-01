@@ -10,6 +10,10 @@ module App
         translation_key.translation_values.find { |value| value.locale == locale }&.value.to_s
       end
 
+      def persisted_translation_value_for(translation_key:, locale:)
+        translation_key.translation_values.find { |value| value.locale == locale }&.value.to_s
+      end
+
       def used_in_entries(translation_key:)
         Array(translation_key.used_in).map do |entry|
           {

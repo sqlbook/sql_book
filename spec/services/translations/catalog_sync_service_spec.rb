@@ -14,7 +14,8 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
       described_class.sync_from_locale_file!
 
       key = TranslationKey.find_by!(key: 'mailers.account.subjects.account_deletion_confirmed')
-      expect(key.area_tags).to include('mailers', 'email')
+      expect(key.area_tags).to include('email')
+      expect(key.area_tags).not_to include('mailers')
       expect(key.type_tags).to include('email_subject')
       expect(key.used_in).to include(a_hash_including('label' => 'Email'))
     end
@@ -41,9 +42,10 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
     it 'marks common keys as shared copy' do
       described_class.sync_from_locale_file!
 
-      key = TranslationKey.find_by!(key: 'common.actions.save')
+      key = TranslationKey.find_by!(key: 'common.actions.create_new')
       expect(key.area_tags).to include('common')
-      expect(key.used_in).to include(a_hash_including('label' => 'Shared copy'))
+      expect(key.used_in).to include(a_hash_including('label' => 'Workspaces page', 'path' => '/app/workspaces'))
+      expect(key.used_in).to include(a_hash_including('label' => 'Data Sources page', 'path' => '/app/workspaces'))
     end
   end
 end

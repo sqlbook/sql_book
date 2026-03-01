@@ -47,6 +47,10 @@ Persistence behavior:
     - requires type-tag overlap to reduce false-positive context reuse
     - only applies before final fallback to default locale
   - cache key versioning (`translations:version`) for invalidation after updates
+  - fallback order in practice:
+    1. exact key in requested locale
+    2. duplicate-English reuse candidate in requested locale (type-tag overlap)
+    3. exact key in default locale (`en`)
 
 ## Canonical shared copy (Phase 2)
 - Introduced `common.actions.*` keys for repeated interface strings to reduce redundant translation work.
@@ -102,26 +106,39 @@ Main capabilities:
   - `Discard` unsaved edits
   - row-level `Translate missing`
   - row-level revision `History`
- - table behavior:
-   - full-width within admin content area
-   - horizontal scroll
-   - fixed minimum widths per column for readability
+- table behavior:
+  - full-width within admin content area
+  - horizontal scroll
+  - fixed minimum widths per column for readability
+  - `Save` and `Discard` actions are shown in the top-right header row
+- draft suggestion behavior:
+  - `Translate missing` writes a draft suggestion to the form only
+  - the row is considered dirty against persisted DB values
+  - `Save`/`Discard` activate immediately after a draft is inserted
 
 ## Metadata format
 `used_in` shape:
 ```json
 [
   { "label": "Account settings page", "path": "/app/account-settings" },
-  { "label": "Workspace settings team tab", "path": "/app/workspaces/:id/workspace-settings?tab=team" }
+  { "label": "Admin page", "path": "/app/admin/translations" },
+  { "label": "Email" }
 ]
 ```
 
+Notes:
+- Entries can be multiple per key and are rendered comma-separated in one cell.
+- If `path` is present and starts with `/`, it is rendered as an internal link.
+- If `path` is omitted (for example `Email` or `Toast`), text is rendered without a link.
+- For `common.*` keys, `used_in` is inferred dynamically from view usage.
+
 Tagging guidance:
 - `area_tags` examples:
-  - `authentication`, `workspace_settings`, `toasts`, `emails`, `navigation`
+  - `authentication`, `toast`, `email`, `navigation`, `common`
 - `type_tags` examples:
-  - `h1`, `label`, `body`, `button`, `toast_title`, `toast_body`, `email_subject`
+  - `h1`, `h3`, `h4`, `label`, `body`, `button`, `email_subject`, `tab`
 - Keys can have multiple tags in both arrays.
+- Area tag normalization is enforced during catalog sync (for example `auth` -> `authentication`, `toasts` -> `toast`, `mailers` -> `email`).
 
 ## LLM generation rules
 - Service: `Translations::OpenaiTranslationService`

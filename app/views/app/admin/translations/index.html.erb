@@ -1,7 +1,17 @@
 <main>
-  <h1><%= I18n.t('admin.translations.title') %></h1>
-
   <div class="container translations-admin" data-controller="translations-admin">
+    <div class="translations-header-row">
+      <h1><%= I18n.t('admin.translations.title') %></h1>
+      <div class="translations-form-actions">
+        <button type="submit" form="translations-form" class="link primary" disabled data-translations-admin-target="saveButton">
+          <%= I18n.t('common.actions.save') %>
+        </button>
+        <button type="button" class="link secondary" disabled data-action="translations-admin#discard" data-translations-admin-target="discardButton">
+          <%= I18n.t('admin.translations.actions.discard') %>
+        </button>
+      </div>
+    </div>
+
     <% selected_status = params[:status].presence || 'all' %>
     <% target_locale = params[:target_locale].presence || 'es' %>
     <%= form_with url: app_admin_translations_path, method: :get, class: 'translations-filters' do %>
@@ -60,20 +70,11 @@
       <% end %>
     <% end %>
 
-    <%= form_with url: app_admin_translations_path, method: :patch, class: 'translations-form', html: { "data-translations-admin-target": "form" } do %>
+    <%= form_with url: app_admin_translations_path, method: :patch, class: 'translations-form', id: 'translations-form', html: { "data-translations-admin-target": "form" } do %>
       <% preserved_filter_params = params.permit(:q, :area_tag, :type_tag, :status, :target_locale, :duplicate_value).to_h %>
       <% preserved_filter_params.each do |key, value| %>
         <%= hidden_field_tag key, value %>
       <% end %>
-
-      <div class="translations-form-actions">
-        <button type="submit" class="link primary" disabled data-translations-admin-target="saveButton">
-          <%= I18n.t('common.actions.save') %>
-        </button>
-        <button type="button" class="link secondary" disabled data-action="translations-admin#discard" data-translations-admin-target="discardButton">
-          <%= I18n.t('admin.translations.actions.discard') %>
-        </button>
-      </div>
 
       <div class="translations-table-wrapper" data-controller="table">
         <table class="collapsible translations-table">
@@ -139,6 +140,7 @@
                 <textarea class="input block fluid translations-value"
                           name="rows[<%= translation_key.id %>][en]"
                           rows="3"
+                          data-initial-value="<%= persisted_translation_value_for(translation_key:, locale: 'en') %>"
                           data-translations-admin-target="field"><%= english_value %></textarea>
               </td>
               <td>
@@ -147,11 +149,14 @@
                   <% if entries.empty? %>
                     <span class="grey-500">-</span>
                   <% else %>
-                    <% entries.each do |entry| %>
+                    <% entries.each_with_index do |entry, index| %>
                       <% if used_in_path_linkable?(path: entry[:path]) %>
                         <%= link_to entry[:label], entry[:path], class: 'link secondary' %>
                       <% else %>
                         <span><%= entry[:label] %></span>
+                      <% end %>
+                      <% if index < entries.length - 1 %>
+                        <span class="translations-used-in-separator">, </span>
                       <% end %>
                     <% end %>
                   <% end %>
@@ -163,6 +168,7 @@
                   <textarea class="input block fluid translations-value"
                             name="rows[<%= translation_key.id %>][<%= locale %>]"
                             rows="3"
+                            data-initial-value="<%= persisted_translation_value_for(translation_key:, locale:) %>"
                             data-translations-admin-target="field"><%= value %></textarea>
                 </td>
               <% end %>
