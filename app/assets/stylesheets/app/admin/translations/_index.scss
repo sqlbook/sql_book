@@ -24,13 +24,8 @@
     align-items: end;
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
-  }
-
-  .translations-filter-submit {
-    align-self: end;
-    justify-self: end;
   }
 
   .translations-form-actions {
@@ -81,7 +76,7 @@
     }
 
     .input {
-      background: var(--cream-100);
+      background: var(--gray-800);
     }
 
     .translations-used-in-list {
@@ -116,10 +111,6 @@
 
     .translations-filters-grid {
       grid-template-columns: 1fr 1fr;
-    }
-
-    .translations-filter-submit {
-      justify-self: start;
     }
   }
 

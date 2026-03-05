@@ -53,7 +53,7 @@ en:
       title: Translations Manager
       filters:
         search: Search
-        type_tag: Type tag
+        type_tag: Type
         status: Status
         any: Any
         status_options:
@@ -62,7 +62,7 @@ en:
           missing_translations: Missing translations
       table:
         key: Key
-        type_tags: Type tags
+        type_tags: Type
         used_in: Used in
         actions: Actions
       actions:

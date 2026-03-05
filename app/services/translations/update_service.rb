@@ -28,19 +28,20 @@ module Translations
 
     def update_row!(row:)
       translation_key = TranslationKey.find(row.fetch('id'))
-      translation_key.update!(
-        area_tags: normalize_tags(row['area_tags']),
-        type_tags: normalize_tags(row['type_tags'])
-      )
+      update_metadata!(translation_key:, row:)
+      update_locales!(translation_key:, row:)
+    end
 
+    def update_metadata!(translation_key:, row:)
+      metadata_updates = {}
+      metadata_updates[:area_tags] = normalize_tags(row['area_tags']) if row.key?('area_tags')
+      metadata_updates[:type_tags] = normalize_tags(row['type_tags']) if row.key?('type_tags')
+      translation_key.update!(metadata_updates) if metadata_updates.any?
+    end
+
+    def update_locales!(translation_key:, row:)
       PERMITTED_LOCALES.each do |locale|
-        next unless row.key?(locale)
-
-        upsert_value!(
-          translation_key:,
-          locale:,
-          value: row[locale].to_s
-        )
+        upsert_value!(translation_key:, locale:, value: row[locale].to_s) if row.key?(locale)
       end
     end
 

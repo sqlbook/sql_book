@@ -22,7 +22,7 @@ es:
       title: Gestor de traducciones
       filters:
         search: Buscar
-        type_tag: Etiqueta de tipo
+        type_tag: Tipo
         status: Estado
         any: Cualquiera
         status_options:
@@ -31,7 +31,7 @@ es:
           missing_translations: Traducciones faltantes
       table:
         key: Clave
-        type_tags: Etiquetas de tipo
+        type_tags: Tipo
         used_in: Usado en
         actions: Acciones
       actions:

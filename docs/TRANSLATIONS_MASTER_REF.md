@@ -102,6 +102,9 @@ Main capabilities:
   - search (`q`)
   - `type_tag`
   - status (`all`, `fully_translated`, `missing_translations`)
+  - auto-apply behavior:
+    - select filters submit immediately on change
+    - search submits automatically after debounce when query is blank or at least 3 characters
 - actions:
   - bulk `Save`
   - `Discard` unsaved edits
@@ -112,6 +115,8 @@ Main capabilities:
   - horizontal scroll
   - fixed minimum widths per column for readability
   - `Save` and `Discard` actions are shown in the top-right header row
+  - `Type` is read-only in UI (managed from code)
+  - `English` is read-only in UI (source copy control stays in code)
 - draft suggestion behavior:
   - `Translate missing` writes a draft suggestion to the form only
   - the row is considered dirty against persisted DB values
