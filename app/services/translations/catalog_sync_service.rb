@@ -3,11 +3,8 @@
 module Translations
   class CatalogSyncService # rubocop:disable Metrics/ClassLength
     LOCALE_FILE_PATH = Rails.root.join('config/locales/en.yml').freeze
+    EXCLUDED_KEY_PREFIXES = %w[admin. toasts.admin.].freeze
     KEY_USAGE_BY_PATH_RULES = [
-      {
-        pattern: %r{\Aapp/views/app/admin/},
-        entry: { label: 'Admin page', path: '/app/admin/translations' }
-      },
       {
         pattern: %r{\Aapp/views/app/workspaces/settings/_team},
         entry: { label: 'Workspace Settings > Team', path: '/app/workspaces/:workspace_id/workspace-settings?tab=team' }
@@ -68,7 +65,6 @@ module Translations
       { pattern: %r{\Aapp/views/.*mailer}, entry: { label: 'Email' } }
     ].freeze
     USED_IN_RULES = [
-      { pattern: /\Aadmin\.translations\./, entries: [{ label: 'Admin page', path: '/app/admin/translations' }] },
       {
         pattern: /\Aapp\.account_settings\.delete_account\./,
         entries: [{ label: 'Account Settings > Delete Account', path: '/app/account-settings?tab=delete_account' }]
@@ -100,7 +96,6 @@ module Translations
         pattern: /\Atoasts\.account_settings\./,
         entries: [{ label: 'Account Settings / Toast', path: '/app/account-settings?tab=general' }]
       },
-      { pattern: /\Atoasts\.admin\./, entries: [{ label: 'Admin / Toast', path: '/app/admin/translations' }] },
       { pattern: /\Atoasts\./, entries: [{ label: 'Toast' }] },
       { pattern: /\Amailers\./, entries: [{ label: 'Email' }] }
     ].freeze
@@ -110,8 +105,7 @@ module Translations
       'toast' => 'toasts.',
       'authentication' => 'auth.',
       'account_settings' => 'app.account_settings.',
-      'navigation' => 'app.navigation.',
-      'admin' => 'admin.'
+      'navigation' => 'app.navigation.'
     }.freeze
     AREA_TAG_NORMALIZATION = {
       'auth' => 'authentication',
@@ -119,7 +113,6 @@ module Translations
       'mailers' => 'email'
     }.freeze
     SPECIFIC_HEADING_TYPE_TAGS = {
-      'admin.translations.title' => 'h1',
       'app.account_settings.title' => 'h1',
       'app.account_settings.delete_account.dialog.title' => 'h3',
       'app.account_settings.delete_account.confirm_label' => 'h4'
@@ -138,14 +131,29 @@ module Translations
 
     class << self
       def sync_from_locale_file!
+        remove_excluded_keys!
         locale_data = YAML.safe_load_file(LOCALE_FILE_PATH)
         english_tree = locale_data.fetch('en', {})
         flatten(english_tree).each do |key, value|
+          next if excluded_key?(key:)
+
           sync_key!(key:, english_value: value.to_s)
         end
       end
 
       private
+
+      def remove_excluded_keys!
+        table = TranslationKey.arel_table
+        query = EXCLUDED_KEY_PREFIXES
+          .map { |prefix| table[:key].matches("#{prefix}%") }
+          .reduce { |memo, clause| memo.or(clause) }
+        TranslationKey.where(query).destroy_all if query
+      end
+
+      def excluded_key?(key:)
+        EXCLUDED_KEY_PREFIXES.any? { |prefix| key.start_with?(prefix) }
+      end
 
       def sync_key!(key:, english_value:)
         translation_key = TranslationKey.find_or_create_by!(key:)
@@ -153,7 +161,7 @@ module Translations
         translation_key.update!(metadata)
 
         translation_value = TranslationValue.find_or_initialize_by(translation_key:, locale: 'en')
-        return if translation_value.persisted? && translation_value.value.present?
+        return if translation_value.persisted? && translation_value.value.to_s == english_value
 
         translation_value.update!(value: english_value, source: 'seed')
       end

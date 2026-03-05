@@ -1,13 +1,13 @@
 <main>
   <div class="container translations-admin" data-controller="translations-admin">
     <div class="translations-header-row">
-      <h1><%= I18n.t('admin.translations.title') %></h1>
+      <h1>Translations Manager</h1>
       <div class="translations-form-actions">
         <button type="submit" form="translations-form" class="link primary" disabled data-translations-admin-target="saveButton">
-          <%= I18n.t('common.actions.save') %>
+          [Save]
         </button>
         <button type="button" class="link secondary" disabled data-action="translations-admin#discard" data-translations-admin-target="discardButton">
-          <%= I18n.t('admin.translations.actions.discard') %>
+          Discard changes
         </button>
       </div>
     </div>
@@ -17,15 +17,15 @@
     <%= form_with url: app_admin_translations_path, method: :get, class: 'translations-filters', html: { "data-translations-admin-target": "filterForm" } do %>
       <div class="translations-filters-grid">
         <div>
-          <label class="label block" for="translations-query"><%= I18n.t('admin.translations.filters.search') %></label>
+          <label class="label block" for="translations-query">Search</label>
           <input id="translations-query" class="input block fluid" type="text" name="q" value="<%= params[:q] %>" data-translations-admin-target="filterField" />
         </div>
 
         <div>
-          <label class="label block" for="translations-type-tag"><%= I18n.t('admin.translations.filters.type_tag') %></label>
+          <label class="label block" for="translations-type-tag">Type</label>
           <div class="select block fluid">
             <select id="translations-type-tag" name="type_tag" data-translations-admin-target="filterField">
-              <option value=""><%= I18n.t('admin.translations.filters.any') %></option>
+              <option value="">Any</option>
               <% @type_tags.each do |tag| %>
                 <option value="<%= tag %>" <%= 'selected' if params[:type_tag] == tag %>><%= tag %></option>
               <% end %>
@@ -35,12 +35,12 @@
         </div>
 
         <div>
-          <label class="label block" for="translations-status"><%= I18n.t('admin.translations.filters.status') %></label>
+          <label class="label block" for="translations-status">Status</label>
           <div class="select block fluid">
             <select id="translations-status" name="status" data-translations-admin-target="filterField">
-              <option value="all" <%= 'selected' if selected_status == 'all' %>><%= I18n.t('admin.translations.filters.status_options.all') %></option>
-              <option value="fully_translated" <%= 'selected' if selected_status == 'fully_translated' %>><%= I18n.t('admin.translations.filters.status_options.fully_translated') %></option>
-              <option value="missing_translations" <%= 'selected' if selected_status == 'missing_translations' %>><%= I18n.t('admin.translations.filters.status_options.missing_translations') %></option>
+              <option value="all" <%= 'selected' if selected_status == 'all' %>>All</option>
+              <option value="fully_translated" <%= 'selected' if selected_status == 'fully_translated' %>>Fully translated</option>
+              <option value="missing_translations" <%= 'selected' if selected_status == 'missing_translations' %>>Missing translations</option>
             </select>
             <i class="ri-arrow-drop-down-line"></i>
           </div>
@@ -68,14 +68,14 @@
             <col class="translations-col-actions" />
           </colgroup>
           <tr>
-            <th><%= I18n.t('admin.translations.table.key') %></th>
-            <th><%= I18n.t('admin.translations.table.type_tags') %></th>
-            <th><%= I18n.t('admin.translations.table.used_in') %></th>
-            <th><%= I18n.t('locales.en') %></th>
+            <th>Key</th>
+            <th>Type</th>
+            <th>Used in</th>
+            <th>English</th>
             <% @target_locales.each do |locale| %>
-              <th><%= I18n.t("locales.#{locale}", default: locale.upcase) %></th>
+              <th><%= locale.upcase %></th>
             <% end %>
-            <th class="actions"><%= I18n.t('admin.translations.table.actions') %></th>
+            <th class="actions">Actions</th>
           </tr>
           <% @translation_keys.each do |translation_key| %>
             <% english_value = translation_value_for(translation_key:, locale: 'en', suggestions: @translation_suggestions) %>
@@ -127,11 +127,11 @@
               <% end %>
               <td class="actions">
                 <div class="translations-row-actions">
-                  <%= link_to I18n.t('admin.translations.actions.translate_missing'),
+                  <%= link_to "Translate missing",
                               translate_missing_app_admin_translation_path(translation_key, preserved_filter_params.merge(target_locale: target_locale)),
                               class: 'link secondary',
                               data: { turbo_method: :post } %>
-                  <%= link_to I18n.t('admin.translations.actions.history'),
+                  <%= link_to "View history",
                               history_app_admin_translation_path(translation_key),
                               class: 'link secondary',
                               target: '_blank',

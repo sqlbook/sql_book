@@ -24,7 +24,7 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
       described_class.sync_from_locale_file!
 
       button_key = TranslationKey.find_by!(key: 'common.actions.save')
-      heading_key = TranslationKey.find_by!(key: 'admin.translations.title')
+      heading_key = TranslationKey.find_by!(key: 'app.account_settings.title')
 
       expect(button_key.type_tags).to include('button')
       expect(heading_key.type_tags).to include('h1')
@@ -48,6 +48,20 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
       expect(key.used_in).to include(
         a_hash_including('label' => 'Data Sources', 'path' => '/app/workspaces/:workspace_id/data_sources')
       )
+    end
+
+    it 'removes admin namespace keys from the translation catalog' do
+      key = TranslationKey.create!(
+        key: 'admin.translations.title',
+        area_tags: ['admin'],
+        type_tags: ['h1'],
+        used_in: []
+      )
+      TranslationValue.create!(translation_key: key, locale: 'en', value: 'Old')
+
+      described_class.sync_from_locale_file!
+
+      expect(TranslationKey.find_by(key: 'admin.translations.title')).to be_nil
     end
   end
 end

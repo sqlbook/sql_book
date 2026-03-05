@@ -180,6 +180,15 @@
       }
     }
 
+    &.with-admin-nav {
+      column-gap: 1rem;
+
+      .menu-actions {
+        flex-shrink: 0;
+        margin: 0 0 0 1rem;
+      }
+    }
+
     .desktop-workspace-switcher {
       display: block;
     }
@@ -267,7 +276,8 @@
     }
   }
 
-    .workspace-menu {
+    .workspace-menu,
+    .admin-menu {
       display: none;
     }
   }

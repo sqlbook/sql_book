@@ -48,33 +48,10 @@ en:
     en: English
     es: Spanish
 
-  admin:
-    translations:
-      title: Translations Manager
-      filters:
-        search: Search
-        type_tag: Type
-        status: Status
-        any: Any
-        status_options:
-          all: All
-          fully_translated: Fully translated
-          missing_translations: Missing translations
-      table:
-        key: Key
-        type_tags: Type
-        used_in: Used in
-        actions: Actions
-      actions:
-        discard: Discard changes
-        translate_missing: Translate missing
-        history: View history
-
   app:
     navigation:
       workspace: Workspace
       account: Account
-      admin: Admin
       chat: Chat
       data_sources: Data Sources
       query_library: Query Library
@@ -160,30 +137,6 @@ en:
       is_not_valid: is not valid
 
   toasts:
-    admin:
-      access_forbidden:
-        title: Admin access denied
-        body: You don't have access to the admin area.
-      translations:
-        saved:
-          title: Translations saved
-          body: Translation updates were saved successfully.
-        save_failed:
-          title: Could not save translations
-          body: Please review your changes and try again.
-        translate_missing_success:
-          title: Translation draft generated
-          body: A translation draft has been added to the row. Review and save when ready.
-        translate_missing_failed:
-          title: Translation generation failed
-          body: We couldn't generate that translation right now. Please try again.
-        translate_not_needed:
-          title: Translation already exists
-          body: This row already has a translation for the selected locale.
-        placeholder_mismatch:
-          body: The generated translation changed required placeholder tokens. No draft was applied.
-        openai_missing_config:
-          body: Translation generation is not configured yet. Please set OPENAI_API_KEY.
     generic_error:
       title: Something went wrong
       body: We couldn't complete your request, please try again. If the problem continues, contact hello@sqlbook.com.

@@ -1,6 +1,6 @@
 # Admin Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-05
 
 ## Service and goal
 - Service: super-admin-only control surfaces under `/app/admin/*`.
@@ -11,7 +11,7 @@ Last updated: 2026-03-01
 Single source of truth for admin surface scope, access model, routing, and operational guardrails.
 
 Related references:
-- `docs/TRANSLATIONS_MASTER_REF.md` for the first admin feature (`/app/admin/translations`).
+- `docs/TRANSLATIONS_MASTER_REF.md` for translation management behavior.
 - `docs/ROLES_RIGHTS_MASTER_REF.md` for workspace-level roles (owner/admin/user/read-only), which are separate from super-admin.
 - `docs/ENV_VARS.md` for required bootstrap/env configuration.
 
@@ -34,20 +34,45 @@ Related references:
 ## Deny behavior
 - Redirect target: `/app/workspaces`
 - Toast copy:
-  - title: `Access denied`
-  - body: `You don't have permission to access admin settings.`
+  - title: `Admin access denied`
+  - body: `You don't have access to the admin area.`
 
 ## Current admin routes
+- `GET /app/admin` (dashboard)
+- `GET /app/admin/workspaces`
+- `GET /app/admin/users`
 - `GET /app/admin/translations`
 - `PATCH /app/admin/translations`
 - `POST /app/admin/translations/:id/translate-missing`
 - `GET /app/admin/translations/:id/history`
+
+## Current admin tabs
+- `Dashboard`
+  - summary KPI cards and role distribution table
+  - placeholder section for planned charts/analytics
+- `Workspaces`
+  - searchable global workspace table
+  - click workspace name to open side panel with deeper workspace data
+- `Users`
+  - searchable global users table
+  - click user name to open side panel with deeper user/membership data
+  - includes `created_at` and `last_active_at` fields for basic internal reporting
+- `Translations`
+  - existing translation manager
 
 ## Admin UI layout conventions
 - Admin pages should use full-width content within app shell spacing (no `container.lg` cap).
 - Filter rows on admin management pages should span full content width.
 - Large admin tables should prefer horizontal scrolling with explicit column minimum widths.
 - Page-level primary/secondary actions can live in the top-right header row when they apply to the table/form below.
+- Admin top-level navigation follows workspace-header breakpoint behavior:
+  - desktop: tab-style nav in header
+  - mobile/tablet: collapses into a menu icon next to account icon
+
+## Admin copy policy
+- Admin interface copy is English-only.
+- Admin strings are intentionally not managed in the translations catalog.
+- Admin toasts are controller-defined (not locale-file keys).
 
 ## Environment separation guardrails
 - `SUPER_ADMIN_BOOTSTRAP_EMAILS` must be set per environment (staging and production independently).
@@ -59,7 +84,7 @@ Related references:
 - Bootstrap first admin in staging:
   1. Set `SUPER_ADMIN_BOOTSTRAP_EMAILS` in staging env.
   2. Sign in with listed email.
-  3. Confirm `/app/admin/translations` is accessible.
+  3. Confirm `/app/admin` is accessible.
 - Bootstrap first admin in production:
   1. Set production-specific allowlist.
   2. Repeat validation in production.
@@ -69,3 +94,5 @@ Related references:
 - Admin namespace should not expose workspace-scoped actions unless explicitly required.
 - Admin pages should avoid hardcoded hostnames and continue using env-safe helpers.
 - All admin writes should produce auditable change records where feasible (implemented for translations via revision model).
+- User activity tracking:
+  - `users.last_active_at` is updated on signed-in `/app/*` requests with throttling (10-minute window).

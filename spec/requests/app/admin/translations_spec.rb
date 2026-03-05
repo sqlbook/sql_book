@@ -24,8 +24,8 @@ RSpec.describe 'App::Admin::Translations', type: :request do
         expect(response).to redirect_to(app_workspaces_path)
         expect(flash[:toast]).to include(
           type: 'error',
-          title: I18n.t('toasts.admin.access_forbidden.title'),
-          body: I18n.t('toasts.admin.access_forbidden.body')
+          title: 'Admin access denied',
+          body: "You don't have access to the admin area."
         )
       end
     end
@@ -39,7 +39,7 @@ RSpec.describe 'App::Admin::Translations', type: :request do
         get '/app/admin/translations'
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include(I18n.t('admin.translations.title'))
+        expect(response.body).to include('Translations Manager')
       end
     end
 
@@ -144,8 +144,8 @@ RSpec.describe 'App::Admin::Translations', type: :request do
       expect(response).to redirect_to(app_admin_translations_path(target_locale: 'es'))
       expect(flash[:toast]).to include(
         type: 'error',
-        title: I18n.t('toasts.admin.translations.translate_missing_failed.title'),
-        body: I18n.t('toasts.admin.translations.placeholder_mismatch.body')
+        title: 'Translation generation failed',
+        body: 'The generated translation changed required placeholder tokens. No draft was applied.'
       )
     end
   end

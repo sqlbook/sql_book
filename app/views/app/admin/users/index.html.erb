@@ -1,0 +1,87 @@
+<% content_for :app_content_layout_class, ('split' if @selected_user.present?) %>
+
+<main>
+  <div class="admin-page-header">
+    <h1>Admin Users</h1>
+  </div>
+
+  <%= form_with url: app_admin_users_path, method: :get, class: 'admin-search-form' do %>
+    <label class="label block" for="admin-users-search">Search</label>
+    <div class="admin-search-row">
+      <input
+        id="admin-users-search"
+        class="input block fluid"
+        type="text"
+        name="q"
+        value="<%= params[:q].to_s %>"
+        placeholder="Search name or email address" />
+      <button type="submit" class="link secondary">[Search]</button>
+    </div>
+  <% end %>
+
+  <div class="admin-table-wrapper" data-controller="table">
+    <table class="collapsible admin-table">
+      <tr>
+        <th>User full name</th>
+        <th>Email address</th>
+        <th>Workspaces</th>
+        <th>Created at</th>
+        <th>Last activity</th>
+      </tr>
+      <% @users.each do |user| %>
+        <% workspace_names = user.members.includes(:workspace).map { |member| member.workspace.name }.uniq.sort %>
+        <tr>
+          <td><%= link_to user.full_name, add_params(user_id: user.id), class: "link secondary" %></td>
+          <td><%= user.email %></td>
+          <td>
+            <span class="truncate-text" data-tooltip-text="<%= workspace_names.join(', ') %>"><%= workspace_names.join(', ').presence || '-' %></span>
+          </td>
+          <td><%= user.created_at.strftime('%d/%m/%Y %H:%M') %></td>
+          <td><%= (user.last_active_at || user.updated_at).strftime('%d/%m/%Y %H:%M') %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+</main>
+
+<% if @selected_user %>
+  <% user_workspaces = @selected_user.members.includes(:workspace).map(&:workspace).uniq.sort_by(&:name) %>
+  <aside data-controller="resizeable-page">
+    <div class="admin-panel-header">
+      <h3><%= @selected_user.full_name %></h3>
+      <%= link_to "[Close]", add_params(user_id: nil), class: "link secondary" %>
+    </div>
+
+    <p><b>Email:</b> <%= @selected_user.email %></p>
+    <p><b>Created at:</b> <%= @selected_user.created_at.strftime('%d/%m/%Y %H:%M') %></p>
+    <p><b>Last activity:</b> <%= (@selected_user.last_active_at || @selected_user.updated_at).strftime('%d/%m/%Y %H:%M') %></p>
+    <p><b>Super admin:</b> <%= @selected_user.super_admin? ? 'Yes' : 'No' %></p>
+
+    <h4>Workspace memberships</h4>
+    <table class="collapsible admin-mini-table">
+      <tr>
+        <th>Workspace</th>
+        <th>Role</th>
+        <th>Status</th>
+      </tr>
+      <% @selected_user.members.includes(:workspace).order(created_at: :desc).each do |member| %>
+        <tr>
+          <td><%= member.workspace.name %></td>
+          <td><%= member.role_name %></td>
+          <td><%= member.status_name %></td>
+        </tr>
+      <% end %>
+    </table>
+
+    <% if user_workspaces.any? %>
+      <h4>Workspace list</h4>
+      <ul>
+        <% user_workspaces.each do |workspace| %>
+          <li><%= workspace.name %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <%= render "shared/grab_handle" %>
+  </aside>
+<% end %>

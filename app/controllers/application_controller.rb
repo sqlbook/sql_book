@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
 
   before_action :set_locale
   before_action :ensure_bootstrap_super_admin!
+  before_action :track_user_activity!
 
   rescue_from WorkspaceAccessDenied, with: :redirect_for_workspace_access_denied
 
@@ -145,8 +146,8 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
   def deny_admin_access!
     flash[:toast] = {
       type: 'error',
-      title: I18n.t('toasts.admin.access_forbidden.title'),
-      body: I18n.t('toasts.admin.access_forbidden.body')
+      title: 'Admin access denied',
+      body: "You don't have access to the admin area."
     }
     redirect_to app_workspaces_path
   end
@@ -166,6 +167,23 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
     return unless bootstrap_super_admin_emails.include?(current_user.email)
 
     current_user.update!(super_admin: true)
+  end
+
+  def track_user_activity!
+    return unless should_track_user_activity?
+    return unless stale_activity_timestamp?
+
+    current_user.update!(last_active_at: Time.current)
+  rescue StandardError => e
+    Rails.logger.warn("Unable to track user activity for user #{current_user&.id}: #{e.class} #{e.message}")
+  end
+
+  def should_track_user_activity?
+    current_user.present? && request.path.start_with?('/app/')
+  end
+
+  def stale_activity_timestamp?
+    current_user.last_active_at.blank? || current_user.last_active_at <= 10.minutes.ago
   end
 
   def resolved_locale

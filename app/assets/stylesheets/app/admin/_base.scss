@@ -1,0 +1,101 @@
+.app-admin-dashboard-index,
+.app-admin-workspaces-index,
+.app-admin-users-index,
+.app-admin-translations-index {
+  .admin-page-header {
+    margin: 0 0 2rem;
+  }
+
+  .admin-page-header h1 {
+    margin: 0;
+  }
+
+  .admin-search-form {
+    margin: 0 0 2rem;
+  }
+
+  .admin-search-row {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+  }
+
+  .admin-table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .admin-table {
+    min-width: 100%;
+    width: max-content;
+
+    th,
+    td {
+      vertical-align: top;
+    }
+  }
+
+  .admin-panel-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 1.5rem;
+  }
+
+  .admin-panel-header h3 {
+    margin: 0;
+  }
+
+  .admin-mini-table {
+    margin: 0 0 2rem;
+  }
+
+  .admin-summary-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0 0 2rem;
+  }
+
+  .admin-summary-card {
+    background: var(--gray-850);
+    border: 1px solid var(--gray-700);
+    border-radius: var(--border-radius-md);
+    padding: 1rem;
+  }
+
+  .admin-summary-card h3 {
+    margin: 0 0 .5rem;
+  }
+
+  .admin-summary-card p {
+    color: var(--red-500);
+    margin: 0;
+  }
+
+  .admin-planned-metrics {
+    margin: 0 0 2rem;
+  }
+
+  .admin-role-breakdown h2,
+  .admin-planned-metrics h2 {
+    margin: 0 0 1rem;
+  }
+
+  @media (max-width: 64rem) {
+    .admin-summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .admin-summary-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-search-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+}

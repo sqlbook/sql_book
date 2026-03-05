@@ -38,6 +38,10 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
 
   namespace :app do # rubocop:disable Metrics/BlockLength
     namespace :admin do
+      root to: 'dashboard#index'
+      get '/', to: 'dashboard#index', as: :dashboard
+      resources :workspaces, only: %i[index]
+      resources :users, only: %i[index]
       patch 'translations', to: 'translations#update'
       resources :translations, only: %i[index] do
         member do

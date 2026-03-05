@@ -1,0 +1,70 @@
+<main>
+  <div class="admin-page-header">
+    <h1>Admin Dashboard</h1>
+  </div>
+
+  <section class="admin-summary-grid">
+    <article class="admin-summary-card">
+      <h3>Total users</h3>
+      <p><%= @dashboard_metrics[:total_users] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>New users (30 days)</h3>
+      <p><%= @dashboard_metrics[:new_users_last_30_days] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>Total workspaces</h3>
+      <p><%= @dashboard_metrics[:total_workspaces] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>Total data sources</h3>
+      <p><%= @dashboard_metrics[:total_data_sources] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>Total dashboards</h3>
+      <p><%= @dashboard_metrics[:total_dashboards] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>Total queries</h3>
+      <p><%= @dashboard_metrics[:total_queries] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>Avg users/workspace</h3>
+      <p><%= @dashboard_metrics[:avg_users_per_workspace] %></p>
+    </article>
+    <article class="admin-summary-card">
+      <h3>Avg data sources/workspace</h3>
+      <p><%= @dashboard_metrics[:avg_data_sources_per_workspace] %></p>
+    </article>
+  </section>
+
+  <section class="admin-planned-metrics">
+    <h2>Planned metrics and charts</h2>
+    <ul>
+      <li>User base growth over time</li>
+      <li>Daily and weekly active users</li>
+      <li>Workspace creation trend</li>
+      <li>Role distribution across memberships</li>
+      <li>Average data sources, queries, and dashboards per workspace</li>
+      <li>Invite conversion and activation funnel</li>
+      <li>Retention cohort views</li>
+    </ul>
+  </section>
+
+  <section class="admin-role-breakdown">
+    <h2>Current accepted role distribution</h2>
+    <table class="collapsible">
+      <tr>
+        <th>Role</th>
+        <th>Count</th>
+      </tr>
+      <% @role_breakdown.sort_by { |role, _count| role }.each do |role, count| %>
+        <% role_name = Member.new(role:).role_name || "Role #{role}" %>
+        <tr>
+          <td><%= role_name %></td>
+          <td><%= count %></td>
+        </tr>
+      <% end %>
+    </table>
+  </section>
+</main>

@@ -1,6 +1,6 @@
 # Toasts Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-05
 
 ## Purpose
 Define copy and rendering rules for in-app toasts so messaging stays consistent and safe.
@@ -19,8 +19,10 @@ Define copy and rendering rules for in-app toasts so messaging stays consistent 
   - `toasts.account_settings.account_delete_failed`
 - Global fallback toast:
   - `toasts.generic_error`
-- Admin translation toasts:
-  - `toasts.admin.*`
+- Admin namespace toasts are English-only and defined in admin controllers (not locale-backed).
+  - current admin access deny toast:
+    - title: `Admin access denied`
+    - body: `You don't have access to the admin area.`
 
 Related references:
 - `docs/TRANSLATIONS_MASTER_REF.md` for DB-backed locale runtime and key management.

@@ -43,9 +43,19 @@ Persistence behavior:
   - `Translations::RuntimeLookupService`
   - locale-aware fetch with exact-key lookup and default-locale fallback
   - cache key versioning (`translations:version`) for invalidation after updates
+  - English (`en`) system copy is synchronized from `config/locales/en.yml` and treated as code-owned canonical text
   - fallback order in practice:
     1. exact key in requested locale
     2. exact key in default locale (`en`)
+
+## Admin exclusion
+- Admin interface copy is intentionally excluded from the translation catalog.
+- Excluded prefixes:
+  - `admin.*`
+  - `toasts.admin.*`
+- Rationale:
+  - admin is super-admin-only operations tooling
+  - copy is fixed English for operational consistency
 
 ## Canonical shared copy (Phase 2)
 - Introduced `common.actions.*` keys for repeated interface strings to reduce redundant translation work.
@@ -63,6 +73,7 @@ Persistence behavior:
   - `common.actions.apply_filters`
   - `common.toasts.workspace_successfully_deleted_title`
 - Rule: prefer `common.*` for globally repeated UI labels; keep domain-specific phrasing under local namespaces.
+- Duplicate-key policy: repeated strings should be consolidated into `common.*` keys in code; the admin manager should not be used as a long-term surface for duplicate-string cleanup.
 
 ## Delivery rule for new copy
 For every feature/change before merge:

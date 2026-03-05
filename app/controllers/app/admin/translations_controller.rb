@@ -145,8 +145,8 @@ module App
         {
           toast: {
             type: 'error',
-            title: I18n.t('toasts.admin.translations.translate_missing_failed.title'),
-            body: I18n.t('toasts.admin.translations.translate_missing_failed.body')
+            title: 'Translation generation failed',
+            body: "We couldn't generate that translation right now. Please try again."
           }
         }
       end
@@ -155,8 +155,8 @@ module App
         {
           toast: {
             type: 'information',
-            title: I18n.t('toasts.admin.translations.translate_not_needed.title'),
-            body: I18n.t('toasts.admin.translations.translate_not_needed.body')
+            title: 'Translation already exists',
+            body: 'This row already has a translation for the selected locale.'
           }
         }
       end
@@ -165,8 +165,8 @@ module App
         {
           toast: {
             type: 'error',
-            title: I18n.t('toasts.admin.translations.translate_missing_failed.title'),
-            body: I18n.t('toasts.admin.translations.placeholder_mismatch.body')
+            title: 'Translation generation failed',
+            body: 'The generated translation changed required placeholder tokens. No draft was applied.'
           }
         }
       end
@@ -201,8 +201,8 @@ module App
         Rails.logger.error("Translation generation misconfigured: #{error.message}")
         flash[:toast] = {
           type: 'error',
-          title: I18n.t('toasts.admin.translations.translate_missing_failed.title'),
-          body: I18n.t('toasts.admin.translations.openai_missing_config.body')
+          title: 'Translation generation failed',
+          body: 'Translation generation is not configured yet. Please set OPENAI_API_KEY.'
         }
         redirect_with_filters
       end
@@ -216,24 +216,24 @@ module App
       def translate_missing_success_toast
         {
           type: 'success',
-          title: I18n.t('toasts.admin.translations.translate_missing_success.title'),
-          body: I18n.t('toasts.admin.translations.translate_missing_success.body')
+          title: 'Translation draft generated',
+          body: 'A translation draft has been added to the row. Review and save when ready.'
         }
       end
 
       def success_toast
         {
           type: 'success',
-          title: I18n.t('toasts.admin.translations.saved.title'),
-          body: I18n.t('toasts.admin.translations.saved.body')
+          title: 'Translations saved',
+          body: 'Translation updates were saved successfully.'
         }
       end
 
       def error_toast
         {
           type: 'error',
-          title: I18n.t('toasts.admin.translations.save_failed.title'),
-          body: I18n.t('toasts.admin.translations.save_failed.body')
+          title: 'Could not save translations',
+          body: 'Please review your changes and try again.'
         }
       end
 

@@ -333,7 +333,8 @@ CREATE TABLE public.users (
     email_change_verification_token character varying,
     email_change_verification_sent_at timestamp(6) without time zone,
     super_admin boolean DEFAULT false NOT NULL,
-    preferred_locale character varying
+    preferred_locale character varying,
+    last_active_at timestamp(6) without time zone
 );
 
 
@@ -687,6 +688,13 @@ CREATE UNIQUE INDEX index_users_on_email_change_verification_token ON public.use
 
 
 --
+-- Name: index_users_on_last_active_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_users_on_last_active_at ON public.users USING btree (last_active_at);
+
+
+--
 -- Name: translation_value_revisions fk_rails_6dd91d72ee; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -725,6 +733,7 @@ ALTER TABLE ONLY public.translation_values
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260305091000'),
 ('20260301100100'),
 ('20260301100000'),
 ('20260220153000'),

@@ -17,33 +17,10 @@ es:
     en: Inglés
     es: Español
 
-  admin:
-    translations:
-      title: Gestor de traducciones
-      filters:
-        search: Buscar
-        type_tag: Tipo
-        status: Estado
-        any: Cualquiera
-        status_options:
-          all: Todas
-          fully_translated: Completamente traducidas
-          missing_translations: Traducciones faltantes
-      table:
-        key: Clave
-        type_tags: Tipo
-        used_in: Usado en
-        actions: Acciones
-      actions:
-        discard: Descartar cambios
-        translate_missing: Traducir faltantes
-        history: Ver historial
-
   app:
     navigation:
       workspace: Espacio de trabajo
       account: Cuenta
-      admin: Administración
       chat: Chat
       data_sources: Fuentes de datos
       query_library: Biblioteca de consultas
@@ -77,27 +54,3 @@ es:
         confirm_delete: "[Sí, me voy]"
 
   toasts:
-    admin:
-      access_forbidden:
-        title: Acceso de administrador denegado
-        body: No tienes acceso al área de administración.
-      translations:
-        saved:
-          title: Traducciones guardadas
-          body: Las traducciones se guardaron correctamente.
-        save_failed:
-          title: No se pudieron guardar las traducciones
-          body: Revisa tus cambios e inténtalo de nuevo.
-        translate_missing_success:
-          title: Borrador de traducción generado
-          body: Se añadió un borrador de traducción en la fila. Revísalo y guárdalo cuando quieras.
-        translate_missing_failed:
-          title: Falló la generación de traducción
-          body: No pudimos generar esa traducción ahora. Inténtalo de nuevo.
-        translate_not_needed:
-          title: La traducción ya existe
-          body: Esta fila ya tiene traducción para el idioma seleccionado.
-        placeholder_mismatch:
-          body: La traducción generada cambió los placeholders requeridos. No se aplicó ningún borrador.
-        openai_missing_config:
-          body: La generación de traducciones aún no está configurada. Define OPENAI_API_KEY.

@@ -1,0 +1,84 @@
+<% content_for :app_content_layout_class, ('split' if @selected_workspace.present?) %>
+
+<main>
+  <div class="admin-page-header">
+    <h1>Admin Workspaces</h1>
+  </div>
+
+  <%= form_with url: app_admin_workspaces_path, method: :get, class: 'admin-search-form' do %>
+    <label class="label block" for="admin-workspaces-search">Search</label>
+    <div class="admin-search-row">
+      <input
+        id="admin-workspaces-search"
+        class="input block fluid"
+        type="text"
+        name="q"
+        value="<%= params[:q].to_s %>"
+        placeholder="Search workspace name" />
+      <button type="submit" class="link secondary">[Search]</button>
+    </div>
+  <% end %>
+
+  <div class="admin-table-wrapper" data-controller="table">
+    <table class="collapsible admin-table">
+      <tr>
+        <th>Workspace name</th>
+        <th>Workspace owner</th>
+        <th>Created at</th>
+        <th>Data sources</th>
+        <th>Dashboards</th>
+        <th>Queries</th>
+      </tr>
+      <% @workspaces.each do |workspace| %>
+        <% owner = workspace.members.find(&:owner?)&.user %>
+        <% query_count = workspace.data_sources.sum { |data_source| data_source.queries.size } %>
+        <tr>
+          <td>
+            <%= link_to workspace.name, add_params(workspace_id: workspace.id), class: "link secondary" %>
+          </td>
+          <td><%= owner&.full_name || '-' %></td>
+          <td><%= workspace.created_at.strftime('%d/%m/%Y %H:%M') %></td>
+          <td><%= workspace.data_sources.size %></td>
+          <td><%= workspace.dashboards.size %></td>
+          <td><%= query_count %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+</main>
+
+<% if @selected_workspace %>
+  <% owner = @selected_workspace.members.find(&:owner?)&.user %>
+  <% accepted_members = @selected_workspace.members.accepted.includes(:user) %>
+  <aside data-controller="resizeable-page">
+    <div class="admin-panel-header">
+      <h3><%= @selected_workspace.name %></h3>
+      <%= link_to "[Close]", add_params(workspace_id: nil), class: "link secondary" %>
+    </div>
+
+    <p><b>Owner:</b> <%= owner&.full_name || '-' %></p>
+    <p><b>Created at:</b> <%= @selected_workspace.created_at.strftime('%d/%m/%Y %H:%M') %></p>
+    <p><b>Accepted members:</b> <%= accepted_members.size %></p>
+    <p><b>Data sources:</b> <%= @selected_workspace.data_sources.count %></p>
+    <p><b>Dashboards:</b> <%= @selected_workspace.dashboards.count %></p>
+    <p><b>Queries:</b> <%= @selected_workspace.queries.count %></p>
+
+    <h4>Team members</h4>
+    <table class="collapsible admin-mini-table">
+      <tr>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Status</th>
+      </tr>
+      <% @selected_workspace.members.includes(:user).each do |member| %>
+        <tr>
+          <td><%= member.user.full_name %></td>
+          <td><%= member.role_name %></td>
+          <td><%= member.status_name %></td>
+        </tr>
+      <% end %>
+    </table>
+
+    <%= render "shared/grab_handle" %>
+  </aside>
+<% end %>
