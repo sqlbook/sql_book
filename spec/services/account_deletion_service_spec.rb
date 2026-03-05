@@ -112,5 +112,51 @@ RSpec.describe AccountDeletionService, type: :service do
         )
       end
     end
+
+    context 'when notifications are disabled' do
+      let(:user) { create(:user, first_name: 'Chris', last_name: 'Pattison', email: 'owner@sitelabs.ai') }
+      let(:new_owner_user) { create(:user, first_name: 'Lewis', last_name: 'Monteith') }
+      let(:workspace) { create(:workspace, name: 'Acme Inc') }
+      let!(:owner_membership) { create(:member, user:, workspace:, role: Member::Roles::OWNER) }
+      let!(:new_owner_membership) { create(:member, user: new_owner_user, workspace:, role: Member::Roles::ADMIN) }
+
+      it 'applies account deletion changes without sending emails' do
+        result = described_class.new(
+          user:,
+          workspace_actions: { workspace.id.to_s => new_owner_membership.id.to_s },
+          send_emails: false
+        ).call
+
+        expect(result.success?).to be(true)
+        expect(User.find_by(id: user.id)).to be_nil
+        expect(new_owner_membership.reload.role).to eq(Member::Roles::OWNER)
+
+        expect(AccountMailer).not_to have_received(:account_deletion_confirmed)
+        expect(WorkspaceMailer).not_to have_received(:workspace_owner_transferred)
+        expect(WorkspaceMailer).not_to have_received(:workspace_deleted)
+      end
+    end
+
+    context 'when notifications are disabled and ownerless cleanup runs after destroy' do
+      let(:user) { create(:user, first_name: 'Chris', last_name: 'Pattison', email: 'owner@sitelabs.ai') }
+      let(:workspace) { create(:workspace, name: 'Ownerless Workspace') }
+      let!(:member_membership) { create(:member, user:, workspace:, role: Member::Roles::USER) }
+      let!(:other_membership) { create(:member, workspace:, role: Member::Roles::USER) }
+
+      it 'suppresses workspace cleanup notifications triggered by user destroy callbacks' do
+        result = described_class.new(
+          user:,
+          workspace_actions: {},
+          send_emails: false
+        ).call
+
+        expect(result.success?).to be(true)
+        expect(User.find_by(id: user.id)).to be_nil
+        expect(Workspace.find_by(id: workspace.id)).to be_nil
+        expect(AccountMailer).not_to have_received(:account_deletion_confirmed)
+        expect(WorkspaceMailer).not_to have_received(:workspace_owner_transferred)
+        expect(WorkspaceMailer).not_to have_received(:workspace_deleted)
+      end
+    end
   end
 end

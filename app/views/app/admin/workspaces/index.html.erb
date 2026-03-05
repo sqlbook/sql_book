@@ -88,10 +88,11 @@
                                    ['Read only', Member::Roles::READ_ONLY]
                                  ],
                                  member.role
-                               ) %>
+                               ),
+                               onchange: "this.form.requestSubmit();",
+                               aria: { label: "Change role for #{member.user.full_name}" } %>
                 <i class="ri-arrow-drop-down-line"></i>
               </div>
-              <%= submit_tag '[Save]', class: "link secondary" %>
             <% end %>
           </td>
           <td><%= member.status_name %></td>

@@ -64,6 +64,7 @@ Related references:
   - click user name to open side panel with deeper user/membership data
   - includes `created_at` and `last_active_at` fields for basic internal reporting
   - includes a super-admin-only delete-user flow with owned-workspace transfer/delete selections
+  - admin-driven user deletion runs account/workspace ownership logic without sending user-facing emails
 - `Translations`
   - existing translation manager
 
@@ -104,3 +105,13 @@ Related references:
 - All admin writes should produce auditable change records where feasible (implemented for translations via revision model).
 - User activity tracking:
   - `users.last_active_at` is updated on signed-in `/app/*` requests with throttling (10-minute window).
+
+## Email behavior in admin actions
+- Admin workspace membership moderation (`/app/admin/workspaces/:workspace_id/members/:id` patch/delete):
+  - no invite/member notification emails are sent.
+- Admin user deletion (`DELETE /app/admin/users/:id`):
+  - uses `AccountDeletionService` with `send_emails: false`.
+  - no account deletion confirmation email.
+  - no workspace deleted emails.
+  - no workspace ownership transferred emails.
+- This no-email policy is scoped to super-admin actions in `/app/admin/*` and does not change workspace-owner/admin behavior in workspace settings.

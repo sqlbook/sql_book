@@ -2,7 +2,7 @@
 
 module App
   module Admin
-    class UsersController < BaseController
+    class UsersController < BaseController # rubocop:disable Metrics/ClassLength
       before_action :load_users
       before_action :load_target_user!, only: %i[destroy]
 
@@ -17,7 +17,8 @@ module App
 
         result = AccountDeletionService.new(
           user: @target_user,
-          workspace_actions: workspace_actions_params
+          workspace_actions: workspace_actions_params,
+          send_emails: false
         ).call
 
         return reject_unresolved_workspace_actions if result.error_key == :account_delete_unresolved_workspaces
@@ -124,6 +125,6 @@ module App
         @users.find { |user| user.id == selected_user_id.to_i } ||
           User.includes(members: { workspace: :members }).find_by(id: selected_user_id)
       end
-    end
+    end # rubocop:enable Metrics/ClassLength
   end
 end

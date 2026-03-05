@@ -4,7 +4,7 @@ class User < ApplicationRecord
   CURRENT_TERMS_VERSION = '2026-02-16'
   EMAIL_CHANGE_VERIFICATION_WINDOW = 1.hour
   SUPPORTED_LOCALES = %w[en es].freeze
-  attr_accessor :skip_terms_validation
+  attr_accessor :skip_terms_validation, :suppress_workspace_cleanup_notifications
 
   before_destroy :capture_workspace_ids_for_cleanup
   after_destroy_commit :destroy_unowned_or_empty_workspaces
@@ -106,7 +106,7 @@ class User < ApplicationRecord
       next unless workspace
       next if workspace.members.accepted.exists?(role: Member::Roles::OWNER)
 
-      notify_workspace_deleted_users!(workspace:)
+      notify_workspace_deleted_users!(workspace:) unless suppress_workspace_cleanup_notifications
       workspace.destroy!
     end
   end

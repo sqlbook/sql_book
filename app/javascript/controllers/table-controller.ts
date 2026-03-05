@@ -80,16 +80,18 @@ export default class extends Controller<HTMLDivElement> {
       const text = textNode.dataset.tooltipText?.trim();
       if (!text) {
         cell.removeAttribute('data-tooltip');
-        textNode.removeAttribute('title');
+        cell.removeAttribute('data-tooltip-align');
         return;
       }
 
       if (textNode.scrollWidth > textNode.clientWidth) {
         cell.setAttribute('data-tooltip', text);
-        textNode.setAttribute('title', text);
+        const cellRect = cell.getBoundingClientRect();
+        const alignment = cellRect.left > window.innerWidth / 2 ? 'right' : 'left';
+        cell.setAttribute('data-tooltip-align', alignment);
       } else {
         cell.removeAttribute('data-tooltip');
-        textNode.removeAttribute('title');
+        cell.removeAttribute('data-tooltip-align');
       }
     });
   }

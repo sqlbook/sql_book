@@ -1,6 +1,6 @@
 # Account Settings Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-05
 
 ## Service and goal
 - Service: authenticated user account settings in sqlbook.
@@ -123,6 +123,9 @@ Email changes use a pending-verification state on `users`:
   - subject: `You've been made the Owner of %{workspace_name}`
   - destination link: workspace home (`/app/workspaces/:id`)
 - Full cross-domain email catalog and trigger map: `docs/EMAILS_MASTER_REF.md`.
+- Scope note:
+  - self-service account deletion (`DELETE /app/account-settings`) runs `AccountDeletionService` with email notifications enabled.
+  - super-admin deletion of another user in `/app/admin/users/:id` explicitly disables those emails.
 
 ## Environment safety rules
 - No hardcoded staging/production hostnames in account-settings links.

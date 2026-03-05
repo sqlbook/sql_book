@@ -1,6 +1,6 @@
 # Emails Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-05
 
 ## Service and goal
 - Service: transactional email delivery in sqlbook.
@@ -41,7 +41,7 @@ Related references:
 | Workspace ownership transferred | `WorkspaceMailer.workspace_owner_transferred`<br>`app/views/workspace_mailer/workspace_owner_transferred.html.erb` | `app/services/account_deletion_service.rb` when transfer action is selected | new owner | `mailers.workspace.subjects.workspace_owner_transferred` |
 | Data source deleted | `DataSourceMailer.destroy`<br>`app/views/data_source_mailer/destroy.html.erb` | `app/controllers/app/workspaces/data_sources_controller.rb#destroy` | affected workspace members | `mailers.data_source.subjects.destroy` |
 | Email-change verification | `AccountMailer.verify_email_change`<br>`app/views/account_mailer/verify_email_change.html.erb` | `app/controllers/app/account_settings_controller.rb#update` | current account email (old email) | `mailers.account.subjects.verify_email_change` |
-| Account deletion confirmed | `AccountMailer.account_deletion_confirmed`<br>`app/views/account_mailer/account_deletion_confirmed.html.erb` | `app/services/account_deletion_service.rb` | deleted user email (captured before destroy) | `mailers.account.subjects.account_deletion_confirmed` |
+| Account deletion confirmed | `AccountMailer.account_deletion_confirmed`<br>`app/views/account_mailer/account_deletion_confirmed.html.erb` | `app/services/account_deletion_service.rb` when `send_emails: true` (self-service account deletion) | deleted user email (captured before destroy) | `mailers.account.subjects.account_deletion_confirmed` |
 
 Subject strings are defined in `config/locales/en.yml` under `en.mailers.*.subjects`.
 
@@ -51,6 +51,10 @@ Subject strings are defined in `config/locales/en.yml` under `en.mailers.*.subje
 - Account-deletion confirmation and ownership-transfer emails are sent after transaction completion.
 - Notification sends in account/workspace deletion flows are best-effort: send failures are logged and do not roll back deletes.
 - `WorkspaceMailer.workspace_member_removed` sets `@unsubscribable = true`, enabling the footer unsubscribe link in `mailer` layout.
+- Admin moderation exception:
+  - super-admin actions in `/app/admin/*` intentionally avoid user-facing transactional emails.
+  - admin user deletion calls `AccountDeletionService` with `send_emails: false`, so account-delete/workspace-delete/workspace-transfer emails are all suppressed.
+  - this exception does not apply to workspace owner/admin actions in workspace settings.
 
 ## Locale behavior for email rendering
 - Mailers render in recipient locale when available (`users.preferred_locale`).

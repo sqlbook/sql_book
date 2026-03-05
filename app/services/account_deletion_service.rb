@@ -7,9 +7,10 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
 
   class InvalidWorkspaceAction < StandardError; end
 
-  def initialize(user:, workspace_actions:)
+  def initialize(user:, workspace_actions:, send_emails: true)
     @user = user
     @workspace_actions = normalized_workspace_actions(workspace_actions:)
+    @send_emails = send_emails
   end
 
   def call
@@ -30,7 +31,7 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
 
   private
 
-  attr_reader :user, :workspace_actions
+  attr_reader :user, :workspace_actions, :send_emails
 
   def perform_account_deletion!
     deleted_user_email = user.email
@@ -43,6 +44,7 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
         deleted_user_name:,
         transferred_workspaces:
       )
+      user.suppress_workspace_cleanup_notifications = true unless send_emails
       user.destroy!
     end
 
@@ -148,6 +150,8 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
   end
 
   def notify_workspace_deleted_users!(users_to_notify:, workspace_name:, workspace_owner_name:)
+    return unless send_emails
+
     users_to_notify.each do |workspace_user|
       WorkspaceMailer.workspace_deleted(
         user: workspace_user,
@@ -160,12 +164,16 @@ class AccountDeletionService # rubocop:disable Metrics/ClassLength
   end
 
   def deliver_account_deletion_confirmation!(email:, locale:)
+    return unless send_emails
+
     AccountMailer.account_deletion_confirmed(user_email: email, fallback_locale: locale).deliver_now
   rescue StandardError => e
     Rails.logger.error("Account deletion confirmation email failed for #{email}: #{e.class} #{e.message}")
   end
 
   def deliver_workspace_transfer_emails!(transferred_workspaces:, deleted_user_name:)
+    return unless send_emails
+
     transferred_workspaces.each do |transfer|
       WorkspaceMailer.workspace_owner_transferred(
         new_owner: transfer[:new_owner],

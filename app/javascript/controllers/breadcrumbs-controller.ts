@@ -40,16 +40,13 @@ export default class extends Controller<HTMLDivElement> {
       const text = textNode.dataset.tooltipText?.trim();
       if (!text) {
         item.removeAttribute('data-tooltip');
-        textNode.removeAttribute('title');
         return;
       }
 
       if (textNode.scrollWidth > textNode.clientWidth) {
         item.setAttribute('data-tooltip', text);
-        textNode.setAttribute('title', text);
       } else {
         item.removeAttribute('data-tooltip');
-        textNode.removeAttribute('title');
       }
     });
   }

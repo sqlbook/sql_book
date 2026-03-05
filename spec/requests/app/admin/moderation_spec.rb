@@ -92,6 +92,7 @@ RSpec.describe 'App::Admin moderation', type: :request do
 
       expect(response).to redirect_to(app_admin_users_path(q: nil))
       expect(promoted_member.reload.role).to eq(Member::Roles::OWNER)
+      expect(ActionMailer::Base.deliveries.count).to eq(0)
     end
   end
 end

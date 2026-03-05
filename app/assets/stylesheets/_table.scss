@@ -107,16 +107,22 @@ table {
       top: calc(100% + .25rem);
       color: var(--gray-250);
       content: attr(data-tooltip);
-      left: 50%;
+      left: 0;
       line-height: 1.5rem;
-      max-width: min(26rem, 80vw);
+      max-width: min(26rem, calc(100vw - 1rem));
       padding: .125rem .5rem;
       pointer-events: none;
       position: absolute;
       text-overflow: clip;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
       width: max-content;
       z-index: 20;
+    }
+
+    &[data-tooltip-align='right']:hover::after {
+      left: auto;
+      right: 0;
     }
   }
 
