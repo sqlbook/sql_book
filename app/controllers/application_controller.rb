@@ -171,6 +171,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
 
   def track_user_activity!
     return unless should_track_user_activity?
+    return unless supports_last_active_tracking?
     return unless stale_activity_timestamp?
 
     current_user.update!(last_active_at: Time.current)
@@ -184,6 +185,10 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
 
   def stale_activity_timestamp?
     current_user.last_active_at.blank? || current_user.last_active_at <= 10.minutes.ago
+  end
+
+  def supports_last_active_tracking?
+    @supports_last_active_tracking ||= User.column_names.include?('last_active_at')
   end
 
   def resolved_locale

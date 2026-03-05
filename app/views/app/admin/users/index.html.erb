@@ -30,6 +30,7 @@
       </tr>
       <% @users.each do |user| %>
         <% workspace_names = user.members.includes(:workspace).map { |member| member.workspace.name }.uniq.sort %>
+        <% user_last_activity = user.respond_to?(:last_active_at) ? (user.last_active_at || user.updated_at) : user.updated_at %>
         <tr>
           <td><%= link_to user.full_name, add_params(user_id: user.id), class: "link secondary" %></td>
           <td><%= user.email %></td>
@@ -37,7 +38,7 @@
             <span class="truncate-text" data-tooltip-text="<%= workspace_names.join(', ') %>"><%= workspace_names.join(', ').presence || '-' %></span>
           </td>
           <td><%= user.created_at.strftime('%d/%m/%Y %H:%M') %></td>
-          <td><%= (user.last_active_at || user.updated_at).strftime('%d/%m/%Y %H:%M') %></td>
+          <td><%= user_last_activity.strftime('%d/%m/%Y %H:%M') %></td>
         </tr>
       <% end %>
     </table>
@@ -54,7 +55,12 @@
 
     <p><b>Email:</b> <%= @selected_user.email %></p>
     <p><b>Created at:</b> <%= @selected_user.created_at.strftime('%d/%m/%Y %H:%M') %></p>
-    <p><b>Last activity:</b> <%= (@selected_user.last_active_at || @selected_user.updated_at).strftime('%d/%m/%Y %H:%M') %></p>
+    <% selected_user_last_activity = if @selected_user.respond_to?(:last_active_at)
+                                       @selected_user.last_active_at || @selected_user.updated_at
+                                     else
+                                       @selected_user.updated_at
+                                     end %>
+    <p><b>Last activity:</b> <%= selected_user_last_activity.strftime('%d/%m/%Y %H:%M') %></p>
     <p><b>Super admin:</b> <%= @selected_user.super_admin? ? 'Yes' : 'No' %></p>
 
     <h4>Workspace memberships</h4>
