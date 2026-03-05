@@ -40,7 +40,10 @@ Related references:
 ## Current admin routes
 - `GET /app/admin` (dashboard)
 - `GET /app/admin/workspaces`
+- `PATCH /app/admin/workspaces/:workspace_id/members/:id`
+- `DELETE /app/admin/workspaces/:workspace_id/members/:id`
 - `GET /app/admin/users`
+- `DELETE /app/admin/users/:id`
 - `GET /app/admin/translations`
 - `PATCH /app/admin/translations`
 - `POST /app/admin/translations/:id/translate-missing`
@@ -53,16 +56,21 @@ Related references:
 - `Workspaces`
   - searchable global workspace table
   - click workspace name to open side panel with deeper workspace data
+  - super-admin can change member role from the panel
+  - super-admin can remove members from the panel
+  - these admin membership actions do not send invite/member-notification emails
 - `Users`
   - searchable global users table
   - click user name to open side panel with deeper user/membership data
   - includes `created_at` and `last_active_at` fields for basic internal reporting
+  - includes a super-admin-only delete-user flow with owned-workspace transfer/delete selections
 - `Translations`
   - existing translation manager
 
 ## Admin UI layout conventions
 - Admin pages should use full-width content within app shell spacing (no `container.lg` cap).
 - Filter rows on admin management pages should span full content width.
+- Search fields on admin management pages should auto-submit on input debounce (no explicit search button).
 - Large admin tables should prefer horizontal scrolling with explicit column minimum widths.
 - Page-level primary/secondary actions can live in the top-right header row when they apply to the table/form below.
 - Admin top-level navigation follows workspace-header breakpoint behavior:

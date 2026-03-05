@@ -5,18 +5,19 @@
     <h1>Admin Users</h1>
   </div>
 
-  <%= form_with url: app_admin_users_path, method: :get, class: 'admin-search-form' do %>
+  <%= form_with url: app_admin_users_path,
+                method: :get,
+                class: 'admin-search-form',
+                html: { "data-search-target": "form", "data-controller": "search" } do %>
     <label class="label block" for="admin-users-search">Search</label>
-    <div class="admin-search-row">
-      <input
-        id="admin-users-search"
-        class="input block fluid"
-        type="text"
-        name="q"
-        value="<%= params[:q].to_s %>"
-        placeholder="Search name or email address" />
-      <button type="submit" class="link secondary">[Search]</button>
-    </div>
+    <input
+      id="admin-users-search"
+      class="input block fluid"
+      type="search"
+      name="q"
+      value="<%= params[:q].to_s %>"
+      placeholder="Search name or email address"
+      data-action="search#change" />
   <% end %>
 
   <div class="admin-table-wrapper" data-controller="table">
@@ -46,8 +47,7 @@
 </main>
 
 <% if @selected_user %>
-  <% user_workspaces = @selected_user.members.includes(:workspace).map(&:workspace).uniq.sort_by(&:name) %>
-  <aside data-controller="resizeable-page">
+  <aside data-controller="resizeable-page account-delete">
     <div class="admin-panel-header">
       <h3><%= @selected_user.full_name %></h3>
       <%= link_to "[Close]", add_params(user_id: nil), class: "link secondary" %>
@@ -79,14 +79,85 @@
       <% end %>
     </table>
 
-    <% if user_workspaces.any? %>
-      <h4>Workspace list</h4>
-      <ul>
-        <% user_workspaces.each do |workspace| %>
-          <li><%= workspace.name %></li>
+    <button type="button" class="link primary admin-delete-user-trigger show" data-account-delete-target="openButton" data-action="account-delete#show">
+      [Delete User]
+    </button>
+
+    <div class="message admin-delete-user-dialog" data-account-delete-target="dialog">
+      <div class="body">
+        <div class="account-delete-dialog-heading">
+          <i class="ri-error-warning-line red-500" aria-hidden="true"></i>
+          <p class="account-delete-dialog-title cream-250"><b>Delete user account</b></p>
+        </div>
+        <p class="account-delete-dialog-description">
+          Deleting this user is irreversible. Any workspaces they own must either be reassigned to an accepted member or deleted.
+        </p>
+
+        <%= form_with url: app_admin_user_path(@selected_user), method: :delete, class: "account-delete-form", html: { "data-account-delete-target": "form" } do %>
+          <%= hidden_field_tag :q, params[:q] %>
+
+          <% if @selected_user_owned_workspace_rows.any? %>
+            <div data-controller="table">
+              <table class="collapsible account-delete-workspaces-table">
+                <tr>
+                  <th>
+                    <span class="truncate-text" data-tooltip-text="Workspace name">Workspace name</span>
+                  </th>
+                  <th>
+                    <span class="truncate-text" data-tooltip-text="Current owner">Current owner</span>
+                  </th>
+                  <th>
+                    <span class="truncate-text" data-tooltip-text="New owner">New owner</span>
+                  </th>
+                </tr>
+                <% @selected_user_owned_workspace_rows.each do |row| %>
+                  <% workspace = row[:workspace] %>
+                  <% eligible_members = row[:eligible_members] %>
+                  <tr>
+                    <td>
+                      <span class="truncate-text" data-tooltip-text="<%= workspace.name %>"><%= workspace.name %></span>
+                    </td>
+                    <td>
+                      <span class="truncate-text" data-tooltip-text="<%= "#{@selected_user.full_name} (user)" %>"><%= @selected_user.full_name %> <span class="gray-300">(user)</span></span>
+                    </td>
+                    <td>
+                      <% if eligible_members.empty? %>
+                        <%= hidden_field_tag "workspace_actions[#{workspace.id}]", AccountDeletionService::DELETE_WORKSPACE_ACTION %>
+                        <span class="truncate-text" data-tooltip-text="No team members, workspace will be deleted.">No team members, workspace will be deleted.</span>
+                      <% else %>
+                        <div class="select account-delete-select">
+                          <%= select_tag "workspace_actions[#{workspace.id}]",
+                                         options_for_select(
+                                           [['Please select', '']] +
+                                           eligible_members.map { |member| [member.user.full_name, member.id] } +
+                                           [['Delete workspace', AccountDeletionService::DELETE_WORKSPACE_ACTION]]
+                                         ),
+                                         class: "account-delete-select-input",
+                                         required: true,
+                                         data: {
+                                           account_delete_target: "actionSelect",
+                                           action: "change->account-delete#updateConfirmState"
+                                         } %>
+                          <i class="ri-arrow-drop-down-line"></i>
+                        </div>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </table>
+            </div>
+          <% else %>
+            <p class="account-delete-empty-state">This user does not own any workspaces that require transfer selection.</p>
+          <% end %>
+
+          <p class="account-delete-confirm-label cream-250"><b>Delete user and apply selected workspace outcomes?</b></p>
+          <div class="actions">
+            <%= submit_tag "[Yes, Delete User]", class: "link primary", disabled: true, "data-account-delete-target": "submit" %>
+            <button type="button" class="link secondary" data-action="account-delete#hide">Cancel</button>
+          </div>
         <% end %>
-      </ul>
-    <% end %>
+      </div>
+    </div>
 
     <%= render "shared/grab_handle" %>
   </aside>

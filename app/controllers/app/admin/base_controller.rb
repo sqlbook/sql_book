@@ -34,7 +34,7 @@ module App
           {
             key: :users,
             path: app_admin_users_path,
-            icon: 'ri-user-3-line',
+            icon: 'ri-group-line',
             label: 'Users',
             aria_label: 'Open admin users'
           },

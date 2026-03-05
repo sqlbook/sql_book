@@ -53,18 +53,20 @@
 
   <section class="admin-role-breakdown">
     <h2>Current accepted role distribution</h2>
-    <table class="collapsible">
-      <tr>
-        <th>Role</th>
-        <th>Count</th>
-      </tr>
-      <% @role_breakdown.sort_by { |role, _count| role }.each do |role, count| %>
-        <% role_name = Member.new(role:).role_name || "Role #{role}" %>
+    <div class="admin-table-wrapper" data-controller="table">
+      <table class="collapsible admin-table">
         <tr>
-          <td><%= role_name %></td>
-          <td><%= count %></td>
+          <th>Role</th>
+          <th>Count</th>
         </tr>
-      <% end %>
-    </table>
+        <% @role_breakdown.sort_by { |role, _count| role }.each do |role, count| %>
+          <% role_name = Member.new(role:).role_name || "Role #{role}" %>
+          <tr>
+            <td><%= role_name %></td>
+            <td><%= count %></td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
   </section>
 </main>

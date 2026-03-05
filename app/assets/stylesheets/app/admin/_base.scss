@@ -12,12 +12,10 @@
 
   .admin-search-form {
     margin: 0 0 2rem;
-  }
 
-  .admin-search-row {
-    align-items: center;
-    display: flex;
-    gap: 1rem;
+    .input {
+      width: 100%;
+    }
   }
 
   .admin-table-wrapper {
@@ -27,11 +25,20 @@
 
   .admin-table {
     min-width: 100%;
-    width: max-content;
+    table-layout: fixed;
+    width: 100%;
 
     th,
     td {
+      max-width: none;
       vertical-align: top;
+    }
+
+    &.collapsible {
+      th,
+      td {
+        max-width: none;
+      }
     }
   }
 
@@ -48,6 +55,142 @@
 
   .admin-mini-table {
     margin: 0 0 2rem;
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+      max-width: none;
+      vertical-align: top;
+    }
+
+    &.collapsible {
+      th,
+      td {
+        max-width: none;
+      }
+    }
+  }
+
+  .admin-inline-form {
+    align-items: center;
+    display: flex;
+    gap: .5rem;
+
+    .select {
+      min-width: 9rem;
+      width: 100%;
+    }
+  }
+
+  .admin-workspace-member-role,
+  .admin-workspace-member-actions {
+    white-space: nowrap;
+  }
+
+  .admin-delete-user-trigger {
+    display: none;
+    margin: 2rem 0 0;
+
+    &.show {
+      display: inline-block;
+    }
+  }
+
+  .admin-delete-user-dialog {
+    background: var(--gray-850);
+    display: none;
+    margin: 2rem 0 0;
+    width: 100%;
+
+    &.show {
+      display: flex;
+    }
+
+    .body {
+      padding: 0;
+      width: 100%;
+    }
+
+    .account-delete-dialog-heading {
+      align-items: center;
+      column-gap: .5rem;
+      display: grid;
+      grid-template-columns: 1rem minmax(0, 1fr);
+      margin: 0 0 .5rem;
+    }
+
+    .account-delete-dialog-heading i {
+      display: block;
+      font-size: 1rem;
+      height: 1rem;
+      line-height: 1;
+      margin: 0;
+      width: 1rem;
+    }
+
+    .account-delete-dialog-title {
+      color: var(--cream-250);
+      margin: 0;
+    }
+
+    .account-delete-dialog-description,
+    .account-delete-empty-state {
+      margin: 0 0 1.5rem;
+    }
+
+    .account-delete-confirm-label {
+      margin: 0 0 1rem;
+    }
+
+    .account-delete-workspaces-table {
+      background: var(--gray-800);
+      margin: 0 0 2rem;
+      table-layout: fixed;
+      width: 100%;
+
+      tr {
+        &:hover,
+        &.active {
+          background: var(--gray-800);
+        }
+      }
+
+      th,
+      td {
+        max-width: none;
+        padding: .5rem 1rem;
+        vertical-align: middle;
+        width: 25%;
+
+        &:last-child {
+          width: 50%;
+        }
+      }
+
+      td {
+        white-space: nowrap;
+      }
+    }
+
+    .account-delete-select {
+      max-width: 15rem;
+      width: 100%;
+
+      &.placeholder-selected select {
+        color: var(--gray-300);
+        font-style: italic;
+      }
+
+      &.danger-selected select {
+        color: var(--red-500);
+        font-style: normal;
+      }
+    }
+
+    .actions {
+      margin: 0;
+    }
   }
 
   .admin-summary-grid {
@@ -93,9 +236,13 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .admin-search-row {
-      align-items: flex-start;
+    .admin-inline-form {
+      align-items: stretch;
       flex-direction: column;
+
+      .select {
+        width: 100%;
+      }
     }
   }
 }

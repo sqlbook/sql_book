@@ -5,18 +5,19 @@
     <h1>Admin Workspaces</h1>
   </div>
 
-  <%= form_with url: app_admin_workspaces_path, method: :get, class: 'admin-search-form' do %>
+  <%= form_with url: app_admin_workspaces_path,
+                method: :get,
+                class: 'admin-search-form',
+                html: { "data-controller": "search", "data-search-target": "form" } do %>
     <label class="label block" for="admin-workspaces-search">Search</label>
-    <div class="admin-search-row">
-      <input
-        id="admin-workspaces-search"
-        class="input block fluid"
-        type="text"
-        name="q"
-        value="<%= params[:q].to_s %>"
-        placeholder="Search workspace name" />
-      <button type="submit" class="link secondary">[Search]</button>
-    </div>
+    <input
+      id="admin-workspaces-search"
+      class="input block fluid"
+      type="search"
+      name="q"
+      value="<%= params[:q].to_s %>"
+      placeholder="Search workspace name"
+      data-action="search#change" />
   <% end %>
 
   <div class="admin-table-wrapper" data-controller="table">
@@ -64,17 +65,45 @@
     <p><b>Queries:</b> <%= @selected_workspace.queries.count %></p>
 
     <h4>Team members</h4>
-    <table class="collapsible admin-mini-table">
+    <table class="collapsible admin-mini-table admin-workspace-members-table">
       <tr>
         <th>Name</th>
         <th>Role</th>
         <th>Status</th>
+        <th>Actions</th>
       </tr>
       <% @selected_workspace.members.includes(:user).each do |member| %>
         <tr>
           <td><%= member.user.full_name %></td>
-          <td><%= member.role_name %></td>
+          <td class="admin-workspace-member-role">
+            <%= form_with url: app_admin_workspace_member_path(@selected_workspace, member), method: :patch, class: "admin-inline-form" do %>
+              <%= hidden_field_tag :q, params[:q] %>
+              <div class="select block fluid">
+                <%= select_tag :role,
+                               options_for_select(
+                                 [
+                                   ['Owner', Member::Roles::OWNER],
+                                   ['Admin', Member::Roles::ADMIN],
+                                   ['User', Member::Roles::USER],
+                                   ['Read only', Member::Roles::READ_ONLY]
+                                 ],
+                                 member.role
+                               ) %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+              <%= submit_tag '[Save]', class: "link secondary" %>
+            <% end %>
+          </td>
           <td><%= member.status_name %></td>
+          <td class="admin-workspace-member-actions">
+            <%= link_to '[Remove]',
+                        app_admin_workspace_member_path(@selected_workspace, member, q: params[:q]),
+                        class: "link secondary",
+                        data: {
+                          turbo_method: :delete,
+                          turbo_confirm: "Remove #{member.user.full_name} from #{@selected_workspace.name}?"
+                        } %>
+          </td>
         </tr>
       <% end %>
     </table>
