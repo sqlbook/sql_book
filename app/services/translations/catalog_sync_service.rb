@@ -9,24 +9,52 @@ module Translations
         entry: { label: 'Admin page', path: '/app/admin/translations' }
       },
       {
+        pattern: %r{\Aapp/views/app/workspaces/settings/_team},
+        entry: { label: 'Workspace Settings > Team', path: '/app/workspaces/:workspace_id/workspace-settings?tab=team' }
+      },
+      {
+        pattern: %r{\Aapp/views/app/workspaces/settings/_subscription},
+        entry: {
+          label: 'Workspace Settings > Subscription',
+          path: '/app/workspaces/:workspace_id/workspace-settings?tab=subscription'
+        }
+      },
+      {
+        pattern: %r{\Aapp/views/app/workspaces/settings/_delete},
+        entry: {
+          label: 'Workspace Settings > Delete Workspace',
+          path: '/app/workspaces/:workspace_id/workspace-settings?tab=delete'
+        }
+      },
+      {
+        pattern: %r{\Aapp/views/app/workspaces/settings/_general},
+        entry: {
+          label: 'Workspace Settings > General',
+          path: '/app/workspaces/:workspace_id/workspace-settings?tab=general'
+        }
+      },
+      {
         pattern: %r{\Aapp/views/app/account_settings/},
-        entry: { label: 'Account settings page', path: '/app/account-settings' }
+        entry: { label: 'Account Settings > General', path: '/app/account-settings?tab=general' }
       },
       {
         pattern: %r{\Aapp/views/app/workspaces/settings/},
-        entry: { label: 'Workspace settings page', path: '/app/workspaces' }
+        entry: {
+          label: 'Workspace Settings > General',
+          path: '/app/workspaces/:workspace_id/workspace-settings?tab=general'
+        }
       },
       {
         pattern: %r{\Aapp/views/app/workspaces/data_sources/},
-        entry: { label: 'Data Sources page', path: '/app/workspaces' }
+        entry: { label: 'Data Sources', path: '/app/workspaces/:workspace_id/data_sources' }
       },
       {
         pattern: %r{\Aapp/views/app/workspaces/queries/},
-        entry: { label: 'Query Library page', path: '/app/workspaces' }
+        entry: { label: 'Query Library', path: '/app/workspaces/:workspace_id/queries' }
       },
       {
         pattern: %r{\Aapp/views/app/workspaces/dashboards/},
-        entry: { label: 'Dashboards page', path: '/app/workspaces' }
+        entry: { label: 'Dashboards', path: '/app/workspaces/:workspace_id/dashboards' }
       },
       {
         pattern: %r{\Aapp/views/app/workspaces/index},
@@ -34,7 +62,7 @@ module Translations
       },
       {
         pattern: %r{\Aapp/views/shared/},
-        entry: { label: 'Shared app components', path: '/app/workspaces' }
+        entry: { label: 'Header navigation', path: '/app/workspaces/:workspace_id' }
       },
       { pattern: %r{\Aapp/views/auth/}, entry: { label: 'Authentication flow', path: '/auth/login' } },
       { pattern: %r{\Aapp/views/.*mailer}, entry: { label: 'Email' } }
@@ -42,11 +70,37 @@ module Translations
     USED_IN_RULES = [
       { pattern: /\Aadmin\.translations\./, entries: [{ label: 'Admin page', path: '/app/admin/translations' }] },
       {
-        pattern: /\Aapp\.account_settings\./,
-        entries: [{ label: 'Account settings page', path: '/app/account-settings' }]
+        pattern: /\Aapp\.account_settings\.delete_account\./,
+        entries: [{ label: 'Account Settings > Delete Account', path: '/app/account-settings?tab=delete_account' }]
       },
-      { pattern: /\Aapp\.navigation\./, entries: [{ label: 'App header navigation', path: '/app/workspaces' }] },
+      {
+        pattern: /\Aapp\.account_settings\./,
+        entries: [{ label: 'Account Settings > General', path: '/app/account-settings?tab=general' }]
+      },
+      {
+        pattern: /\Aapp\.navigation\./,
+        entries: [{ label: 'Header navigation', path: '/app/workspaces/:workspace_id' }]
+      },
       { pattern: /\Aauth\./, entries: [{ label: 'Authentication flow', path: '/auth/login' }] },
+      {
+        pattern: /\Atoasts\.workspaces\.members\./,
+        entries: [{
+          label: 'Workspace Settings > Team / Toast',
+          path: '/app/workspaces/:workspace_id/workspace-settings?tab=team'
+        }]
+      },
+      {
+        pattern: /\Atoasts\.workspaces\./,
+        entries: [{
+          label: 'Workspace Settings > General / Toast',
+          path: '/app/workspaces/:workspace_id/workspace-settings?tab=general'
+        }]
+      },
+      {
+        pattern: /\Atoasts\.account_settings\./,
+        entries: [{ label: 'Account Settings / Toast', path: '/app/account-settings?tab=general' }]
+      },
+      { pattern: /\Atoasts\.admin\./, entries: [{ label: 'Admin / Toast', path: '/app/admin/translations' }] },
       { pattern: /\Atoasts\./, entries: [{ label: 'Toast' }] },
       { pattern: /\Amailers\./, entries: [{ label: 'Email' }] }
     ].freeze

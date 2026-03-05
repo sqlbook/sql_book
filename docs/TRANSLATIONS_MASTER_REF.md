@@ -100,7 +100,6 @@ Main capabilities:
 - table editor with `English`, `Used in`, and `Spanish` columns
 - filters:
   - search (`q`)
-  - `area_tag`
   - `type_tag`
   - status (`all`, `fully_translated`, `missing_translations`)
 - actions:
@@ -131,16 +130,15 @@ Main capabilities:
 Notes:
 - Entries can be multiple per key and are rendered comma-separated in one cell.
 - If `path` is present and starts with `/`, it is rendered as an internal link.
+- Workspace-aware links can use `:workspace_id` placeholders and are resolved at render time to a real workspace id for the current admin user.
 - If `path` is omitted (for example `Email` or `Toast`), text is rendered without a link.
 - For `common.*` keys, `used_in` is inferred dynamically from view usage.
 
 Tagging guidance:
-- `area_tags` examples:
-  - `authentication`, `toast`, `email`, `navigation`, `common`
 - `type_tags` examples:
   - `h1`, `h3`, `h4`, `label`, `body`, `button`, `email_subject`, `tab`
 - Keys can have multiple tags in both arrays.
-- Area tag normalization is enforced during catalog sync (for example `auth` -> `authentication`, `toasts` -> `toast`, `mailers` -> `email`).
+- Area tags remain in the data model for backend classification and prompt context, but are no longer exposed in the admin UI table/filter.
 
 ## LLM generation rules
 - Service: `Translations::OpenaiTranslationService`

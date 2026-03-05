@@ -24,7 +24,7 @@
     align-items: end;
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
     width: 100%;
   }
 
@@ -80,6 +80,10 @@
       resize: vertical;
     }
 
+    .input {
+      background: var(--cream-100);
+    }
+
     .translations-used-in-list {
       display: inline-flex;
       flex-wrap: wrap;
@@ -96,13 +100,6 @@
     .actions {
       width: 12rem;
     }
-  }
-
-  .translations-duplicate-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    margin-top: 0.5rem;
   }
 
   .translations-row-actions {

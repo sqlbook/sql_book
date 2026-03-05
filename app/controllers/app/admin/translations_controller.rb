@@ -50,7 +50,6 @@ module App
 
       def load_index_collections
         @translation_keys = filtered_translation_keys
-        @area_tags = available_tags(:area_tags)
         @type_tags = available_tags(:type_tags)
         @target_locales = TranslationValue::SUPPORTED_LOCALES - [I18n.default_locale.to_s]
       end
@@ -68,7 +67,6 @@ module App
 
       def apply_tag_filters(scope)
         updated_scope = scope
-        updated_scope = updated_scope.for_area_tag(filter_params[:area_tag]) if filter_params[:area_tag].present?
         updated_scope = updated_scope.for_type_tag(filter_params[:type_tag]) if filter_params[:type_tag].present?
         updated_scope
       end
@@ -192,7 +190,7 @@ module App
       end
 
       def filter_params
-        @filter_params ||= params.permit(:q, :area_tag, :type_tag, :status, :target_locale)
+        @filter_params ||= params.permit(:q, :type_tag, :status, :target_locale)
       end
 
       def redirect_with_filters

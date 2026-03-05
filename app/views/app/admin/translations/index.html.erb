@@ -22,19 +22,6 @@
         </div>
 
         <div>
-          <label class="label block" for="translations-area-tag"><%= I18n.t('admin.translations.filters.area_tag') %></label>
-          <div class="select block fluid">
-            <select id="translations-area-tag" name="area_tag">
-              <option value=""><%= I18n.t('admin.translations.filters.any') %></option>
-              <% @area_tags.each do |tag| %>
-                <option value="<%= tag %>" <%= 'selected' if params[:area_tag] == tag %>><%= tag %></option>
-              <% end %>
-            </select>
-            <i class="ri-arrow-drop-down-line"></i>
-          </div>
-        </div>
-
-        <div>
           <label class="label block" for="translations-type-tag"><%= I18n.t('admin.translations.filters.type_tag') %></label>
           <div class="select block fluid">
             <select id="translations-type-tag" name="type_tag">
@@ -67,7 +54,7 @@
     <% end %>
 
     <%= form_with url: app_admin_translations_path, method: :patch, class: 'translations-form', id: 'translations-form', html: { "data-translations-admin-target": "form" } do %>
-      <% preserved_filter_params = params.permit(:q, :area_tag, :type_tag, :status, :target_locale).to_h %>
+      <% preserved_filter_params = params.permit(:q, :type_tag, :status, :target_locale).to_h %>
       <% preserved_filter_params.each do |key, value| %>
         <%= hidden_field_tag key, value %>
       <% end %>
@@ -76,7 +63,6 @@
         <table class="collapsible translations-table">
           <colgroup>
             <col class="translations-col-key" />
-            <col class="translations-col-tags" />
             <col class="translations-col-tags" />
             <col class="translations-col-wide" />
             <col class="translations-col-wide" />
@@ -87,10 +73,9 @@
           </colgroup>
           <tr>
             <th><%= I18n.t('admin.translations.table.key') %></th>
-            <th><%= I18n.t('admin.translations.table.area_tags') %></th>
             <th><%= I18n.t('admin.translations.table.type_tags') %></th>
-            <th><%= I18n.t('locales.en') %></th>
             <th><%= I18n.t('admin.translations.table.used_in') %></th>
+            <th><%= I18n.t('locales.en') %></th>
             <% @target_locales.each do |locale| %>
               <th><%= I18n.t("locales.#{locale}", default: locale.upcase) %></th>
             <% end %>
@@ -106,23 +91,9 @@
               <td>
                 <input type="text"
                        class="input block fluid"
-                       value="<%= translation_key.area_tags.join(', ') %>"
-                       name="rows[<%= translation_key.id %>][area_tags]"
-                       data-translations-admin-target="field" />
-              </td>
-              <td>
-                <input type="text"
-                       class="input block fluid"
                        value="<%= translation_key.type_tags.join(', ') %>"
                        name="rows[<%= translation_key.id %>][type_tags]"
                        data-translations-admin-target="field" />
-              </td>
-              <td>
-                <textarea class="input block fluid translations-value"
-                          name="rows[<%= translation_key.id %>][en]"
-                          rows="3"
-                          data-initial-value="<%= persisted_translation_value_for(translation_key:, locale: 'en') %>"
-                          data-translations-admin-target="field"><%= english_value %></textarea>
               </td>
               <td>
                 <% entries = used_in_entries(translation_key:) %>
@@ -131,8 +102,9 @@
                     <span class="grey-500">-</span>
                   <% else %>
                     <% entries.each_with_index do |entry, index| %>
-                      <% if used_in_path_linkable?(path: entry[:path]) %>
-                        <%= link_to entry[:label], entry[:path], class: 'link secondary' %>
+                      <% resolved_path = resolve_used_in_path(path: entry[:path]) %>
+                      <% if used_in_path_linkable?(path: resolved_path) %>
+                        <%= link_to entry[:label], resolved_path, class: 'link secondary' %>
                       <% else %>
                         <span><%= entry[:label] %></span>
                       <% end %>
@@ -142,6 +114,13 @@
                     <% end %>
                   <% end %>
                 </div>
+              </td>
+              <td>
+                <textarea class="input block fluid translations-value"
+                          name="rows[<%= translation_key.id %>][en]"
+                          rows="3"
+                          readonly
+                          tabindex="-1"><%= english_value %></textarea>
               </td>
               <% @target_locales.each do |locale| %>
                 <% value = translation_value_for(translation_key:, locale:, suggestions: @translation_suggestions) %>

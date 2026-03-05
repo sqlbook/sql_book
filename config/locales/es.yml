@@ -22,7 +22,6 @@ es:
       title: Gestor de traducciones
       filters:
         search: Buscar
-        area_tag: Etiqueta de área
         type_tag: Etiqueta de tipo
         status: Estado
         any: Cualquiera
@@ -32,7 +31,6 @@ es:
           missing_translations: Traducciones faltantes
       table:
         key: Clave
-        area_tags: Etiquetas de área
         type_tags: Etiquetas de tipo
         used_in: Usado en
         actions: Acciones

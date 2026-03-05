@@ -35,7 +35,7 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
 
       key = TranslationKey.find_by!(key: 'app.account_settings.general.description')
       expect(key.used_in).to include(
-        a_hash_including('label' => 'Account settings page', 'path' => '/app/account-settings')
+        a_hash_including('label' => 'Account Settings > General', 'path' => '/app/account-settings?tab=general')
       )
     end
 
@@ -45,7 +45,9 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
       key = TranslationKey.find_by!(key: 'common.actions.create_new')
       expect(key.area_tags).to include('common')
       expect(key.used_in).to include(a_hash_including('label' => 'Workspaces page', 'path' => '/app/workspaces'))
-      expect(key.used_in).to include(a_hash_including('label' => 'Data Sources page', 'path' => '/app/workspaces'))
+      expect(key.used_in).to include(
+        a_hash_including('label' => 'Data Sources', 'path' => '/app/workspaces/:workspace_id/data_sources')
+      )
     end
   end
 end

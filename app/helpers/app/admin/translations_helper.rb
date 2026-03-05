@@ -26,6 +26,25 @@ module App
       def used_in_path_linkable?(path:)
         path.present? && path.start_with?('/')
       end
+
+      def resolve_used_in_path(path:)
+        return '' if path.blank?
+        return path unless path.include?(':workspace_id')
+
+        workspace_id = current_used_in_workspace_id
+        return '' if workspace_id.blank?
+
+        path.gsub(':workspace_id', workspace_id.to_s)
+      end
+
+      private
+
+      def current_used_in_workspace_id
+        user = controller.send(:current_user) if controller.respond_to?(:current_user, true)
+        return nil unless user
+
+        user.workspaces.order(:id).limit(1).pick(:id)
+      end
     end
   end
 end

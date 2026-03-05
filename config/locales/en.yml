@@ -53,7 +53,6 @@ en:
       title: Translations Manager
       filters:
         search: Search
-        area_tag: Area tag
         type_tag: Type tag
         status: Status
         any: Any
@@ -63,7 +62,6 @@ en:
           missing_translations: Missing translations
       table:
         key: Key
-        area_tags: Area tags
         type_tags: Type tags
         used_in: Used in
         actions: Actions
