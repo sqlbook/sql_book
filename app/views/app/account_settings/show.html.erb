@@ -44,7 +44,7 @@
         </div>
 
         <div class="submit">
-          <%= form.submit I18n.t('app.account_settings.actions.save'), class: "link primary", "data-form-target": "submit", disabled: true %>
+          <%= form.submit I18n.t('common.actions.save_changes'), class: "link primary", "data-form-target": "submit", disabled: true %>
         </div>
       <% end %>
     </div>
@@ -135,7 +135,7 @@
 
             <div class="actions">
               <%= submit_tag I18n.t('app.account_settings.actions.confirm_delete'), class: "link primary", disabled: true, "data-account-delete-target": "submit" %>
-              <button type="button" class="link secondary" data-action="account-delete#hide"><%= I18n.t('app.account_settings.actions.cancel') %></button>
+              <button type="button" class="link secondary" data-action="account-delete#hide"><%= I18n.t('common.actions.cancel') %></button>
             </div>
           <% end %>
         </div>

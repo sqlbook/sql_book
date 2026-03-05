@@ -82,13 +82,26 @@
     position: absolute;
     right: 0;
     top: calc(100% + .5rem);
-    width: 11.25rem;
+    max-width: min(90vw, 26rem);
+    min-width: 10rem;
+    width: max-content;
     z-index: 5;
 
     .select {
       background: var(--gray-850);
       border-color: var(--gray-700);
+      align-self: flex-start;
       margin: 0 0 1rem 0;
+      max-width: 100%;
+      width: 100%;
+
+      select {
+        overflow: hidden;
+        max-width: 100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 100%;
+      }
     }
 
     .category {
@@ -106,6 +119,7 @@
 
     .menu-item {
       margin: 0 0 .5rem 0;
+      white-space: nowrap;
       text-decoration: none;
 
       &:last-of-type {
@@ -150,16 +164,10 @@
   }
 
   .workspace-menu .dropdown {
-    width: 11.25rem;
-
     .select:not(:hover):not(:focus-within) {
       background: var(--gray-850);
       border-color: var(--gray-700);
     }
-  }
-
-  .account-menu .dropdown {
-    width: 10rem;
   }
 
   @media (min-width: 64rem) {

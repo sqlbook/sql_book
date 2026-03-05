@@ -28,8 +28,8 @@ RSpec.describe 'App::Workspaces', type: :request do
       it 'renders a list of workspaces' do
         get '/app/workspaces'
 
-        expect(response.body).to have_selector('.workspace-card h4 a', text: workspace_1.name)
-        expect(response.body).to have_selector('.workspace-card h4 a', text: workspace_2.name)
+        expect(response.body).to have_selector('.workspace-card h3 a', text: workspace_1.name)
+        expect(response.body).to have_selector('.workspace-card h3 a', text: workspace_2.name)
       end
 
       it 'renders the account menu toggle in the header' do
@@ -478,7 +478,7 @@ RSpec.describe 'App::Workspaces', type: :request do
 
       expect(flash[:toast]).to include(
         type: 'success',
-        title: I18n.t('toasts.workspaces.deleted.title'),
+        title: I18n.t('common.toasts.workspace_successfully_deleted_title'),
         body: I18n.t('toasts.workspaces.deleted.body')
       )
     end

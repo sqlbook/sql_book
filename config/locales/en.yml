@@ -41,6 +41,8 @@ en:
       save_changes: "[Save Changes]"
       settings: Settings
       view: View
+    toasts:
+      workspace_successfully_deleted_title: Workspace successfully deleted
 
   locales:
     en: English
@@ -59,19 +61,12 @@ en:
           all: All
           fully_translated: Fully translated
           missing_translations: Missing translations
-          duplicate_english: Duplicate English text
       table:
         key: Key
         area_tags: Area tags
         type_tags: Type tags
-        english: English
         used_in: Used in
-        spanish: Spanish
         actions: Actions
-        duplicate_text_count:
-          one: Shared text (%{count} key)
-          other: Shared text (%{count} keys)
-        show_duplicates: Show duplicates
       actions:
         discard: Discard changes
         translate_missing: Translate missing
@@ -86,7 +81,6 @@ en:
       data_sources: Data Sources
       query_library: Query Library
       dashboards: Dashboards
-      settings: Settings
       log_out: Log out
       aria:
         chat: Open chat for the %{workspace_name} workspace
@@ -132,10 +126,8 @@ en:
         empty_state: You do not own any workspaces. Deleting your account will only remove your account data.
         confirm_label: Delete account and transfer workspaces (if relevant)?
       actions:
-        save: "[Save Changes]"
         delete_account: "[Delete Account]"
         confirm_delete: "[Yes, I'm leaving]"
-        cancel: Cancel
 
   auth:
     account_already_exists: An account with this email already exists
@@ -277,10 +269,8 @@ en:
           title: Owner invite not allowed
           body: You can't invite a user as owner.
       deleted:
-        title: Workspace successfully deleted
         body: All data has been deleted and affected users have been informed.
       deleted_partial:
-        title: Workspace successfully deleted
         body: Workspace data was deleted, but some users could not be notified by email.
       delete_forbidden:
         title: Workspace deletion not allowed

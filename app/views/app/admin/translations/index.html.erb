@@ -54,7 +54,6 @@
               <option value="all" <%= 'selected' if selected_status == 'all' %>><%= I18n.t('admin.translations.filters.status_options.all') %></option>
               <option value="fully_translated" <%= 'selected' if selected_status == 'fully_translated' %>><%= I18n.t('admin.translations.filters.status_options.fully_translated') %></option>
               <option value="missing_translations" <%= 'selected' if selected_status == 'missing_translations' %>><%= I18n.t('admin.translations.filters.status_options.missing_translations') %></option>
-              <option value="duplicate_english" <%= 'selected' if selected_status == 'duplicate_english' %>><%= I18n.t('admin.translations.filters.status_options.duplicate_english') %></option>
             </select>
             <i class="ri-arrow-drop-down-line"></i>
           </div>
@@ -65,13 +64,10 @@
         </div>
       </div>
       <%= hidden_field_tag :target_locale, target_locale %>
-      <% if params[:duplicate_value].present? %>
-        <%= hidden_field_tag :duplicate_value, params[:duplicate_value] %>
-      <% end %>
     <% end %>
 
     <%= form_with url: app_admin_translations_path, method: :patch, class: 'translations-form', id: 'translations-form', html: { "data-translations-admin-target": "form" } do %>
-      <% preserved_filter_params = params.permit(:q, :area_tag, :type_tag, :status, :target_locale, :duplicate_value).to_h %>
+      <% preserved_filter_params = params.permit(:q, :area_tag, :type_tag, :status, :target_locale).to_h %>
       <% preserved_filter_params.each do |key, value| %>
         <%= hidden_field_tag key, value %>
       <% end %>
@@ -93,7 +89,7 @@
             <th><%= I18n.t('admin.translations.table.key') %></th>
             <th><%= I18n.t('admin.translations.table.area_tags') %></th>
             <th><%= I18n.t('admin.translations.table.type_tags') %></th>
-            <th><%= I18n.t('admin.translations.table.english') %></th>
+            <th><%= I18n.t('locales.en') %></th>
             <th><%= I18n.t('admin.translations.table.used_in') %></th>
             <% @target_locales.each do |locale| %>
               <th><%= I18n.t("locales.#{locale}", default: locale.upcase) %></th>
@@ -102,24 +98,9 @@
           </tr>
           <% @translation_keys.each do |translation_key| %>
             <% english_value = translation_value_for(translation_key:, locale: 'en', suggestions: @translation_suggestions) %>
-            <% duplicate_count = duplicate_english_count_for(value: english_value, duplicate_counts: @duplicate_english_counts) %>
             <tr>
               <td>
                 <span class="truncate-text" data-tooltip-text="<%= translation_key.key %>"><%= translation_key.key %></span>
-                <% if duplicate_count.present? %>
-                  <div class="translations-duplicate-meta">
-                    <span><%= I18n.t('admin.translations.table.duplicate_text_count', count: duplicate_count) %></span>
-                    <%= link_to I18n.t('admin.translations.table.show_duplicates'),
-                                app_admin_translations_path(
-                                  preserved_filter_params.merge(
-                                    status: 'duplicate_english',
-                                    duplicate_value: english_value,
-                                    q: nil
-                                  )
-                                ),
-                                class: 'link secondary' %>
-                  </div>
-                <% end %>
                 <%= hidden_field_tag "rows[#{translation_key.id}][id]", translation_key.id %>
               </td>
               <td>

@@ -115,14 +115,14 @@ module App
       if failed_notifications.zero?
         return {
           type: 'success',
-          title: I18n.t('toasts.workspaces.deleted.title'),
+          title: I18n.t('common.toasts.workspace_successfully_deleted_title'),
           body: I18n.t('toasts.workspaces.deleted.body')
         }
       end
 
       {
         type: 'information',
-        title: I18n.t('toasts.workspaces.deleted_partial.title'),
+        title: I18n.t('common.toasts.workspace_successfully_deleted_title'),
         body: I18n.t('toasts.workspaces.deleted_partial.body')
       }
     end

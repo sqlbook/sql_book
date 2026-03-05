@@ -30,19 +30,12 @@ es:
           all: Todas
           fully_translated: Completamente traducidas
           missing_translations: Traducciones faltantes
-          duplicate_english: Texto duplicado en inglés
       table:
         key: Clave
         area_tags: Etiquetas de área
         type_tags: Etiquetas de tipo
-        english: Inglés
         used_in: Usado en
-        spanish: Español
         actions: Acciones
-        duplicate_text_count:
-          one: Texto compartido (%{count} clave)
-          other: Texto compartido (%{count} claves)
-        show_duplicates: Ver duplicados
       actions:
         discard: Descartar cambios
         translate_missing: Traducir faltantes
@@ -57,7 +50,6 @@ es:
       data_sources: Fuentes de datos
       query_library: Biblioteca de consultas
       dashboards: Paneles
-      settings: Configuración
       log_out: Cerrar sesión
       aria:
         chat: Abrir chat del espacio de trabajo %{workspace_name}
@@ -83,10 +75,8 @@ es:
           last_name: p. ej. Smith
           email: correo@ejemplo.com
       actions:
-        save: "[Guardar cambios]"
         delete_account: "[Eliminar cuenta]"
         confirm_delete: "[Sí, me voy]"
-        cancel: Cancelar
 
   toasts:
     admin:

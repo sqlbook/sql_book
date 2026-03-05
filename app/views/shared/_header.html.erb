@@ -45,7 +45,7 @@
            key: :settings,
            path: app_workspace_settings_path(@workspace),
            icon: 'ri-settings-3-line',
-           label: I18n.t('app.navigation.settings'),
+           label: I18n.t('common.actions.settings'),
            aria_label: I18n.t('app.navigation.aria.settings', workspace_name: @workspace.name)
          }
        ] %>
@@ -123,7 +123,7 @@
               <% end %>
             <% end %>
             <%= link_to app_account_settings_path, class: "link secondary menu-item", "aria-label": "View account settings" do %>
-              <i class="ri-settings-3-line"></i> <%= I18n.t('app.navigation.settings') %>
+              <i class="ri-settings-3-line"></i> <%= I18n.t('common.actions.settings') %>
             <% end %>
             <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>
               <i class="ri-logout-box-r-line"></i> <%= I18n.t('app.navigation.log_out') %>
@@ -151,7 +151,7 @@
               <% end %>
             <% end %>
             <%= link_to app_account_settings_path, class: "link secondary menu-item", "aria-label": "View account settings" do %>
-              <i class="ri-settings-3-line"></i> <%= I18n.t('app.navigation.settings') %>
+              <i class="ri-settings-3-line"></i> <%= I18n.t('common.actions.settings') %>
             <% end %>
             <%= link_to auth_signout_index_path, class: "link secondary menu-item", "aria-label": "Log out" do %>
               <i class="ri-logout-box-r-line"></i> <%= I18n.t('app.navigation.log_out') %>

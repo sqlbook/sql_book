@@ -26,10 +26,6 @@ module App
       def used_in_path_linkable?(path:)
         path.present? && path.start_with?('/')
       end
-
-      def duplicate_english_count_for(value:, duplicate_counts:)
-        duplicate_counts[value.to_s.downcase]
-      end
     end
   end
 end

@@ -1,6 +1,6 @@
 # Translations Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-05
 
 ## Service and goal
 - Service: database-backed internationalization for the signed-in and email experiences.
@@ -41,16 +41,11 @@ Persistence behavior:
   2. YAML backend fallback: standard Rails locale files
 - Runtime lookup service:
   - `Translations::RuntimeLookupService`
-  - locale-aware fetch with default-locale fallback
-  - duplicate reuse fallback (Phase 2):
-    - when a locale value is missing for a key, runtime attempts an exact-English-text match on another key
-    - requires type-tag overlap to reduce false-positive context reuse
-    - only applies before final fallback to default locale
+  - locale-aware fetch with exact-key lookup and default-locale fallback
   - cache key versioning (`translations:version`) for invalidation after updates
   - fallback order in practice:
     1. exact key in requested locale
-    2. duplicate-English reuse candidate in requested locale (type-tag overlap)
-    3. exact key in default locale (`en`)
+    2. exact key in default locale (`en`)
 
 ## Canonical shared copy (Phase 2)
 - Introduced `common.actions.*` keys for repeated interface strings to reduce redundant translation work.
@@ -66,7 +61,15 @@ Persistence behavior:
   - `common.actions.delete_workspace`
   - `common.actions.delete_workspace_label`
   - `common.actions.apply_filters`
+  - `common.toasts.workspace_successfully_deleted_title`
 - Rule: prefer `common.*` for globally repeated UI labels; keep domain-specific phrasing under local namespaces.
+
+## Delivery rule for new copy
+For every feature/change before merge:
+1. Check whether new UI copy should use an existing `common.*` key.
+2. If not, check whether the new phrase appears elsewhere and should become a new `common.*` key.
+3. If creating a new common key, update all matching call sites in the same change.
+4. Confirm `used_in` metadata links still map to the affected pages.
 
 ## Data model
 - `translation_keys`
@@ -99,8 +102,7 @@ Main capabilities:
   - search (`q`)
   - `area_tag`
   - `type_tag`
-  - status (`all`, `fully_translated`, `missing_translations`, `duplicate_english`)
-  - optional duplicate drill-in via `duplicate_value`
+  - status (`all`, `fully_translated`, `missing_translations`)
 - actions:
   - bulk `Save`
   - `Discard` unsaved edits

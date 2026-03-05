@@ -53,7 +53,6 @@ module App
         @area_tags = available_tags(:area_tags)
         @type_tags = available_tags(:type_tags)
         @target_locales = TranslationValue::SUPPORTED_LOCALES - [I18n.default_locale.to_s]
-        @duplicate_english_counts = duplicate_english_counts
       end
 
       def available_tags(column)
@@ -64,7 +63,6 @@ module App
         scope = TranslationKey.includes(:translation_values).ordered
         scope = apply_tag_filters(scope)
         scope = apply_search_filter(scope)
-        scope = apply_duplicate_value_filter(scope)
         apply_status_filter(scope)
       end
 
@@ -90,45 +88,8 @@ module App
         status = filter_params[:status].presence || 'all'
         return scope.where.not(id: translated_value_ids) if status == 'missing_translations'
         return scope.where(id: translated_value_ids) if status == 'fully_translated'
-        return duplicate_english_scope(scope) if status == 'duplicate_english'
 
         scope
-      end
-
-      def apply_duplicate_value_filter(scope)
-        duplicate_value = filter_params[:duplicate_value].to_s.strip
-        return scope if duplicate_value.blank?
-
-        scope.joins(:translation_values)
-          .where(translation_values: { locale: I18n.default_locale.to_s, value: duplicate_value })
-          .distinct
-      end
-
-      def duplicate_english_scope(scope)
-        duplicate_values = duplicate_english_normalized_values
-
-        return scope.none if duplicate_values.empty?
-
-        scope.joins(:translation_values)
-          .where(translation_values: { locale: I18n.default_locale.to_s })
-          .where('LOWER(translation_values.value) IN (?)', duplicate_values)
-          .distinct
-      end
-
-      def duplicate_english_normalized_values
-        TranslationValue.where(locale: I18n.default_locale.to_s)
-          .where.not(value: [nil, ''])
-          .group('LOWER(value)')
-          .having('COUNT(*) > 1')
-          .pluck(Arel.sql('LOWER(value)'))
-      end
-
-      def duplicate_english_counts
-        TranslationValue.where(locale: I18n.default_locale.to_s)
-          .where.not(value: [nil, ''])
-          .group('LOWER(value)')
-          .having('COUNT(*) > 1')
-          .count
       end
 
       def translated_value_ids
@@ -231,7 +192,7 @@ module App
       end
 
       def filter_params
-        @filter_params ||= params.permit(:q, :area_tag, :type_tag, :status, :target_locale, :duplicate_value)
+        @filter_params ||= params.permit(:q, :area_tag, :type_tag, :status, :target_locale)
       end
 
       def redirect_with_filters
