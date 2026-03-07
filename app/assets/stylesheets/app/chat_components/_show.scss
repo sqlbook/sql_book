@@ -1,0 +1,118 @@
+.app-chat_components-show {
+  .chat-components-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 0 auto;
+    max-width: 64rem;
+    width: 100%;
+  }
+
+  .chat-components-header {
+    h1 {
+      margin: 0;
+      text-align: left;
+    }
+
+    p {
+      color: var(--gray-300);
+      margin: 0.25rem 0 0;
+    }
+  }
+
+  .chat-components-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .chat-components-section > h2 {
+    color: var(--cream-250);
+    margin: 0;
+  }
+
+  .chat-components-canvas {
+    background: var(--gray-850);
+    border: 1px solid var(--gray-700);
+    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+  }
+
+  .chat-components-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .chat-components-inline {
+    justify-content: flex-start;
+    margin: 0;
+  }
+
+  .chat-components-canvas .chat-empty-state {
+    min-height: 30rem;
+  }
+
+  .chat-components-canvas .chat-composer {
+    max-width: 47.5rem;
+  }
+
+  .chat-components-canvas .chat-attachment-button[disabled] {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .chat-inline-card-success {
+    border-color: var(--green-500);
+  }
+
+  .chat-thread-shell {
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+    border-radius: var(--border-radius-sm);
+    max-width: 28rem;
+    width: 100%;
+  }
+
+  .chat-thread-shell-header {
+    align-items: center;
+    border-bottom: 1px solid var(--gray-700);
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+
+    h3 {
+      margin: 0;
+    }
+  }
+
+  .chat-thread-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+  }
+
+  .chat-thread-item {
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-sm);
+    padding: 0.625rem 0.75rem;
+  }
+
+  .chat-thread-item.is-active {
+    background: var(--gray-850);
+    border-color: var(--gray-500);
+  }
+
+  .chat-thread-title {
+    color: var(--cream-250);
+    margin: 0;
+  }
+
+  .chat-thread-meta {
+    color: var(--gray-300);
+    margin: 0.25rem 0 0;
+  }
+}

@@ -1,8 +1,20 @@
-.app-workspaces-show {
+.app-workspaces-show,
+.app-chat_components-show {
   .workspace-chat-page {
     display: flex;
     flex-direction: column;
     min-height: calc(100% - 1.5rem);
+
+    &.is-submitting {
+      .chat-composer-input-row {
+        opacity: 0.72;
+      }
+
+      .chat-attachment-button {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+    }
   }
 
   h1 {
@@ -23,6 +35,22 @@
       height: auto;
       margin: 0 auto;
       width: 4.5rem;
+    }
+
+    &.chat-empty-state-active {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+
+      .chat-empty-state-image,
+      h1,
+      .chat-suggestion-chips {
+        display: none;
+      }
+
+      .chat-composer-empty {
+        margin-top: auto;
+      }
     }
   }
 
@@ -72,8 +100,8 @@
   }
 
   .chat-user-bubble {
-    background: var(--gray-700);
-    border-radius: var(--border-radius-lg) var(--border-radius-lg) 1rem 1rem;
+    background: var(--gray-850);
+    border-radius: var(--border-radius-lg);
     color: var(--cream-250);
     margin: 0 0 0 auto;
     max-width: min(80%, 44rem);
@@ -169,6 +197,7 @@
     gap: 0.5rem;
     height: 3.5rem;
     padding: 0 0.75rem;
+    transition: opacity 140ms ease;
 
     &:focus-within {
       background: var(--black);

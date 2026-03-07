@@ -5,7 +5,7 @@ const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'textInput', 'fileInput', 'attachmentTray', 'attachmentError'];
+  static targets = ['form', 'textInput', 'fileInput', 'attachmentTray', 'attachmentError', 'messages'];
   static values = {
     workspaceId: Number,
     threadId: Number,
@@ -17,12 +17,16 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly fileInputTarget: HTMLInputElement;
   declare readonly attachmentTrayTarget: HTMLDivElement;
   declare readonly attachmentErrorTarget: HTMLParagraphElement;
+  declare readonly messagesTarget: HTMLDivElement;
+  declare readonly hasMessagesTarget: boolean;
   declare readonly workspaceIdValue: number;
   declare readonly threadIdValue: number;
   declare readonly i18nValue: Record<string, string>;
 
   private selectedFiles: File[] = [];
   private previewUrls: string[] = [];
+  private optimisticMessageElements: HTMLElement[] = [];
+  private pendingDraft: { content: string; files: File[] } | null = null;
   private submitting = false;
 
   public connect(): void {
@@ -86,17 +90,25 @@ export default class extends Controller<HTMLDivElement> {
     event.preventDefault();
     if (this.submitting) return;
 
-    const content = this.textInputTarget.value.trim();
+    const draftContent = this.textInputTarget.value;
+    const content = draftContent.trim();
     if (!content && this.selectedFiles.length === 0) {
       this.setAttachmentError(this.translate('messageRequiredError'));
       return;
     }
 
+    const draftFiles = [...this.selectedFiles];
     const formData = new FormData(this.formTarget);
     this.submitting = true;
+    this.pendingDraft = { content: draftContent, files: draftFiles };
+    this.appendOptimisticMessages(content);
+    this.clearComposer();
+    this.setAttachmentError('');
+    this.setSubmittingState(true);
 
     this.fetchJson(this.formTarget.action, formData)
       .then((data) => {
+        this.pendingDraft = null;
         const redirectPath = data.redirect_path as string | undefined;
         if (redirectPath) {
           window.Turbo.visit(redirectPath);
@@ -106,10 +118,13 @@ export default class extends Controller<HTMLDivElement> {
         window.Turbo.visit(window.location.pathname, { action: 'replace' });
       })
       .catch((error) => {
+        this.removeOptimisticMessages();
+        this.restorePendingDraft();
         this.setAttachmentError(error.message || this.translate('genericError'));
       })
       .finally(() => {
         this.submitting = false;
+        this.setSubmittingState(false);
       });
   }
 
@@ -221,6 +236,12 @@ export default class extends Controller<HTMLDivElement> {
     this.attachmentErrorTarget.textContent = message;
   }
 
+  private setSubmittingState(submitting: boolean): void {
+    this.element.classList.toggle('is-submitting', submitting);
+    this.textInputTarget.readOnly = submitting;
+    this.fileInputTarget.disabled = submitting;
+  }
+
   private translate(key: string): string {
     const value = this.i18nValue?.[key];
     return value || '';
@@ -229,5 +250,104 @@ export default class extends Controller<HTMLDivElement> {
   private removeAttachmentAriaLabel(filename: string): string {
     const template = this.translate('removeAttachmentAria');
     return template.replace('%{filename}', filename);
+  }
+
+  private appendOptimisticMessages(content: string): void {
+    this.removeOptimisticMessages();
+    const messageStream = this.ensureMessageStream();
+    if (!messageStream) return;
+
+    const timestamp = this.formatCurrentTime();
+    const inserted: HTMLElement[] = [];
+
+    if (content) {
+      const userArticle = document.createElement('article');
+      userArticle.className = 'chat-message chat-message-user chat-message-pending';
+      userArticle.dataset.optimistic = 'true';
+
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-user-bubble';
+
+      const userBody = document.createElement('p');
+      userBody.className = 'chat-message-body';
+      userBody.textContent = content;
+
+      const userMeta = document.createElement('p');
+      userMeta.className = 'chat-message-meta';
+      userMeta.textContent = timestamp;
+
+      userBubble.appendChild(userBody);
+      userArticle.appendChild(userBubble);
+      userArticle.appendChild(userMeta);
+      messageStream.appendChild(userArticle);
+      inserted.push(userArticle);
+    }
+
+    const thinkingArticle = document.createElement('article');
+    thinkingArticle.className = 'chat-message chat-message-system chat-message-pending';
+    thinkingArticle.dataset.optimistic = 'true';
+
+    const thinkingRow = document.createElement('p');
+    thinkingRow.className = 'chat-system-row';
+    thinkingRow.textContent = this.translate('thinkingStatus') || 'Thinking';
+
+    const thinkingMeta = document.createElement('p');
+    thinkingMeta.className = 'chat-message-meta';
+    thinkingMeta.textContent = timestamp;
+
+    thinkingArticle.appendChild(thinkingRow);
+    thinkingArticle.appendChild(thinkingMeta);
+    messageStream.appendChild(thinkingArticle);
+    inserted.push(thinkingArticle);
+
+    this.optimisticMessageElements = inserted;
+    thinkingArticle.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  }
+
+  private removeOptimisticMessages(): void {
+    this.optimisticMessageElements.forEach((element) => element.remove());
+    this.optimisticMessageElements = [];
+  }
+
+  private clearComposer(): void {
+    this.textInputTarget.value = '';
+    this.selectedFiles = [];
+    this.syncFileInput();
+    this.renderAttachmentTray();
+  }
+
+  private restorePendingDraft(): void {
+    if (!this.pendingDraft) return;
+
+    this.textInputTarget.value = this.pendingDraft.content;
+    this.selectedFiles = [...this.pendingDraft.files];
+    this.syncFileInput();
+    this.renderAttachmentTray();
+    this.pendingDraft = null;
+    this.textInputTarget.focus();
+  }
+
+  private formatCurrentTime(): string {
+    const now = new Date();
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+
+    return `${hour}:${minute}`;
+  }
+
+  private ensureMessageStream(): HTMLElement | null {
+    if (this.hasMessagesTarget) return this.messagesTarget;
+
+    const emptyState = this.element.querySelector('.chat-empty-state');
+    if (!(emptyState instanceof HTMLElement)) return null;
+
+    emptyState.classList.add('chat-empty-state-active');
+
+    const stream = document.createElement('section');
+    stream.className = 'chat-message-stream';
+    stream.dataset.workspaceChatTarget = 'messages';
+    emptyState.insertBefore(stream, this.formTarget);
+
+    return stream;
   }
 }

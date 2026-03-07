@@ -181,9 +181,9 @@ RSpec.describe 'App::Workspaces', type: :request do
       it 'renders chat empty-state suggestions and composer' do
         get "/app/workspaces/#{workspace.id}"
 
-        expect(response.body).to include('Invite your team mates')
-        expect(response.body).to include('Rename this workspace')
-        expect(response.body).to include('List current team members')
+        expect(response.body).to include('Help me invite a teammate')
+        expect(response.body).to include('Rename this workspace to')
+        expect(response.body).to include('Show current team members')
         expect(response.body).to include('Type here to begin a new chat...')
       end
 

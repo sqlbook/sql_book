@@ -37,6 +37,8 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   end
 
   namespace :app do # rubocop:disable Metrics/BlockLength
+    get 'chat-components', to: 'chat_components#show'
+
     namespace :admin do
       root to: 'dashboard#index'
       get '/', to: 'dashboard#index', as: :dashboard

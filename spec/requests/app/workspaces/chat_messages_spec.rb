@@ -50,6 +50,42 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['action_request']['action_type']).to eq('workspace.update_name')
     end
 
+    it 'extracts a clean target name for rename questions' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Can you rename my workspace to Bumanarama?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('requires_confirmation')
+      expect(payload['action_request']['action_type']).to eq('workspace.update_name')
+      expect(payload['action_request']['payload']['name']).to eq('Bumanarama')
+    end
+
+    it 'asks for email before proposing an invite action' do
+      expect do
+        post app_workspace_chat_messages_path(workspace), params: { content: 'invite my team mates' }, as: :json
+      end.not_to change(ChatActionRequest, :count)
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('ok')
+      expect(payload['messages'].last['role']).to eq('assistant')
+      expect(payload['messages'].last['content']).to eq('Sure. What email should I send the invitation to?')
+    end
+
+    it 'asks for workspace name before proposing a rename action' do
+      expect do
+        post app_workspace_chat_messages_path(workspace), params: { content: 'rename workspace' }, as: :json
+      end.not_to change(ChatActionRequest, :count)
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('ok')
+      expect(payload['messages'].last['role']).to eq('assistant')
+      expect(payload['messages'].last['content']).to eq('Sure. What should the new workspace name be?')
+    end
+
     it 'rejects non-image attachments' do
       post app_workspace_chat_messages_path(workspace),
            params: {

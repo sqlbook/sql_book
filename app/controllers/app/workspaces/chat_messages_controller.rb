@@ -40,6 +40,14 @@ module App
           )
         end
 
+        missing_details_message = missing_details_message_for(action_type: plan.action_type, payload: plan.payload.to_h)
+        if missing_details_message.present?
+          return render_non_action_response(
+            user_message:,
+            assistant_content: missing_details_message
+          )
+        end
+
         if Chat::Policy.write_action?(plan.action_type)
           return render_confirmation_response(
             user_message:,
@@ -129,6 +137,35 @@ module App
           'thread_id' => chat_thread.id,
           'message_id' => message.id
         }
+      end
+
+      def missing_details_message_for(action_type:, payload:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+        case action_type
+        when 'workspace.update_name'
+          return I18n.t('app.workspaces.chat.planner.workspace_rename_needs_name') if payload['name'].to_s.strip.blank?
+        when 'member.invite'
+          return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if payload['email'].to_s.strip.blank?
+        when 'member.resend_invite'
+          return I18n.t('app.workspaces.chat.planner.member_resend_needs_member') if member_reference_missing?(payload:)
+        when 'member.update_role'
+          if member_reference_missing?(payload:) && payload['role'].to_s.strip.blank?
+            return I18n.t('app.workspaces.chat.planner.member_role_update_needs_member_and_role')
+          end
+          if member_reference_missing?(payload:)
+            return I18n.t('app.workspaces.chat.planner.member_role_update_needs_member')
+          end
+          if payload['role'].to_s.strip.blank?
+            return I18n.t('app.workspaces.chat.planner.member_role_update_needs_role')
+          end
+        when 'member.remove'
+          return I18n.t('app.workspaces.chat.planner.member_remove_needs_member') if member_reference_missing?(payload:)
+        end
+
+        nil
+      end
+
+      def member_reference_missing?(payload:)
+        payload['member_id'].to_s.strip.blank? && payload['email'].to_s.strip.blank?
       end
 
       def render_non_action_response(user_message:, assistant_content:)

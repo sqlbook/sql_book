@@ -69,9 +69,9 @@ en:
       chat:
         title: Where should we begin?
         suggestions:
-          invite_team_mates: Invite your team mates
-          rename_workspace: Rename this workspace
-          list_team_members: List current team members
+          invite_team_mates: Help me invite a teammate
+          rename_workspace: Rename this workspace to "..."
+          list_team_members: Show current team members
         composer:
           placeholder_empty: Type here to begin a new chat...
           placeholder_active: Type here...
@@ -113,11 +113,18 @@ en:
           default_help: I can help rename/delete this workspace, list team members, and manage invites and roles.
           workspace_delete: I can delete this workspace once you confirm.
           workspace_rename: I can rename this workspace once you confirm.
+          workspace_rename_needs_name: Sure. What should the new workspace name be?
           member_list: I will list the current workspace team members now.
           member_invite: I can send that invitation once you confirm.
+          member_invite_needs_email: Sure. What email should I send the invitation to?
           member_resend: I can resend that pending invitation once you confirm.
+          member_resend_needs_member: Sure. Which team member should I resend the invitation to? Share their email.
           member_role_update: I can update that team member role once you confirm.
+          member_role_update_needs_member_and_role: Sure. Which team member should I update, and what role should they have (Admin, User, or Read only)?
+          member_role_update_needs_member: Sure. Which team member should I update? Share their email.
+          member_role_update_needs_role: Sure. What role should they have (Admin, User, or Read only)?
           member_remove: I can remove that team member once you confirm.
+          member_remove_needs_member: Sure. Which team member should I remove? Share their email.
           attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
           fallback_with_action: I can help with that. Please confirm to proceed.
           fallback_without_action: I can help with workspace and team actions.

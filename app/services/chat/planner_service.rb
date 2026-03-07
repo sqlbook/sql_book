@@ -20,10 +20,13 @@ module Chat
     end
 
     def call
-      llm_plan || heuristic_plan
+      heuristic = heuristic_plan
+      return heuristic if heuristic
+
+      llm_plan || default_help_plan
     rescue StandardError => e
       Rails.logger.warn("Chat planner failed, falling back to heuristic planner: #{e.class} #{e.message}")
-      heuristic_plan
+      heuristic_plan || default_help_plan
     end
 
     private
@@ -72,7 +75,22 @@ module Chat
               {
                 type: 'input_text',
                 text: [
-                  'You classify workspace chat intents into an action contract.',
+                  'You are sqlbook\'s in-workspace chat assistant.',
+                  [
+                    'sqlbook is a collaborative data workspace product. Teams can manage workspace settings,',
+                    'team members, data sources, queries, and dashboards.'
+                  ].join(' '),
+                  [
+                    'Your current executable scope in this environment is workspace/team management only,',
+                    'using the action contract below.'
+                  ].join(' '),
+                  [
+                    'Future capabilities may include datasource/query/dashboard actions, but those are not',
+                    'available to execute right now. If asked, explain this clearly and offer supported actions.'
+                  ].join(' '),
+                  'Never claim to have executed actions that are out of scope.',
+                  'Never propose cross-workspace actions; stay in the current workspace only.',
+                  'Classify user intent into an action contract when possible.',
                   [
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
                     'member.resend_invite, member.update_role, member.remove.'
@@ -80,6 +98,18 @@ module Chat
                   [
                     'Disallowed namespaces: workspace.list/get/create, datasource.*, query.*, dashboard.*,',
                     'billing.*, subscription.*, admin.*, super_admin.*.'
+                  ].join(' '),
+                  [
+                    'Before proposing write actions, collect required fields first.',
+                    'If required fields are missing, set action_type to null and ask a concise follow-up question.',
+                    'Required fields: workspace.update_name(name), member.invite(email),',
+                    'member.resend_invite(email or member_id),',
+                    'member.update_role(email or member_id, role),',
+                    'member.remove(email or member_id).'
+                  ].join(' '),
+                  [
+                    'For workspace.update_name, payload.name must be a clean target name only,',
+                    'without wrapping quotes and without trailing conversational punctuation.'
                   ].join(' '),
                   'Return JSON only with keys assistant_message, action_type, payload.'
                 ].join(' ')
@@ -149,8 +179,8 @@ module Chat
       return workspace_delete_plan if lower.match?(/\b(delete|remove)\b.*\bworkspace\b/)
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
       return member_list_plan if lower.match?(/\b(list|show|who)\b.*\b(team|member)s?\b/)
-      return member_invite_plan if lower.include?('invite')
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
+      return member_invite_plan if lower.include?('invite')
       return member_role_update_plan if lower.match?(/\b(change|update)\b.*\brole\b/)
       return member_remove_plan if lower.match?(/\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/)
 
@@ -162,7 +192,7 @@ module Chat
         )
       end
 
-      default_help_plan
+      nil
     end
 
     def default_help_plan
@@ -182,13 +212,19 @@ module Chat
     end
 
     def workspace_rename_plan
-      name = message.split(/\bto\b/i, 2).last.to_s.strip
-      payload = name.present? ? { 'name' => name } : {}
+      name = parsed_workspace_name
+      if name.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.workspace_rename_needs_name'),
+          action_type: nil,
+          payload: {}
+        )
+      end
 
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.workspace_rename'),
         action_type: 'workspace.update_name',
-        payload:
+        payload: { 'name' => name }
       )
     end
 
@@ -200,16 +236,19 @@ module Chat
       )
     end
 
-    def member_invite_plan # rubocop:disable Metrics/AbcSize
-      email = message[EMAIL_REGEX].to_s.downcase
+    def member_invite_plan
+      email = parsed_email
+      if email.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.member_invite_needs_email'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
       role = parsed_role || Member::Roles::USER
-      names = message.gsub(EMAIL_REGEX, '').split(/\s+/).compact_blank
-      first_name = names.first.to_s.capitalize.presence
-      last_name = names.second.to_s.capitalize.presence
 
       payload = { 'email' => email, 'role' => role }
-      payload['first_name'] = first_name if first_name
-      payload['last_name'] = last_name if last_name
 
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_invite'),
@@ -219,29 +258,72 @@ module Chat
     end
 
     def member_resend_plan
+      email = parsed_email
+      if email.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.member_resend_needs_member'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_resend'),
         action_type: 'member.resend_invite',
-        payload: { 'email' => message[EMAIL_REGEX].to_s.downcase }
+        payload: { 'email' => email }
       )
     end
 
-    def member_role_update_plan
+    def member_role_update_plan # rubocop:disable Metrics/MethodLength
+      email = parsed_email
+      role = parsed_role
+
+      if email.blank? && role.nil?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update_needs_member_and_role'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+      if email.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update_needs_member'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+      if role.nil?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update_needs_role'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update'),
         action_type: 'member.update_role',
         payload: {
-          'email' => message[EMAIL_REGEX].to_s.downcase,
-          'role' => parsed_role
+          'email' => email,
+          'role' => role
         }
       )
     end
 
     def member_remove_plan
+      email = parsed_email
+      if email.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.member_remove_needs_member'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_remove'),
         action_type: 'member.remove',
-        payload: { 'email' => message[EMAIL_REGEX].to_s.downcase }
+        payload: { 'email' => email }
       )
     end
 
@@ -252,6 +334,23 @@ module Chat
       return Member::Roles::USER if lowered.include?('user')
 
       nil
+    end
+
+    def parsed_workspace_name
+      from_to_match = message.match(/\b(?:rename|change)\b.*\bworkspace\b.*\bto\b\s+(.+)\z/i)
+      from_to_name = from_to_match&.captures&.first
+      return cleaned_name(from_to_name) if from_to_name.present?
+
+      quoted_match = message.match(/["']([^"']+)["']/)
+      cleaned_name(quoted_match&.captures&.first)
+    end
+
+    def cleaned_name(value)
+      value.to_s.strip.sub(/[.!?]+\z/, '').presence
+    end
+
+    def parsed_email
+      message[EMAIL_REGEX].to_s.downcase.presence
     end
 
     def fallback_assistant_message(action_type:)

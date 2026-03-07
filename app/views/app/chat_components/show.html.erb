@@ -1,0 +1,185 @@
+<main class="chat-components-page">
+  <header class="chat-components-header">
+    <h1>Chat Components</h1>
+    <p class="text-small">
+      Visual review surface for chat component styling and states.
+    </p>
+  </header>
+
+  <section class="chat-components-section">
+    <h2>Empty-state Hero Block</h2>
+    <div class="chat-components-canvas">
+      <section class="chat-empty-state">
+        <%= image_tag "waving-quokka.svg", alt: "", class: "chat-empty-state-image", width: 72, height: 72 %>
+        <h1><%= I18n.t('app.workspaces.chat.title') %></h1>
+
+        <div class="chat-suggestion-chips">
+          <button type="button" class="chat-suggestion-chip">
+            <%= I18n.t('app.workspaces.chat.suggestions.invite_team_mates') %>
+          </button>
+          <button type="button" class="chat-suggestion-chip">
+            <%= I18n.t('app.workspaces.chat.suggestions.rename_workspace') %>
+          </button>
+          <button type="button" class="chat-suggestion-chip">
+            <%= I18n.t('app.workspaces.chat.suggestions.list_team_members') %>
+          </button>
+        </div>
+
+        <div class="chat-composer chat-composer-empty">
+          <div class="chat-composer-input-row">
+            <input type="text"
+                   class="input block fluid chat-composer-input"
+                   placeholder="<%= I18n.t('app.workspaces.chat.composer.placeholder_empty') %>" />
+            <button type="button" class="chat-attachment-button" aria-label="<%= I18n.t('app.workspaces.chat.composer.attach_images_aria_label') %>">
+              <i class="ri-attachment-2"></i>
+            </button>
+          </div>
+          <p class="chat-composer-hint"><%= I18n.t('app.workspaces.chat.composer.submit_hint') %></p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="chat-components-section">
+    <h2>Suggestion Chip</h2>
+    <div class="chat-components-canvas">
+      <div class="chat-suggestion-chips chat-components-inline">
+        <button type="button" class="chat-suggestion-chip">Show current team members</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="chat-components-section">
+    <h2>Composer (empty / active / disabled)</h2>
+    <div class="chat-components-canvas chat-components-stack">
+      <div class="chat-composer chat-composer-empty">
+        <div class="chat-composer-input-row">
+          <input type="text" class="input block fluid chat-composer-input" placeholder="Type here to begin a new chat..." />
+          <button type="button" class="chat-attachment-button" aria-label="Attach images">
+            <i class="ri-attachment-2"></i>
+          </button>
+        </div>
+        <p class="chat-composer-hint">Press ENTER to submit</p>
+      </div>
+
+      <div class="chat-composer">
+        <div class="chat-composer-input-row">
+          <input type="text" class="input block fluid chat-composer-input" placeholder="Type here..." value="Invite sam@example.com as admin" />
+          <button type="button" class="chat-attachment-button" aria-label="Attach images">
+            <i class="ri-attachment-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="chat-composer">
+        <div class="chat-composer-input-row">
+          <input type="text" class="input block fluid chat-composer-input" placeholder="Type here..." value="Submitting..." readonly />
+          <button type="button" class="chat-attachment-button" aria-label="Attach images" disabled>
+            <i class="ri-attachment-2"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chat-components-section">
+    <h2>Attachment Tray (preview / remove / overflow)</h2>
+    <div class="chat-components-canvas">
+      <div class="chat-attachment-tray">
+        <% 1.upto(8) do %>
+          <div class="chat-attachment-preview">
+            <%= image_tag "waving-quokka.svg", alt: "Attachment preview", class: "chat-attachment-thumb" %>
+            <button type="button" class="chat-attachment-remove" aria-label="Remove">x</button>
+          </div>
+        <% end %>
+      </div>
+      <p class="chat-attachment-error">Only PNG, JPG, WEBP, and GIF images are supported.</p>
+    </div>
+  </section>
+
+  <section class="chat-components-section">
+    <h2>Message Stream Components</h2>
+    <div class="chat-components-canvas">
+      <section class="chat-message-stream">
+        <article class="chat-message chat-message-user">
+          <div class="chat-user-bubble">
+            <p class="chat-message-body">Can you rename my workspace to Bumanarama?</p>
+          </div>
+          <p class="chat-message-meta">16:40</p>
+        </article>
+
+        <article class="chat-message chat-message-system">
+          <p class="chat-system-row"><%= I18n.t('app.workspaces.chat.statuses.thinking') %></p>
+          <p class="chat-message-meta">16:40</p>
+        </article>
+
+        <article class="chat-message chat-message-assistant">
+          <div class="chat-assistant-block">
+            <p class="chat-message-body">I can rename this workspace once you confirm.</p>
+
+            <div class="chat-inline-card">
+              <p class="chat-inline-card-title"><%= I18n.t('app.workspaces.chat.cards.confirmation_needed') %></p>
+              <p class="chat-inline-card-body">
+                <%= I18n.t('app.workspaces.chat.cards.action_label') %>
+                <strong><%= I18n.t('app.workspaces.chat.action_labels.workspace_update_name') %></strong>
+              </p>
+              <div class="chat-inline-card-actions">
+                <button type="button" class="link primary"><%= I18n.t('common.actions.confirm') %></button>
+                <button type="button" class="link secondary"><%= I18n.t('common.actions.cancel') %></button>
+              </div>
+            </div>
+          </div>
+          <p class="chat-message-meta">16:41</p>
+        </article>
+
+        <article class="chat-message chat-message-assistant">
+          <div class="chat-assistant-block">
+            <p class="chat-message-body">I couldn't complete that action.</p>
+            <div class="chat-inline-card chat-inline-card-error">
+              <p class="chat-inline-card-title">Error</p>
+              <p class="chat-inline-card-body">Could not confirm that action.</p>
+            </div>
+          </div>
+          <p class="chat-message-meta">16:42</p>
+        </article>
+
+        <article class="chat-message chat-message-assistant">
+          <div class="chat-assistant-block">
+            <p class="chat-message-body">Done. Workspace renamed to Bumanarama.</p>
+            <div class="chat-inline-card chat-inline-card-success">
+              <p class="chat-inline-card-title">Success</p>
+              <p class="chat-inline-card-body">Workspace name updated to Bumanarama.</p>
+            </div>
+          </div>
+          <p class="chat-message-meta">16:43</p>
+        </article>
+      </section>
+    </div>
+  </section>
+
+  <section class="chat-components-section">
+    <h2>Thread Switcher / History Shell</h2>
+    <div class="chat-components-canvas">
+      <aside class="chat-thread-shell">
+        <header class="chat-thread-shell-header">
+          <h3>Conversations</h3>
+          <button type="button" class="link secondary">New thread</button>
+        </header>
+        <ul class="chat-thread-list">
+          <li class="chat-thread-item is-active">
+            <p class="chat-thread-title">Invite team members</p>
+            <p class="chat-thread-meta">Today, 16:43</p>
+          </li>
+          <li class="chat-thread-item">
+            <p class="chat-thread-title">Rename workspace</p>
+            <p class="chat-thread-meta">Today, 15:17</p>
+          </li>
+          <li class="chat-thread-item">
+            <p class="chat-thread-title">Member role updates</p>
+            <p class="chat-thread-meta">Yesterday, 10:02</p>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+</main>

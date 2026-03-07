@@ -47,6 +47,12 @@ Planner/executor payload contract includes:
 - `thread_id`
 - `message_id`
 
+Planner prompt requirements:
+- include assistant role context (sqlbook workspace chat assistant)
+- include product context (workspace/team/data-source/query/dashboard concepts)
+- clearly separate current executable scope (workspace/team actions) from future capabilities
+- require clean structured payloads for executable actions
+
 Executor result statuses:
 - `requires_confirmation`
 - `executed`
@@ -85,6 +91,9 @@ Blocked prefixes:
 
 ## Confirmation lifecycle
 - All mutating actions require explicit inline confirmation.
+- Confirmations are only created when required action fields are present.
+  - Example: `member.invite` requires an email first.
+  - If required fields are missing, assistant asks a follow-up question instead of creating a confirmation card.
 - Pending confirmation requests have expiry (`15 minutes`).
 - Confirm endpoint validates:
   - request is pending
@@ -120,6 +129,7 @@ Blocked prefixes:
   - controller validation copy
   - client-side validation/fallback errors
 - LLM free-form responses are dynamic and not locale-key managed.
+- Deterministic follow-up questions for missing action fields must use locale keys (same as other deterministic chat copy).
 - Current supported locales: `en`, `es`.
 - When adding chat copy:
   1. check for existing reusable keys (`common.actions.*`) first
@@ -135,3 +145,7 @@ Blocked prefixes:
   - attachment validations (type/count/size)
   - localized copy behavior for Spanish locale
 - Integration behavior for workspace deletion redirect and action status handling.
+
+## Component Preview Surface
+- Route: `GET /app/chat-components`
+- Purpose: visual QA page for chat component styling/states before final design sign-off.

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class User < ApplicationRecord
+class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   CURRENT_TERMS_VERSION = '2026-02-16'
   EMAIL_CHANGE_VERIFICATION_WINDOW = 1.hour
   SUPPORTED_LOCALES = %w[en es].freeze
