@@ -31,3 +31,4 @@
 - Reserve absolute URLs for genuinely external destinations (for example docs/help center).
 - Toast locale copy is plain text; do not use HTML entities like `&apos;` in toast translation strings.
 - See `docs/TOASTS_MASTER_REF.md` for toast-specific copy/encoding/interpolation rules.
+- For workspace chat, all deterministic system copy (UI labels, validation text, status rows, fixed executor/planner text) must use locale keys and ship with `en` + `es` entries.

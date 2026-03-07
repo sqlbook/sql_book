@@ -175,7 +175,16 @@ RSpec.describe 'App::Workspaces', type: :request do
       it 'renders the workspace name' do
         get "/app/workspaces/#{workspace.id}"
 
-        expect(response.body).to have_selector('h1', text: workspace.name)
+        expect(response.body).to have_selector('h1', text: 'Where should we begin?')
+      end
+
+      it 'renders chat empty-state suggestions and composer' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).to include('Invite your team mates')
+        expect(response.body).to include('Rename this workspace')
+        expect(response.body).to include('List current team members')
+        expect(response.body).to include('Type here to begin a new chat...')
       end
 
       it 'renders breadcrumbs with workspace as the current page' do
@@ -225,7 +234,7 @@ RSpec.describe 'App::Workspaces', type: :request do
         get "/app/workspaces/#{workspace.id}"
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to have_selector('h1', text: workspace.name)
+        expect(response.body).to have_selector('h1', text: 'Where should we begin?')
       end
     end
 
@@ -238,7 +247,21 @@ RSpec.describe 'App::Workspaces', type: :request do
         get "/app/workspaces/#{workspace.id}"
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to have_selector('h1', text: workspace.name)
+        expect(response.body).to have_selector('h1', text: 'Where should we begin?')
+      end
+    end
+
+    context 'when current user locale is Spanish' do
+      let(:user) { create(:user, preferred_locale: 'es') }
+      let(:owner) { user }
+
+      it 'renders localized chat copy' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('¿Por dónde empezamos?')
+        expect(response.body).to include('Escribe aquí para iniciar un nuevo chat...')
+        expect(response.body).to include('Presiona ENTER para enviar')
       end
     end
 

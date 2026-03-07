@@ -32,6 +32,7 @@ en:
     actions:
       apply_filters: Apply filters
       cancel: Cancel
+      confirm: "[Confirm]"
       create_new: Create New
       delete: Delete
       delete_workspace_label: Delete Workspace
@@ -39,6 +40,7 @@ en:
       open: Open
       save: "[Save]"
       save_changes: "[Save Changes]"
+      send: Send
       settings: Settings
       view: View
     toasts:
@@ -63,6 +65,84 @@ en:
         query_library: View queries for the %{workspace_name} workspace
         dashboards: View dashboards for the %{workspace_name} workspace
         settings: View workspace settings for the %{workspace_name} workspace
+    workspaces:
+      chat:
+        title: Where should we begin?
+        suggestions:
+          invite_team_mates: Invite your team mates
+          rename_workspace: Rename this workspace
+          list_team_members: List current team members
+        composer:
+          placeholder_empty: Type here to begin a new chat...
+          placeholder_active: Type here...
+          submit_hint: Press ENTER to submit
+          attach_images_aria_label: Attach images
+          remove_image_aria_label: Remove %{filename}
+        cards:
+          confirmation_needed: Confirmation needed
+          action_label: "Action:"
+          action_update: Action update
+        statuses:
+          thinking: Thinking
+          checking_permissions: Checking permissions
+          ready_to_confirm: Ready to confirm
+          done: Done
+        messages:
+          confirm_suffix: Please confirm to continue.
+          action_canceled: Okay, I canceled that action.
+        errors:
+          message_or_image_required: Message content or at least one image is required.
+          max_images: You can attach up to %{count} images per message.
+          unsupported_images: Only PNG, JPG, WEBP, and GIF images are supported.
+          image_too_large: Images must be 25MB or smaller.
+          request_failed: Something went wrong. Please try again.
+          confirm_failed: Could not confirm that action.
+          cancel_failed: Could not cancel that action.
+          action_not_pending_confirmation: This action is no longer pending confirmation.
+          confirmation_expired: This confirmation has expired.
+          invalid_confirmation_token: Invalid confirmation token.
+        action_labels:
+          workspace_update_name: Rename workspace
+          workspace_delete: Delete workspace
+          member_list: List team members
+          member_invite: Invite team member
+          member_resend_invite: Resend invitation
+          member_update_role: Update member role
+          member_remove: Remove team member
+        planner:
+          default_help: I can help rename/delete this workspace, list team members, and manage invites and roles.
+          workspace_delete: I can delete this workspace once you confirm.
+          workspace_rename: I can rename this workspace once you confirm.
+          member_list: I will list the current workspace team members now.
+          member_invite: I can send that invitation once you confirm.
+          member_resend: I can resend that pending invitation once you confirm.
+          member_role_update: I can update that team member role once you confirm.
+          member_remove: I can remove that team member once you confirm.
+          attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
+          fallback_with_action: I can help with that. Please confirm to proceed.
+          fallback_without_action: I can help with workspace and team actions.
+        executor:
+          forbidden: I can't run that action with your current workspace permissions.
+          unexpected_error: There was an unexpected error while running that action.
+          workspace_name_required: Please provide a workspace name.
+          workspace_name_updated: Workspace name updated to %{name}.
+          workspace_delete_failed: We could not delete that workspace right now.
+          workspace_delete_success: Workspace deleted. All affected users were notified.
+          workspace_delete_partial: Workspace deleted, but we could not notify some users by email.
+          member_list_found: Found %{count} team members.
+          member_invite_email_required: Please provide a valid email address.
+          member_invite_already_member: This user is already in the workspace team.
+          member_invite_sent: Invitation sent to %{email}.
+          member_not_found: Team member not found.
+          member_resend_only_pending: Only pending invitations can be resent.
+          member_resend_cooldown: Please wait before resending that invitation.
+          member_resend_sent: A fresh invitation has been sent to %{email}.
+          member_role_invalid: Please choose a valid role.
+          member_role_updated: "%{name} is now %{role}."
+          member_remove_owner_forbidden: Workspace owners cannot be removed.
+          member_remove_success: "%{name} has been removed from the workspace."
+          inferred_first_name: Team
+          inferred_last_name: Member
     account_settings:
       title: Account settings
       tabs:

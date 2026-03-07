@@ -25,6 +25,7 @@ import SearchController from './search-controller';
 import TableController from './table-controller';
 import ToastStackController from './toast-stack-controller';
 import TranslationsAdminController from './translations-admin-controller';
+import WorkspaceChatController from './workspace-chat-controller';
 
 application.register('account-delete', AccountDeleteController);
 application.register('accordion', AccordionController);
@@ -47,3 +48,4 @@ application.register('search', SearchController);
 application.register('table', TableController);
 application.register('toast-stack', ToastStackController);
 application.register('translations-admin', TranslationsAdminController);
+application.register('workspace-chat', WorkspaceChatController);

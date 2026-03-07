@@ -36,6 +36,40 @@ Use this file to record major choices and why they were made.
 - Why:
   - privacy/data residency requirements and customer trust
 
+## 2026-03-07
+### Decision: Use connector-type strategy (live-query first for external SQL in v1)
+- Status: Accepted
+- Why:
+  - supports the product shift from first-party-only capture to multi-source workspaces
+  - delivers the first external connector faster by avoiding full ingest pipeline work
+  - keeps operational complexity lower during relaunch
+  - fits current architecture where first-party capture already has strong tenant isolation controls
+- Consequences:
+  - supersedes the earlier ingest-first connector assumption in `/Users/chrispattison/sql_book/docs/ARCHITECTURE_PLAN.md`
+  - external SQL connectors use read-only live querying in v1; full ingestion is not the default
+  - API/SaaS connectors may still require selective sync/materialization where live querying is impractical
+  - temporary query-result caching must remain tenant-scoped and treated as controlled temporary storage
+  - first-party captured events remain centralized with strict per-tenant access controls (RLS model preserved)
+- Revisit when:
+  - external API/rate-limit constraints make live querying unreliable for core use cases
+  - performance/cost of live querying becomes unacceptable for target workloads
+  - cross-source federation requirements demand a different storage/execution model
+
+### Decision: Ship workspace-scoped chat with strict action allowlist in v1
+- Status: Accepted
+- Why:
+  - enables useful in-product assistant behavior without expanding system risk surface
+  - keeps parity with existing server-side workspace/team behavior and side effects
+  - allows incremental delivery toward broader chat-driven workflows
+- Consequences:
+  - chat actions are constrained to workspace/team management in v1
+  - all mutating actions require inline confirmation
+  - payloads carry workspace/thread/message identifiers and are scope-validated server-side
+  - fixed/system chat copy is locale-key based (`en`/`es`) rather than hardcoded
+- Revisit when:
+  - data source/query/dashboard chat actions are implemented with equivalent policy/confirmation guarantees
+  - thread switching/history UX becomes a surfaced user feature
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

@@ -1,3 +1,102 @@
-<main>
-  <h1><%= @workspace.name %></h1>
+<main class="workspace-chat-page"
+      data-controller="workspace-chat"
+      data-workspace-chat-workspace-id-value="<%= @workspace.id %>"
+      data-workspace-chat-thread-id-value="<%= @chat_thread.id %>"
+      data-workspace-chat-i18n-value="<%= json_escape({
+        maxImagesError: I18n.t('app.workspaces.chat.errors.max_images', count: ChatMessage::MAX_IMAGE_COUNT),
+        unsupportedImagesError: I18n.t('app.workspaces.chat.errors.unsupported_images'),
+        imageTooLargeError: I18n.t('app.workspaces.chat.errors.image_too_large'),
+        messageRequiredError: I18n.t('app.workspaces.chat.errors.message_or_image_required'),
+        genericError: I18n.t('app.workspaces.chat.errors.request_failed'),
+        confirmActionError: I18n.t('app.workspaces.chat.errors.confirm_failed'),
+        cancelActionError: I18n.t('app.workspaces.chat.errors.cancel_failed'),
+        requestFailedError: I18n.t('app.workspaces.chat.errors.request_failed'),
+        removeAttachmentAria: I18n.t('app.workspaces.chat.composer.remove_image_aria_label', filename: '%{filename}')
+      }.to_json) %>">
+  <% if @chat_messages.empty? %>
+    <section class="chat-empty-state">
+      <%= image_tag "waving-quokka.svg", alt: "", class: "chat-empty-state-image", width: 72, height: 72 %>
+
+      <h1><%= I18n.t('app.workspaces.chat.title') %></h1>
+
+      <div class="chat-suggestion-chips">
+        <% @chat_suggestions.each do |suggestion| %>
+          <button type="button"
+                  class="chat-suggestion-chip"
+                  data-action="workspace-chat#useSuggestion"
+                  data-suggestion="<%= suggestion %>">
+            <%= suggestion %>
+          </button>
+        <% end %>
+      </div>
+
+      <%= form_with url: app_workspace_chat_messages_path(@workspace),
+                    method: :post,
+                    class: "chat-composer chat-composer-empty",
+                    html: { "data-workspace-chat-target": "form", "data-action": "submit->workspace-chat#submit" } do |form| %>
+        <%= hidden_field_tag :thread_id, @chat_thread.id %>
+
+        <div class="chat-composer-input-row">
+          <%= form.text_field :content,
+                              class: "input block fluid chat-composer-input",
+                              placeholder: I18n.t('app.workspaces.chat.composer.placeholder_empty'),
+                              autocomplete: "off",
+                              "data-workspace-chat-target": "textInput" %>
+
+          <label class="chat-attachment-button" aria-label="<%= I18n.t('app.workspaces.chat.composer.attach_images_aria_label') %>">
+            <i class="ri-attachment-2"></i>
+            <%= file_field_tag :images,
+                               multiple: true,
+                               accept: "image/png,image/jpeg,image/webp,image/gif",
+                               class: "chat-attachment-input",
+                               "data-workspace-chat-target": "fileInput",
+                               "data-action": "change->workspace-chat#onFileChange" %>
+          </label>
+        </div>
+
+        <div class="chat-attachment-tray" data-workspace-chat-target="attachmentTray"></div>
+        <p class="chat-attachment-error" data-workspace-chat-target="attachmentError"></p>
+
+        <p class="chat-composer-hint"><%= I18n.t('app.workspaces.chat.composer.submit_hint') %></p>
+        <%= form.submit I18n.t('common.actions.send'), class: "chat-composer-submit" %>
+      <% end %>
+    </section>
+  <% else %>
+    <section class="chat-message-stream" data-workspace-chat-target="messages">
+      <% @chat_messages.each do |message| %>
+        <%= render "app/workspaces/chat/message",
+                   message:,
+                   action_requests_by_id: @chat_action_requests_by_id %>
+      <% end %>
+    </section>
+
+    <%= form_with url: app_workspace_chat_messages_path(@workspace),
+                  method: :post,
+                  class: "chat-composer chat-composer-sticky",
+                  html: { "data-workspace-chat-target": "form", "data-action": "submit->workspace-chat#submit" } do |form| %>
+      <%= hidden_field_tag :thread_id, @chat_thread.id %>
+
+      <div class="chat-composer-input-row">
+        <%= form.text_field :content,
+                            class: "input block fluid chat-composer-input",
+                            placeholder: I18n.t('app.workspaces.chat.composer.placeholder_active'),
+                            autocomplete: "off",
+                            "data-workspace-chat-target": "textInput" %>
+
+        <label class="chat-attachment-button" aria-label="<%= I18n.t('app.workspaces.chat.composer.attach_images_aria_label') %>">
+          <i class="ri-attachment-2"></i>
+          <%= file_field_tag :images,
+                             multiple: true,
+                             accept: "image/png,image/jpeg,image/webp,image/gif",
+                             class: "chat-attachment-input",
+                             "data-workspace-chat-target": "fileInput",
+                             "data-action": "change->workspace-chat#onFileChange" %>
+        </label>
+      </div>
+
+      <div class="chat-attachment-tray" data-workspace-chat-target="attachmentTray"></div>
+      <p class="chat-attachment-error" data-workspace-chat-target="attachmentError"></p>
+      <%= form.submit I18n.t('common.actions.send'), class: "chat-composer-submit" %>
+    <% end %>
+  <% end %>
 </main>

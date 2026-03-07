@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-02-26
+Last updated: 2026-03-07
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -13,6 +13,7 @@ Single source of truth for workspace routes, role permissions, delete flows, inv
 Related references:
 - `docs/ROLES_RIGHTS_MASTER_REF.md` for canonical role capability matrix and UI affordance expectations.
 - `docs/EMAILS_MASTER_REF.md` for full mailer inventory and trigger ownership.
+- `docs/CHAT_MASTER_REF.md` for chat-specific architecture, lifecycle, and localization rules.
 
 ## Core routes
 - Workspaces:
@@ -28,6 +29,11 @@ Related references:
   - `PATCH /app/workspaces/:workspace_id/members/:id` -> update member role (role constrained)
   - `POST /app/workspaces/:workspace_id/members/:id/resend` -> resend pending invitation
   - `DELETE /app/workspaces/:workspace_id/members/:id` -> remove member (role constrained)
+- Workspace chat:
+  - `GET /app/workspaces/:workspace_id/chat/messages` -> incremental chat history
+  - `POST /app/workspaces/:workspace_id/chat/messages` -> submit chat message and receive planner/execution response
+  - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm` -> confirm pending mutating action
+  - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel` -> cancel pending mutating action
 
 ## Roles and authorization
 - Roles in `Member`:
@@ -41,6 +47,12 @@ Related references:
   - Workspace settings (`GET/PATCH /app/workspaces/:id/workspace-settings`): owner/admin only
   - Workspace delete (`DELETE /app/workspaces/:id`): owner only
   - Team management routes (`members#create`, `members#update`, `members#destroy`, `members#resend`): owner/admin only
+  - Chat home (`GET /app/workspaces/:id`): all accepted roles
+  - Chat read route (`chat/messages#index`): all accepted roles
+  - Chat action route (`chat/messages#create`):
+    - read-only actions (`member.list`) allowed for all accepted roles
+    - mutating actions policy-gated by role and target constraints
+  - Chat confirm/cancel routes (`chat/actions#confirm`, `chat/actions#cancel`): requester-only and workspace-scoped
   - Data source settings routes (`data_sources*`, `data_sources/set_up#index`): owner/admin only
   - Query library (`GET /app/workspaces/:workspace_id/queries`): all roles
   - Query write (`data_sources/queries#create|update|chart_config`): owner/admin/user
@@ -77,7 +89,27 @@ Related references:
   - show information toast that invitation is no longer valid
 - Resend cooldown:
   - server-enforced 10-minute cooldown before another resend is allowed
-  - when blocked, info toast explains cooldown
+- when blocked, info toast explains cooldown
+
+## Workspace chat (v1)
+- Workspace home surface is chat-first and workspace-scoped.
+- v1 allowlist:
+  - `workspace.update_name`
+  - `workspace.delete`
+  - `member.list`
+  - `member.invite`
+  - `member.resend_invite`
+  - `member.update_role`
+  - `member.remove`
+- v1 blocked namespaces include:
+  - `workspace.list/get/create`
+  - `datasource.*`
+  - `query.*`
+  - `dashboard.*`
+  - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
+- Mutating chat actions always require explicit inline confirmation.
+- Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
+- Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
 
 ## Workspace settings save behavior
 - General tab workspace-name form uses change detection:

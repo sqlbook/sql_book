@@ -55,6 +55,34 @@ FactoryBot.define do
     last_updated_by { nil }
   end
 
+  factory :chat_thread do
+    workspace { create(:workspace) }
+    created_by { create(:user) }
+    title { 'Workspace chat' }
+    archived_at { nil }
+  end
+
+  factory :chat_message do
+    chat_thread { create(:chat_thread) }
+    user { create(:user) }
+    role { ChatMessage::Roles::USER }
+    status { ChatMessage::Statuses::COMPLETED }
+    content { 'Hello there' }
+    metadata { {} }
+  end
+
+  factory :chat_action_request do
+    chat_thread { create(:chat_thread) }
+    chat_message { create(:chat_message, chat_thread:) }
+    requested_by { create(:user) }
+    action_type { 'member.invite' }
+    status { ChatActionRequest::Statuses::PENDING_CONFIRMATION }
+    payload { { 'email' => 'invitee@example.com', 'role' => Member::Roles::USER } }
+    result_payload { {} }
+    confirmation_token { SecureRandom.hex(20) }
+    confirmation_expires_at { 15.minutes.from_now }
+  end
+
   factory :click do
     data_source_uuid { SecureRandom.uuid }
     session_uuid { SecureRandom.uuid }

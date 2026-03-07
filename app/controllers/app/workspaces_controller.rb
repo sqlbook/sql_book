@@ -13,6 +13,14 @@ module App
 
     def show
       @workspace = workspace
+      @chat_thread = ChatThread.active_for(workspace:, user: current_user)
+      @chat_messages = @chat_thread.chat_messages.includes(:user, { images_attachments: :blob }, :chat_action_requests)
+      @chat_action_requests_by_id = @chat_thread.chat_action_requests.index_by(&:id)
+      @chat_suggestions = [
+        I18n.t('app.workspaces.chat.suggestions.invite_team_mates'),
+        I18n.t('app.workspaces.chat.suggestions.rename_workspace'),
+        I18n.t('app.workspaces.chat.suggestions.list_team_members')
+      ]
     end
 
     def new; end
@@ -32,16 +40,10 @@ module App
     def destroy
       return handle_forbidden_workspace_delete unless current_user_owner?
 
-      users_to_notify = workspace_users_to_notify
-      workspace_name = workspace.name
-      deleted_by_name = current_user.full_name
+      deletion_result = WorkspaceDeletionService.new(workspace:, deleted_by: current_user).call
+      return handle_workspace_delete_error unless deletion_result.success?
 
-      workspace.destroy!
-      failed_notifications = notify_workspace_deleted_users!(
-        users: users_to_notify,
-        workspace_name: workspace_name,
-        workspace_owner_name: deleted_by_name
-      )
+      failed_notifications = deletion_result.failed_notifications
 
       flash[:toast] = delete_workspace_toast(failed_notifications:)
       redirect_to app_workspaces_path
@@ -93,24 +95,6 @@ module App
       app_workspace_path(workspace)
     end
 
-    def workspace_users_to_notify
-      workspace.members.includes(:user).map(&:user).uniq.reject { |user| user.id == current_user.id }
-    end
-
-    def notify_workspace_deleted_users!(users:, workspace_name:, workspace_owner_name:)
-      users.count do |user|
-        WorkspaceMailer.workspace_deleted(
-          user:,
-          workspace_name:,
-          workspace_owner_name:
-        ).deliver_now
-        false
-      rescue StandardError => e
-        Rails.logger.error("Workspace delete notification failed for user #{user.id}: #{e.class} #{e.message}")
-        true
-      end
-    end
-
     def delete_workspace_toast(failed_notifications:)
       if failed_notifications.zero?
         return {
@@ -125,6 +109,11 @@ module App
         title: I18n.t('common.toasts.workspace_successfully_deleted_title'),
         body: I18n.t('toasts.workspaces.deleted_partial.body')
       }
+    end
+
+    def handle_workspace_delete_error
+      flash[:toast] = generic_error_toast
+      redirect_to forbidden_delete_redirect_path
     end
   end
 end

@@ -1,0 +1,59 @@
+<article class="chat-message <%= "chat-message-#{message.role_name}" %>" data-message-id="<%= message.id %>">
+  <% if message.user? %>
+    <div class="chat-user-bubble">
+      <% if message.content.present? %>
+        <p class="chat-message-body"><%= message.content %></p>
+      <% end %>
+
+      <% if message.images.attached? %>
+        <div class="chat-image-grid">
+          <% message.images.each do |image| %>
+            <%= image_tag image, alt: image.filename.to_s, class: "chat-image-thumb" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% elsif message.system? %>
+    <p class="chat-system-row"><%= message.content %></p>
+  <% else %>
+    <div class="chat-assistant-block">
+      <p class="chat-message-body"><%= message.content %></p>
+
+      <% action_request_id = message.metadata.to_h["action_request_id"] %>
+      <% action_request = action_requests_by_id[action_request_id.to_i] if action_request_id.present? %>
+
+      <% if action_request&.pending_confirmation? %>
+        <% action_label = I18n.t("app.workspaces.chat.action_labels.#{action_request.action_type.tr('.', '_')}", default: action_request.action_type) %>
+        <div class="chat-inline-card">
+          <p class="chat-inline-card-title"><%= I18n.t('app.workspaces.chat.cards.confirmation_needed') %></p>
+          <p class="chat-inline-card-body">
+            <%= I18n.t('app.workspaces.chat.cards.action_label') %>
+            <strong><%= action_label %></strong>
+          </p>
+          <div class="chat-inline-card-actions">
+            <button type="button"
+                    class="link primary"
+                    data-action="workspace-chat#confirmAction"
+                    data-action-id="<%= action_request.id %>"
+                    data-confirmation-token="<%= action_request.confirmation_token %>">
+              <%= I18n.t('common.actions.confirm') %>
+            </button>
+            <button type="button"
+                    class="link secondary"
+                    data-action="workspace-chat#cancelAction"
+                    data-action-id="<%= action_request.id %>">
+              <%= I18n.t('common.actions.cancel') %>
+            </button>
+          </div>
+        </div>
+      <% elsif action_request.present? && action_request.status != ChatActionRequest::Statuses::EXECUTED %>
+        <div class="chat-inline-card chat-inline-card-error">
+          <p class="chat-inline-card-title"><%= I18n.t('app.workspaces.chat.cards.action_update') %></p>
+          <p class="chat-inline-card-body"><%= message.content %></p>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <p class="chat-message-meta"><%= message.created_at.strftime("%H:%M") %></p>
+</article>

@@ -4,6 +4,12 @@ class Workspace < ApplicationRecord
   has_many :data_sources,
            dependent: :destroy
 
+  has_many :chat_threads,
+           dependent: :destroy
+
+  has_many :chat_messages,
+           through: :chat_threads
+
   has_many :members,
            dependent: :destroy
 

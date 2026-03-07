@@ -1,6 +1,6 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-07
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
@@ -8,6 +8,7 @@ Single source of truth for workspace role capabilities, route-level enforcement,
 Related references:
 - `docs/ADMIN_MASTER_REF.md` for super-admin controls under `/app/admin/*`.
 - `docs/TRANSLATIONS_MASTER_REF.md` for translation manager access and behavior.
+- `docs/CHAT_MASTER_REF.md` for workspace chat action contracts and lifecycle.
 
 ## Role model
 Roles are workspace-scoped via `members.role`.
@@ -61,6 +62,40 @@ Super-admin is separate from workspace roles:
 - Admin: allow (cannot manage equal/higher role members and cannot invite owner role)
 - User: deny
 - Read-only: deny
+
+### Workspace chat routes (v1)
+- Route scope:
+  - `GET /app/workspaces/:workspace_id/chat/messages`
+  - `POST /app/workspaces/:workspace_id/chat/messages`
+  - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm`
+  - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel`
+- Owner: allow
+- Admin: allow
+- User: allow
+- Read-only: allow
+- Notes:
+  - read actions are available to all accepted roles
+  - mutating action execution is additionally policy-gated by action type + target role constraints
+  - confirm/cancel is limited to the same requesting user and workspace/thread scope
+
+### Workspace chat action allowlist (v1)
+- `workspace.update_name`
+  - Owner: allow
+  - Admin: allow
+  - User: deny
+  - Read-only: deny
+- `workspace.delete`
+  - Owner: allow
+  - Admin: deny
+  - User: deny
+  - Read-only: deny
+- `member.list`
+  - Owner/Admin/User/Read-only: allow
+- `member.invite`, `member.resend_invite`, `member.update_role`, `member.remove`
+  - Owner: allow (except owner-removal/promotion constraints)
+  - Admin: allow only for lower roles and non-owner targets
+  - User: deny
+  - Read-only: deny
 
 ### Data source management
 - Route scope:

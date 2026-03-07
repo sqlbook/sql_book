@@ -1,6 +1,6 @@
 # Translations Master Reference
 
-Last updated: 2026-03-05
+Last updated: 2026-03-07
 
 ## Service and goal
 - Service: database-backed internationalization for the signed-in and email experiences.
@@ -15,6 +15,7 @@ Related references:
 - `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for user locale preference updates.
 - `docs/EMAILS_MASTER_REF.md` for recipient-locale mailer behavior.
 - `docs/ENV_VARS.md` for translation/admin environment variables.
+- `docs/CHAT_MASTER_REF.md` for chat-specific localization and deterministic copy rules.
 
 ## V1 locale scope
 - Supported locales: `en`, `es`
@@ -64,10 +65,12 @@ Persistence behavior:
   - `common.actions.save`
   - `common.actions.save_changes`
   - `common.actions.cancel`
+  - `common.actions.confirm`
   - `common.actions.settings`
   - `common.actions.view`
   - `common.actions.open`
   - `common.actions.delete`
+  - `common.actions.send`
   - `common.actions.delete_workspace`
   - `common.actions.delete_workspace_label`
   - `common.actions.apply_filters`
@@ -81,6 +84,18 @@ For every feature/change before merge:
 2. If not, check whether the new phrase appears elsewhere and should become a new `common.*` key.
 3. If creating a new common key, update all matching call sites in the same change.
 4. Confirm `used_in` metadata links still map to the affected pages.
+
+## Chat deterministic copy rule
+- All non-LLM chat copy must be locale-key backed in `app.workspaces.chat.*` or `common.*`.
+- This includes:
+  - empty-state headings/placeholders/hints
+  - confirmation card labels and fixed action labels
+  - system/status rows
+  - planner fallback text (when no LLM or parsing fallback)
+  - executor validation/success/failure responses
+  - client-side validation and fallback request errors in Stimulus controllers
+- LLM free-form generated responses are intentionally not key-managed.
+- For chat changes, add/update both `en.yml` and `es.yml` in the same PR.
 
 ## Data model
 - `translation_keys`
