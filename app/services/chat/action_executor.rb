@@ -89,8 +89,17 @@ module Chat
         }
       end
 
+      user_message = if members.empty?
+                       I18n.t('app.workspaces.chat.executor.member_list_none')
+                     else
+                       [
+                         I18n.t('app.workspaces.chat.executor.member_list_found', count: members.size),
+                         members.map { |member| member_list_item_line(member:) }.join("\n")
+                       ].join("\n")
+                     end
+
       executed_result(
-        message: I18n.t('app.workspaces.chat.executor.member_list_found', count: members.size),
+        message: user_message,
         data: { members: }
       )
     end
@@ -192,6 +201,20 @@ module Chat
 
     def existing_member?(email:)
       workspace.members.joins(:user).exists?(users: { email: })
+    end
+
+    def member_list_item_line(member:)
+      I18n.t(
+        'app.workspaces.chat.executor.member_list_item',
+        name: member_field(member[:name], fallback_key: 'member_unknown_name'),
+        email: member_field(member[:email], fallback_key: 'member_unknown_email'),
+        role: member_field(member[:role], fallback_key: 'member_unknown_role'),
+        status: member_field(member[:status], fallback_key: 'member_unknown_status')
+      )
+    end
+
+    def member_field(value, fallback_key:)
+      value.to_s.strip.presence || I18n.t("app.workspaces.chat.executor.#{fallback_key}")
     end
 
     def inferred_name_from_email(email:)

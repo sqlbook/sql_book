@@ -31,7 +31,8 @@ module App
           message: params[:content],
           workspace:,
           actor: current_user,
-          attachments: user_message.images.attachments
+          attachments: user_message.images.attachments,
+          conversation_messages: planner_conversation_messages
         ).call
 
         if plan.action_type.blank?
@@ -160,6 +161,20 @@ module App
           'thread_id' => chat_thread.id,
           'message_id' => message.id
         }
+      end
+
+      def planner_conversation_messages
+        recent_messages = chat_thread.chat_messages
+          .where(role: [ChatMessage::Roles::USER, ChatMessage::Roles::ASSISTANT])
+          .order(id: :desc)
+          .limit(8)
+          .pluck(:role, :content)
+          .reverse
+
+        recent_messages.map do |role, content|
+          role_name = role.to_i == ChatMessage::Roles::USER ? 'user' : 'assistant'
+          { role: role_name, content: content.to_s }
+        end
       end
 
       def create_action?

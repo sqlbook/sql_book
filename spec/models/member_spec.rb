@@ -108,7 +108,7 @@ RSpec.describe Member, type: :model do
       let(:instance) { Member.new(role: Member::Roles::OWNER) }
 
       it 'returns Owner' do
-        expect(subject).to eq('Owner')
+        expect(subject).to eq(I18n.t('models.member.roles.owner'))
       end
     end
 
@@ -116,7 +116,7 @@ RSpec.describe Member, type: :model do
       let(:instance) { Member.new(role: Member::Roles::ADMIN) }
 
       it 'returns Admin' do
-        expect(subject).to eq('Admin')
+        expect(subject).to eq(I18n.t('models.member.roles.admin'))
       end
     end
 
@@ -124,7 +124,7 @@ RSpec.describe Member, type: :model do
       let(:instance) { Member.new(role: Member::Roles::USER) }
 
       it 'returns User' do
-        expect(subject).to eq('User')
+        expect(subject).to eq(I18n.t('models.member.roles.user'))
       end
     end
 
@@ -132,7 +132,7 @@ RSpec.describe Member, type: :model do
       let(:instance) { Member.new(role: Member::Roles::READ_ONLY) }
 
       it 'returns Read only' do
-        expect(subject).to eq('Read only')
+        expect(subject).to eq(I18n.t('models.member.roles.read_only'))
       end
     end
   end
@@ -144,7 +144,7 @@ RSpec.describe Member, type: :model do
       let(:instance) { Member.new(status: Member::Status::ACCEPTED) }
 
       it 'returns Accepted' do
-        expect(subject).to eq('Accepted')
+        expect(subject).to eq(I18n.t('models.member.statuses.accepted'))
       end
     end
 
@@ -152,7 +152,23 @@ RSpec.describe Member, type: :model do
       let(:instance) { Member.new(status: Member::Status::PENDING) }
 
       it 'returns Pending' do
-        expect(subject).to eq('Pending')
+        expect(subject).to eq(I18n.t('models.member.statuses.pending'))
+      end
+    end
+  end
+
+  describe 'localized labels' do
+    it 'returns translated role labels for Spanish locale' do
+      I18n.with_locale(:es) do
+        expect(Member.role_name_for(Member::Roles::ADMIN)).to eq('Administrador')
+        expect(Member.role_name_for(Member::Roles::READ_ONLY)).to eq('Solo lectura')
+      end
+    end
+
+    it 'returns translated status labels for Spanish locale' do
+      I18n.with_locale(:es) do
+        expect(Member.status_name_for(Member::Status::ACCEPTED)).to eq('Aceptado')
+        expect(Member.status_name_for(Member::Status::PENDING)).to eq('Pendiente')
       end
     end
   end

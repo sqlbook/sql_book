@@ -123,6 +123,12 @@ es:
           workspace_delete_success: Espacio eliminado. Se notificó a todos los usuarios afectados.
           workspace_delete_partial: El espacio se eliminó, pero no pudimos notificar por correo a algunos usuarios.
           member_list_found: Se encontraron %{count} miembros del equipo.
+          member_list_none: No se encontraron miembros del equipo en este espacio.
+          member_list_item: "- %{name} (%{email}) - %{role}, %{status}"
+          member_unknown_name: Miembro sin nombre
+          member_unknown_email: Sin correo
+          member_unknown_role: Rol desconocido
+          member_unknown_status: Estado desconocido
           member_invite_email_required: Indica una dirección de correo válida.
           member_invite_already_member: Este usuario ya está en el equipo del espacio.
           member_invite_sent: Invitación enviada a %{email}.
@@ -136,6 +142,38 @@ es:
           member_remove_success: "%{name} ha sido eliminado del espacio."
           inferred_first_name: Equipo
           inferred_last_name: Miembro
+      settings:
+        title: Configuración del espacio de trabajo
+        tabs:
+          general: General
+          team: Equipo
+          subscription: Suscripción
+        general:
+          workspace_name_label: Nombre del espacio de trabajo
+        team:
+          description: Usa la configuración de abajo para ver, invitar y gestionar los roles de los miembros asociados a este espacio de trabajo. Añadir miembros siempre es gratuito, independientemente de su rol.
+          table:
+            name: Nombre
+            role: Rol
+            status: Estado
+            actions: Acciones
+          actions:
+            resend_invitation: Reenviar invitación
+            invite_member: Invitar miembro del equipo
+          form:
+            first_name_label: Nombre
+            first_name_placeholder: Jess
+            last_name_label: Apellido
+            last_name_placeholder: Smith
+            email_label: Correo electrónico
+            email_placeholder: correo@ejemplo.com
+            role_label: Rol
+            send_invitation: "[Enviar invitación]"
+          aria:
+            change_role: Cambiar rol de %{name}
+            resend_invitation: Reenviar invitación a %{name}
+            delete_invitation: Eliminar invitación pendiente de %{name}
+            remove_member: Quitar a %{name} del equipo
     account_settings:
       title: Configuración de la cuenta
       tabs:
@@ -158,3 +196,14 @@ es:
         confirm_delete: "[Sí, me voy]"
 
   toasts:
+
+  models:
+    member:
+      roles:
+        owner: Propietario
+        admin: Administrador
+        user: Usuario
+        read_only: Solo lectura
+      statuses:
+        accepted: Aceptado
+        pending: Pendiente

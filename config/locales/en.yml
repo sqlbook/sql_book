@@ -154,6 +154,12 @@ en:
           workspace_delete_success: Workspace deleted. All affected users were notified.
           workspace_delete_partial: Workspace deleted, but we could not notify some users by email.
           member_list_found: Found %{count} team members.
+          member_list_none: No team members were found in this workspace.
+          member_list_item: "- %{name} (%{email}) - %{role}, %{status}"
+          member_unknown_name: Unnamed member
+          member_unknown_email: No email
+          member_unknown_role: Unknown role
+          member_unknown_status: Unknown status
           member_invite_email_required: Please provide a valid email address.
           member_invite_already_member: This user is already in the workspace team.
           member_invite_sent: Invitation sent to %{email}.
@@ -167,6 +173,38 @@ en:
           member_remove_success: "%{name} has been removed from the workspace."
           inferred_first_name: Team
           inferred_last_name: Member
+      settings:
+        title: Workspace settings
+        tabs:
+          general: General
+          team: Team
+          subscription: Subscription
+        general:
+          workspace_name_label: Workspace name
+        team:
+          description: Use the settings below to view, invite and manage the roles of any team members associated with this workspace. Adding members is always free of charge, regardless of their role.
+          table:
+            name: Name
+            role: Role
+            status: Status
+            actions: Actions
+          actions:
+            resend_invitation: Resend invitation
+            invite_member: Invite team member
+          form:
+            first_name_label: First name
+            first_name_placeholder: Jess
+            last_name_label: Last name
+            last_name_placeholder: Smith
+            email_label: Email
+            email_placeholder: email@example.com
+            role_label: Role
+            send_invitation: "[Send invitation]"
+          aria:
+            change_role: Change role for %{name}
+            resend_invitation: Resend invitation to %{name}
+            delete_invitation: Delete pending invitation for %{name}
+            remove_member: Remove %{name} from the team
     account_settings:
       title: Account settings
       tabs:
@@ -239,6 +277,15 @@ en:
   models:
     data_source:
       is_not_valid: is not valid
+    member:
+      roles:
+        owner: Owner
+        admin: Admin
+        user: User
+        read_only: Read only
+      statuses:
+        accepted: Accepted
+        pending: Pending
 
   toasts:
     generic_error:

@@ -46,5 +46,19 @@ RSpec.describe Chat::PlannerService do
       expect(plan.action_type).to eq('member.invite')
       expect(plan.payload).to include('email' => 'sam@example.com', 'role' => Member::Roles::ADMIN)
     end
+
+    it 'treats member detail follow-ups as member listing when prior context is team members' do
+      plan = described_class.new(
+        message: 'what are their names and details?',
+        workspace:,
+        actor:,
+        conversation_messages: [
+          { role: 'user', content: 'Show me my current team members please' },
+          { role: 'assistant', content: 'Found 2 team members.' }
+        ]
+      ).call
+
+      expect(plan.action_type).to eq('member.list')
+    end
   end
 end

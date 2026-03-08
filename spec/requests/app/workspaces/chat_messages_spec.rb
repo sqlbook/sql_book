@@ -39,6 +39,27 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('ok')
     end
 
+    it 'returns member list details instead of count-only output' do
+      teammate_user = create(:user, first_name: 'Tess', last_name: 'Member', email: 'tess@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate_user,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('executed')
+      assistant_message = payload['messages'].last
+      expect(assistant_message['role']).to eq('assistant')
+      expect(assistant_message['content']).to include('tess@example.com')
+      expect(assistant_message['content']).to include('Admin')
+    end
+
     it 'creates a new thread with a generated title when thread_id is not provided' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'Invite my team mates' }, as: :json
@@ -147,6 +168,29 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       payload = response.parsed_body
       expect(payload['status']).to eq('validation_error')
       expect(payload['message']).to eq('Se requiere contenido del mensaje o al menos una imagen.')
+    end
+
+    it 'returns localized role and status labels for Spanish member list output' do
+      user.update!(preferred_locale: 'es')
+      teammate = create(:user, first_name: 'Tess', last_name: 'Member', email: 'tess@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::READ_ONLY,
+        status: Member::Status::PENDING
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'show current team members' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('executed')
+      assistant_message = payload['messages'].last
+      expect(assistant_message['content']).to include('Solo lectura')
+      expect(assistant_message['content']).to include('Pendiente')
     end
   end
 

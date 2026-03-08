@@ -2,9 +2,9 @@
   <% current_role = current_user_role(workspace: @workspace, current_user: @current_user) %>
   <% can_manage_members = can_manage_workspace_members?(workspace: @workspace) %>
   <% can_delete_workspace = current_role == Member::Roles::OWNER %>
-  <% editable_role_options = [["Admin", Member::Roles::ADMIN], ["User", Member::Roles::USER], ["Read only", Member::Roles::READ_ONLY]] %>
+  <% editable_role_options = [Member::Roles::ADMIN, Member::Roles::USER, Member::Roles::READ_ONLY].map { |role| [Member.role_name_for(role), role] } %>
 
-  <h1>Workspace settings</h1>
+  <h1><%= I18n.t('app.workspaces.settings.title') %></h1>
 
   <section class="workspace-settings-panel container lg">
     <%= render "app/workspaces/settings/panel",

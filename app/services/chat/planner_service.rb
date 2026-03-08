@@ -11,11 +11,12 @@ module Chat
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
 
-    def initialize(message:, workspace:, actor:, attachments: [])
+    def initialize(message:, workspace:, actor:, attachments: [], conversation_messages: [])
       @message = message.to_s.strip
       @workspace = workspace
       @actor = actor
       @attachments = Array(attachments).compact
+      @conversation_messages = Array(conversation_messages).compact
     end
 
     def call
@@ -30,7 +31,7 @@ module Chat
 
     private
 
-    attr_reader :message, :workspace, :actor, :attachments
+    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages
 
     def attachment_count
       attachments.size
@@ -89,6 +90,12 @@ module Chat
                   ].join(' '),
                   'Never claim to have executed actions that are out of scope.',
                   'Never propose cross-workspace actions; stay in the current workspace only.',
+                  'Use the recent conversation context to resolve follow-up references like "their names/details".',
+                  [
+                    'When the user asks for team members, `member.list` means detailed member output',
+                    '(name, email, role, status), not only a count.'
+                  ].join(' '),
+                  'Do not fall back to generic capability lists for specific follow-up questions.',
                   'Classify user intent into an action contract when possible.',
                   [
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
@@ -130,6 +137,7 @@ module Chat
           text: [
             "Workspace: #{workspace.id} (#{workspace.name})",
             "Actor: #{actor.id}",
+            conversation_context_line,
             attachment_context_line,
             "Message: #{message}"
           ].join("\n")
@@ -151,6 +159,32 @@ module Chat
       end
 
       "Image attachments count: #{attachment_count} (#{details.join('; ')})"
+    end
+
+    def conversation_context_line
+      return 'Recent conversation: none' if conversation_messages.empty?
+
+      lines = conversation_messages.last(8).map do |entry|
+        role = conversation_entry_role(entry)
+        content = conversation_entry_content(entry)
+        next if role.blank? || content.blank?
+
+        "#{role}: #{content}"
+      end.compact
+
+      return 'Recent conversation: none' if lines.empty?
+
+      "Recent conversation:\n#{lines.join("\n")}"
+    end
+
+    def conversation_entry_role(entry)
+      entry[:role].presence || entry['role'].presence
+    end
+
+    def conversation_entry_content(entry)
+      raw = entry[:content].presence || entry['content'].presence || ''
+      cleaned = raw.to_s.gsub(/\s+/, ' ').strip
+      cleaned[0, 280]
     end
 
     def inline_multimodal_images
@@ -177,7 +211,7 @@ module Chat
 
       return workspace_delete_plan if lower.match?(/\b(delete|remove)\b.*\bworkspace\b/)
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
-      return member_list_plan if lower.match?(/\b(list|show|who)\b.*\b(team|member)s?\b/)
+      return member_list_plan if member_list_intent?(lower)
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
       return member_invite_plan if lower.include?('invite')
       return member_role_update_plan if lower.match?(/\b(change|update)\b.*\brole\b/)
@@ -192,6 +226,19 @@ module Chat
       end
 
       nil
+    end
+
+    def member_list_intent?(lowered_message)
+      return true if lowered_message.match?(/\b(list|show|who)\b.*\b(team|member)s?\b/)
+
+      contextual_member_follow_up?(lowered_message)
+    end
+
+    def contextual_member_follow_up?(lowered_message)
+      return false unless lowered_message.match?(/\b(name|names|email|emails|details?|who are they|their)\b/)
+
+      recent_text = conversation_messages.last(8).map { |entry| conversation_entry_content(entry).downcase }.join(' ')
+      recent_text.match?(/\bteam members?\b|\bmember list\b|\bfound\s+\d+\s+team members?\b/)
     end
 
     def default_help_plan
