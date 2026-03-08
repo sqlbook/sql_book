@@ -64,6 +64,10 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
     patch 'workspaces/:id/workspace-settings', to: 'workspaces/settings#update', as: nil
 
     resources :workspaces, except: %i[edit update] do
+      resources :chat_threads,
+                only: %i[index create update destroy],
+                path: 'chat/threads',
+                controller: 'workspaces/chat_threads'
       get 'chat/messages', to: 'workspaces/chat_messages#index', as: :chat_messages
       post 'chat/messages', to: 'workspaces/chat_messages#create'
       post 'chat/actions/:id/confirm', to: 'workspaces/chat_actions#confirm', as: :chat_action_confirm

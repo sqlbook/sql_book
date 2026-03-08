@@ -24,11 +24,18 @@
   - Must be configured independently per environment (staging and production).
   - Keep list minimal and review periodically.
 - `OPENAI_API_KEY`
-  - API key used by admin translation "Translate missing" action.
+  - API key used by chat planner/title generation and admin translation "Translate missing" action.
   - Required only for LLM-assisted generation.
 - `OPENAI_TRANSLATIONS_MODEL`
   - Optional model override for translation generation.
   - Defaults to `gpt-4.1-mini` if unset.
+- `OPENAI_CHAT_MODEL`
+  - Optional model override for workspace chat planner/title generation.
+  - Defaults to `gpt-5-mini` if unset.
+- `OPENAI_RESPONSES_ENDPOINT`
+  - Optional full Responses API endpoint for chat and translation flows.
+  - Defaults to `https://api.openai.com/v1/responses`.
+  - Use this to route by environment/provider without code changes.
 
 ## Database
 - `POSTGRES_HOST`

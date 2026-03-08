@@ -6,12 +6,12 @@ module App
       before_action :require_authentication!
 
       def index
-        messages = chat_thread.chat_messages.includes(:user, images_attachments: :blob)
-        messages = messages.where('chat_messages.id > ?', params[:after_id].to_i) if params[:after_id].present?
+        thread = chat_thread
+        return render_empty_thread unless thread
 
         render json: {
-          thread_id: chat_thread.id,
-          messages: messages.order(:id).map { |message| serialize_message(message:) }
+          thread_id: thread.id,
+          messages: serialized_messages_for(thread:)
         }
       end
 
@@ -23,6 +23,7 @@ module App
         user_message = build_user_message
         return render_validation_error(message: user_message.errors.full_messages.to_sentence) unless user_message.save
 
+        assign_thread_title_from_first_message(user_message:)
         append_system_message(content: I18n.t('app.workspaces.chat.statuses.thinking'))
         action_payload_context = action_payload_context_for(message: user_message)
 
@@ -74,14 +75,28 @@ module App
 
       def chat_thread
         @chat_thread ||= if params[:thread_id].present?
-                           workspace.chat_threads.active.find_by(id: params[:thread_id]) || default_thread
+                           thread_from_params
+                         elsif create_action?
+                           create_chat_thread!
                          else
                            default_thread
                          end
       end
 
+      def thread_from_params
+        found_thread = workspace.chat_threads.active.find_by(id: params[:thread_id])
+        return found_thread if found_thread
+        return nil unless create_action?
+
+        create_chat_thread!
+      end
+
       def default_thread
-        ChatThread.active_for(workspace:, user: current_user)
+        workspace.chat_threads.active.with_messages.order(updated_at: :desc, id: :desc).first
+      end
+
+      def create_chat_thread!
+        workspace.chat_threads.create!(created_by: current_user)
       end
 
       def message_blank?
@@ -131,12 +146,47 @@ module App
         )
       end
 
+      def assign_thread_title_from_first_message(user_message:)
+        return unless should_assign_thread_title?
+
+        chat_thread.update!(title: generated_thread_title(user_message:))
+      rescue StandardError => e
+        Rails.logger.warn("Chat thread title assignment failed: #{e.class} #{e.message}")
+      end
+
       def action_payload_context_for(message:)
         {
           'workspace_id' => workspace.id,
           'thread_id' => chat_thread.id,
           'message_id' => message.id
         }
+      end
+
+      def create_action?
+        action_name == 'create'
+      end
+
+      def should_assign_thread_title?
+        chat_thread.title.blank? && chat_thread.chat_messages.where(role: ChatMessage::Roles::USER).count == 1
+      end
+
+      def generated_thread_title(user_message:)
+        Chat::ThreadTitleService.new(
+          message: user_message.content,
+          workspace:,
+          actor: current_user
+        ).call
+      end
+
+      def serialized_messages_for(thread:)
+        messages = thread.chat_messages.includes(:user, images_attachments: :blob)
+        messages = messages.where('chat_messages.id > ?', params[:after_id].to_i) if params[:after_id].present?
+
+        messages.order(:id).map { |message| serialize_message(message:) }
+      end
+
+      def render_empty_thread
+        render json: { thread_id: nil, messages: [] }
       end
 
       def missing_details_message_for(action_type:, payload:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity

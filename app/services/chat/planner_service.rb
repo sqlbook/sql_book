@@ -7,7 +7,6 @@ module Chat
   class PlannerService # rubocop:disable Metrics/ClassLength
     Plan = Struct.new(:assistant_message, :action_type, :payload, keyword_init: true)
 
-    ENDPOINT = URI('https://api.openai.com/v1/responses').freeze
     EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
@@ -58,7 +57,7 @@ module Chat
     end
 
     def request
-      req = Net::HTTP::Post.new(ENDPOINT)
+      req = Net::HTTP::Post.new(endpoint)
       req['Authorization'] = "Bearer #{api_key}"
       req['Content-Type'] = 'application/json'
       req.body = request_payload.to_json
@@ -360,7 +359,11 @@ module Chat
     end
 
     def http_client
-      Net::HTTP.new(ENDPOINT.host, ENDPOINT.port).tap { |http| http.use_ssl = true }
+      Net::HTTP.new(endpoint.host, endpoint.port).tap { |http| http.use_ssl = endpoint.scheme == 'https' }
+    end
+
+    def endpoint
+      @endpoint ||= OpenaiConfiguration.responses_endpoint
     end
 
     def api_key

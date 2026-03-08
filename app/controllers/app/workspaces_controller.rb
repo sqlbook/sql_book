@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module App
-  class WorkspacesController < ApplicationController
+  class WorkspacesController < ApplicationController # rubocop:disable Metrics/ClassLength
     before_action :require_authentication!
 
     def index
@@ -13,9 +13,10 @@ module App
 
     def show
       @workspace = workspace
-      @chat_thread = ChatThread.active_for(workspace:, user: current_user)
-      @chat_messages = @chat_thread.chat_messages.includes(:user, { images_attachments: :blob }, :chat_action_requests)
-      @chat_action_requests_by_id = @chat_thread.chat_action_requests.index_by(&:id)
+      @chat_threads = workspace.chat_threads.active.with_messages.order(updated_at: :desc, id: :desc)
+      @chat_thread = selected_chat_thread
+      @chat_messages = chat_messages_for_selected_thread
+      @chat_action_requests_by_id = chat_action_requests_for_selected_thread
       @chat_suggestions = [
         I18n.t('app.workspaces.chat.suggestions.invite_team_mates'),
         I18n.t('app.workspaces.chat.suggestions.rename_workspace'),
@@ -115,5 +116,26 @@ module App
       flash[:toast] = generic_error_toast
       redirect_to forbidden_delete_redirect_path
     end
-  end
+
+    def selected_chat_thread
+      return nil if params[:new_chat].present?
+      return @chat_threads.find { |thread| thread.id == params[:thread_id].to_i } if params[:thread_id].present?
+
+      @chat_threads.first
+    end
+
+    def chat_messages_for_selected_thread
+      return ChatMessage.none unless @chat_thread
+
+      @chat_thread
+        .chat_messages
+        .includes(:user, { images_attachments: :blob }, :chat_action_requests)
+    end
+
+    def chat_action_requests_for_selected_thread
+      return {} unless @chat_thread
+
+      @chat_thread.chat_action_requests.index_by(&:id)
+    end
+  end # rubocop:enable Metrics/ClassLength
 end

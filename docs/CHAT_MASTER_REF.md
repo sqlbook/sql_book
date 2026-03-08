@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, and localization rules.
@@ -10,6 +10,12 @@ Related references:
 - `docs/ROLES_RIGHTS_MASTER_REF.md`
 - `docs/TRANSLATIONS_MASTER_REF.md`
 - `docs/ENGINEERING_GUARDRAILS.md`
+- `docs/ENV_VARS.md`
+
+## Runtime configuration
+- `OPENAI_API_KEY` (required for LLM-backed planning/title generation)
+- `OPENAI_CHAT_MODEL` (optional, defaults to `gpt-5-mini`)
+- `OPENAI_RESPONSES_ENDPOINT` (optional, defaults to `https://api.openai.com/v1/responses`)
 
 ## Scope (v1)
 - Chat is strictly workspace-scoped and rendered on `GET /app/workspaces/:id`.
@@ -34,10 +40,23 @@ Related references:
   - lifecycle status: pending confirmation / executed / canceled / forbidden / validation error / execution error
 
 ## HTTP interface
+- `GET /app/workspaces/:workspace_id/chat/threads`
+- `POST /app/workspaces/:workspace_id/chat/threads`
+- `PATCH /app/workspaces/:workspace_id/chat/threads/:id`
+- `DELETE /app/workspaces/:workspace_id/chat/threads/:id`
 - `GET /app/workspaces/:workspace_id/chat/messages`
 - `POST /app/workspaces/:workspace_id/chat/messages`
 - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm`
 - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel`
+
+## Thread/sidebar UX behavior
+- Sidebar width is fixed at `260px` on desktop.
+- Sidebar is closed by default only when a workspace has no persisted chat threads yet.
+- Sidebar open/closed preference is stored in session storage per workspace and reused during the same browser session.
+- On mobile (`<=760px`), sidebar opens as full chat-surface overlay and collapses after thread selection (or manual close).
+- "New chat" starts as a draft view and does not create/list a thread until first message submission.
+- Thread title is generated from the first user message (LLM-first with deterministic fallback).
+- Thread list supports local title search (filter activates at 2+ characters), inline rename, and archive/delete from row menu.
 
 ## Action contract
 Planner/executor payload contract includes:

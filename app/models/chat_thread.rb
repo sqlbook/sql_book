@@ -19,10 +19,11 @@ class ChatThread < ApplicationRecord
            inverse_of: :chat_thread
 
   scope :active, -> { where(archived_at: nil) }
+  scope :with_messages, -> { joins(:chat_messages).distinct }
 
   validates :title, length: { maximum: 255 }, allow_blank: true
 
   def self.active_for(workspace:, user:)
-    active.where(workspace:).order(:id).first || create!(workspace:, created_by: user, title: 'Workspace chat')
+    active.where(workspace:).order(updated_at: :desc, id: :desc).first || create!(workspace:, created_by: user)
   end
 end

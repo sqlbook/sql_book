@@ -4,12 +4,33 @@ const MAX_IMAGE_COUNT = 6;
 const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
+type JsonPayload = Record<string, unknown>;
+
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'textInput', 'fileInput', 'attachmentTray', 'attachmentError', 'messages'];
+  static targets = [
+    'form',
+    'textInput',
+    'fileInput',
+    'attachmentTray',
+    'attachmentError',
+    'messages',
+    'threadInput',
+    'sidebar',
+    'sidebarOpenButton',
+    'sidebarCloseButton',
+    'threadSearchInput',
+    'threadSearchClear',
+    'threadRow',
+    'threadListEmpty'
+  ];
+
   static values = {
     workspaceId: Number,
     threadId: Number,
-    i18n: Object
+    i18n: Object,
+    sidebarDefaultOpen: Boolean,
+    newChatPath: String,
+    mobileBreakpoint: Number
   };
 
   declare readonly formTarget: HTMLFormElement;
@@ -18,23 +39,58 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly attachmentTrayTarget: HTMLDivElement;
   declare readonly attachmentErrorTarget: HTMLParagraphElement;
   declare readonly messagesTarget: HTMLDivElement;
+  declare readonly threadInputTarget: HTMLInputElement;
+  declare readonly sidebarTarget: HTMLElement;
+  declare readonly sidebarOpenButtonTarget: HTMLButtonElement;
+  declare readonly sidebarCloseButtonTarget: HTMLButtonElement;
+  declare readonly threadSearchInputTarget: HTMLInputElement;
+  declare readonly threadSearchClearTarget: HTMLButtonElement;
+  declare readonly threadRowTargets: HTMLElement[];
+  declare readonly threadListEmptyTarget: HTMLElement;
+
   declare readonly hasMessagesTarget: boolean;
+  declare readonly hasThreadInputTarget: boolean;
+  declare readonly hasSidebarTarget: boolean;
+  declare readonly hasSidebarOpenButtonTarget: boolean;
+  declare readonly hasSidebarCloseButtonTarget: boolean;
+  declare readonly hasThreadSearchInputTarget: boolean;
+  declare readonly hasThreadSearchClearTarget: boolean;
+  declare readonly hasThreadListEmptyTarget: boolean;
+
   declare readonly workspaceIdValue: number;
   declare readonly threadIdValue: number;
   declare readonly i18nValue: Record<string, string>;
+  declare readonly sidebarDefaultOpenValue: boolean;
+  declare readonly newChatPathValue: string;
+  declare readonly mobileBreakpointValue: number;
 
   private selectedFiles: File[] = [];
   private previewUrls: string[] = [];
   private optimisticMessageElements: HTMLElement[] = [];
   private pendingDraft: { content: string; files: File[] } | null = null;
   private submitting = false;
+  private openMenuRow: HTMLElement | null = null;
+  private renamingRow: HTMLElement | null = null;
+
+  private readonly onDocumentClick = (event: Event): void => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('.chat-history-thread-actions')) return;
+
+    this.closeThreadMenu();
+  };
 
   public connect(): void {
     this.renderAttachmentTray();
+    this.initializeSidebar();
+    this.updateThreadSearchVisibility();
+    this.refreshThreadEmptyState();
+    document.addEventListener('click', this.onDocumentClick);
   }
 
   public disconnect(): void {
     this.revokePreviewUrls();
+    document.removeEventListener('click', this.onDocumentClick);
   }
 
   public useSuggestion(event: Event): void {
@@ -109,13 +165,16 @@ export default class extends Controller<HTMLDivElement> {
     this.fetchJson(this.formTarget.action, formData)
       .then((data) => {
         this.pendingDraft = null;
-        const redirectPath = data.redirect_path as string | undefined;
+        const redirectPath = this.stringValue(data.redirect_path);
         if (redirectPath) {
           window.Turbo.visit(redirectPath);
           return;
         }
 
-        window.Turbo.visit(window.location.pathname, { action: 'replace' });
+        const threadId = this.numberValue(data.thread_id);
+        if (threadId > 0 && this.currentThreadId() <= 0) this.persistSidebarPreference(true);
+
+        this.visitWorkspace(threadId);
       })
       .catch((error) => {
         this.removeOptimisticMessages();
@@ -132,22 +191,23 @@ export default class extends Controller<HTMLDivElement> {
     const target = event.currentTarget as HTMLElement;
     const actionId = target.dataset.actionId;
     const confirmationToken = target.dataset.confirmationToken;
-    if (!actionId || !confirmationToken) return;
+    const threadId = this.currentThreadId();
+    if (!actionId || !confirmationToken || threadId <= 0) return;
 
     const formData = new FormData();
-    formData.set('thread_id', String(this.threadIdValue));
+    formData.set('thread_id', String(threadId));
     formData.set('confirmation_token', confirmationToken);
 
     const path = `/app/workspaces/${this.workspaceIdValue}/chat/actions/${actionId}/confirm`;
     this.fetchJson(path, formData)
       .then((data) => {
-        const redirectPath = data.redirect_path as string | undefined;
+        const redirectPath = this.stringValue(data.redirect_path);
         if (redirectPath) {
           window.Turbo.visit(redirectPath);
           return;
         }
 
-        window.Turbo.visit(window.location.pathname, { action: 'replace' });
+        this.visitWorkspace(threadId);
       })
       .catch((error) => {
         this.setAttachmentError(error.message || this.translate('confirmActionError'));
@@ -157,26 +217,145 @@ export default class extends Controller<HTMLDivElement> {
   public cancelAction(event: Event): void {
     const target = event.currentTarget as HTMLElement;
     const actionId = target.dataset.actionId;
-    if (!actionId) return;
+    const threadId = this.currentThreadId();
+    if (!actionId || threadId <= 0) return;
 
     const formData = new FormData();
-    formData.set('thread_id', String(this.threadIdValue));
+    formData.set('thread_id', String(threadId));
 
     const path = `/app/workspaces/${this.workspaceIdValue}/chat/actions/${actionId}/cancel`;
     this.fetchJson(path, formData)
       .then(() => {
-        window.Turbo.visit(window.location.pathname, { action: 'replace' });
+        this.visitWorkspace(threadId);
       })
       .catch((error) => {
         this.setAttachmentError(error.message || this.translate('cancelActionError'));
       });
   }
 
-  private fetchJson(path: string, body: FormData): Promise<Record<string, unknown>> {
+  public toggleSidebar(event: Event): void {
+    event.preventDefault();
+    this.setSidebarOpen(!this.sidebarOpen());
+  }
+
+  public startNewChat(event: Event): void {
+    event.preventDefault();
+    this.closeThreadMenu();
+    this.cancelRename();
+    this.persistSidebarPreference(true);
+    window.Turbo.visit(this.newChatPathValue, { action: 'replace' });
+  }
+
+  public openThread(event: Event): void {
+    event.preventDefault();
+    if (this.renamingRow) return;
+
+    const row = this.rowFromEvent(event);
+    if (!row) return;
+
+    const path = row.dataset.threadPath;
+    if (!path) return;
+
+    if (window.innerWidth <= this.mobileBreakpointValue) this.persistSidebarPreference(false);
+
+    window.Turbo.visit(path, { action: 'replace' });
+  }
+
+  public searchThreads(): void {
+    this.updateThreadSearchVisibility();
+  }
+
+  public clearThreadSearch(event: Event): void {
+    event.preventDefault();
+    if (!this.hasThreadSearchInputTarget) return;
+
+    this.threadSearchInputTarget.value = '';
+    this.updateThreadSearchVisibility();
+    this.threadSearchInputTarget.focus();
+  }
+
+  public toggleThreadMenu(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const row = this.rowFromEvent(event);
+    if (!row) return;
+
+    if (this.openMenuRow && this.openMenuRow !== row) this.openMenuRow.classList.remove('menu-open');
+
+    const isOpen = row.classList.toggle('menu-open');
+    this.openMenuRow = isOpen ? row : null;
+  }
+
+  public beginRenameThread(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const row = this.rowFromEvent(event);
+    if (!row) return;
+
+    this.closeThreadMenu();
+    this.activateRename(row);
+  }
+
+  public renameKeydown(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    const input = event.currentTarget as HTMLInputElement;
+
+    if (keyboardEvent.key === 'Escape') {
+      keyboardEvent.preventDefault();
+      this.cancelRename();
+      return;
+    }
+
+    if (keyboardEvent.key !== 'Enter') return;
+
+    keyboardEvent.preventDefault();
+    this.commitRename(input);
+  }
+
+  public renameBlur(event: Event): void {
+    const input = event.currentTarget as HTMLInputElement;
+    this.commitRename(input);
+  }
+
+  public deleteThread(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const row = this.rowFromEvent(event);
+    if (!row) return;
+
+    const threadId = Number(row.dataset.threadId);
+    if (Number.isNaN(threadId)) return;
+
+    if (!window.confirm(this.translate('deleteThreadConfirmation'))) return;
+
+    const path = `/app/workspaces/${this.workspaceIdValue}/chat/threads/${threadId}`;
+    this.fetchJson(path, new FormData(), 'DELETE')
+      .then((data) => {
+        const redirectPath = this.stringValue(data.redirect_path);
+        if (redirectPath || row.classList.contains('is-active')) {
+          window.Turbo.visit(redirectPath || this.newChatPathValue, { action: 'replace' });
+          return;
+        }
+
+        row.remove();
+        this.refreshThreadEmptyState();
+      })
+      .catch((error) => {
+        this.setAttachmentError(error.message || this.translate('deleteThreadFailedError'));
+      })
+      .finally(() => {
+        this.closeThreadMenu();
+      });
+  }
+
+  private fetchJson(path: string, body: FormData, method = 'POST'): Promise<JsonPayload> {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     return fetch(path, {
-      method: 'POST',
+      method,
       body,
       credentials: 'same-origin',
       headers: {
@@ -184,12 +363,12 @@ export default class extends Controller<HTMLDivElement> {
         'X-CSRF-Token': csrfToken
       }
     }).then(async (response) => {
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error((data.message as string) || this.translate('requestFailedError'));
-      }
+      const raw = await response.text();
+      const data = raw ? (JSON.parse(raw) as JsonPayload) : {};
 
-      return data as Record<string, unknown>;
+      if (!response.ok) throw new Error(this.stringValue(data.message) || this.translate('requestFailedError'));
+
+      return data;
     });
   }
 
@@ -349,5 +528,203 @@ export default class extends Controller<HTMLDivElement> {
     emptyState.insertBefore(stream, this.formTarget);
 
     return stream;
+  }
+
+  private initializeSidebar(): void {
+    if (!this.hasSidebarTarget) return;
+
+    const storedPreference = sessionStorage.getItem(this.sidebarPreferenceKey());
+    const open = storedPreference === null ? this.sidebarDefaultOpenValue : storedPreference === 'open';
+    this.setSidebarOpen(open, false);
+  }
+
+  private sidebarOpen(): boolean {
+    return this.element.classList.contains('chat-sidebar-open');
+  }
+
+  private setSidebarOpen(open: boolean, persist = true): void {
+    this.element.classList.toggle('chat-sidebar-open', open);
+    this.element.classList.toggle('chat-sidebar-closed', !open);
+
+    if (this.hasSidebarOpenButtonTarget) {
+      this.sidebarOpenButtonTarget.setAttribute('aria-label', this.translate('sidebarOpenAria'));
+      this.sidebarOpenButtonTarget.setAttribute('aria-expanded', String(open));
+    }
+
+    if (this.hasSidebarCloseButtonTarget) {
+      this.sidebarCloseButtonTarget.setAttribute('aria-label', this.translate('sidebarCloseAria'));
+      this.sidebarCloseButtonTarget.setAttribute('aria-expanded', String(open));
+    }
+
+    if (persist) this.persistSidebarPreference(open);
+  }
+
+  private persistSidebarPreference(open: boolean): void {
+    sessionStorage.setItem(this.sidebarPreferenceKey(), open ? 'open' : 'closed');
+  }
+
+  private sidebarPreferenceKey(): string {
+    return `workspace-chat-sidebar:${this.workspaceIdValue}`;
+  }
+
+  private visitWorkspace(threadId: number): void {
+    const url = new URL(window.location.href);
+    if (threadId > 0) {
+      url.searchParams.set('thread_id', String(threadId));
+    }
+    url.searchParams.delete('new_chat');
+
+    const query = url.searchParams.toString();
+    const path = query ? `${url.pathname}?${query}` : url.pathname;
+    window.Turbo.visit(path, { action: 'replace' });
+  }
+
+  private currentThreadId(): number {
+    if (this.threadIdValue > 0) return this.threadIdValue;
+
+    if (this.hasThreadInputTarget) {
+      const threadId = Number(this.threadInputTarget.value);
+      if (!Number.isNaN(threadId) && threadId > 0) return threadId;
+    }
+
+    return 0;
+  }
+
+  private updateThreadSearchVisibility(): void {
+    if (!this.hasThreadSearchInputTarget) return;
+
+    const query = this.threadSearchInputTarget.value.trim().toLowerCase();
+    const filterEnabled = query.length >= 2;
+    let visibleRows = 0;
+
+    this.threadRowTargets.forEach((row) => {
+      const title = row.dataset.threadTitle || '';
+      const visible = !filterEnabled || title.includes(query);
+      row.classList.toggle('is-hidden', !visible);
+      if (visible) visibleRows += 1;
+    });
+
+    if (this.hasThreadSearchClearTarget) {
+      this.threadSearchClearTarget.classList.toggle('visible', query.length > 0);
+    }
+
+    if (this.hasThreadListEmptyTarget) {
+      const showEmptyState = visibleRows === 0;
+      this.threadListEmptyTarget.classList.toggle('visible', showEmptyState);
+    }
+  }
+
+  private refreshThreadEmptyState(): void {
+    if (!this.hasThreadListEmptyTarget) return;
+
+    const hasVisibleRows = this.threadRowTargets.some((row) => !row.classList.contains('is-hidden'));
+    this.threadListEmptyTarget.classList.toggle('visible', !hasVisibleRows);
+  }
+
+  private rowFromEvent(event: Event): HTMLElement | null {
+    const target = event.currentTarget;
+    if (!(target instanceof Element)) return null;
+
+    return target.closest('.chat-history-thread-row');
+  }
+
+  private closeThreadMenu(): void {
+    if (!this.openMenuRow) return;
+
+    this.openMenuRow.classList.remove('menu-open');
+    this.openMenuRow = null;
+  }
+
+  private activateRename(row: HTMLElement): void {
+    if (this.renamingRow && this.renamingRow !== row) this.cancelRename();
+
+    this.renamingRow = row;
+    row.classList.add('is-editing');
+
+    const input = row.querySelector('.chat-history-thread-title-input');
+    if (!(input instanceof HTMLInputElement)) return;
+
+    input.value = this.rowTitle(row);
+    input.focus();
+    input.select();
+  }
+
+  private cancelRename(): void {
+    if (!this.renamingRow) return;
+
+    const input = this.renamingRow.querySelector('.chat-history-thread-title-input');
+    if (input instanceof HTMLInputElement) input.value = this.rowTitle(this.renamingRow);
+
+    this.renamingRow.classList.remove('is-editing');
+    this.renamingRow = null;
+  }
+
+  private commitRename(input: HTMLInputElement): void {
+    const row = input.closest('.chat-history-thread-row');
+    if (!(row instanceof HTMLElement)) return;
+    if (!row.classList.contains('is-editing')) return;
+
+    const nextTitle = input.value.trim();
+    if (!nextTitle) {
+      this.setAttachmentError(this.translate('threadTitleRequiredError'));
+      input.focus();
+      return;
+    }
+
+    const currentTitle = this.rowTitle(row);
+    if (nextTitle === currentTitle) {
+      this.finishRename(row, currentTitle);
+      return;
+    }
+
+    const threadId = Number(row.dataset.threadId);
+    if (Number.isNaN(threadId)) return;
+
+    const formData = new FormData();
+    formData.set('title', nextTitle);
+
+    this.fetchJson(`/app/workspaces/${this.workspaceIdValue}/chat/threads/${threadId}`, formData, 'PATCH')
+      .then((data) => {
+        const thread = data.thread as JsonPayload | undefined;
+        const title = this.stringValue(thread?.title) || nextTitle;
+        this.finishRename(row, title);
+        this.setAttachmentError('');
+      })
+      .catch((error) => {
+        this.setAttachmentError(error.message || this.translate('renameThreadFailedError'));
+        input.focus();
+      });
+  }
+
+  private finishRename(row: HTMLElement, title: string): void {
+    const normalizedTitle = title.trim();
+    row.dataset.threadTitle = normalizedTitle.toLowerCase();
+
+    const label = row.querySelector('.chat-history-thread-title');
+    if (label instanceof HTMLElement) label.textContent = normalizedTitle;
+
+    const input = row.querySelector('.chat-history-thread-title-input');
+    if (input instanceof HTMLInputElement) input.value = normalizedTitle;
+
+    row.classList.remove('is-editing');
+    if (this.renamingRow === row) this.renamingRow = null;
+
+    this.updateThreadSearchVisibility();
+  }
+
+  private rowTitle(row: HTMLElement): string {
+    const label = row.querySelector('.chat-history-thread-title');
+    if (label instanceof HTMLElement) return label.textContent?.trim() || '';
+
+    return '';
+  }
+
+  private stringValue(value: unknown): string {
+    return typeof value === 'string' ? value : '';
+  }
+
+  private numberValue(value: unknown): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 }

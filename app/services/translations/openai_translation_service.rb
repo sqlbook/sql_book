@@ -7,8 +7,6 @@ module Translations
     class ConfigurationError < StandardError; end
     class RequestError < StandardError; end
 
-    ENDPOINT = URI('https://api.openai.com/v1/responses').freeze
-
     def initialize(source_text:, source_locale:, target_locale:, translation_key:)
       @source_text = source_text
       @source_locale = source_locale
@@ -32,7 +30,7 @@ module Translations
     end
 
     def request
-      req = Net::HTTP::Post.new(ENDPOINT)
+      req = Net::HTTP::Post.new(endpoint)
       req['Authorization'] = "Bearer #{api_key}"
       req['Content-Type'] = 'application/json'
       req.body = request_payload.to_json
@@ -76,7 +74,7 @@ module Translations
     end
 
     def http_client
-      Net::HTTP.new(ENDPOINT.host, ENDPOINT.port).tap { |http| http.use_ssl = true }
+      Net::HTTP.new(endpoint.host, endpoint.port).tap { |http| http.use_ssl = endpoint.scheme == 'https' }
     end
 
     def parse_response(response)
@@ -123,6 +121,10 @@ module Translations
 
     def model_name
       ENV.fetch('OPENAI_TRANSLATIONS_MODEL', 'gpt-4.1-mini')
+    end
+
+    def endpoint
+      @endpoint ||= OpenaiConfiguration.responses_endpoint
     end
   end
 end

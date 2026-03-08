@@ -38,6 +38,7 @@ en:
       delete_workspace_label: Delete Workspace
       delete_workspace: "[Delete Workspace]"
       open: Open
+      rename: Rename
       save: "[Save]"
       save_changes: "[Save Changes]"
       send: Send
@@ -72,6 +73,17 @@ en:
           invite_team_mates: Help me invite a teammate
           rename_workspace: Rename this workspace to "..."
           list_team_members: Show current team members
+        sidebar:
+          heading: Chats
+          search_placeholder: Search...
+          empty: No chats yet.
+          delete_confirmation: Delete this chat?
+          actions:
+            open_aria: Open chat history
+            close_aria: Close chat history
+            new_chat_aria: Start a new chat
+            clear_search_aria: Clear search
+            thread_menu_aria: Chat options
         composer:
           placeholder_empty: Type here to begin a new chat...
           placeholder_active: Type here...
@@ -101,6 +113,11 @@ en:
           action_not_pending_confirmation: This action is no longer pending confirmation.
           confirmation_expired: This confirmation has expired.
           invalid_confirmation_token: Invalid confirmation token.
+          thread_title_required: Please enter a chat name.
+          rename_thread_failed: Could not rename that chat.
+          delete_thread_failed: Could not delete that chat.
+        threads:
+          untitled: New chat
         action_labels:
           workspace_update_name: Rename workspace
           workspace_delete: Delete workspace

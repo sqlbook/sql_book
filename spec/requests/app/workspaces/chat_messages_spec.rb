@@ -39,6 +39,17 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('ok')
     end
 
+    it 'creates a new thread with a generated title when thread_id is not provided' do
+      expect do
+        post app_workspace_chat_messages_path(workspace), params: { content: 'Invite my team mates' }, as: :json
+      end.to change(ChatThread, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      created_thread = ChatThread.order(:id).last
+      expect(created_thread.title).to be_present
+      expect(created_thread.title).not_to end_with('?')
+    end
+
     it 'creates a confirmation request for write actions' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'rename workspace to New Name' }, as: :json

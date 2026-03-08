@@ -9,6 +9,7 @@ es:
       delete_workspace_label: Eliminar espacio de trabajo
       delete_workspace: "[Eliminar espacio de trabajo]"
       open: Abrir
+      rename: Renombrar
       save: "[Guardar]"
       save_changes: "[Guardar cambios]"
       send: Enviar
@@ -41,6 +42,17 @@ es:
           invite_team_mates: Ayúdame a invitar a un compañero
           rename_workspace: Cambia el nombre de este espacio a "..."
           list_team_members: Muestra los miembros actuales del equipo
+        sidebar:
+          heading: Chats
+          search_placeholder: Buscar...
+          empty: Aún no hay chats.
+          delete_confirmation: "¿Eliminar este chat?"
+          actions:
+            open_aria: Abrir historial de chat
+            close_aria: Cerrar historial de chat
+            new_chat_aria: Iniciar un nuevo chat
+            clear_search_aria: Limpiar búsqueda
+            thread_menu_aria: Opciones del chat
         composer:
           placeholder_empty: Escribe aquí para iniciar un nuevo chat...
           placeholder_active: Escribe aquí...
@@ -70,6 +82,11 @@ es:
           action_not_pending_confirmation: Esta acción ya no está pendiente de confirmación.
           confirmation_expired: Esta confirmación ha caducado.
           invalid_confirmation_token: Token de confirmación no válido.
+          thread_title_required: Indica un nombre para el chat.
+          rename_thread_failed: No se pudo renombrar ese chat.
+          delete_thread_failed: No se pudo eliminar ese chat.
+        threads:
+          untitled: Nuevo chat
         action_labels:
           workspace_update_name: Cambiar nombre del espacio
           workspace_delete: Eliminar espacio

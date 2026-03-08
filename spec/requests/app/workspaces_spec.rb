@@ -184,6 +184,8 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to include('Help me invite a teammate')
         expect(response.body).to include('Rename this workspace to')
         expect(response.body).to include('Show current team members')
+        expect(response.body).to include('Chats')
+        expect(response.body).to include('Search...')
         expect(response.body).to include('Type here to begin a new chat...')
       end
 
