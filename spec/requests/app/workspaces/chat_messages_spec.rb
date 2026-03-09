@@ -135,6 +135,28 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['messages'].last['content']).to eq('Sure. What email should I send the invitation to?')
     end
 
+    it 'continues invite flow after email follow-up in mixed context threads' do
+      post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Can I invite someone else?' },
+           as: :json
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'Their name is Bob Jenkins and their email is hello@sqlbook.com'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('requires_confirmation')
+      expect(payload.dig('action_request', 'action_type')).to eq('member.invite')
+      expect(payload.dig('action_request', 'payload', 'email')).to eq('hello@sqlbook.com')
+    end
+
     it 'asks for workspace name before proposing a rename action' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'rename workspace' }, as: :json

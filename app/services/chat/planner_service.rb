@@ -10,6 +10,11 @@ module Chat
     EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
     MEMBER_ENTITY_REGEX = /\b(team|teammates?|team mates?|member|members|equipo|miembro|miembros)\b/
     MEMBER_LIST_VERB_REGEX = /\b(list|show|display|get|see|who|listar|lista|muestra|mostrar|ver|quien|quienes)\b/
+    INVITE_CONTEXT_REGEX = /
+      \b(
+        invitation|invite|invitar|invitacion|correo|email
+      )\b
+    /x
     MEMBER_DETAIL_REGEX = /
       \b(
         name|names|email|emails|detail|details|their|who\ are\ they|
@@ -233,11 +238,11 @@ module Chat
 
       return workspace_delete_plan if lower.match?(/\b(delete|remove)\b.*\bworkspace\b/)
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
-      return member_list_plan if member_list_intent?(lower)
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
-      return member_invite_plan if lower.include?('invite')
+      return member_invite_plan if member_invite_intent?(lower)
       return member_role_update_plan if lower.match?(/\b(change|update)\b.*\brole\b/)
       return member_remove_plan if lower.match?(/\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/)
+      return member_list_plan if member_list_intent?(lower)
 
       if attachment_count.positive?
         return Plan.new(
@@ -261,12 +266,30 @@ module Chat
       lowered_message.match?(MEMBER_ENTITY_REGEX) && lowered_message.match?(MEMBER_LIST_VERB_REGEX)
     end
 
+    def member_invite_intent?(lowered_message)
+      return true if lowered_message.include?('invite')
+
+      invite_follow_up_with_email?
+    end
+
+    def invite_follow_up_with_email?
+      return false if parsed_email.blank?
+
+      recent_assistant_text = conversation_messages.reverse.find do |entry|
+        conversation_entry_role(entry) == 'assistant'
+      end
+      return false unless recent_assistant_text
+
+      conversation_entry_content(recent_assistant_text).downcase.match?(INVITE_CONTEXT_REGEX)
+    end
+
     def member_detail_request_with_member_reference?(lowered_message)
       lowered_message.match?(MEMBER_ENTITY_REGEX) && lowered_message.match?(MEMBER_DETAIL_REGEX)
     end
 
     def contextual_member_follow_up?(lowered_message)
       return false unless lowered_message.match?(MEMBER_DETAIL_REGEX)
+      return false if invite_follow_up_with_email?
 
       recent_text = conversation_messages.last(8).map { |entry| conversation_entry_content(entry).downcase }.join(' ')
       recent_text.match?(MEMBER_CONTEXT_REGEX)

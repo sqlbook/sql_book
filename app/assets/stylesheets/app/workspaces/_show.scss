@@ -1,5 +1,9 @@
 .app-workspaces-show,
 .app-chat_components-show {
+  > .app-content-layout > main {
+    background: var(--gray-850);
+  }
+
   .workspace-chat-page {
     --chat-panel-padding: 32px;
 
