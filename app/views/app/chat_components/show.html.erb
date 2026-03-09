@@ -105,12 +105,13 @@
           <div class="chat-user-bubble">
             <p class="chat-message-body">Can you rename my workspace to Bumanarama?</p>
           </div>
-          <p class="chat-message-meta">16:40</p>
         </article>
 
         <article class="chat-message chat-message-system">
-          <p class="chat-system-row"><%= I18n.t('app.workspaces.chat.statuses.thinking') %></p>
-          <p class="chat-message-meta">16:40</p>
+          <p class="chat-system-row chat-system-row-thinking">
+            <%= I18n.t('app.workspaces.chat.statuses.thinking') %>
+            <span class="chat-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+          </p>
         </article>
 
         <article class="chat-message chat-message-assistant">
@@ -129,7 +130,6 @@
               </div>
             </div>
           </div>
-          <p class="chat-message-meta">16:41</p>
         </article>
 
         <article class="chat-message chat-message-assistant">
@@ -140,7 +140,6 @@
               <p class="chat-inline-card-body">Could not confirm that action.</p>
             </div>
           </div>
-          <p class="chat-message-meta">16:42</p>
         </article>
 
         <article class="chat-message chat-message-assistant">
@@ -151,7 +150,6 @@
               <p class="chat-inline-card-body">Workspace name updated to Bumanarama.</p>
             </div>
           </div>
-          <p class="chat-message-meta">16:43</p>
         </article>
       </section>
     </div>

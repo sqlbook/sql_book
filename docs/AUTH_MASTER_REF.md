@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-03-01
+Last updated: 2026-03-09
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -28,7 +28,7 @@ Related references:
 ## Routes (auth)
 - Signup:
   - `GET /auth/signup` -> `Auth::SignupController#index`
-  - `GET /auth/signup/new` -> sends OTP email for new account
+  - `GET /auth/signup/new` -> validates signup identity + terms, then sends OTP email for new account
   - `POST /auth/signup` -> verifies code and creates user
   - `GET /auth/signup/magic_link` -> verifies token via query params
   - `GET /auth/signup/resend` -> resend rotated OTP
@@ -55,6 +55,8 @@ Related references:
 1. User submits name/email on signup page.
 2. `Auth::SignupController#new` checks:
    - email present
+   - first name present
+   - last name present
    - terms accepted (server-side check)
    - user does not already exist
 3. OTP service `create!` is called:
@@ -110,7 +112,8 @@ Source: `app/services/one_time_password_service.rb`
 ## Invitation flow rules
 Source: `WorkspaceInvitationService`
 
-- Inviting creates or finds user by email.
+- Inviting requires `first_name`, `last_name`, and `email`.
+- Service creates or updates user identity from invite payload before membership is created.
 - Creates `Member` with:
   - `status: PENDING`
   - `invitation: SecureRandom.base36`

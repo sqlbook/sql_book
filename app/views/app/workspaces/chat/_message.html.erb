@@ -14,7 +14,15 @@
       <% end %>
     </div>
   <% elsif message.system? %>
-    <p class="chat-system-row"><%= message.content %></p>
+    <% thinking_label = I18n.t('app.workspaces.chat.statuses.thinking') %>
+    <% if message.content.to_s.strip.casecmp(thinking_label.to_s.strip).zero? %>
+      <p class="chat-system-row chat-system-row-thinking">
+        <%= thinking_label %>
+        <span class="chat-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+      </p>
+    <% else %>
+      <p class="chat-system-row"><%= message.content %></p>
+    <% end %>
   <% else %>
     <div class="chat-assistant-block">
       <p class="chat-message-body"><%= message.content %></p>
@@ -55,5 +63,4 @@
     </div>
   <% end %>
 
-  <p class="chat-message-meta"><%= message.created_at.strftime("%H:%M") %></p>
 </article>

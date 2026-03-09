@@ -86,6 +86,19 @@ Use this file to record major choices and why they were made.
   - broader domain namespaces (`datasource.*`, `query.*`, `dashboard.*`) are promoted into shared tooling
   - model/provider strategy changes require runtime contract updates
 
+### Decision: Require explicit first + last name for workspace invites (and signup identity)
+- Status: Accepted
+- Why:
+  - invitation and onboarding emails rely on real user identity fields
+  - avoids weak/ambiguous invite payloads derived from partial or placeholder text
+  - improves deterministic validation and translation-safe follow-up prompts
+- Consequences:
+  - `member.invite` now requires `first_name`, `last_name`, `email` in tool schema and API contract
+  - chat runtime/planner follow-ups collect missing invite fields instead of executing with partial data
+  - signup identity gate for OTP step requires non-blank `email`, `first_name`, `last_name`
+- Revisit when:
+  - ownership transfer + advanced identity workflows are added to chat and API surfaces
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

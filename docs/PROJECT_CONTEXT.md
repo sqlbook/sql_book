@@ -32,6 +32,9 @@ sqlbook lets users:
 - Shared tool registry is now the canonical server execution interface for chat actions.
 - Public API docs for workspace/team contracts are available at `/dev/api` (API routes remain auth-protected).
 - High-risk writes (`workspace.delete`, `member.update_role`, `member.remove`) require confirmation; low-risk writes auto-run.
+- Invite flows require full identity (`first_name`, `last_name`, `email`) before `member.invite` executes.
+- Chat surface uses split sibling panels (history + conversation) on desktop and overlay history on mobile (`<=760px`).
+- Message stream keeps the latest content in view (bottom-oriented UX), hides per-message timestamps, and shows animated `Thinking...` status rows.
 
 ## Architecture Principles
 - Optimize for shipping and maintainability over maximal control.

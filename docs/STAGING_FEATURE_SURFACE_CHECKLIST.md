@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-02-26
+Last updated: 2026-03-09
 
 ## Purpose
 Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook is pre-production only.
@@ -26,6 +26,12 @@ Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook i
 - [ ] Workspace access denies non-members with `Workspace not available` redirect/toast.
 - [ ] Owner/admin-only pages/actions are blocked for user/read-only roles.
 - [ ] Team role update and invite permissions still enforce role hierarchy.
+
+### Workspace chat (v1)
+- [ ] Chat message submit does not 500 on write actions (rename/invite/resend/remove).
+- [ ] Invite flow asks for required fields (`first_name`, `last_name`, `email`) and executes when provided.
+- [ ] High-risk actions still require inline confirmation and confirm/cancel behaves correctly.
+- [ ] Sidebar split/overlay behavior still matches viewport rules (`260px` desktop, full overlay at `<=760px`).
 
 ### Destructive and irreversible flows
 - [ ] Workspace delete flow succeeds for owner and blocks non-owner.

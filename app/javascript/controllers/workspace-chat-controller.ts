@@ -437,7 +437,6 @@ export default class extends Controller<HTMLDivElement> {
     const messageStream = this.ensureMessageStream();
     if (!messageStream) return;
 
-    const timestamp = this.formatCurrentTime();
     const inserted: HTMLElement[] = [];
 
     if (content) {
@@ -452,13 +451,8 @@ export default class extends Controller<HTMLDivElement> {
       userBody.className = 'chat-message-body';
       userBody.textContent = content;
 
-      const userMeta = document.createElement('p');
-      userMeta.className = 'chat-message-meta';
-      userMeta.textContent = timestamp;
-
       userBubble.appendChild(userBody);
       userArticle.appendChild(userBubble);
-      userArticle.appendChild(userMeta);
       messageStream.appendChild(userArticle);
       inserted.push(userArticle);
     }
@@ -468,15 +462,20 @@ export default class extends Controller<HTMLDivElement> {
     thinkingArticle.dataset.optimistic = 'true';
 
     const thinkingRow = document.createElement('p');
-    thinkingRow.className = 'chat-system-row';
+    thinkingRow.className = 'chat-system-row chat-system-row-thinking';
     thinkingRow.textContent = this.translate('thinkingStatus') || 'Thinking';
 
-    const thinkingMeta = document.createElement('p');
-    thinkingMeta.className = 'chat-message-meta';
-    thinkingMeta.textContent = timestamp;
+    const thinkingDots = document.createElement('span');
+    thinkingDots.className = 'chat-thinking-dots';
+    thinkingDots.setAttribute('aria-hidden', 'true');
+    ['.', '.', '.'].forEach((dot) => {
+      const dotSpan = document.createElement('span');
+      dotSpan.textContent = dot;
+      thinkingDots.appendChild(dotSpan);
+    });
 
     thinkingArticle.appendChild(thinkingRow);
-    thinkingArticle.appendChild(thinkingMeta);
+    thinkingRow.appendChild(thinkingDots);
     messageStream.appendChild(thinkingArticle);
     inserted.push(thinkingArticle);
 
@@ -505,14 +504,6 @@ export default class extends Controller<HTMLDivElement> {
     this.renderAttachmentTray();
     this.pendingDraft = null;
     this.textInputTarget.focus();
-  }
-
-  private formatCurrentTime(): string {
-    const now = new Date();
-    const hour = String(now.getHours()).padStart(2, '0');
-    const minute = String(now.getMinutes()).padStart(2, '0');
-
-    return `${hour}:${minute}`;
   }
 
   private ensureMessageStream(): HTMLElement | null {

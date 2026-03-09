@@ -1,6 +1,6 @@
 # Staging Core Functionality Checklist
 
-Last updated: 2026-02-19
+Last updated: 2026-03-09
 
 ## Purpose
 Define the minimum stable functionality that must pass before any production cutover work proceeds.
@@ -31,6 +31,8 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] Team tab member status/actions auto-refresh when invite state changes (no manual page refresh).
 - [ ] Create data source succeeds with valid site URL.
 - [ ] Data source verification flow reaches success state.
+- [ ] Chat write actions work without server errors (rename/invite flows).
+- [ ] Migration `20260309102000_add_idempotency_key_to_chat_action_requests` is applied in staging.
 
 ## 4) Tracking and event ingestion
 - [ ] Tracking script snippet renders with staging host/protocol values.

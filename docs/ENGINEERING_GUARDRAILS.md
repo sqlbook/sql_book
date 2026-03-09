@@ -14,8 +14,10 @@
 - Preserve explicit user control to edit SQL manually.
 
 ## Connector Ingestion
-- Prefer ingesting source data into sqlbook over live per-request API reads.
-- Use incremental sync + webhooks when providers support them.
+- Use connector-specific execution strategy:
+  - SQL database connectors default to live read-only querying in v1.
+  - API/SaaS connectors can use selective sync/materialization when live-query is impractical.
+- Use incremental sync + webhooks for sync-based connectors when providers support them.
 - Track sync status, retries, and dead-letter failures.
 - Keep provider credentials encrypted and scoped minimally.
 

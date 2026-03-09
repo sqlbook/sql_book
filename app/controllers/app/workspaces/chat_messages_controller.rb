@@ -69,7 +69,7 @@ module App
         end
 
         idempotency_key = nil
-        if write_tool?(tool_definition)
+        if write_tool?(tool_definition) && idempotency_supported?
           idempotency_key = idempotency_key_for(tool_name: tool_call.tool_name, payload: tool_call.arguments.to_h)
           existing_request = existing_write_request(idempotency_key:)
           if existing_request
@@ -257,7 +257,9 @@ module App
         when 'member.invite'
           missing_email = payload['email'].to_s.strip.blank?
           missing_name = payload['first_name'].to_s.strip.blank? || payload['last_name'].to_s.strip.blank?
-          return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name') if missing_email && missing_name
+          if missing_email && missing_name
+            return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
+          end
           return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_email
           return I18n.t('app.workspaces.chat.planner.member_invite_needs_name') if missing_name
         when 'member.resend_invite'
@@ -298,14 +300,15 @@ module App
       end
 
       def render_confirmation_response(user_message:, action_type:, payload:, assistant_content:, idempotency_key:) # rubocop:disable Metrics/AbcSize
-        action_request = chat_thread.chat_action_requests.create!(
+        action_request_attributes = {
           chat_message: user_message,
           requested_by: current_user,
           action_type:,
           payload:,
-          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION,
-          idempotency_key:
-        )
+          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION
+        }.merge(idempotency_attributes(idempotency_key:))
+
+        action_request = chat_thread.chat_action_requests.create!(action_request_attributes)
 
         assistant_message = chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
@@ -487,6 +490,7 @@ module App
       end
 
       def existing_write_request(idempotency_key:)
+        return nil unless idempotency_supported?
         return nil if idempotency_key.blank?
 
         chat_thread.chat_action_requests
@@ -497,7 +501,7 @@ module App
       end
 
       def persist_auto_executed_request(user_message:, action_type:, payload:, execution:, idempotency_key:)
-        chat_thread.chat_action_requests.create!(
+        attributes = {
           chat_message: user_message,
           requested_by: current_user,
           action_type:,
@@ -507,11 +511,23 @@ module App
             'data' => execution.data
           },
           status: status_for_result(result_status: execution.status),
-          idempotency_key:,
           executed_at: Time.current
-        )
+        }.merge(idempotency_attributes(idempotency_key:))
+
+        chat_thread.chat_action_requests.create!(attributes)
       rescue ActiveRecord::RecordNotUnique
         nil
+      end
+
+      def idempotency_attributes(idempotency_key:)
+        return {} unless idempotency_supported?
+        return {} if idempotency_key.blank?
+
+        { idempotency_key: }
+      end
+
+      def idempotency_supported?
+        @idempotency_supported ||= ChatActionRequest.column_names.include?('idempotency_key')
       end
 
       def status_for_result(result_status:)

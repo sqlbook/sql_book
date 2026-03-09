@@ -129,6 +129,21 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(workspace.reload.name).to eq('Repeated Name')
     end
 
+    it 'still executes writes when idempotency column is unavailable' do
+      column_names_without_idempotency = ChatActionRequest.column_names - ['idempotency_key']
+      allow(ChatActionRequest).to receive(:column_names).and_return(column_names_without_idempotency)
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { content: 'rename workspace to Fallback Name' },
+             as: :json
+      end.to change(ChatActionRequest, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(workspace.reload.name).to eq('Fallback Name')
+    end
+
     it 'extracts a clean target name for rename questions' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'Can you rename my workspace to Bumanarama?' },

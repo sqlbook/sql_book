@@ -32,7 +32,7 @@ class ChatActionRequest < ApplicationRecord
     ]
   }
   validates :confirmation_token, uniqueness: true, allow_nil: true
-  validates :idempotency_key, uniqueness: true, allow_nil: true
+  validates :idempotency_key, uniqueness: true, allow_nil: true, if: :idempotency_supported?
 
   before_validation :assign_confirmation_defaults, on: :create
 
@@ -64,5 +64,9 @@ class ChatActionRequest < ApplicationRecord
 
     self.confirmation_token ||= SecureRandom.hex(20)
     self.confirmation_expires_at ||= CONFIRMATION_WINDOW.from_now
+  end
+
+  def idempotency_supported?
+    self.class.column_names.include?('idempotency_key')
   end
 end

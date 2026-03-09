@@ -1,6 +1,6 @@
 # Environment Parity Checklist
 
-Last updated: 2026-02-15
+Last updated: 2026-03-09
 
 ## Purpose
 Prevent staging/production configuration drift and stop staging-only values leaking into production.
@@ -31,6 +31,10 @@ Set and validate on both Web and Worker:
 - `RAILS_LOG_LEVEL`
 - `APP_HOST`
 - `APP_PROTOCOL`
+- `OPENAI_API_KEY` (if LLM chat/translation features are enabled)
+- `OPENAI_CHAT_MODEL` (optional but keep parity if set)
+- `OPENAI_TRANSLATIONS_MODEL` (optional but keep parity if set)
+- `OPENAI_RESPONSES_ENDPOINT` (optional but keep parity if set)
 
 ## Predeploy gate
 Run before any deploy:

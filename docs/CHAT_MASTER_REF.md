@@ -39,6 +39,8 @@ Related references:
 - Server-authoritative policy/execution:
   - `Chat::Policy` for role/scope checks
   - `Chat::ActionExecutor` for normalized execution statuses
+- Schema-drift safety:
+  - if `chat_action_requests.idempotency_key` is not present yet, write idempotency dedupe is skipped to prevent request-time 500s during partial deploy/migration windows
 
 ## Data model
 - `ChatThread` (`chat_threads`)
@@ -138,6 +140,13 @@ High-risk writes (inline confirmation required):
 - `member.update_role`
 - `member.remove`
 
+## Required action fields (v1)
+- `workspace.update_name`: `name`
+- `member.invite`: `first_name`, `last_name`, `email` (role optional; defaults to `USER`)
+- `member.resend_invite`: `email` or `member_id`
+- `member.update_role`: (`email` or `member_id`) + `role`
+- `member.remove`: `email` or `member_id`
+
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
 - Role and outrank rules mirror workspace team-management permissions.
@@ -161,6 +170,8 @@ High-risk writes (inline confirmation required):
 - Write actions use deterministic idempotency keys scoped by workspace/thread/actor/tool/payload.
 - Duplicate submissions inside the idempotency window reuse prior request state/result.
 - Prevents duplicate side effects on retries or repeated Enter submits.
+- Requires DB migration `20260309102000_add_idempotency_key_to_chat_action_requests`.
+- If that migration is not applied yet in an environment, writes still execute but dedupe is skipped until migration is applied.
 
 ## Confirmation lifecycle
 - Confirmation required only for high-risk writes.
@@ -176,9 +187,19 @@ High-risk writes (inline confirmation required):
 - Sidebar is closed by default only when a workspace has no persisted chat threads yet.
 - Sidebar open/closed preference is stored in session storage per workspace and reused during the same browser session.
 - On mobile (`<=760px`), sidebar opens as full chat-surface overlay and collapses after thread selection (or manual close).
+- Sidebar toggle uses line icons only (`chat-sidebar-icon-fold` / `chat-sidebar-icon-unfold`), 16px.
+- Toggle location:
+  - open sidebar: fold toggle lives inside sidebar header
+  - closed sidebar: unfold toggle lives at top-left of conversation surface
 - "New chat" starts as a draft view and does not create/list a thread until first message submission.
 - Thread title is generated from the first user message (LLM-first with deterministic fallback).
 - Thread list supports local title search (filter activates at 2+ characters), inline rename, and archive/delete from row menu.
+
+## Message stream UX behavior
+- User messages render immediately on submit (optimistic append) before runtime response returns.
+- Message timestamps are intentionally hidden in chat stream UI.
+- System `Thinking` rows render with animated trailing ellipsis to indicate active work.
+- Sticky composer area includes an opaque mask so older messages are hidden until scrolled above the composer.
 
 ## Attachment behavior (v1)
 - Accepted MIME types:

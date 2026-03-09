@@ -117,8 +117,11 @@ Related references:
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - Low-risk chat writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`).
 - High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
+- Chat invite execution requires `first_name`, `last_name`, and `email`; runtime/planner follow-ups collect missing fields before execution.
 - Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
+- Chat stream hides per-message timestamps; `Thinking` status uses animated ellipsis.
+- Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.
 
 ## Workspace settings save behavior
 - General tab workspace-name form uses change detection:
@@ -211,6 +214,11 @@ Related references:
   - `main` + `aside` render in a two-column split below header.
   - split layout fills available viewport height under header.
   - `aside` no longer participates in header layout; it sits entirely below header.
+- Workspace chat split surface (`/app/workspaces/:id`):
+  - history and conversation render as sibling surfaces (not nested).
+  - desktop open state uses `260px + 1fr` columns with a 24px inter-surface gap.
+  - both surfaces use 32px internal padding and 24px radius.
+  - mobile (`<=760px`) history opens as overlay and collapses after thread selection.
 - Workspace settings page (`/app/workspaces/:id/workspace-settings`):
   - treated as a main-surface page (not an aside-style panel layout).
 

@@ -155,12 +155,14 @@ Use this check after chat UI/runtime deploys to prove exactly what staging is ru
 ```bash
 echo "RENDER_GIT_COMMIT=$RENDER_GIT_COMMIT"
 grep -n 'content_for :app_content_layout_class, "split app-workspace-chat-layout' app/views/app/workspaces/show.html.erb
-grep -n 'ri-sidebar-fold-line' app/views/app/workspaces/show.html.erb
-grep -n 'ri-sidebar-unfold-line' app/views/app/workspaces/show.html.erb
+grep -n 'chat-sidebar-icon-fold' app/views/app/workspaces/show.html.erb
+grep -n 'chat-sidebar-icon-unfold' app/views/app/workspaces/show.html.erb
 grep -n 'Chat::RuntimeService.new' app/controllers/app/workspaces/chat_messages_controller.rb
 grep -n 'Tooling::WorkspaceTeamRegistry.tool_metadata' app/controllers/app/workspaces/chat_messages_controller.rb
 grep -n 'confirmation_mode' app/services/tooling/workspace_team_registry.rb
 grep -n 'member.invite' app/services/tooling/workspace_team_registry.rb
+grep -n 'idempotency_key' app/controllers/app/workspaces/chat_messages_controller.rb
+bundle exec rails db:migrate:status | grep 20260309102000
 ```
 
 Then verify compiled CSS fingerprint + critical rules:
@@ -176,6 +178,7 @@ If any check is missing:
 - confirm latest commit is on `origin/main`
 - confirm both Render services are configured to branch `main`
 - trigger a fresh deploy on web + worker
+- run `bundle exec rails db:migrate` in web shell, then redeploy
 
 ## Notes and decisions
 - 2026-02-15: Chose 5 GB staging Postgres storage to minimize initial cost.

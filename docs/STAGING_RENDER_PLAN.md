@@ -1,5 +1,7 @@
 # Staging Deployment Plan (Render)
 
+Last updated: 2026-03-09
+
 This runbook sets up `staging.sqlbook.com` on Render in an EU region.
 
 ## 1) Create Render resources
@@ -58,6 +60,12 @@ Set these on both Web and Worker:
 - `APP_HOST=staging.sqlbook.com`
 - `APP_PROTOCOL=https`
 
+Set these on Web (and optionally Worker for strict env parity):
+- `OPENAI_API_KEY=<required for workspace chat + translation generation>`
+- `OPENAI_CHAT_MODEL=<optional; default gpt-5-mini>`
+- `OPENAI_TRANSLATIONS_MODEL=<optional; default gpt-4.1-mini>`
+- `OPENAI_RESPONSES_ENDPOINT=<optional; default https://api.openai.com/v1/responses>`
+
 Also set for Web:
 - `PORT=3000` (Render usually injects this; setting explicitly is fine)
 
@@ -100,6 +108,7 @@ After deploy:
 - Sign-up/login code email is delivered
 - Login succeeds with one-time code
 - Background event jobs are consumed by worker
+- `bundle exec rails db:migrate:status | grep 20260309102000` confirms chat idempotency migration is up
 
 ## 8) Launch gate for staging
 

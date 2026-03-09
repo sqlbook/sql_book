@@ -465,6 +465,30 @@
     text-transform: uppercase;
   }
 
+  .chat-system-row-thinking {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.125rem;
+  }
+
+  .chat-thinking-dots {
+    display: inline-flex;
+    min-width: 1.25rem;
+  }
+
+  .chat-thinking-dots span {
+    animation: chat-thinking-dot 1.2s ease-in-out infinite;
+    opacity: 0.25;
+  }
+
+  .chat-thinking-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .chat-thinking-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
   .chat-message-body {
     margin: 0;
     white-space: pre-wrap;
@@ -476,6 +500,18 @@
     font-size: 0.75rem;
     line-height: 1rem;
     margin: 0.375rem 0 0;
+  }
+
+  @keyframes chat-thinking-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+    }
+
+    40% {
+      opacity: 1;
+    }
   }
 
   .chat-inline-card {
