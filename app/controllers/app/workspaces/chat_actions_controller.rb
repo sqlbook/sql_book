@@ -69,7 +69,7 @@ module App
       end
 
       def chat_thread
-        @chat_thread ||= workspace.chat_threads.active.find(params[:thread_id])
+        @chat_thread ||= workspace.chat_threads.active.for_user(current_user).find(params[:thread_id])
       end
 
       def action_request

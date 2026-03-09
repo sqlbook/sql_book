@@ -71,6 +71,25 @@ RSpec.describe Chat::PlannerService do
       )
     end
 
+    it 'parses first and last name when provided inline with email' do
+      plan = described_class.new(
+        message: 'Chris Smith, hello@sqlbook.com',
+        workspace:,
+        actor:,
+        conversation_messages: [
+          { role: 'user', content: 'Can I invite someone else?' },
+          { role: 'assistant', content: 'Sure. Please share their first name, last name, and email address.' }
+        ]
+      ).call
+
+      expect(plan.action_type).to eq('member.invite')
+      expect(plan.payload).to include(
+        'first_name' => 'Chris',
+        'last_name' => 'Smith',
+        'email' => 'hello@sqlbook.com'
+      )
+    end
+
     it 'treats member detail follow-ups as member listing when prior context is team members' do
       plan = described_class.new(
         message: 'what are their names and details?',

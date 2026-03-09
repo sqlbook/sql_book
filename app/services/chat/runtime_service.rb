@@ -18,6 +18,15 @@ module Chat
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
     EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
+    NAME_WITH_EMAIL_REGEX = /
+      \b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)
+      (?:
+        \s*[,;:]\s* |
+        \s*[,;:]?\s+(?:whose\s+)?(?:e-?mail|correo)(?:\s+(?:address|electr[oó]nico))?\s*(?:is|es)?\s+ |
+        \s+
+      )
+      #{EMAIL_REGEX.source}\b
+    /ix
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     PLACEHOLDER_NAME_PARTS = %w[
@@ -551,9 +560,7 @@ module Chat
         return payload if valid_name_payload?(payload)
       end
 
-      name_before_email_match = text.match(
-        /\b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)\s+#{EMAIL_REGEX.source}\b/i
-      )
+      name_before_email_match = text.match(NAME_WITH_EMAIL_REGEX)
       if name_before_email_match
         payload = normalized_name_payload(name_before_email_match)
         return payload if valid_name_payload?(payload)

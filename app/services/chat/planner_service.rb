@@ -8,6 +8,15 @@ module Chat
     Plan = Struct.new(:assistant_message, :action_type, :payload, keyword_init: true)
 
     EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
+    NAME_WITH_EMAIL_REGEX = /
+      \b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)
+      (?:
+        \s*[,;:]\s* |
+        \s*[,;:]?\s+(?:whose\s+)?(?:e-?mail|correo)(?:\s+(?:address|electr[oó]nico))?\s*(?:is|es)?\s+ |
+        \s+
+      )
+      #{EMAIL_REGEX.source}\b
+    /ix
     MEMBER_ENTITY_REGEX = /\b(team|teammates?|team mates?|member|members|equipo|miembro|miembros)\b/
     MEMBER_LIST_VERB_REGEX = /\b(list|show|display|get|see|who|listar|lista|muestra|mostrar|ver|quien|quienes)\b/
     INVITE_CONTEXT_REGEX = /
@@ -521,9 +530,7 @@ module Chat
         return payload if valid_name_payload?(payload)
       end
 
-      name_before_email_match = text.match(
-        /\b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)\s+#{EMAIL_REGEX.source}\b/i
-      )
+      name_before_email_match = text.match(NAME_WITH_EMAIL_REGEX)
       if name_before_email_match
         payload = normalized_name_payload(name_before_email_match)
         return payload if valid_name_payload?(payload)

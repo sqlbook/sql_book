@@ -101,6 +101,7 @@ Related references:
 
 ## Workspace chat (v1)
 - Workspace home surface is chat-first and workspace-scoped.
+- Chat threads/history are isolated per-user within a workspace.
 - v1 allowlist:
   - `workspace.update_name`
   - `workspace.delete`
@@ -119,6 +120,7 @@ Related references:
 - High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
 - Chat invite execution requires `first_name`, `last_name`, and `email`; runtime/planner follow-ups collect missing fields before execution.
 - Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
+- Thread/message route access is constrained to `created_by == current_user` within the current workspace.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
 - Chat stream hides per-message timestamps; `Thinking` status uses animated ellipsis.
 - Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.

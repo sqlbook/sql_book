@@ -13,7 +13,11 @@ module App
 
     def show
       @workspace = workspace
-      @chat_threads = workspace.chat_threads.active.with_messages.order(updated_at: :desc, id: :desc)
+      @chat_threads = workspace.chat_threads
+        .active
+        .for_user(current_user)
+        .with_messages
+        .order(updated_at: :desc, id: :desc)
       @chat_thread = selected_chat_thread
       @chat_messages = chat_messages_for_selected_thread
       @chat_action_requests_by_id = chat_action_requests_for_selected_thread

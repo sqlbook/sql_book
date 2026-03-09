@@ -167,6 +167,42 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(false)
     end
 
+    it 'parses name and email from the same invite follow-up message' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I can help with workspace and team actions.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Chris Smith, hello@sqlbook.com',
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          conversation_messages: [
+            { role: 'user', content: 'Can I invite someone else?' },
+            { role: 'assistant', content: 'Sure. Please share their first name, last name, and email address.' }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls.size).to eq(1)
+      expect(decision.tool_calls.first.tool_name).to eq('member.invite')
+      expect(decision.tool_calls.first.arguments['email']).to eq('hello@sqlbook.com')
+      expect(decision.tool_calls.first.arguments['first_name']).to eq('Chris')
+      expect(decision.tool_calls.first.arguments['last_name']).to eq('Smith')
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
     it 'asks for required invite fields when invite intent is present but model returns generic no-tool output' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {

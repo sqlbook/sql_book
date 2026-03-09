@@ -56,12 +56,16 @@ module Chat
       return true if payload_workspace_id && payload_workspace_id != workspace.id
 
       payload_thread_id = payload['thread_id'].to_i if payload['thread_id'].present?
-      return true if payload_thread_id && !workspace.chat_threads.active.exists?(id: payload_thread_id)
+      return true if payload_thread_id && !workspace.chat_threads.active.for_user(actor).exists?(id: payload_thread_id)
 
       payload_message_id = payload['message_id'].to_i if payload['message_id'].present?
       return false unless payload_message_id
 
-      !workspace.chat_messages.exists?(id: payload_message_id)
+      user_message_scope = workspace.chat_messages
+        .joins(:chat_thread)
+        .where(chat_threads: { created_by_id: actor.id })
+
+      !user_message_scope.exists?(id: payload_message_id)
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 

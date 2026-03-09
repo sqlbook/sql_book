@@ -65,7 +65,11 @@ module App
       end
 
       def chat_threads
-        @chat_threads ||= workspace.chat_threads.active.with_messages.order(updated_at: :desc, id: :desc)
+        @chat_threads ||= workspace.chat_threads
+          .active
+          .for_user(current_user)
+          .with_messages
+          .order(updated_at: :desc, id: :desc)
       end
 
       def next_redirect_path

@@ -15,7 +15,7 @@
     </div>
   <% elsif message.system? %>
     <% thinking_label = I18n.t('app.workspaces.chat.statuses.thinking') %>
-    <% if message.content.to_s.strip.casecmp(thinking_label.to_s.strip).zero? %>
+    <% if message.content.to_s.strip.casecmp(thinking_label.to_s.strip).zero? && message.status == ChatMessage::Statuses::PENDING %>
       <p class="chat-system-row chat-system-row-thinking">
         <%= thinking_label %>
         <span class="chat-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>

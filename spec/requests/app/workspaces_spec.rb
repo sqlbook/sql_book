@@ -194,6 +194,19 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to include('chat-sidebar-icon-unfold')
       end
 
+      it 'does not render chat threads created by other workspace members' do
+        teammate = create(:user)
+        create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN, status: Member::Status::ACCEPTED)
+        teammate_thread = create(:chat_thread, workspace:, created_by: teammate, title: 'Teammate private thread')
+        create(:chat_message, chat_thread: teammate_thread, user: teammate, content: 'Private')
+
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include('Teammate private thread')
+        expect(response.body).to have_selector('h1', text: 'Where should we begin?')
+      end
+
       it 'renders breadcrumbs with workspace as the current page' do
         get "/app/workspaces/#{workspace.id}"
 

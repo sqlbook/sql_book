@@ -20,6 +20,7 @@ Related references:
 
 ## Scope (v1)
 - Chat is strictly workspace-scoped and rendered on `GET /app/workspaces/:id`.
+- Chat history is isolated per user within each workspace (a member can only access threads they created).
 - Chat can execute only workspace/team-management actions that already exist elsewhere in app UX.
 - Explicitly out of scope in v1:
   - cross-workspace actions
@@ -194,11 +195,12 @@ High-risk writes (inline confirmation required):
 - "New chat" starts as a draft view and does not create/list a thread until first message submission.
 - Thread title is generated from the first user message (LLM-first with deterministic fallback).
 - Thread list supports local title search (filter activates at 2+ characters), inline rename, and archive/delete from row menu.
+- Thread and message fetch/update routes are scoped by `workspace_id + current_user` to prevent cross-member history leakage.
 
 ## Message stream UX behavior
 - User messages render immediately on submit (optimistic append) before runtime response returns.
 - Message timestamps are intentionally hidden in chat stream UI.
-- System `Thinking` rows render with animated trailing ellipsis to indicate active work.
+- System `Thinking` rows render animated trailing ellipsis only while pending/optimistic; persisted completed rows render static label text.
 - Sticky composer area includes an opaque mask so older messages are hidden until scrolled above the composer.
 
 ## Attachment behavior (v1)

@@ -9,14 +9,24 @@ RSpec.describe 'App::Workspaces chat threads', type: :request do
   before { sign_in(user) }
 
   describe 'GET /app/workspaces/:workspace_id/chat/threads' do
-    it 'returns active threads with messages for the workspace only' do
-      visible_thread = create(:chat_thread, workspace:, title: 'Invite team')
+    it 'returns active threads with messages for the current user in the workspace only' do
+      visible_thread = create(:chat_thread, workspace:, created_by: user, title: 'Invite team')
       create(:chat_message, chat_thread: visible_thread, user:, content: 'Invite')
 
-      hidden_thread = create(:chat_thread, workspace:, title: 'No messages')
+      hidden_thread = create(:chat_thread, workspace:, created_by: user, title: 'No messages')
+
+      teammate = create(:user)
+      create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN, status: Member::Status::ACCEPTED)
+      teammate_thread = create(:chat_thread, workspace:, created_by: teammate, title: 'Teammate thread')
+      create(:chat_message, chat_thread: teammate_thread, user: teammate, content: 'Private')
 
       other_workspace = create(:workspace_with_owner)
-      other_thread = create(:chat_thread, workspace: other_workspace, title: 'Other')
+      other_thread = create(
+        :chat_thread,
+        workspace: other_workspace,
+        created_by: other_workspace.members.first.user,
+        title: 'Other'
+      )
       create(:chat_message, chat_thread: other_thread, user: other_workspace.members.first.user, content: 'Hi')
 
       get app_workspace_chat_threads_path(workspace), as: :json
@@ -25,13 +35,14 @@ RSpec.describe 'App::Workspaces chat threads', type: :request do
       payload = response.parsed_body
       expect(payload['threads'].map { |thread| thread['id'] }).to include(visible_thread.id)
       expect(payload['threads'].map { |thread| thread['id'] }).not_to include(hidden_thread.id)
+      expect(payload['threads'].map { |thread| thread['id'] }).not_to include(teammate_thread.id)
       expect(payload['threads'].map { |thread| thread['id'] }).not_to include(other_thread.id)
     end
   end
 
   describe 'PATCH /app/workspaces/:workspace_id/chat/threads/:id' do
     it 'renames the thread' do
-      thread = create(:chat_thread, workspace:, title: 'Old title')
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Old title')
       create(:chat_message, chat_thread: thread, user:, content: 'Hello')
 
       patch app_workspace_chat_thread_path(workspace, thread), params: { title: 'New title' }, as: :json
@@ -41,7 +52,7 @@ RSpec.describe 'App::Workspaces chat threads', type: :request do
     end
 
     it 'returns validation_error when title is blank' do
-      thread = create(:chat_thread, workspace:, title: 'Old title')
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Old title')
       create(:chat_message, chat_thread: thread, user:, content: 'Hello')
 
       patch app_workspace_chat_thread_path(workspace, thread), params: { title: '   ' }, as: :json
@@ -54,10 +65,10 @@ RSpec.describe 'App::Workspaces chat threads', type: :request do
 
   describe 'DELETE /app/workspaces/:workspace_id/chat/threads/:id' do
     it 'archives a thread and returns redirect path to another thread' do
-      thread = create(:chat_thread, workspace:, title: 'Delete me')
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Delete me')
       create(:chat_message, chat_thread: thread, user:, content: 'First')
 
-      keep_thread = create(:chat_thread, workspace:, title: 'Keep me')
+      keep_thread = create(:chat_thread, workspace:, created_by: user, title: 'Keep me')
       create(:chat_message, chat_thread: keep_thread, user:, content: 'Second')
 
       delete app_workspace_chat_thread_path(workspace, thread), as: :json

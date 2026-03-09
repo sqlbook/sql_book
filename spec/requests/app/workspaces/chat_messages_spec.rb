@@ -26,6 +26,24 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['thread_id']).to eq(thread.id)
       expect(payload['messages'].map { |row| row['id'] }).to include(message.id)
     end
+
+    it 'does not expose another workspace member thread messages' do
+      teammate = create(:user)
+      create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN, status: Member::Status::ACCEPTED)
+      teammate_thread = create(:chat_thread, workspace:, created_by: teammate, title: 'Teammate private')
+      create(
+        :chat_message,
+        chat_thread: teammate_thread,
+        user: teammate,
+        role: ChatMessage::Roles::USER,
+        content: 'Private thread'
+      )
+
+      get app_workspace_chat_messages_path(workspace), params: { thread_id: teammate_thread.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq({ 'thread_id' => nil, 'messages' => [] })
+    end
   end
 
   describe 'POST /app/workspaces/:workspace_id/chat/messages' do
@@ -191,6 +209,30 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
       expect(invited_member).to be_present
       expect(invited_member.role).to eq(Member::Roles::USER)
+    end
+
+    it 'parses first/last name and email from a single follow-up message' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Can I invite someone else?' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'Chris Smith, hello@sqlbook.com'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('executed')
+      expect(payload.dig('messages', -1, 'content')).to include('hello@sqlbook.com')
+
+      invited_user = User.find_by(email: 'hello@sqlbook.com')
+      expect(invited_user).to be_present
+      expect(invited_user.first_name).to eq('Chris')
+      expect(invited_user.last_name).to eq('Smith')
     end
 
     it 'asks for workspace name before proposing a rename action' do

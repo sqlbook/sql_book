@@ -131,7 +131,7 @@ module App
       end
 
       def thread_from_params
-        found_thread = workspace.chat_threads.active.find_by(id: params[:thread_id])
+        found_thread = user_chat_threads.find_by(id: params[:thread_id])
         return found_thread if found_thread
         return nil unless create_action?
 
@@ -139,7 +139,11 @@ module App
       end
 
       def default_thread
-        workspace.chat_threads.active.with_messages.order(updated_at: :desc, id: :desc).first
+        user_chat_threads.with_messages.order(updated_at: :desc, id: :desc).first
+      end
+
+      def user_chat_threads
+        @user_chat_threads ||= workspace.chat_threads.active.for_user(current_user)
       end
 
       def create_chat_thread!
