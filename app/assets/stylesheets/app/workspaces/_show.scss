@@ -2,6 +2,7 @@
 .app-chat_components-show {
   .workspace-chat-page {
     --chat-panel-padding: 32px;
+    --chat-bottom-safe-space: 8rem;
   }
 }
 
@@ -323,8 +324,11 @@
     height: 100%;
     min-height: 0;
     min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: var(--chat-panel-padding);
     position: relative;
+    scroll-padding-bottom: var(--chat-bottom-safe-space);
   }
 
   .chat-pane-sidebar-open {
@@ -417,6 +421,7 @@
     gap: 1.25rem;
     margin: 0 auto;
     max-width: 47.5rem;
+    padding-bottom: var(--chat-bottom-safe-space);
     width: 100%;
   }
 

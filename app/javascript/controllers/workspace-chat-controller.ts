@@ -85,6 +85,7 @@ export default class extends Controller<HTMLDivElement> {
     this.initializeSidebar();
     this.updateThreadSearchVisibility();
     this.refreshThreadEmptyState();
+    requestAnimationFrame(() => this.scrollConversationToBottom(true));
     document.addEventListener('click', this.onDocumentClick);
   }
 
@@ -480,7 +481,7 @@ export default class extends Controller<HTMLDivElement> {
     inserted.push(thinkingArticle);
 
     this.optimisticMessageElements = inserted;
-    thinkingArticle.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    this.scrollConversationToBottom(true);
   }
 
   private removeOptimisticMessages(): void {
@@ -528,6 +529,21 @@ export default class extends Controller<HTMLDivElement> {
     emptyState.insertBefore(stream, this.formTarget);
 
     return stream;
+  }
+
+  private scrollConversationToBottom(force = false): void {
+    const pane = this.chatPaneElement();
+    if (!pane) return;
+
+    const distanceFromBottom = pane.scrollHeight - pane.clientHeight - pane.scrollTop;
+    if (!force && distanceFromBottom > 64) return;
+
+    pane.scrollTop = pane.scrollHeight;
+  }
+
+  private chatPaneElement(): HTMLElement | null {
+    const pane = this.element.querySelector('.chat-pane');
+    return pane instanceof HTMLElement ? pane : null;
   }
 
   private initializeSidebar(): void {
