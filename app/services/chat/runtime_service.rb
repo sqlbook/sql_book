@@ -17,6 +17,13 @@ module Chat
 
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
+    EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
+    INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
+    INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
+    PLACEHOLDER_NAME_PARTS = %w[
+      someone somebody anyone anybody person people team teammate teammates mate mates
+      member members user users my our else another one this that
+    ].freeze
     DECISION_SCHEMA = {
       'type' => 'object',
       'required' => %w[assistant_message tool_calls missing_information finalize_without_tools],
@@ -54,6 +61,7 @@ module Chat
 
     def call
       decision = llm_decision
+      decision = apply_deterministic_guards(decision)
       return decision if decision
 
       fallback_decision
@@ -68,11 +76,7 @@ module Chat
       response = perform_request(payload: tool_result_request_payload(tool_name:, tool_arguments:, execution:))
       return execution.user_message unless response.is_a?(Net::HTTPSuccess)
 
-      parsed = JSON.parse(response.body)
-      formatted = response_text_from(parsed).to_s.gsub(/\s+/, ' ').strip
-      formatted.presence || execution.user_message
-    rescue JSON::ParserError
-      execution.user_message
+      parsed_tool_result_message(response_body: response.body, fallback_message: execution.user_message)
     rescue StandardError => e
       Rails.logger.warn("Chat runtime result rendering failed: #{e.class} #{e.message}")
       execution.user_message
@@ -82,7 +86,7 @@ module Chat
 
     attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :tool_metadata
 
-    def llm_decision # rubocop:disable Metrics/AbcSize
+    def llm_decision
       return nil if api_key.blank?
 
       response = perform_request(payload: decision_request_payload)
@@ -97,26 +101,14 @@ module Chat
       nil
     end
 
-    def parse_decision_json(raw_json) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def parse_decision_json(raw_json)
       parsed = parse_json_object(raw_json)
       return nil unless parsed.is_a?(Hash)
 
-      tool_calls = Array(parsed['tool_calls']).filter_map do |row|
-        next unless row.is_a?(Hash)
-
-        tool_name = row['tool_name'].to_s
-        arguments = row['arguments'].is_a?(Hash) ? row['arguments'] : {}
-        next if tool_name.blank?
-
-        ToolCall.new(tool_name:, arguments:)
-      end
-
-      missing_information = Array(parsed['missing_information']).map(&:to_s).map(&:strip).compact_blank
-
       Decision.new(
         assistant_message: parsed['assistant_message'].to_s,
-        tool_calls:,
-        missing_information:,
+        tool_calls: build_tool_calls(parsed:),
+        missing_information: build_missing_information(parsed:),
         finalize_without_tools: parsed['finalize_without_tools'] == true
       )
     end
@@ -234,7 +226,7 @@ module Chat
       }
     end
 
-    def system_prompt # rubocop:disable Metrics/MethodLength
+    def system_prompt
       [
         'You are sqlbook\'s workspace chat assistant operating inside one workspace.',
         'Keep the conversation natural and task-focused.',
@@ -243,8 +235,9 @@ module Chat
         'Only provide capability summaries when the user explicitly asks what you can do.',
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
-        'When a user asks to invite someone and no email is present, ask for the email address.',
-        'If invite context exists and the user provides an email, use member.invite.',
+        'For member.invite, required fields are first_name, last_name, and email.',
+        'If invite context exists, collect missing invite fields and continue until all required fields are present.',
+        'Do not fall back to a generic capability summary during invite follow-ups.',
         'When asked for team member names/details, use member.list and include detailed entries.',
         'Never execute cross-workspace actions.',
         'Never invent permissions or claim execution outside provided tools.',
@@ -375,15 +368,34 @@ module Chat
       value.to_s.strip.presence
     end
 
+    def parsed_tool_result_message(response_body:, fallback_message:)
+      parsed = JSON.parse(response_body)
+      formatted = response_text_from(parsed).to_s.gsub(/\s+/, ' ').strip
+      formatted.presence || fallback_message
+    rescue JSON::ParserError
+      fallback_message
+    end
+
+    def build_tool_calls(parsed:)
+      Array(parsed['tool_calls']).filter_map do |row|
+        next unless row.is_a?(Hash)
+
+        tool_name = row['tool_name'].to_s
+        arguments = row['arguments'].is_a?(Hash) ? row['arguments'] : {}
+        next if tool_name.blank?
+
+        ToolCall.new(tool_name:, arguments:)
+      end
+    end
+
+    def build_missing_information(parsed:)
+      Array(parsed['missing_information']).map(&:to_s).map(&:strip).compact_blank
+    end
+
     def parse_json_object(raw_json)
       JSON.parse(raw_json)
     rescue JSON::ParserError
-      extracted = extract_json_object(raw_json)
-      return nil if extracted.blank?
-
-      JSON.parse(extracted)
-    rescue JSON::ParserError
-      nil
+      parse_extracted_json(raw_json:)
     end
 
     def extract_json_object(raw_text)
@@ -397,8 +409,184 @@ module Chat
       raw_text[first..last]
     end
 
+    def parse_extracted_json(raw_json:)
+      extracted = extract_json_object(raw_json)
+      return nil if extracted.blank?
+
+      JSON.parse(extracted)
+    rescue JSON::ParserError
+      nil
+    end
+
     def actor_locale
       actor.preferred_locale.presence || I18n.default_locale.to_s
+    end
+
+    def apply_deterministic_guards(decision)
+      return decision if decision.nil?
+      return decision unless no_tool_selected?(decision)
+      return decision unless invite_context_active?
+
+      invite_details = inferred_invite_details
+      missing_fields = missing_invite_fields(invite_details:)
+      return invite_follow_up_decision(invite_details:) if missing_fields.empty?
+
+      invite_missing_details_decision(missing_fields:)
+    end
+
+    def no_tool_selected?(decision)
+      decision.tool_calls.empty?
+    end
+
+    def invite_context_active?
+      message.match?(INVITE_INTENT_REGEX) ||
+        invite_context_in_recent_messages? ||
+        invite_details_present_in_message?
+    end
+
+    def invite_context_in_recent_messages?
+      recent_assistant_message = conversation_messages.reverse.find do |entry|
+        conversation_entry_role(entry) == 'assistant'
+      end
+      return false unless recent_assistant_message
+
+      conversation_entry_content(recent_assistant_message).match?(INVITE_CONTEXT_REGEX)
+    end
+
+    def invite_details_present_in_message?
+      parsed_email.present? || parsed_name_payload.present?
+    end
+
+    def inferred_invite_details
+      details = invite_details_from_recent_user_messages
+      details['email'] = parsed_email if parsed_email.present?
+      details.merge(parsed_name_payload)
+    end
+
+    def invite_details_from_recent_user_messages # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      details = {}
+      conversation_messages.reverse.each do |entry|
+        next unless conversation_entry_role(entry) == 'user'
+
+        text = conversation_entry_content(entry)
+        details['email'] ||= parse_email_from(text:)
+        parsed_name = parsed_name_payload_from(text:)
+        details['first_name'] ||= parsed_name['first_name']
+        details['last_name'] ||= parsed_name['last_name']
+        break if missing_invite_fields(invite_details: details).empty?
+      end
+
+      details
+    end
+
+    def missing_invite_fields(invite_details:)
+      fields = []
+      fields << 'email' if invite_details['email'].to_s.strip.blank?
+      fields << 'first_name' if invite_details['first_name'].to_s.strip.blank?
+      fields << 'last_name' if invite_details['last_name'].to_s.strip.blank?
+      fields
+    end
+
+    def invite_follow_up_decision(invite_details:)
+      payload = {
+        'email' => invite_details['email'],
+        'first_name' => invite_details['first_name'],
+        'last_name' => invite_details['last_name'],
+        'role' => Member::Roles::USER
+      }
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.member_invite'),
+        tool_calls: [ToolCall.new(tool_name: 'member.invite', arguments: payload)],
+        missing_information: [],
+        finalize_without_tools: false
+      )
+    end
+
+    def invite_missing_details_decision(missing_fields:)
+      prompt = invite_missing_details_prompt(missing_fields:)
+      Decision.new(
+        assistant_message: prompt,
+        tool_calls: [],
+        missing_information: [prompt],
+        finalize_without_tools: true
+      )
+    end
+
+    def invite_missing_details_prompt(missing_fields:)
+      return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_fields == ['email']
+      if missing_fields.intersect?(%w[first_name last_name]) && missing_fields.exclude?('email')
+        return I18n.t('app.workspaces.chat.planner.member_invite_needs_name')
+      end
+
+      I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
+    end
+
+    def parsed_email
+      parse_email_from(text: message)
+    end
+
+    def parsed_name_payload
+      parsed_name_payload_from(text: message)
+    end
+
+    def parse_email_from(text:)
+      text[EMAIL_REGEX].to_s.downcase.presence
+    end
+
+    def parsed_name_payload_from(text:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      match = text.match(
+        /\b(?:name\s+is|called|se\s+llama)\s+([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)/i
+      )
+      if match
+        payload = normalized_name_payload(match)
+        return payload if valid_name_payload?(payload)
+      end
+
+      invite_name_match = text.match(
+        /\b(?:invite|invitar)\s+([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)/i
+      )
+      if invite_name_match
+        payload = normalized_name_payload(invite_name_match)
+        return payload if valid_name_payload?(payload)
+      end
+
+      name_before_email_match = text.match(
+        /\b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)\s+#{EMAIL_REGEX.source}\b/i
+      )
+      if name_before_email_match
+        payload = normalized_name_payload(name_before_email_match)
+        return payload if valid_name_payload?(payload)
+      end
+
+      simple_name_match = text.strip.match(/\A([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)\z/i)
+      return {} unless simple_name_match
+
+      payload = normalized_name_payload(simple_name_match)
+      return {} unless valid_name_payload?(payload)
+
+      payload
+    end
+
+    def normalized_name_payload(match_data)
+      {
+        'first_name' => normalize_name_part(match_data[1]),
+        'last_name' => normalize_name_part(match_data[2])
+      }
+    end
+
+    def normalize_name_part(value)
+      value.to_s.strip.split(/\s+/).map(&:capitalize).join(' ')
+    end
+
+    def valid_name_payload?(payload)
+      first = payload['first_name'].to_s.downcase
+      last = payload['last_name'].to_s.downcase
+      return false if first.blank? || last.blank?
+      return false if PLACEHOLDER_NAME_PARTS.include?(first)
+      return false if PLACEHOLDER_NAME_PARTS.include?(last)
+
+      true
     end
 
     def api_key

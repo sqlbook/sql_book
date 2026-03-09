@@ -255,7 +255,11 @@ module App
         when 'workspace.update_name'
           return I18n.t('app.workspaces.chat.planner.workspace_rename_needs_name') if payload['name'].to_s.strip.blank?
         when 'member.invite'
-          return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if payload['email'].to_s.strip.blank?
+          missing_email = payload['email'].to_s.strip.blank?
+          missing_name = payload['first_name'].to_s.strip.blank? || payload['last_name'].to_s.strip.blank?
+          return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name') if missing_email && missing_name
+          return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_email
+          return I18n.t('app.workspaces.chat.planner.member_invite_needs_name') if missing_name
         when 'member.resend_invite'
           return I18n.t('app.workspaces.chat.planner.member_resend_needs_member') if member_reference_missing?(payload:)
         when 'member.update_role'

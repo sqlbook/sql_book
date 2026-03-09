@@ -8,16 +8,9 @@ module Api
       end
 
       def create
-        payload = {
-          'email' => params[:email].to_s,
-          'first_name' => params[:first_name].to_s,
-          'last_name' => params[:last_name].to_s
-        }
-        payload['role'] = params[:role].to_i if params[:role].present?
-
         execute_tool(
           action_type: 'member.invite',
-          payload:
+          payload: invite_payload
         )
       end
 
@@ -56,6 +49,16 @@ module Api
         return params[:member_id].to_i if params[:member_id].present?
 
         nil
+      end
+
+      def invite_payload
+        payload = {
+          'email' => params[:email].to_s,
+          'first_name' => params[:first_name].to_s,
+          'last_name' => params[:last_name].to_s
+        }
+        payload['role'] = params[:role].to_i if params[:role].present?
+        payload
       end
     end
   end

@@ -56,6 +56,7 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   normalizes :email, with: ->(email) { email.strip.downcase }
   normalizes :pending_email, with: ->(email) { email.strip.downcase }
   normalizes :preferred_locale, with: ->(locale) { locale.to_s.strip.downcase.presence }
+  validates :first_name, :last_name, presence: true, on: :create
   validates :terms_accepted_at, :terms_version, presence: true, on: :create, unless: :skip_terms_validation
   validates :preferred_locale, inclusion: { in: SUPPORTED_LOCALES }, allow_nil: true
 

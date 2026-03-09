@@ -10,9 +10,8 @@ module Translations
       []
     end
 
-    def translate(locale, key, options = {}) # rubocop:disable Metrics/AbcSize
+    def translate(locale, key, options = {})
       raise I18n::ArgumentError, 'translation missing: locale is nil' if locale.nil?
-      raise I18n::ArgumentError, 'translation missing: key is nil' if key.nil?
 
       value = RuntimeLookupService.fetch(locale:, key: normalize_flat_keys(key))
       throw(:exception, I18n::MissingTranslation.new(locale, key, options)) if value.nil?
@@ -23,7 +22,7 @@ module Translations
       I18n.interpolate(value, values)
     rescue I18n::ReservedInterpolationKey => e
       raise I18n::ReservedInterpolationKey.new(e.message, key)
-    end # rubocop:enable Metrics/AbcSize
+    end
 
     private
 

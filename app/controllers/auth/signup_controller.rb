@@ -7,7 +7,7 @@ module Auth
     def index; end
 
     def new
-      return redirect_to auth_signup_index_path unless email
+      return redirect_to auth_signup_index_path unless signup_identity_params_present?
       return handle_terms_not_accepted unless accepted_terms?
       return handle_existing_account if User.exists?(email:)
 
@@ -123,7 +123,11 @@ module Auth
     end
 
     def create_params_present?
-      [email, token, first_name, last_name].all?
+      [email, token, first_name, last_name].all?(&:present?)
+    end
+
+    def signup_identity_params_present?
+      [email, first_name, last_name].all?(&:present?)
     end
   end # rubocop:enable Metrics/ClassLength
 end

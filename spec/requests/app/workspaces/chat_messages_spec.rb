@@ -140,7 +140,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(workspace.reload.name).to eq('Bumanarama')
     end
 
-    it 'asks for email before proposing an invite action' do
+    it 'asks for required invite details before proposing an invite action' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'invite my team mates' }, as: :json
       end.not_to change(ChatActionRequest, :count)
@@ -149,7 +149,9 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       payload = response.parsed_body
       expect(payload['status']).to eq('ok')
       expect(payload['messages'].last['role']).to eq('assistant')
-      expect(payload['messages'].last['content']).to eq('Sure. What email should I send the invitation to?')
+      expect(payload['messages'].last['content']).to eq(
+        'Sure. Please share their first name, last name, and email address.'
+      )
     end
 
     it 'continues invite flow after email follow-up in mixed context threads without confirmation' do

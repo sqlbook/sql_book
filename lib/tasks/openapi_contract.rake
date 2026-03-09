@@ -19,9 +19,7 @@ namespace :openapi do
     missing_paths = required_paths - spec.fetch('paths', {}).keys
     raise "OpenAPI spec missing required paths: #{missing_paths.join(', ')}" if missing_paths.any?
 
-    unless spec['openapi'].to_s.start_with?('3.')
-      raise "OpenAPI version must be 3.x, got: #{spec['openapi'].inspect}"
-    end
+    raise "OpenAPI version must be 3.x, got: #{spec['openapi'].inspect}" unless spec['openapi'].to_s.start_with?('3.')
 
     puts "OpenAPI contract valid: #{path}"
   end

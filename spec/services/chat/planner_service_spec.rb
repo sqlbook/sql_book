@@ -26,11 +26,11 @@ RSpec.describe Chat::PlannerService do
       expect(plan.assistant_message).to eq('Sure. What should the new workspace name be?')
     end
 
-    it 'asks for an email when invite intent is missing recipient details' do
+    it 'asks for required invite fields when invite intent is missing recipient details' do
       plan = described_class.new(message: 'invite my team', workspace:, actor:).call
 
       expect(plan.action_type).to be_nil
-      expect(plan.assistant_message).to eq('Sure. What email should I send the invitation to?')
+      expect(plan.assistant_message).to eq('Sure. Please share their first name, last name, and email address.')
     end
 
     it 'keeps resend intent distinct from invite intent' do
@@ -40,11 +40,16 @@ RSpec.describe Chat::PlannerService do
       expect(plan.payload).to include('email' => 'sam@example.com')
     end
 
-    it 'creates an invite action when a valid email is present' do
-      plan = described_class.new(message: 'invite sam@example.com as admin', workspace:, actor:).call
+    it 'creates an invite action when required invite fields are present' do
+      plan = described_class.new(message: 'invite Sam Jenkins sam@example.com as admin', workspace:, actor:).call
 
       expect(plan.action_type).to eq('member.invite')
-      expect(plan.payload).to include('email' => 'sam@example.com', 'role' => Member::Roles::ADMIN)
+      expect(plan.payload).to include(
+        'first_name' => 'Sam',
+        'last_name' => 'Jenkins',
+        'email' => 'sam@example.com',
+        'role' => Member::Roles::ADMIN
+      )
     end
 
     it 'treats invite follow-ups with an email as member.invite' do
@@ -54,12 +59,16 @@ RSpec.describe Chat::PlannerService do
         actor:,
         conversation_messages: [
           { role: 'user', content: 'Can I invite someone else?' },
-          { role: 'assistant', content: 'Sure. What email should I send the invitation to?' }
+          { role: 'assistant', content: 'Sure. Please share their first name, last name, and email address.' }
         ]
       ).call
 
       expect(plan.action_type).to eq('member.invite')
-      expect(plan.payload).to include('email' => 'hello@sqlbook.com')
+      expect(plan.payload).to include(
+        'first_name' => 'Bob',
+        'last_name' => 'Jenkins',
+        'email' => 'hello@sqlbook.com'
+      )
     end
 
     it 'treats member detail follow-ups as member listing when prior context is team members' do

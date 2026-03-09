@@ -11,9 +11,7 @@ module Tooling
 
     def workspace_update_name(arguments:)
       name = arguments['name'].to_s.strip
-      if name.blank?
-        return validation_error(message: I18n.t('app.workspaces.chat.executor.workspace_name_required'))
-      end
+      return validation_error(message: I18n.t('app.workspaces.chat.executor.workspace_name_required')) if name.blank?
 
       workspace.update!(name:)
       executed(
@@ -22,7 +20,7 @@ module Tooling
       )
     end
 
-    def workspace_delete(arguments: nil)
+    def workspace_delete(*)
       result = WorkspaceDeletionService.new(workspace:, deleted_by: actor).call
       unless result.success?
         return execution_error(message: I18n.t('app.workspaces.chat.executor.workspace_delete_failed'))
@@ -40,7 +38,7 @@ module Tooling
       )
     end
 
-    def member_list(arguments: nil) # rubocop:disable Metrics/AbcSize
+    def member_list(*) # rubocop:disable Metrics/AbcSize
       members = workspace.members.includes(:user).map do |member|
         {
           id: member.id,
@@ -64,28 +62,26 @@ module Tooling
       executed(message: user_message, data: { members: })
     end
 
-    def member_invite(arguments:) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def member_invite(arguments:) # rubocop:disable Metrics/AbcSize
       email = arguments['email'].to_s.strip.downcase
-      if email.blank?
-        return validation_error(message: I18n.t('app.workspaces.chat.executor.member_invite_email_required'))
-      end
-      if existing_member?(email:)
-        return validation_error(message: I18n.t('app.workspaces.chat.executor.member_invite_already_member'))
-      end
-      role = normalized_invite_role(arguments['role'])
-      if arguments['role'].present? && role.nil?
-        return validation_error(message: I18n.t('app.workspaces.chat.executor.member_role_invalid'))
-      end
-      role ||= Member::Roles::USER
-
       first_name = arguments['first_name'].to_s.strip
       last_name = arguments['last_name'].to_s.strip
-      inferred_name_parts = inferred_name_from_email(email:)
+      role = normalized_invite_role(arguments['role'])
+      error_message = invite_validation_error_message(
+        first_name:,
+        last_name:,
+        email:,
+        role:,
+        raw_role: arguments['role']
+      )
+      return validation_error(message: error_message) if error_message
+
+      role ||= Member::Roles::USER
 
       WorkspaceInvitationService.new(workspace:).invite!(
         invited_by: actor,
-        first_name: first_name.presence || inferred_name_parts[:first_name],
-        last_name: last_name.presence || inferred_name_parts[:last_name],
+        first_name:,
+        last_name:,
         email:,
         role:
       )
@@ -188,21 +184,20 @@ module Tooling
       value.to_s.strip.presence || I18n.t("app.workspaces.chat.executor.#{fallback_key}")
     end
 
-    def inferred_name_from_email(email:)
-      base = email.split('@').first.to_s
-      segments = base.split(/[._-]/).compact_blank
-      {
-        first_name: segments.first.to_s.capitalize.presence ||
-          I18n.t('app.workspaces.chat.executor.inferred_first_name'),
-        last_name: segments.drop(1).join(' ').strip.capitalize.presence ||
-          I18n.t('app.workspaces.chat.executor.inferred_last_name')
-      }
-    end
-
     def normalized_invite_role(raw_role)
       return nil unless raw_role.to_s.match?(/\A\d+\z/)
 
       raw_role.to_i
+    end
+
+    def invite_validation_error_message(first_name:, last_name:, email:, role:, raw_role:)
+      return I18n.t('app.workspaces.chat.executor.member_invite_first_name_required') if first_name.blank?
+      return I18n.t('app.workspaces.chat.executor.member_invite_last_name_required') if last_name.blank?
+      return I18n.t('app.workspaces.chat.executor.member_invite_email_required') if email.blank?
+      return I18n.t('app.workspaces.chat.executor.member_invite_already_member') if existing_member?(email:)
+      return I18n.t('app.workspaces.chat.executor.member_role_invalid') if raw_role.present? && role.nil?
+
+      nil
     end
 
     def validation_error(message:, code: 'validation_error')

@@ -15,6 +15,7 @@ module Chat
         invitation|invite|invitar|invitacion|correo|email
       )\b
     /x
+    INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     MEMBER_DETAIL_REGEX = /
       \b(
         name|names|email|emails|detail|details|their|who\ are\ they|
@@ -29,6 +30,10 @@ module Chat
     /x
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
+    PLACEHOLDER_NAME_PARTS = %w[
+      someone somebody anyone anybody person people team teammate teammates mate mates
+      member members user users my our else another one this that
+    ].freeze
 
     def initialize(message:, workspace:, actor:, attachments: [], conversation_messages: [])
       @message = message.to_s.strip
@@ -135,7 +140,7 @@ module Chat
                   [
                     'Before proposing write actions, collect required fields first.',
                     'If required fields are missing, set action_type to null and ask a concise follow-up question.',
-                    'Required fields: workspace.update_name(name), member.invite(email),',
+                    'Required fields: workspace.update_name(name), member.invite(first_name,last_name,email),',
                     'member.resend_invite(email or member_id),',
                     'member.update_role(email or member_id, role),',
                     'member.remove(email or member_id).'
@@ -267,13 +272,24 @@ module Chat
     end
 
     def member_invite_intent?(lowered_message)
-      return true if lowered_message.include?('invite')
+      return true if lowered_message.match?(INVITE_INTENT_REGEX)
 
-      invite_follow_up_with_email?
+      invite_follow_up_with_email? || invite_follow_up_with_name?
     end
 
     def invite_follow_up_with_email?
       return false if parsed_email.blank?
+
+      recent_assistant_text = conversation_messages.reverse.find do |entry|
+        conversation_entry_role(entry) == 'assistant'
+      end
+      return false unless recent_assistant_text
+
+      conversation_entry_content(recent_assistant_text).downcase.match?(INVITE_CONTEXT_REGEX)
+    end
+
+    def invite_follow_up_with_name?
+      return false if parsed_name_payload.empty?
 
       recent_assistant_text = conversation_messages.reverse.find do |entry|
         conversation_entry_role(entry) == 'assistant'
@@ -337,18 +353,23 @@ module Chat
     end
 
     def member_invite_plan
-      email = parsed_email
-      if email.blank?
+      details = invite_details
+      missing_fields = missing_invite_fields(details:)
+      if missing_fields.any?
         return Plan.new(
-          assistant_message: I18n.t('app.workspaces.chat.planner.member_invite_needs_email'),
+          assistant_message: invite_missing_details_message(missing_fields:),
           action_type: nil,
           payload: {}
         )
       end
-
       role = parsed_role || Member::Roles::USER
 
-      payload = { 'email' => email, 'role' => role }
+      payload = {
+        'email' => details['email'],
+        'first_name' => details['first_name'],
+        'last_name' => details['last_name'],
+        'role' => role
+      }
 
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_invite'),
@@ -450,7 +471,109 @@ module Chat
     end
 
     def parsed_email
-      message[EMAIL_REGEX].to_s.downcase.presence
+      parse_email_from(text: message)
+    end
+
+    def invite_details
+      details = invite_details_from_recent_user_messages
+      details['email'] = parsed_email if parsed_email.present?
+      details.merge(parsed_name_payload)
+    end
+
+    def invite_details_from_recent_user_messages # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      details = {}
+      conversation_messages.reverse.each do |entry|
+        next unless conversation_entry_role(entry) == 'user'
+
+        text = conversation_entry_content(entry)
+        details['email'] ||= parse_email_from(text:)
+        parsed_name = parsed_name_payload_from(text:)
+        details['first_name'] ||= parsed_name['first_name']
+        details['last_name'] ||= parsed_name['last_name']
+        break if missing_invite_fields(details:).empty?
+      end
+
+      details
+    end
+
+    def parse_email_from(text:)
+      text[EMAIL_REGEX].to_s.downcase.presence
+    end
+
+    def parsed_name_payload
+      parsed_name_payload_from(text: message)
+    end
+
+    def parsed_name_payload_from(text:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      match = text.match(
+        /\b(?:name\s+is|called|se\s+llama)\s+([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)/i
+      )
+      if match
+        payload = normalized_name_payload(match)
+        return payload if valid_name_payload?(payload)
+      end
+
+      invite_name_match = text.match(
+        /\b(?:invite|invitar)\s+([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)/i
+      )
+      if invite_name_match
+        payload = normalized_name_payload(invite_name_match)
+        return payload if valid_name_payload?(payload)
+      end
+
+      name_before_email_match = text.match(
+        /\b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)\s+#{EMAIL_REGEX.source}\b/i
+      )
+      if name_before_email_match
+        payload = normalized_name_payload(name_before_email_match)
+        return payload if valid_name_payload?(payload)
+      end
+
+      simple_name_match = text.strip.match(/\A([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)\z/i)
+      return {} unless simple_name_match
+
+      payload = normalized_name_payload(simple_name_match)
+      return {} unless valid_name_payload?(payload)
+
+      payload
+    end
+
+    def normalized_name_payload(match_data)
+      {
+        'first_name' => normalize_name_part(match_data[1]),
+        'last_name' => normalize_name_part(match_data[2])
+      }
+    end
+
+    def normalize_name_part(value)
+      value.to_s.strip.split(/\s+/).map(&:capitalize).join(' ')
+    end
+
+    def valid_name_payload?(payload)
+      first = payload['first_name'].to_s.downcase
+      last = payload['last_name'].to_s.downcase
+      return false if first.blank? || last.blank?
+      return false if PLACEHOLDER_NAME_PARTS.include?(first)
+      return false if PLACEHOLDER_NAME_PARTS.include?(last)
+
+      true
+    end
+
+    def missing_invite_fields(details:)
+      fields = []
+      fields << 'email' if details['email'].to_s.strip.blank?
+      fields << 'first_name' if details['first_name'].to_s.strip.blank?
+      fields << 'last_name' if details['last_name'].to_s.strip.blank?
+      fields
+    end
+
+    def invite_missing_details_message(missing_fields:)
+      return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_fields == ['email']
+      if missing_fields.intersect?(%w[first_name last_name]) && missing_fields.exclude?('email')
+        return I18n.t('app.workspaces.chat.planner.member_invite_needs_name')
+      end
+
+      I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
     end
 
     def fallback_assistant_message(action_type:)

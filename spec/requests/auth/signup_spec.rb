@@ -23,7 +23,12 @@ RSpec.describe 'Auth::Signups', type: :request do
     end
 
     it 'redirects /auth/signup/new to app workspaces' do
-      get '/auth/signup/new', params: { email: 'new-user@example.com', accept_terms: '1' }
+      get '/auth/signup/new', params: {
+        email: 'new-user@example.com',
+        first_name: 'New',
+        last_name: 'User',
+        accept_terms: '1'
+      }
 
       expect(response).to redirect_to(app_workspaces_path)
     end
@@ -54,13 +59,23 @@ RSpec.describe 'Auth::Signups', type: :request do
       let(:user) { create(:user) }
 
       it 'redirects back to the index page' do
-        get '/auth/signup/new', params: { email: user.email, accept_terms: '1' }
+        get '/auth/signup/new', params: {
+          email: user.email,
+          first_name: 'Existing',
+          last_name: 'User',
+          accept_terms: '1'
+        }
 
         expect(response).to redirect_to(auth_signup_index_path)
       end
 
       it 'displays a flash message' do
-        get '/auth/signup/new', params: { email: user.email, accept_terms: '1' }
+        get '/auth/signup/new', params: {
+          email: user.email,
+          first_name: 'Existing',
+          last_name: 'User',
+          accept_terms: '1'
+        }
 
         expect(flash[:alert]).to eq('An account with this email already exists')
       end
@@ -75,13 +90,13 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'creates a one time token' do
-        get '/auth/signup/new', params: { email:, accept_terms: '1' }
+        get '/auth/signup/new', params: { email:, first_name: 'Jess', last_name: 'Smith', accept_terms: '1' }
 
         expect(one_time_password_service).to have_received(:create!)
       end
 
       it 'renders the one time token inputs' do
-        get '/auth/signup/new', params: { email:, accept_terms: '1' }
+        get '/auth/signup/new', params: { email:, first_name: 'Jess', last_name: 'Smith', accept_terms: '1' }
 
         expect(response.body).to include('type="text" name="one_time_password_1"')
         expect(response.body).to include('type="text" name="one_time_password_2"')
@@ -102,13 +117,13 @@ RSpec.describe 'Auth::Signups', type: :request do
       end
 
       it 'redirects back to the index page' do
-        get '/auth/signup/new', params: { email:, accept_terms: '1' }
+        get '/auth/signup/new', params: { email:, first_name: 'Jess', last_name: 'Smith', accept_terms: '1' }
 
         expect(response).to redirect_to(auth_signup_index_path)
       end
 
       it 'displays a flash message' do
-        get '/auth/signup/new', params: { email:, accept_terms: '1' }
+        get '/auth/signup/new', params: { email:, first_name: 'Jess', last_name: 'Smith', accept_terms: '1' }
 
         expect(flash[:alert]).to eq(I18n.t('auth.unable_to_send_code'))
       end
@@ -118,13 +133,13 @@ RSpec.describe 'Auth::Signups', type: :request do
       let(:email) { "#{SecureRandom.base36}@email.com" }
 
       it 'redirects back to the index page' do
-        get '/auth/signup/new', params: { email: }
+        get '/auth/signup/new', params: { email:, first_name: 'Jess', last_name: 'Smith' }
 
         expect(response).to redirect_to(auth_signup_index_path)
       end
 
       it 'displays a flash message' do
-        get '/auth/signup/new', params: { email: }
+        get '/auth/signup/new', params: { email:, first_name: 'Jess', last_name: 'Smith' }
 
         expect(flash[:alert]).to eq('You must accept the Terms Of Service to continue')
       end

@@ -3,7 +3,7 @@
 require 'uri'
 
 module Tooling
-  class Registry
+  class Registry # rubocop:disable Metrics/ClassLength
     ToolDefinition = Struct.new(
       :name,
       :description,
@@ -16,6 +16,14 @@ module Tooling
     )
 
     SUPPORTED_TYPES = %w[string integer number boolean object array].freeze
+    TYPE_VALIDATORS = {
+      'string' => ->(value) { value.is_a?(String) },
+      'integer' => ->(value) { value.is_a?(Integer) },
+      'number' => ->(value) { value.is_a?(Numeric) },
+      'boolean' => ->(value) { [true, false].include?(value) },
+      'object' => ->(value) { value.is_a?(Hash) },
+      'array' => ->(value) { value.is_a?(Array) }
+    }.freeze
 
     def initialize(definitions:)
       @definitions = Array(definitions).index_by(&:name)
@@ -72,40 +80,15 @@ module Tooling
       end
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def validate_properties!(tool:, schema:, arguments:)
       properties = schema['properties'].to_h
       arguments.each do |field, value|
-        property = properties[field].to_h
-        next if property.empty?
-
-        expected_type = property['type'].to_s
-        unless expected_type.blank? || SUPPORTED_TYPES.include?(expected_type)
-          raise ValidationError.new(
-            tool_name: tool.name,
-            field: field,
-            message: "#{tool.name}: unsupported schema type `#{expected_type}` for `#{field}`",
-            code: 'invalid_schema'
-          )
-        end
-
-        validate_type!(tool:, field:, value:, expected_type:) if expected_type.present?
-        validate_min_length!(tool:, field:, value:, property:)
-        validate_enum!(tool:, field:, value:, property:)
-        validate_email_format!(tool:, field:, value:, property:)
+        validate_property!(tool:, properties:, field:, value:)
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def validate_type!(tool:, field:, value:, expected_type:)
-      valid = case expected_type
-              when 'string' then value.is_a?(String)
-              when 'integer' then value.is_a?(Integer)
-              when 'number' then value.is_a?(Numeric)
-              when 'boolean' then [true, false].include?(value)
-              when 'object' then value.is_a?(Hash)
-              when 'array' then value.is_a?(Array)
-              end
+      valid = TYPE_VALIDATORS.fetch(expected_type).call(value)
 
       return if valid
 
@@ -119,7 +102,7 @@ module Tooling
 
     def validate_min_length!(tool:, field:, value:, property:)
       min_length = property['min_length']
-      return unless min_length.present?
+      return if min_length.blank?
       return unless value.is_a?(String)
       return if value.strip.length >= min_length.to_i
 
@@ -153,6 +136,29 @@ module Tooling
         field: field,
         message: "#{tool.name}: field `#{field}` must be a valid email",
         code: 'invalid_argument'
+      )
+    end
+
+    def validate_property!(tool:, properties:, field:, value:)
+      property = properties[field].to_h
+      return if property.empty?
+
+      expected_type = property['type'].to_s
+      validate_schema_type!(tool:, field:, expected_type:)
+      validate_type!(tool:, field:, value:, expected_type:) if expected_type.present?
+      validate_min_length!(tool:, field:, value:, property:)
+      validate_enum!(tool:, field:, value:, property:)
+      validate_email_format!(tool:, field:, value:, property:)
+    end
+
+    def validate_schema_type!(tool:, field:, expected_type:)
+      return if expected_type.blank? || SUPPORTED_TYPES.include?(expected_type)
+
+      raise ValidationError.new(
+        tool_name: tool.name,
+        field: field,
+        message: "#{tool.name}: unsupported schema type `#{expected_type}` for `#{field}`",
+        code: 'invalid_schema'
       )
     end
   end

@@ -36,8 +36,8 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       it 'renders a list of data_sources' do
         get "/app/workspaces/#{workspace.id}/data_sources"
 
-        expect(response.body).to have_selector('.data-source-card h4 a', text: data_source_1.url)
-        expect(response.body).to have_selector('.data-source-card h4 a', text: data_source_2.url)
+        expect(response.body).to have_selector('.data-source-card h3 a', text: data_source_1.url)
+        expect(response.body).to have_selector('.data-source-card h3 a', text: data_source_2.url)
       end
     end
 

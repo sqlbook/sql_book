@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tooling
-  module WorkspaceTeamRegistry
+  module WorkspaceTeamRegistry # rubocop:disable Metrics/ModuleLength
     module_function
 
     TOOL_CATALOG = [
@@ -43,11 +43,11 @@ module Tooling
         description: 'Invite a member to the current workspace.',
         input_schema: {
           'type' => 'object',
-          'required' => ['email'],
+          'required' => %w[first_name last_name email],
           'properties' => {
             'email' => { 'type' => 'string', 'format' => 'email' },
-            'first_name' => { 'type' => 'string' },
-            'last_name' => { 'type' => 'string' },
+            'first_name' => { 'type' => 'string', 'min_length' => 1 },
+            'last_name' => { 'type' => 'string', 'min_length' => 1 },
             'role' => { 'type' => 'integer', 'enum' => Chat::Policy::EDITABLE_ROLES }
           }
         },
