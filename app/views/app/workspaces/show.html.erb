@@ -1,11 +1,14 @@
-<main class="workspace-chat-page <%= @chat_threads.any? ? 'chat-sidebar-open' : 'chat-sidebar-closed' %>"
-      data-controller="workspace-chat"
-      data-workspace-chat-workspace-id-value="<%= @workspace.id %>"
-      data-workspace-chat-thread-id-value="<%= @chat_thread&.id || 0 %>"
-      data-workspace-chat-sidebar-default-open-value="<%= @chat_threads.any? %>"
-      data-workspace-chat-new-chat-path-value="<%= app_workspace_path(@workspace, new_chat: 1) %>"
-      data-workspace-chat-mobile-breakpoint-value="760"
-      data-workspace-chat-i18n-value="<%= json_escape({
+<% layout_sidebar_class = @chat_threads.any? ? "chat-history-open" : "chat-history-closed" %>
+<% content_for :app_content_layout_class, "split app-workspace-chat-layout #{layout_sidebar_class}" %>
+
+<div class="workspace-chat-page <%= @chat_threads.any? ? 'chat-sidebar-open' : 'chat-sidebar-closed' %>"
+     data-controller="workspace-chat"
+     data-workspace-chat-workspace-id-value="<%= @workspace.id %>"
+     data-workspace-chat-thread-id-value="<%= @chat_thread&.id || 0 %>"
+     data-workspace-chat-sidebar-default-open-value="<%= @chat_threads.any? %>"
+     data-workspace-chat-new-chat-path-value="<%= app_workspace_path(@workspace, new_chat: 1) %>"
+     data-workspace-chat-mobile-breakpoint-value="760"
+     data-workspace-chat-i18n-value="<%= json_escape({
         maxImagesError: I18n.t('app.workspaces.chat.errors.max_images', count: ChatMessage::MAX_IMAGE_COUNT),
         unsupportedImagesError: I18n.t('app.workspaces.chat.errors.unsupported_images'),
         imageTooLargeError: I18n.t('app.workspaces.chat.errors.image_too_large'),
@@ -112,7 +115,7 @@
     </p>
   </aside>
 
-  <section class="chat-pane">
+  <main class="chat-pane">
     <button type="button"
             class="chat-sidebar-icon-button chat-pane-sidebar-open"
             data-workspace-chat-target="sidebarOpenButton"
@@ -211,5 +214,5 @@
         <%= form.submit I18n.t('common.actions.send'), class: "chat-composer-submit" %>
       <% end %>
     <% end %>
-  </section>
-</main>
+  </main>
+</div>

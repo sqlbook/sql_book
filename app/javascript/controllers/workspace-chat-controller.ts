@@ -545,6 +545,7 @@ export default class extends Controller<HTMLDivElement> {
   private setSidebarOpen(open: boolean, persist = true): void {
     this.element.classList.toggle('chat-sidebar-open', open);
     this.element.classList.toggle('chat-sidebar-closed', !open);
+    this.syncLayoutSidebarState(open);
 
     if (this.hasSidebarOpenButtonTarget) {
       this.sidebarOpenButtonTarget.setAttribute('aria-label', this.translate('sidebarOpenAria'));
@@ -557,6 +558,14 @@ export default class extends Controller<HTMLDivElement> {
     }
 
     if (persist) this.persistSidebarPreference(open);
+  }
+
+  private syncLayoutSidebarState(open: boolean): void {
+    const layout = this.element.closest('.app-content-layout');
+    if (!(layout instanceof HTMLElement)) return;
+
+    layout.classList.toggle('chat-history-open', open);
+    layout.classList.toggle('chat-history-closed', !open);
   }
 
   private persistSidebarPreference(open: boolean): void {

@@ -149,6 +149,31 @@ Why:
 - Production has `config.assets.compile = false`.
 - If precompile is skipped, the app can request digested assets that do not exist and render unstyled pages (`/assets/application-*.css` 404).
 
+## Chat release verification (staging shell)
+Use this check after chat UI/planner deploys to prove what staging is running.
+
+```bash
+echo "RENDER_GIT_COMMIT=$RENDER_GIT_COMMIT"
+grep -n 'content_for :app_content_layout_class, "split app-workspace-chat-layout' app/views/app/workspaces/show.html.erb
+grep -n 'ri-sidebar-fold-line' app/views/app/workspaces/show.html.erb
+grep -n 'ri-sidebar-unfold-line' app/views/app/workspaces/show.html.erb
+grep -n 'member_invite_intent?' app/services/chat/planner_service.rb
+```
+
+Then verify compiled CSS fingerprint + critical rules:
+
+```bash
+CSS=$(ls -1 public/assets/application-*.css | tail -n 1); \
+echo "CSS_FILE=$CSS"; \
+grep -q "app-workspace-chat-layout.chat-history-open{grid-template-columns:260px minmax(0,1fr)" "$CSS" && echo "split layout css: OK" || echo "split layout css: MISSING"; \
+grep -q "chat-composer-sticky{bottom:calc(-1*var(--chat-panel-padding));isolation:isolate" "$CSS" && echo "composer mask css: OK" || echo "composer mask css: MISSING"
+```
+
+If any check is missing:
+- confirm latest commit is on `origin/main`
+- confirm both Render services are configured to branch `main`
+- trigger a fresh deploy on web + worker
+
 ## Notes and decisions
 - 2026-02-15: Chose 5 GB staging Postgres storage to minimize initial cost.
 - 2026-02-15: Renamed Render project from `My project` to `sqlbook`.
