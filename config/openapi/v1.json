@@ -1,0 +1,339 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "sqlbook API",
+    "version": "v1",
+    "description": "Workspace and team management API used by chat runtime and app surfaces."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "cookieAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/workspaces/{workspace_id}": {
+      "patch": {
+        "operationId": "workspaceUpdateName",
+        "summary": "Update workspace name",
+        "tags": ["Workspace"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "workspaceDelete",
+        "summary": "Delete workspace",
+        "tags": ["Workspace"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members": {
+      "get": {
+        "operationId": "memberList",
+        "summary": "List workspace members",
+        "tags": ["Members"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          }
+        }
+      },
+      "post": {
+        "operationId": "memberInvite",
+        "summary": "Invite workspace member",
+        "tags": ["Members"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "type": "integer",
+                    "description": "Optional role id. Defaults to User when omitted."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members/resend-invite": {
+      "post": {
+        "operationId": "memberResendInvite",
+        "summary": "Resend pending invitation",
+        "tags": ["Members"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "integer"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members/{id}/role": {
+      "patch": {
+        "operationId": "memberUpdateRole",
+        "summary": "Update member role",
+        "tags": ["Members"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/memberId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members/{id}": {
+      "delete": {
+        "operationId": "memberRemove",
+        "summary": "Remove workspace member",
+        "tags": ["Members"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/memberId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ToolExecuted"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "_sqlbook_session"
+      }
+    },
+    "parameters": {
+      "workspaceId": {
+        "name": "workspace_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "memberId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      }
+    },
+    "responses": {
+      "ToolExecuted": {
+        "description": "Tool execution succeeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ToolResponse"
+            }
+          }
+        }
+      },
+      "ToolForbidden": {
+        "description": "Action forbidden for current role/scope",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ToolResponse"
+            }
+          }
+        }
+      },
+      "ToolValidationError": {
+        "description": "Invalid payload for requested operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ToolResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ToolResponse": {
+        "type": "object",
+        "required": ["status", "message", "data"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed", "forbidden", "validation_error", "execution_error"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "error_code": {
+            "type": ["string", "null"]
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

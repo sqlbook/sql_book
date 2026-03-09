@@ -142,7 +142,8 @@ CREATE TABLE public.chat_action_requests (
     confirmation_expires_at timestamp(6) without time zone,
     executed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    idempotency_key character varying
 );
 
 
@@ -903,6 +904,13 @@ CREATE UNIQUE INDEX index_chat_action_requests_on_confirmation_token ON public.c
 
 
 --
+-- Name: index_chat_action_requests_on_idempotency_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_chat_action_requests_on_idempotency_key ON public.chat_action_requests USING btree (idempotency_key);
+
+
+--
 -- Name: index_chat_action_requests_on_requested_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1188,6 +1196,7 @@ ALTER TABLE ONLY public.chat_action_requests
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260309102000'),
 ('20260307150100'),
 ('20260307150000'),
 ('20260305091000'),

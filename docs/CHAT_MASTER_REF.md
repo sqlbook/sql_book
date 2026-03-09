@@ -1,9 +1,9 @@
 # Chat Master Reference
 
-Last updated: 2026-03-08
+Last updated: 2026-03-09
 
 ## Purpose
-Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, and localization rules.
+Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
 
 Related references:
 - `docs/WORKSPACES_MASTER_REF.md`
@@ -11,9 +11,10 @@ Related references:
 - `docs/TRANSLATIONS_MASTER_REF.md`
 - `docs/ENGINEERING_GUARDRAILS.md`
 - `docs/ENV_VARS.md`
+- `docs/RENDER_MASTER_REF.md`
 
 ## Runtime configuration
-- `OPENAI_API_KEY` (required for LLM-backed planning/title generation)
+- `OPENAI_API_KEY` (required for LLM-backed chat runtime and thread title generation)
 - `OPENAI_CHAT_MODEL` (optional, defaults to `gpt-5-mini`)
 - `OPENAI_RESPONSES_ENDPOINT` (optional, defaults to `https://api.openai.com/v1/responses`)
 
@@ -26,10 +27,23 @@ Related references:
   - data source, query, dashboard, billing/subscription/admin/super-admin actions
   - owner-role promotion via chat
 
+## Core architecture
+- Runtime orchestrator: `Chat::RuntimeService`
+  - single-model structured-output decision path
+  - optional planner fallback only if model output is missing/invalid
+  - supports multimodal image context (bounded inline subset)
+- Shared tooling foundation:
+  - `Tooling::Registry`
+  - `Tooling::WorkspaceTeamRegistry`
+  - `Tooling::WorkspaceTeamHandlers`
+- Server-authoritative policy/execution:
+  - `Chat::Policy` for role/scope checks
+  - `Chat::ActionExecutor` for normalized execution statuses
+
 ## Data model
 - `ChatThread` (`chat_threads`)
-  - workspace-scoped container
-  - supports future multi-thread UI
+  - workspace-scoped conversation container
+  - supports multi-thread history and future thread switching UX
 - `ChatMessage` (`chat_messages`)
   - role: `user`, `assistant`, `system`
   - status: `pending`, `completed`, `failed`
@@ -38,8 +52,10 @@ Related references:
   - structured action proposal with payload
   - confirmation token + expiry
   - lifecycle status: pending confirmation / executed / canceled / forbidden / validation error / execution error
+  - idempotency key for deduplicating repeated write requests
 
-## HTTP interface
+## HTTP interfaces
+App routes:
 - `GET /app/workspaces/:workspace_id/chat/threads`
 - `POST /app/workspaces/:workspace_id/chat/threads`
 - `PATCH /app/workspaces/:workspace_id/chat/threads/:id`
@@ -49,28 +65,35 @@ Related references:
 - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm`
 - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel`
 
-## Thread/sidebar UX behavior
-- Sidebar width is fixed at `260px` on desktop.
-- Sidebar is closed by default only when a workspace has no persisted chat threads yet.
-- Sidebar open/closed preference is stored in session storage per workspace and reused during the same browser session.
-- On mobile (`<=760px`), sidebar opens as full chat-surface overlay and collapses after thread selection (or manual close).
-- "New chat" starts as a draft view and does not create/list a thread until first message submission.
-- Thread title is generated from the first user message (LLM-first with deterministic fallback).
-- Thread list supports local title search (filter activates at 2+ characters), inline rename, and archive/delete from row menu.
+API v1 routes (internal-first, documented):
+- `PATCH /api/v1/workspaces/:workspace_id`
+- `DELETE /api/v1/workspaces/:workspace_id`
+- `GET /api/v1/workspaces/:workspace_id/members`
+- `POST /api/v1/workspaces/:workspace_id/members`
+- `POST /api/v1/workspaces/:workspace_id/members/resend-invite`
+- `PATCH /api/v1/workspaces/:workspace_id/members/:id/role`
+- `DELETE /api/v1/workspaces/:workspace_id/members/:id`
 
-## Action contract
-Planner/executor payload contract includes:
+Docs surface:
+- `GET /dev/api`
+- `GET /dev/api/openapi.json`
+
+## Tool contract
+Tool definition contract:
+- `name`
+- `description`
+- `input_schema`
+- `output_schema`
+- `risk_level`
+- `confirmation_mode`
+- `handler`
+
+Runtime action payload contract:
 - `action_type`
 - structured `payload`
 - `workspace_id`
 - `thread_id`
 - `message_id`
-
-Planner prompt requirements:
-- include assistant role context (sqlbook workspace chat assistant)
-- include product context (workspace/team/data-source/query/dashboard concepts)
-- clearly separate current executable scope (workspace/team actions) from future capabilities
-- require clean structured payloads for executable actions
 
 Executor result statuses:
 - `requires_confirmation`
@@ -79,7 +102,7 @@ Executor result statuses:
 - `validation_error`
 - `execution_error`
 
-## Allowlist and denylist
+## Allowlist and blocked namespaces
 Allowed action types:
 - `workspace.update_name`
 - `workspace.delete`
@@ -101,24 +124,61 @@ Blocked prefixes:
 - `admin.*`
 - `super_admin.*`
 
+## Risk and confirmation policy
+Read actions (`confirmation_mode: none`):
+- `member.list`
+
+Low-risk writes (auto-run, no confirmation):
+- `workspace.update_name`
+- `member.invite`
+- `member.resend_invite`
+
+High-risk writes (inline confirmation required):
+- `workspace.delete`
+- `member.update_role`
+- `member.remove`
+
 ## Authorization and scope enforcement
-- Chat authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
+- Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
 - Role and outrank rules mirror workspace team-management permissions.
 - `workspace.delete` is owner-only.
-- `member.invite` / `member.update_role` restrict target roles to non-owner editable roles.
+- `member.invite` / `member.update_role` restrict target roles to editable non-owner roles.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 
+## Runtime decision flow
+1. User message is persisted immediately.
+2. Runtime returns structured decision:
+   - `assistant_message`
+   - `tool_calls[]` (`tool_name`, `arguments`)
+   - `missing_information[]`
+   - `finalize_without_tools`
+3. If `missing_information` exists, assistant asks follow-up (no execution).
+4. If tool call is high-risk write, create confirmation card.
+5. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
+6. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+
+## Idempotency behavior (writes)
+- Write actions use deterministic idempotency keys scoped by workspace/thread/actor/tool/payload.
+- Duplicate submissions inside the idempotency window reuse prior request state/result.
+- Prevents duplicate side effects on retries or repeated Enter submits.
+
 ## Confirmation lifecycle
-- All mutating actions require explicit inline confirmation.
-- Confirmations are only created when required action fields are present.
-  - Example: `member.invite` requires an email first.
-  - If required fields are missing, assistant asks a follow-up question instead of creating a confirmation card.
-- Pending confirmation requests have expiry (`15 minutes`).
+- Confirmation required only for high-risk writes.
 - Confirm endpoint validates:
   - request is pending
   - token is valid
   - token is not expired
 - Cancel endpoint marks pending requests canceled and appends assistant confirmation text.
+- Pending confirmation expiry: `15 minutes`.
+
+## Thread/sidebar UX behavior
+- Sidebar width is fixed at `260px` on desktop.
+- Sidebar is closed by default only when a workspace has no persisted chat threads yet.
+- Sidebar open/closed preference is stored in session storage per workspace and reused during the same browser session.
+- On mobile (`<=760px`), sidebar opens as full chat-surface overlay and collapses after thread selection (or manual close).
+- "New chat" starts as a draft view and does not create/list a thread until first message submission.
+- Thread title is generated from the first user message (LLM-first with deterministic fallback).
+- Thread list supports local title search (filter activates at 2+ characters), inline rename, and archive/delete from row menu.
 
 ## Attachment behavior (v1)
 - Accepted MIME types:
@@ -129,13 +189,13 @@ Blocked prefixes:
 - Limits:
   - max `6` images per message
   - max `25MB` per image
-- Validation occurs in both controller boundary and model validation.
-- Planner includes attachment context for tool selection and can inline a bounded subset of images for multimodal reasoning.
+- Validation occurs at controller and model boundaries.
+- Runtime receives attachment context and can inline a bounded subset for multimodal reasoning.
 
 ## Workspace delete behavior in chat
-- Confirmed `workspace.delete` action reuses `WorkspaceDeletionService`.
+- Confirmed `workspace.delete` reuses `WorkspaceDeletionService`.
 - Executor returns `redirect_path: /app/workspaces`.
-- Existing deletion side-effects remain authoritative (toast + notification behavior).
+- Existing deletion side effects remain authoritative (toast + notification behavior).
 
 ## Localization and copy rules
 - All deterministic chat copy must use locale keys:
@@ -143,28 +203,32 @@ Blocked prefixes:
   - composer helper/aria text
   - confirmation card labels
   - status rows
-  - non-LLM planner fallback copy
-  - executor success/error copy
-  - controller validation copy
+  - planner fallback copy
+  - executor/API validation and result copy
   - client-side validation/fallback errors
-- LLM free-form responses are dynamic and not locale-key managed.
-- Deterministic follow-up questions for missing action fields must use locale keys (same as other deterministic chat copy).
+- LLM free-form responses are dynamic and are not locale-key managed.
+- Deterministic follow-up prompts for missing required fields must use locale keys.
 - Current supported locales: `en`, `es`.
 - When adding chat copy:
-  1. check for existing reusable keys (`common.actions.*`) first
+  1. check reusable keys first (`common.*`, existing workspace/team labels)
   2. add missing keys under `app.workspaces.chat.*`
   3. add both `en` and `es` entries in the same change
-  4. verify via request spec with a non-default locale
+  4. verify through request specs with non-default locale
 
 ## Testing baseline
-- Policy tests for allowlist/blocked namespaces and role checks.
+- Policy tests for allowlist/blocked namespaces and role/scope checks.
+- Tool registry tests for schema validation and normalized error handling.
+- Runtime tests for structured parsing and fallback behavior.
 - Request specs for:
   - message creation and rendering
   - confirmation/cancel lifecycle
   - attachment validations (type/count/size)
-  - localized copy behavior for Spanish locale
-- Integration behavior for workspace deletion redirect and action status handling.
+  - idempotency dedupe behavior
+  - localized deterministic copy behavior (`es`)
+- API docs checks:
+  - `/dev/api` and `/dev/api/openapi.json` availability
+  - OpenAPI contract validation task (`rake openapi:validate`)
 
-## Component Preview Surface
+## Component preview surface
 - Route: `GET /app/chat-components`
 - Purpose: visual QA page for chat component styling/states before final design sign-off.

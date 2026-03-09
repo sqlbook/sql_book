@@ -190,10 +190,8 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to include('Chats')
         expect(response.body).to include('Search...')
         expect(response.body).to include('Type here to begin a new chat...')
-        expect(response.body).to include('ri-sidebar-fold-line')
-        expect(response.body).to include('ri-sidebar-unfold-line')
-        expect(response.body).not_to include('ri-sidebar-fold-fill')
-        expect(response.body).not_to include('ri-sidebar-unfold-fill')
+        expect(response.body).to include('chat-sidebar-icon-fold')
+        expect(response.body).to include('chat-sidebar-icon-unfold')
       end
 
       it 'renders breadcrumbs with workspace as the current page' do

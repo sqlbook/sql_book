@@ -43,7 +43,12 @@
                 data-action="workspace-chat#toggleSidebar"
                 data-workspace-chat-target="sidebarCloseButton"
                 aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.close_aria') %>">
-          <i class="ri-sidebar-fold-line"></i>
+          <svg class="chat-sidebar-icon chat-sidebar-icon-fold"
+               viewBox="0 0 24 24"
+               aria-hidden="true"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 5H13V19H5V5ZM19 19H15V5H19V19ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V4C21 3.44772 20.5523 3 20 3H4ZM7 12L11 8.5V15.5L7 12Z" />
+          </svg>
         </button>
       </div>
     </header>
@@ -121,7 +126,12 @@
             data-workspace-chat-target="sidebarOpenButton"
             data-action="workspace-chat#toggleSidebar"
             aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.open_aria') %>">
-      <i class="ri-sidebar-unfold-line"></i>
+      <svg class="chat-sidebar-icon chat-sidebar-icon-unfold"
+           viewBox="0 0 24 24"
+           aria-hidden="true"
+           xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 5H13V19H5V5ZM19 19H15V5H19V19ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V4C21 3.44772 20.5523 3 20 3H4ZM11 12L7 8.5V15.5L11 12Z" />
+      </svg>
     </button>
 
     <% if @chat_messages.empty? %>

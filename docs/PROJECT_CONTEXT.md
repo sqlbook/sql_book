@@ -20,12 +20,18 @@ sqlbook lets users:
 ## Near-Term Priorities
 1. Stable staging environment (`staging.sqlbook.com`).
 2. Reliable auth email delivery in staging/production.
-3. Workspace-scoped chat v1 for workspace/team management actions with confirmation and localization.
+3. Workspace-scoped chat v1 for workspace/team actions using LLM-first runtime + shared tool registry, with risk-based confirmation and localization.
 4. Generalize data sources from first-party-only to multi-type connectors.
 5. Implement connector adapter architecture and strict query safety guardrails.
 6. Ship first external connector (PostgreSQL, live query mode).
 7. Update data source/query UX for connector catalog + connector-aware schema explorer.
 8. Dashboard MVP on top of the new connector model.
+
+## Current Chat Runtime Snapshot
+- Chat execution scope remains limited to workspace + team management actions.
+- Shared tool registry is now the canonical server execution interface for chat actions.
+- Public API docs for workspace/team contracts are available at `/dev/api` (API routes remain auth-protected).
+- High-risk writes (`workspace.delete`, `member.update_role`, `member.remove`) require confirmation; low-risk writes auto-run.
 
 ## Architecture Principles
 - Optimize for shipping and maintainability over maximal control.

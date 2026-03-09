@@ -32,6 +32,7 @@ class ChatActionRequest < ApplicationRecord
     ]
   }
   validates :confirmation_token, uniqueness: true, allow_nil: true
+  validates :idempotency_key, uniqueness: true, allow_nil: true
 
   before_validation :assign_confirmation_defaults, on: :create
 

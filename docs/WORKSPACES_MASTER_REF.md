@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-07
+Last updated: 2026-03-09
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -31,9 +31,17 @@ Related references:
   - `DELETE /app/workspaces/:workspace_id/members/:id` -> remove member (role constrained)
 - Workspace chat:
   - `GET /app/workspaces/:workspace_id/chat/messages` -> incremental chat history
-  - `POST /app/workspaces/:workspace_id/chat/messages` -> submit chat message and receive planner/execution response
-  - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm` -> confirm pending mutating action
-  - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel` -> cancel pending mutating action
+  - `POST /app/workspaces/:workspace_id/chat/messages` -> submit chat message and receive runtime decision/execution response
+  - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm` -> confirm pending high-risk action
+  - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel` -> cancel pending high-risk action
+- Workspace/team API v1 (auth-protected, documented via `/dev/api`):
+  - `PATCH /api/v1/workspaces/:workspace_id`
+  - `DELETE /api/v1/workspaces/:workspace_id`
+  - `GET /api/v1/workspaces/:workspace_id/members`
+  - `POST /api/v1/workspaces/:workspace_id/members`
+  - `POST /api/v1/workspaces/:workspace_id/members/resend-invite`
+  - `PATCH /api/v1/workspaces/:workspace_id/members/:id/role`
+  - `DELETE /api/v1/workspaces/:workspace_id/members/:id`
 
 ## Roles and authorization
 - Roles in `Member`:
@@ -107,7 +115,8 @@ Related references:
   - `query.*`
   - `dashboard.*`
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
-- Mutating chat actions always require explicit inline confirmation.
+- Low-risk chat writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`).
+- High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
 - Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
 

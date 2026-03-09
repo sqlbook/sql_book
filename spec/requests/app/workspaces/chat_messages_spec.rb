@@ -100,15 +100,33 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(created_thread.title).not_to end_with('?')
     end
 
-    it 'creates a confirmation request for write actions' do
+    it 'auto-executes low-risk write actions' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'rename workspace to New Name' }, as: :json
       end.to change(ChatActionRequest, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
-      expect(payload['status']).to eq('requires_confirmation')
-      expect(payload['action_request']['action_type']).to eq('workspace.update_name')
+      expect(payload['status']).to eq('executed')
+      expect(workspace.reload.name).to eq('New Name')
+      expect(ChatActionRequest.order(:id).last.status).to eq(ChatActionRequest::Statuses::EXECUTED)
+    end
+
+    it 'deduplicates repeated low-risk writes with idempotency keys' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'rename workspace to Repeated Name' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'rename workspace to Repeated Name' },
+             as: :json
+      end.not_to change(ChatActionRequest, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(workspace.reload.name).to eq('Repeated Name')
     end
 
     it 'extracts a clean target name for rename questions' do
@@ -118,9 +136,8 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
-      expect(payload['status']).to eq('requires_confirmation')
-      expect(payload['action_request']['action_type']).to eq('workspace.update_name')
-      expect(payload['action_request']['payload']['name']).to eq('Bumanarama')
+      expect(payload['status']).to eq('executed')
+      expect(workspace.reload.name).to eq('Bumanarama')
     end
 
     it 'asks for email before proposing an invite action' do
@@ -135,7 +152,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['messages'].last['content']).to eq('Sure. What email should I send the invitation to?')
     end
 
-    it 'continues invite flow after email follow-up in mixed context threads' do
+    it 'continues invite flow after email follow-up in mixed context threads without confirmation' do
       post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
       thread_id = response.parsed_body['thread_id']
 
@@ -152,9 +169,11 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
-      expect(payload['status']).to eq('requires_confirmation')
-      expect(payload.dig('action_request', 'action_type')).to eq('member.invite')
-      expect(payload.dig('action_request', 'payload', 'email')).to eq('hello@sqlbook.com')
+      expect(payload['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('hello@sqlbook.com')
+      invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
+      expect(invited_member).to be_present
+      expect(invited_member.role).to eq(Member::Roles::USER)
     end
 
     it 'asks for workspace name before proposing a rename action' do
@@ -167,6 +186,26 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('ok')
       expect(payload['messages'].last['role']).to eq('assistant')
       expect(payload['messages'].last['content']).to eq('Sure. What should the new workspace name be?')
+    end
+
+    it 'keeps high-risk member removal behind confirmation' do
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'remove user bob@example.com' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('requires_confirmation')
+      expect(payload.dig('action_request', 'action_type')).to eq('member.remove')
     end
 
     it 'rejects non-image attachments' do

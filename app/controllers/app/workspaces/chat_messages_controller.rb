@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require 'digest'
+
 module App
   module Workspaces
     class ChatMessagesController < ApplicationController # rubocop:disable Metrics/ClassLength
+      IDEMPOTENCY_WINDOW = 10.minutes
+
       before_action :require_authentication!
 
       def index
@@ -15,7 +19,7 @@ module App
         }
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def create
         validation_error = submission_validation_error
         return render_validation_error(message: validation_error) if validation_error
@@ -27,46 +31,88 @@ module App
         append_system_message(content: I18n.t('app.workspaces.chat.statuses.thinking'))
         action_payload_context = action_payload_context_for(message: user_message)
 
-        plan = Chat::PlannerService.new(
+        runtime = Chat::RuntimeService.new(
           message: params[:content],
           workspace:,
           actor: current_user,
-          attachments: user_message.images.attachments,
-          conversation_messages: planner_conversation_messages
-        ).call
+          tool_metadata: runtime_tool_metadata,
+          context: {
+            attachments: user_message.images.attachments,
+            conversation_messages: planner_conversation_messages
+          }
+        )
+        decision = runtime.call
 
-        if plan.action_type.blank?
+        if decision.missing_information.any?
+          follow_up = decision.assistant_message.presence || decision.missing_information.join(' ')
+          return render_non_action_response(user_message:, assistant_content: follow_up)
+        end
+
+        tool_call = decision.tool_calls.first
+        if decision.finalize_without_tools || tool_call.nil?
+          assistant_content = decision.assistant_message.presence || I18n.t('app.workspaces.chat.planner.default_help')
+          return render_non_action_response(user_message:, assistant_content:)
+        end
+
+        tool_definition = runtime_tool_definition(tool_call.tool_name)
+        unless tool_definition
           return render_non_action_response(
             user_message:,
-            assistant_content: plan.assistant_message
+            assistant_content: I18n.t('app.workspaces.chat.executor.forbidden')
           )
         end
 
-        missing_details_message = missing_details_message_for(action_type: plan.action_type, payload: plan.payload.to_h)
+        payload = tool_call.arguments.to_h.merge(action_payload_context)
+        missing_details_message = missing_details_message_for(action_type: tool_call.tool_name, payload:)
         if missing_details_message.present?
-          return render_non_action_response(
-            user_message:,
-            assistant_content: missing_details_message
-          )
+          return render_non_action_response(user_message:, assistant_content: missing_details_message)
         end
 
-        if Chat::Policy.write_action?(plan.action_type)
+        idempotency_key = nil
+        if write_tool?(tool_definition)
+          idempotency_key = idempotency_key_for(tool_name: tool_call.tool_name, payload: tool_call.arguments.to_h)
+          existing_request = existing_write_request(idempotency_key:)
+          if existing_request
+            return render_existing_write_response(
+              user_message:,
+              action_request: existing_request,
+              assistant_content: decision.assistant_message
+            )
+          end
+        end
+
+        if confirmation_required?(tool_definition)
           return render_confirmation_response(
             user_message:,
-            plan:,
-            payload_context: action_payload_context
+            action_type: tool_call.tool_name,
+            payload:,
+            assistant_content: decision.assistant_message,
+            idempotency_key:
           )
         end
 
         append_system_message(content: I18n.t('app.workspaces.chat.statuses.checking_permissions'))
-        execution = Chat::ActionExecutor.new(workspace:, actor: current_user).execute(
-          action_type: plan.action_type,
-          payload: plan.payload.to_h.merge(action_payload_context)
-        )
+        execution = action_executor.execute(action_type: tool_call.tool_name, payload:)
+        if execution.status == 'executed' && read_tool?(tool_definition)
+          execution.user_message = runtime.compose_tool_result_message(
+            tool_name: tool_call.tool_name,
+            tool_arguments: tool_call.arguments.to_h,
+            execution:
+          )
+        end
+        if write_tool?(tool_definition)
+          persist_auto_executed_request(
+            user_message:,
+            action_type: tool_call.tool_name,
+            payload:,
+            execution:,
+            idempotency_key:
+          )
+        end
 
         render_execution_response(user_message:, execution:)
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
       private
 
@@ -247,20 +293,21 @@ module App
         }
       end
 
-      def render_confirmation_response(user_message:, plan:, payload_context:) # rubocop:disable Metrics/AbcSize
+      def render_confirmation_response(user_message:, action_type:, payload:, assistant_content:, idempotency_key:) # rubocop:disable Metrics/AbcSize
         action_request = chat_thread.chat_action_requests.create!(
           chat_message: user_message,
           requested_by: current_user,
-          action_type: plan.action_type,
-          payload: plan.payload.to_h.merge(payload_context),
-          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION
+          action_type:,
+          payload:,
+          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION,
+          idempotency_key:
         )
 
         assistant_message = chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
           status: ChatMessage::Statuses::COMPLETED,
           content: [
-            plan.assistant_message,
+            assistant_content.presence || I18n.t('app.workspaces.chat.messages.confirmation_default'),
             I18n.t('app.workspaces.chat.messages.confirm_suffix')
           ].join(' '),
           metadata: {
@@ -296,6 +343,51 @@ module App
           thread_id: chat_thread.id,
           messages: [serialize_message(message: user_message), serialize_message(message: assistant_message)],
           data: execution.data
+        }
+      end
+
+      def render_existing_write_response(user_message:, action_request:, assistant_content:) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+        if action_request.pending_confirmation?
+          pending_content = assistant_content.presence || I18n.t('app.workspaces.chat.messages.request_already_pending')
+          assistant_message = chat_thread.chat_messages.create!(
+            role: ChatMessage::Roles::ASSISTANT,
+            status: ChatMessage::Statuses::COMPLETED,
+            content: [pending_content, I18n.t('app.workspaces.chat.messages.confirm_suffix')].join(' '),
+            metadata: {
+              action_request_id: action_request.id,
+              action_state: 'requires_confirmation'
+            }
+          )
+          append_system_message(content: I18n.t('app.workspaces.chat.statuses.ready_to_confirm'))
+
+          return render json: {
+            status: 'requires_confirmation',
+            thread_id: chat_thread.id,
+            action_request: serialize_action_request(action_request:),
+            messages: [serialize_message(message: user_message), serialize_message(message: assistant_message)]
+          }
+        end
+
+        duplicated_content = action_request.result_payload.to_h['user_message'].to_s
+        if duplicated_content.blank?
+          duplicated_content = I18n.t('app.workspaces.chat.messages.request_already_processed')
+        end
+        assistant_status = if action_request.status == ChatActionRequest::Statuses::EXECUTED
+                             ChatMessage::Statuses::COMPLETED
+                           else
+                             ChatMessage::Statuses::FAILED
+                           end
+        assistant_message = chat_thread.chat_messages.create!(
+          role: ChatMessage::Roles::ASSISTANT,
+          status: assistant_status,
+          content: duplicated_content
+        )
+
+        render json: {
+          status: action_request.status_name,
+          thread_id: chat_thread.id,
+          messages: [serialize_message(message: user_message), serialize_message(message: assistant_message)],
+          data: action_request.result_payload.to_h['data'] || {}
         }
       end
 
@@ -343,6 +435,88 @@ module App
           confirmation_token: action_request.confirmation_token,
           confirmation_expires_at: action_request.confirmation_expires_at&.iso8601
         }
+      end
+
+      def action_executor
+        @action_executor ||= Chat::ActionExecutor.new(workspace:, actor: current_user)
+      end
+
+      def runtime_tool_metadata
+        @runtime_tool_metadata ||= Tooling::WorkspaceTeamRegistry.tool_metadata
+      end
+
+      def runtime_tool_definition(tool_name)
+        @runtime_tool_definitions ||= runtime_tool_metadata.index_by { |tool| tool[:name] }
+        @runtime_tool_definitions[tool_name]
+      end
+
+      def write_tool?(tool_definition)
+        tool_definition[:risk_level].to_s != 'read'
+      end
+
+      def read_tool?(tool_definition)
+        tool_definition[:risk_level].to_s == 'read'
+      end
+
+      def confirmation_required?(tool_definition)
+        tool_definition[:confirmation_mode].to_s == 'required'
+      end
+
+      def idempotency_key_for(tool_name:, payload:)
+        stable_json = stable_payload_json(payload)
+        Digest::SHA256.hexdigest("#{workspace.id}:#{chat_thread.id}:#{current_user.id}:#{tool_name}:#{stable_json}")
+      end
+
+      def stable_payload_json(payload)
+        JSON.generate(deep_sorted_value(payload))
+      end
+
+      def deep_sorted_value(value)
+        case value
+        when Hash
+          value.to_h.sort.to_h { |key, child| [key.to_s, deep_sorted_value(child)] }
+        when Array
+          value.map { |child| deep_sorted_value(child) }
+        else
+          value
+        end
+      end
+
+      def existing_write_request(idempotency_key:)
+        return nil if idempotency_key.blank?
+
+        chat_thread.chat_action_requests
+          .where(requested_by: current_user, idempotency_key:)
+          .where(created_at: IDEMPOTENCY_WINDOW.ago..)
+          .order(id: :desc)
+          .first
+      end
+
+      def persist_auto_executed_request(user_message:, action_type:, payload:, execution:, idempotency_key:)
+        chat_thread.chat_action_requests.create!(
+          chat_message: user_message,
+          requested_by: current_user,
+          action_type:,
+          payload:,
+          result_payload: {
+            'user_message' => execution.user_message,
+            'data' => execution.data
+          },
+          status: status_for_result(result_status: execution.status),
+          idempotency_key:,
+          executed_at: Time.current
+        )
+      rescue ActiveRecord::RecordNotUnique
+        nil
+      end
+
+      def status_for_result(result_status:)
+        {
+          'executed' => ChatActionRequest::Statuses::EXECUTED,
+          'forbidden' => ChatActionRequest::Statuses::FORBIDDEN,
+          'validation_error' => ChatActionRequest::Statuses::VALIDATION_ERROR,
+          'execution_error' => ChatActionRequest::Statuses::EXECUTION_ERROR
+        }.fetch(result_status, ChatActionRequest::Statuses::EXECUTION_ERROR)
       end
     end
   end

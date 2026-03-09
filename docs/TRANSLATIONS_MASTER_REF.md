@@ -93,6 +93,7 @@ For every feature/change before merge:
   - system/status rows
   - planner fallback text (when no LLM or parsing fallback)
   - executor validation/success/failure responses
+  - deterministic structured output labels (for example member list `email/role/status` labels, reusing workspace settings keys where available)
   - client-side validation and fallback request errors in Stimulus controllers
 - LLM free-form generated responses are intentionally not key-managed.
 - For chat changes, add/update both `en.yml` and `es.yml` in the same PR.

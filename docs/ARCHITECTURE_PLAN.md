@@ -22,7 +22,8 @@ Build a reliable multi-source analytics/query SaaS that stays simple to operate 
 - Product scope:
   - tracking script ingestion (first-party)
   - connector catalog and setup UX
-  - workspace-scoped chat assistant for workspace/team management actions (v1)
+  - workspace-scoped chat assistant for workspace/team management actions (v1), powered by shared tool registry + LLM-first runtime
+  - documented workspace/team API contracts at `/dev/api` (OpenAPI + Scalar), auth-protected at execution layer
   - SQL query editor
   - connector-aware schema explorer
   - saved queries

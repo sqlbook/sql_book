@@ -48,6 +48,9 @@ jobs:
       - name: Lint code for consistent style
         run: bundle exec rubocop
 
+      - name: Validate OpenAPI contract
+        run: bundle exec rake openapi:validate
+
   test:
     runs-on: ubuntu-latest
 

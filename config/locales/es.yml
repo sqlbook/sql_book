@@ -70,7 +70,10 @@ es:
           done: Hecho
         messages:
           confirm_suffix: Por favor confirma para continuar.
+          confirmation_default: Puedo ejecutar esa acción cuando la confirmes.
           action_canceled: Vale, cancelé esa acción.
+          request_already_pending: Esa solicitud ya está pendiente de confirmación.
+          request_already_processed: Ya procesé esa solicitud.
         errors:
           message_or_image_required: Se requiere contenido del mensaje o al menos una imagen.
           max_images: Puedes adjuntar hasta %{count} imágenes por mensaje.

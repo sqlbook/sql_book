@@ -101,7 +101,10 @@ en:
           done: Done
         messages:
           confirm_suffix: Please confirm to continue.
+          confirmation_default: I can run that action once you confirm.
           action_canceled: Okay, I canceled that action.
+          request_already_pending: That request is already pending confirmation.
+          request_already_processed: I already processed that request.
         errors:
           message_or_image_required: Message content or at least one image is required.
           max_images: You can attach up to %{count} images per message.

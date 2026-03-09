@@ -19,7 +19,10 @@ module App
 
         action_request.update!(
           status: status_for_result(result_status: execution.status),
-          result_payload: execution.data,
+          result_payload: {
+            'user_message' => execution.user_message,
+            'data' => execution.data
+          },
           executed_at: Time.current
         )
 

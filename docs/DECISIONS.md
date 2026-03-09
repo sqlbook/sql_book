@@ -63,12 +63,28 @@ Use this file to record major choices and why they were made.
   - allows incremental delivery toward broader chat-driven workflows
 - Consequences:
   - chat actions are constrained to workspace/team management in v1
-  - all mutating actions require inline confirmation
+  - high-risk mutating actions require inline confirmation; low-risk writes auto-run
   - payloads carry workspace/thread/message identifiers and are scope-validated server-side
   - fixed/system chat copy is locale-key based (`en`/`es`) rather than hardcoded
 - Revisit when:
   - data source/query/dashboard chat actions are implemented with equivalent policy/confirmation guarantees
   - thread switching/history UX becomes a surfaced user feature
+
+## 2026-03-09
+### Decision: Move chat orchestration to LLM-first runtime with shared tool registry
+- Status: Accepted
+- Why:
+  - improves conversational quality by using one structured model decision path instead of heavy heuristic routing
+  - creates reusable cross-product tooling infrastructure beyond chat
+  - centralizes schema validation and normalized execution/error handling
+- Consequences:
+  - chat runtime now uses structured `assistant_message/tool_calls/missing_information/finalize_without_tools` output
+  - `Tooling::Registry` + workspace/team tool catalog are now the canonical execution surface
+  - write idempotency keys prevent duplicate side effects on retries
+  - API v1 workspace/team routes and public Scalar docs (`/dev/api`) are now maintained contracts
+- Revisit when:
+  - broader domain namespaces (`datasource.*`, `query.*`, `dashboard.*`) are promoted into shared tooling
+  - model/provider strategy changes require runtime contract updates
 
 ## Template
 ### Decision: <title>

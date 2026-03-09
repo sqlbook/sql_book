@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-02-23
+Last updated: 2026-03-09
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -150,14 +150,17 @@ Why:
 - If precompile is skipped, the app can request digested assets that do not exist and render unstyled pages (`/assets/application-*.css` 404).
 
 ## Chat release verification (staging shell)
-Use this check after chat UI/planner deploys to prove what staging is running.
+Use this check after chat UI/runtime deploys to prove exactly what staging is running.
 
 ```bash
 echo "RENDER_GIT_COMMIT=$RENDER_GIT_COMMIT"
 grep -n 'content_for :app_content_layout_class, "split app-workspace-chat-layout' app/views/app/workspaces/show.html.erb
 grep -n 'ri-sidebar-fold-line' app/views/app/workspaces/show.html.erb
 grep -n 'ri-sidebar-unfold-line' app/views/app/workspaces/show.html.erb
-grep -n 'member_invite_intent?' app/services/chat/planner_service.rb
+grep -n 'Chat::RuntimeService.new' app/controllers/app/workspaces/chat_messages_controller.rb
+grep -n 'Tooling::WorkspaceTeamRegistry.tool_metadata' app/controllers/app/workspaces/chat_messages_controller.rb
+grep -n 'confirmation_mode' app/services/tooling/workspace_team_registry.rb
+grep -n 'member.invite' app/services/tooling/workspace_team_registry.rb
 ```
 
 Then verify compiled CSS fingerprint + critical rules:

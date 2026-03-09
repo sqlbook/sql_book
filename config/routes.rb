@@ -13,6 +13,20 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   resources :about, only: %i[index]
   get 'terms-of-service', to: 'legal#terms_of_service'
   get 'privacy-policy', to: 'legal#privacy_policy'
+  get 'dev/api', to: 'dev/api_docs#show'
+  get 'dev/api/openapi.json', to: 'dev/api_docs#openapi'
+
+  namespace :api do
+    namespace :v1 do
+      patch 'workspaces/:workspace_id', to: 'workspaces#update'
+      delete 'workspaces/:workspace_id', to: 'workspaces#destroy'
+      get 'workspaces/:workspace_id/members', to: 'members#index'
+      post 'workspaces/:workspace_id/members', to: 'members#create'
+      post 'workspaces/:workspace_id/members/resend-invite', to: 'members#resend_invite'
+      patch 'workspaces/:workspace_id/members/:id/role', to: 'members#update_role'
+      delete 'workspaces/:workspace_id/members/:id', to: 'members#destroy'
+    end
+  end
 
   namespace :auth do
     resources :invitation, only: %i[show] do

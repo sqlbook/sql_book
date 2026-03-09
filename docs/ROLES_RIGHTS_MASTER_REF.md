@@ -1,6 +1,6 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-03-07
+Last updated: 2026-03-09
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
@@ -76,6 +76,9 @@ Super-admin is separate from workspace roles:
 - Notes:
   - read actions are available to all accepted roles
   - mutating action execution is additionally policy-gated by action type + target role constraints
+  - confirmation policy is risk-based:
+    - high-risk writes require confirmation (`workspace.delete`, `member.update_role`, `member.remove`)
+    - low-risk writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`)
   - confirm/cancel is limited to the same requesting user and workspace/thread scope
 
 ### Workspace chat action allowlist (v1)
