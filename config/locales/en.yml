@@ -155,7 +155,7 @@ en:
           workspace_delete_partial: Workspace deleted, but we could not notify some users by email.
           member_list_found: Found %{count} team members.
           member_list_none: No team members were found in this workspace.
-          member_list_item: "- %{name} (%{email}) - %{role}, %{status}"
+          member_list_item: "- %{name} (%{email_label}: %{email}, %{role_label}: %{role}, %{status_label}: %{status})"
           member_unknown_name: Unnamed member
           member_unknown_email: No email
           member_unknown_role: Unknown role

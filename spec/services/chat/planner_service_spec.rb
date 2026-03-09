@@ -60,5 +60,15 @@ RSpec.describe Chat::PlannerService do
 
       expect(plan.action_type).to eq('member.list')
     end
+
+    it 'treats direct member detail requests as member listing' do
+      plan = described_class.new(
+        message: 'show team member names and emails',
+        workspace:,
+        actor:
+      ).call
+
+      expect(plan.action_type).to eq('member.list')
+    end
   end
 end

@@ -60,6 +60,35 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(assistant_message['content']).to include('Admin')
     end
 
+    it 'keeps member detail follow-ups in member.list flow' do
+      teammate_user = create(:user, first_name: 'Tess', last_name: 'Member', email: 'tess@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate_user,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'sure, but what are their names and details?'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('executed')
+      assistant_message = payload['messages'].last
+      expect(assistant_message['content']).to include('tess@example.com')
+      expect(assistant_message['content']).to include('Role')
+      expect(assistant_message['content']).to include('Status')
+    end
+
     it 'creates a new thread with a generated title when thread_id is not provided' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'Invite my team mates' }, as: :json

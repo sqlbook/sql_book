@@ -209,7 +209,10 @@ module Chat
         name: member_field(member[:name], fallback_key: 'member_unknown_name'),
         email: member_field(member[:email], fallback_key: 'member_unknown_email'),
         role: member_field(member[:role], fallback_key: 'member_unknown_role'),
-        status: member_field(member[:status], fallback_key: 'member_unknown_status')
+        status: member_field(member[:status], fallback_key: 'member_unknown_status'),
+        email_label: I18n.t('app.workspaces.settings.team.form.email_label'),
+        role_label: I18n.t('app.workspaces.settings.team.table.role'),
+        status_label: I18n.t('app.workspaces.settings.team.table.status')
       )
     end
 

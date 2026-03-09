@@ -124,7 +124,7 @@ es:
           workspace_delete_partial: El espacio se eliminó, pero no pudimos notificar por correo a algunos usuarios.
           member_list_found: Se encontraron %{count} miembros del equipo.
           member_list_none: No se encontraron miembros del equipo en este espacio.
-          member_list_item: "- %{name} (%{email}) - %{role}, %{status}"
+          member_list_item: "- %{name} (%{email_label}: %{email}, %{role_label}: %{role}, %{status_label}: %{status})"
           member_unknown_name: Miembro sin nombre
           member_unknown_email: Sin correo
           member_unknown_role: Rol desconocido

@@ -8,6 +8,20 @@ module Chat
     Plan = Struct.new(:assistant_message, :action_type, :payload, keyword_init: true)
 
     EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
+    MEMBER_ENTITY_REGEX = /\b(team|teammates?|team mates?|member|members|equipo|miembro|miembros)\b/
+    MEMBER_LIST_VERB_REGEX = /\b(list|show|display|get|see|who|listar|lista|muestra|mostrar|ver|quien|quienes)\b/
+    MEMBER_DETAIL_REGEX = /
+      \b(
+        name|names|email|emails|detail|details|their|who\ are\ they|
+        nombre|nombres|correo|correos|detalle|detalles|quienes\ son
+      )\b
+    /x
+    MEMBER_CONTEXT_REGEX = /
+      \b(
+        team\ members?|member\ list|found\s+\d+\s+team\ members?|workspace\ team|
+        miembros?(?:\s+del\s+equipo)?|se\ encontraron\s+\d+\s+miembros?
+      )\b
+    /x
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
 
@@ -95,7 +109,15 @@ module Chat
                     'When the user asks for team members, `member.list` means detailed member output',
                     '(name, email, role, status), not only a count.'
                   ].join(' '),
+                  [
+                    'If the user asks a follow-up after a member list response (for example names, emails,',
+                    'details, "who are they"), respond with `member.list` again instead of a capability summary.'
+                  ].join(' '),
                   'Do not fall back to generic capability lists for specific follow-up questions.',
+                  [
+                    'Only provide a capability summary when the user explicitly asks a meta question like',
+                    '"what can you do?".'
+                  ].join(' '),
                   'Classify user intent into an action contract when possible.',
                   [
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
@@ -229,16 +251,25 @@ module Chat
     end
 
     def member_list_intent?(lowered_message)
-      return true if lowered_message.match?(/\b(list|show|who)\b.*\b(team|member)s?\b/)
+      return true if member_listing_request?(lowered_message)
+      return true if member_detail_request_with_member_reference?(lowered_message)
 
       contextual_member_follow_up?(lowered_message)
     end
 
+    def member_listing_request?(lowered_message)
+      lowered_message.match?(MEMBER_ENTITY_REGEX) && lowered_message.match?(MEMBER_LIST_VERB_REGEX)
+    end
+
+    def member_detail_request_with_member_reference?(lowered_message)
+      lowered_message.match?(MEMBER_ENTITY_REGEX) && lowered_message.match?(MEMBER_DETAIL_REGEX)
+    end
+
     def contextual_member_follow_up?(lowered_message)
-      return false unless lowered_message.match?(/\b(name|names|email|emails|details?|who are they|their)\b/)
+      return false unless lowered_message.match?(MEMBER_DETAIL_REGEX)
 
       recent_text = conversation_messages.last(8).map { |entry| conversation_entry_content(entry).downcase }.join(' ')
-      recent_text.match?(/\bteam members?\b|\bmember list\b|\bfound\s+\d+\s+team members?\b/)
+      recent_text.match?(MEMBER_CONTEXT_REGEX)
     end
 
     def default_help_plan
