@@ -13,14 +13,11 @@ RSpec.describe Chat::RuntimeService do
   end
 
   describe 'decision schema' do
-    it 'declares nested tool arguments additionalProperties for Responses API strict json_schema' do
+    it 'serializes nested tool arguments as a string for Responses API strict json_schema' do
       arguments_schema = described_class::DECISION_SCHEMA
         .dig('properties', 'tool_calls', 'items', 'properties', 'arguments')
 
-      expect(arguments_schema).to include(
-        'type' => 'object',
-        'additionalProperties' => true
-      )
+      expect(arguments_schema).to eq('type' => 'string')
     end
   end
 
@@ -66,6 +63,32 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.tool_calls.size).to eq(1)
       expect(decision.tool_calls.first.tool_name).to eq('member.list')
       expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'parses stringified tool arguments from model output' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'Sure, I can do that.',
+        tool_calls: [{ tool_name: 'member.invite', arguments: '{"email":"sam@example.com"}' }],
+        missing_information: [],
+        finalize_without_tools: false
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'invite sam@example.com',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('member.invite')
+      expect(decision.tool_calls.first.arguments).to eq('email' => 'sam@example.com')
     end
 
     it 'parses nested response output with fenced json payload' do

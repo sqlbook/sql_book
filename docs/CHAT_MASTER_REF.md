@@ -35,7 +35,7 @@ Related references:
   - planner fallback is used only when `OPENAI_API_KEY` is unavailable
   - if model returns non-JSON text, runtime uses that assistant text instead of collapsing to generic capability copy
   - supports multimodal image context (bounded inline subset)
-  - uses Responses API `json_schema` structured output; nested object nodes in runtime/planner schemas must explicitly declare `additionalProperties`
+  - uses Responses API `json_schema` structured output; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side to satisfy strict schema validation
 - Shared tooling foundation:
   - `Tooling::Registry`
   - `Tooling::WorkspaceTeamRegistry`
@@ -173,10 +173,11 @@ High-risk writes (inline confirmation required):
 
 ## Responses API schema guardrail
 - Chat runtime and planner both use strict Responses API `json_schema` output.
-- Every object node in those schemas must explicitly declare `additionalProperties` to avoid OpenAI `400 Invalid schema for response_format` failures.
-- Current required nested object declarations:
-  - `Chat::RuntimeService::DECISION_SCHEMA -> tool_calls[].arguments`
-  - `Chat::PlannerService::PLAN_SCHEMA -> payload`
+- Dynamic nested argument objects should not be modeled as open-ended nested objects in strict schemas.
+- Current runtime/planner contract:
+  - `Chat::RuntimeService::DECISION_SCHEMA -> tool_calls[].arguments` is a JSON string encoding an object
+  - `Chat::PlannerService::PLAN_SCHEMA -> payload` is a JSON string encoding an object
+- Runtime/planner parse those JSON strings back into hashes server-side before execution.
 - If staging logs show `Invalid schema for response_format`, fix the schema contract first; changing prompts or models will not resolve that class of failure.
 
 ## Idempotency behavior (writes)

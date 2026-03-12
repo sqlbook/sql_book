@@ -166,8 +166,8 @@ grep -n 'Tooling::WorkspaceTeamRegistry.tool_metadata' app/controllers/app/works
 grep -n 'confirmation_mode' app/services/tooling/workspace_team_registry.rb
 grep -n 'member.invite' app/services/tooling/workspace_team_registry.rb
 grep -n 'idempotency_key' app/controllers/app/workspaces/chat_messages_controller.rb
-grep -n 'additionalProperties' app/services/chat/runtime_service.rb
-grep -n 'additionalProperties' app/services/chat/planner_service.rb
+grep -n \"'arguments' => { 'type' => 'string' }\" app/services/chat/runtime_service.rb
+grep -n \"'payload' => { 'type' => 'string' }\" app/services/chat/planner_service.rb
 bundle exec rails db:migrate:status | grep 20260309102000
 ```
 

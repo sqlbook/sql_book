@@ -12,13 +12,10 @@ RSpec.describe Chat::PlannerService do
   end
 
   describe 'plan schema' do
-    it 'declares payload additionalProperties for Responses API strict json_schema' do
+    it 'serializes payload as a string for Responses API strict json_schema' do
       payload_schema = described_class::PLAN_SCHEMA.dig('properties', 'payload')
 
-      expect(payload_schema).to include(
-        'type' => 'object',
-        'additionalProperties' => true
-      )
+      expect(payload_schema).to eq('type' => 'string')
     end
   end
 
@@ -61,6 +58,28 @@ RSpec.describe Chat::PlannerService do
         'email' => 'sam@example.com',
         'role' => Member::Roles::ADMIN
       )
+    end
+
+    it 'parses stringified payload from llm plan output' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      response_body = {
+        output_text: {
+          assistant_message: 'Sure, I can rename it.',
+          action_type: 'workspace.update_name',
+          payload: '{"name":"Renamed Workspace"}'
+        }.to_json
+      }.to_json
+      response = double('response', body: response_body)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow_any_instance_of(described_class).to receive(:http_client).and_return(http_client)
+
+      plan = described_class.new(message: 'rename workspace to Renamed Workspace', workspace:, actor:).call
+
+      expect(plan.action_type).to eq('workspace.update_name')
+      expect(plan.payload).to eq('name' => 'Renamed Workspace')
     end
 
     it 'treats invite follow-ups with an email as member.invite' do

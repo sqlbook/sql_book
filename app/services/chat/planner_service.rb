@@ -51,10 +51,7 @@ module Chat
       'properties' => {
         'assistant_message' => { 'type' => 'string' },
         'action_type' => { 'type' => %w[string null] },
-        'payload' => {
-          'type' => 'object',
-          'additionalProperties' => true
-        }
+        'payload' => { 'type' => 'string' }
       }
     }.freeze
 
@@ -107,10 +104,16 @@ module Chat
 
     def build_plan_from_llm_payload(planned:)
       action_type = planned['action_type'].to_s.presence
-      payload = planned['payload'].is_a?(Hash) ? planned['payload'] : {}
+      payload = parsed_payload(planned['payload'])
       assistant_message = planned['assistant_message'].to_s.presence || fallback_assistant_message(action_type:)
 
       Plan.new(assistant_message:, action_type:, payload:)
+    end
+
+    def parsed_payload(raw_payload)
+      return raw_payload if raw_payload.is_a?(Hash)
+
+      parse_json_object(raw_payload.to_s).presence || {}
     end
 
     def request(payload:)
@@ -182,7 +185,8 @@ module Chat
                     'For workspace.update_name, payload.name must be a clean target name only,',
                     'without wrapping quotes and without trailing conversational punctuation.'
                   ].join(' '),
-                  'Return JSON only with keys assistant_message, action_type, payload.'
+                  'Return JSON only with keys assistant_message, action_type, payload.',
+                  'payload must be a JSON string encoding an object, for example "{}" or "{\"name\":\"New name\"}".'
                 ].join(' ')
               }
             ]

@@ -83,7 +83,7 @@ Use this file to record major choices and why they were made.
   - write idempotency keys prevent duplicate side effects on retries
   - API v1 workspace/team routes and public Scalar docs (`/dev/api`) are now maintained contracts
   - `docs/API_MASTER_REF.md` owns the API-doc setup and maintenance workflow
-  - Responses API strict `json_schema` requires explicit nested-object `additionalProperties` declarations in runtime/planner schemas
+  - Responses API strict `json_schema` does not tolerate our open-ended dynamic nested argument objects, so runtime/planner now serialize dynamic tool arguments/payloads as JSON strings and parse them server-side
 - Revisit when:
   - broader domain namespaces (`datasource.*`, `query.*`, `dashboard.*`) are promoted into shared tooling
   - model/provider strategy changes require runtime contract updates

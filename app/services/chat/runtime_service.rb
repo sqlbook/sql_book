@@ -48,10 +48,7 @@ module Chat
             'additionalProperties' => false,
             'properties' => {
               'tool_name' => { 'type' => 'string' },
-              'arguments' => {
-                'type' => 'object',
-                'additionalProperties' => true
-              }
+              'arguments' => { 'type' => 'string' }
             }
           }
         },
@@ -357,6 +354,7 @@ module Chat
         'Do not wrap payload values with extra punctuation not intended by user input.',
         'Output strict JSON with keys: assistant_message, tool_calls, missing_information, finalize_without_tools.',
         'tool_calls must be an array of objects: { tool_name, arguments }.',
+        'arguments must be a JSON string encoding an object, for example "{}" or "{\"email\":\"sam@example.com\"}".',
         'missing_information must be an array of short user-facing prompts.',
         'finalize_without_tools must be true only when no tool should run now.',
         "Available tools metadata:\n#{JSON.pretty_generate(tool_metadata)}"
@@ -494,11 +492,17 @@ module Chat
         next unless row.is_a?(Hash)
 
         tool_name = row['tool_name'].to_s
-        arguments = row['arguments'].is_a?(Hash) ? row['arguments'] : {}
+        arguments = parsed_tool_arguments(row['arguments'])
         next if tool_name.blank?
 
         ToolCall.new(tool_name:, arguments:)
       end
+    end
+
+    def parsed_tool_arguments(raw_arguments)
+      return raw_arguments if raw_arguments.is_a?(Hash)
+
+      parse_json_object(raw_arguments.to_s).presence || {}
     end
 
     def build_missing_information(parsed:)
