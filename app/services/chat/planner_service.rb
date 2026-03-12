@@ -51,7 +51,10 @@ module Chat
       'properties' => {
         'assistant_message' => { 'type' => 'string' },
         'action_type' => { 'type' => %w[string null] },
-        'payload' => { 'type' => 'object' }
+        'payload' => {
+          'type' => 'object',
+          'additionalProperties' => true
+        }
       }
     }.freeze
 

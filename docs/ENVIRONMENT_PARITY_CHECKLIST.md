@@ -1,6 +1,6 @@
 # Environment Parity Checklist
 
-Last updated: 2026-03-09
+Last updated: 2026-03-12
 
 ## Purpose
 Prevent staging/production configuration drift and stop staging-only values leaking into production.
@@ -32,7 +32,7 @@ Set and validate on both Web and Worker:
 - `APP_HOST`
 - `APP_PROTOCOL`
 - `OPENAI_API_KEY` (if LLM chat/translation features are enabled)
-- `OPENAI_CHAT_MODEL` (optional but keep parity if set)
+- `OPENAI_CHAT_MODEL` (set explicitly on both Web and Worker; keep parity)
 - `OPENAI_TRANSLATIONS_MODEL` (optional but keep parity if set)
 - `OPENAI_RESPONSES_ENDPOINT` (optional but keep parity if set)
 

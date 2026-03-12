@@ -48,7 +48,10 @@ module Chat
             'additionalProperties' => false,
             'properties' => {
               'tool_name' => { 'type' => 'string' },
-              'arguments' => { 'type' => 'object' }
+              'arguments' => {
+                'type' => 'object',
+                'additionalProperties' => true
+              }
             }
           }
         },

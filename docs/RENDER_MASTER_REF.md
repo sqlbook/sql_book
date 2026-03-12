@@ -1,6 +1,6 @@
 # Render Master Reference (Staging + Production)
 
-Last updated: 2026-03-09
+Last updated: 2026-03-12
 
 ## Purpose
 Single source of truth for Render setup decisions, actual configured values, and rollout progress.
@@ -116,6 +116,10 @@ Web only:
 - `APP_HOST=staging.sqlbook.com`
 - `APP_PROTOCOL=https`
 - `WEB_CONCURRENCY=1`
+- `OPENAI_API_KEY=<required for chat + translation generation>`
+- `OPENAI_CHAT_MODEL=<set explicitly; do not rely on default in deploy envs>`
+- `OPENAI_TRANSLATIONS_MODEL=<optional; default gpt-4.1-mini>`
+- `OPENAI_RESPONSES_ENDPOINT=<optional; default https://api.openai.com/v1/responses>`
 
 Current note:
 - `config/master.key` is not present in repo; use `SECRET_KEY_BASE` and do not set `RAILS_MASTER_KEY` for current staging deploy.
@@ -162,6 +166,8 @@ grep -n 'Tooling::WorkspaceTeamRegistry.tool_metadata' app/controllers/app/works
 grep -n 'confirmation_mode' app/services/tooling/workspace_team_registry.rb
 grep -n 'member.invite' app/services/tooling/workspace_team_registry.rb
 grep -n 'idempotency_key' app/controllers/app/workspaces/chat_messages_controller.rb
+grep -n 'additionalProperties' app/services/chat/runtime_service.rb
+grep -n 'additionalProperties' app/services/chat/planner_service.rb
 bundle exec rails db:migrate:status | grep 20260309102000
 ```
 
@@ -179,6 +185,11 @@ If any check is missing:
 - confirm both Render services are configured to branch `main`
 - trigger a fresh deploy on web + worker
 - run `bundle exec rails db:migrate` in web shell, then redeploy
+
+If chat requests return `200` but the assistant replies with the localized planning retry message:
+- check Render logs for `Chat runtime decision response failed`
+- if the body includes `Invalid schema for response_format`, the issue is the chat JSON schema contract, not migrations or model quality
+- if the body includes auth or model-not-found errors, verify `OPENAI_API_KEY` and `OPENAI_CHAT_MODEL`
 
 ## API docs verification (staging shell)
 Use this after API/OpenAPI/Scalar changes to prove docs and spec are current in the deployed environment.

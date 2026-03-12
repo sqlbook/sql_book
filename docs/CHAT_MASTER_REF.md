@@ -16,7 +16,7 @@ Related references:
 
 ## Runtime configuration
 - `OPENAI_API_KEY` (required for LLM-backed chat runtime and thread title generation)
-- `OPENAI_CHAT_MODEL` (optional, defaults to `gpt-5-mini`)
+- `OPENAI_CHAT_MODEL` (defaults to `gpt-5-mini` if unset, but should be explicitly configured in deploy environments)
 - `OPENAI_RESPONSES_ENDPOINT` (optional, defaults to `https://api.openai.com/v1/responses`)
 
 ## Scope (v1)
@@ -35,6 +35,7 @@ Related references:
   - planner fallback is used only when `OPENAI_API_KEY` is unavailable
   - if model returns non-JSON text, runtime uses that assistant text instead of collapsing to generic capability copy
   - supports multimodal image context (bounded inline subset)
+  - uses Responses API `json_schema` structured output; nested object nodes in runtime/planner schemas must explicitly declare `additionalProperties`
 - Shared tooling foundation:
   - `Tooling::Registry`
   - `Tooling::WorkspaceTeamRegistry`
@@ -169,6 +170,14 @@ High-risk writes (inline confirmation required):
 5. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
 6. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
 7. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+
+## Responses API schema guardrail
+- Chat runtime and planner both use strict Responses API `json_schema` output.
+- Every object node in those schemas must explicitly declare `additionalProperties` to avoid OpenAI `400 Invalid schema for response_format` failures.
+- Current required nested object declarations:
+  - `Chat::RuntimeService::DECISION_SCHEMA -> tool_calls[].arguments`
+  - `Chat::PlannerService::PLAN_SCHEMA -> payload`
+- If staging logs show `Invalid schema for response_format`, fix the schema contract first; changing prompts or models will not resolve that class of failure.
 
 ## Idempotency behavior (writes)
 - Write actions use deterministic idempotency keys scoped by workspace/thread/actor/tool/payload.

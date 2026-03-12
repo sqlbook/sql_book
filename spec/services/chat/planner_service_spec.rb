@@ -11,6 +11,17 @@ RSpec.describe Chat::PlannerService do
     allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return(nil)
   end
 
+  describe 'plan schema' do
+    it 'declares payload additionalProperties for Responses API strict json_schema' do
+      payload_schema = described_class::PLAN_SCHEMA.dig('properties', 'payload')
+
+      expect(payload_schema).to include(
+        'type' => 'object',
+        'additionalProperties' => true
+      )
+    end
+  end
+
   describe '#call' do
     it 'extracts workspace rename target without trailing question punctuation' do
       plan = described_class.new(message: 'Can you rename my workspace to Bumanarama?', workspace:, actor:).call

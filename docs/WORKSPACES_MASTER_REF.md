@@ -126,6 +126,7 @@ Related references:
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
 - Chat stream hides per-message timestamps; `Thinking` status uses animated ellipsis.
 - Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.
+- Chat runtime/planner use strict Responses API JSON schema; if logs show `Invalid schema for response_format`, fix the runtime/planner schema contract before treating the issue as prompt/model quality.
 
 ## Workspace settings save behavior
 - General tab workspace-name form uses change detection:

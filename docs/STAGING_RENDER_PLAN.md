@@ -1,6 +1,6 @@
 # Staging Deployment Plan (Render)
 
-Last updated: 2026-03-09
+Last updated: 2026-03-12
 
 This runbook sets up `staging.sqlbook.com` on Render in an EU region.
 
@@ -62,7 +62,7 @@ Set these on both Web and Worker:
 
 Set these on Web (and optionally Worker for strict env parity):
 - `OPENAI_API_KEY=<required for workspace chat + translation generation>`
-- `OPENAI_CHAT_MODEL=<optional; default gpt-5-mini>`
+- `OPENAI_CHAT_MODEL=<set explicitly for deploy envs; recommended gpt-5.2 or gpt-5.4>`
 - `OPENAI_TRANSLATIONS_MODEL=<optional; default gpt-4.1-mini>`
 - `OPENAI_RESPONSES_ENDPOINT=<optional; default https://api.openai.com/v1/responses>`
 
@@ -109,6 +109,7 @@ After deploy:
 - Login succeeds with one-time code
 - Background event jobs are consumed by worker
 - `bundle exec rails db:migrate:status | grep 20260309102000` confirms chat idempotency migration is up
+- chat requests do not log `Invalid schema for response_format` from runtime/planner Responses API calls
 
 ## 8) Launch gate for staging
 

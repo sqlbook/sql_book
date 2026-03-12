@@ -12,6 +12,18 @@ RSpec.describe Chat::RuntimeService do
     allow(ENV).to receive(:fetch).with('OPENAI_CHAT_MODEL', 'gpt-5-mini').and_return('gpt-5-mini')
   end
 
+  describe 'decision schema' do
+    it 'declares nested tool arguments additionalProperties for Responses API strict json_schema' do
+      arguments_schema = described_class::DECISION_SCHEMA
+        .dig('properties', 'tool_calls', 'items', 'properties', 'arguments')
+
+      expect(arguments_schema).to include(
+        'type' => 'object',
+        'additionalProperties' => true
+      )
+    end
+  end
+
   describe '#call' do
     it 'falls back to planner when OPENAI_API_KEY is missing' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return(nil)

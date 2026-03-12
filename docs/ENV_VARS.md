@@ -32,6 +32,8 @@
 - `OPENAI_CHAT_MODEL`
   - Optional model override for workspace chat runtime/title generation.
   - Defaults to `gpt-5-mini` if unset.
+  - In deploy environments, set this explicitly rather than relying on the default.
+  - Current recommendation: choose the chat model deliberately per environment (`gpt-5.2` or `gpt-5.4`), based on capability/cost goals.
 - `OPENAI_RESPONSES_ENDPOINT`
   - Optional full Responses API endpoint for chat and translation flows.
   - Defaults to `https://api.openai.com/v1/responses`.
