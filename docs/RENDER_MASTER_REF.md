@@ -185,8 +185,8 @@ Use this after API/OpenAPI/Scalar changes to prove docs and spec are current in 
 
 ```bash
 echo "RENDER_GIT_COMMIT=$RENDER_GIT_COMMIT"
-grep -n 'Scalar.createApiReference' app/views/dev/api_docs/show.html.erb
-grep -n 'showOperationId' app/views/dev/api_docs/show.html.erb
+grep -n 'data-url=\"/dev/api/openapi.json\"' app/views/dev/api_docs/show.html.erb
+grep -n 'scalar-sidebar-width' app/views/dev/api_docs/show.html.erb
 grep -n 'x-scalar-environments' config/openapi/v1.json
 grep -n 'x-codeSamples' config/openapi/v1.json
 bundle exec rake openapi:validate

@@ -11,7 +11,7 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
       expect(response.body).to include('api-reference')
       expect(response.body).to include('/dev/api/openapi.json')
       expect(response.body).to include('@scalar/api-reference')
-      expect(response.body).to include('Scalar.createApiReference')
+      expect(response.body).to include('data-url="/dev/api/openapi.json"')
     end
   end
 

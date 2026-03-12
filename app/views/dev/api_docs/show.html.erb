@@ -1,45 +1,34 @@
-<%
-  scalar_config = {
-    url: '/dev/api/openapi.json',
-    tagsSorter: 'alpha',
-    operationsSorter: 'method',
-    showOperationId: true,
-    searchHotKey: 'k',
-    documentDownloadType: 'json',
-    customCss: <<~CSS
-      .scalar-api-reference {
-        --scalar-sidebar-width: 18rem;
-      }
-
-      .t-doc__sidebar {
-        padding-left: 24px !important;
-        padding-right: 24px !important;
-      }
-
-      .t-doc__sidebar nav.sidebar-pages,
-      .t-doc__sidebar .sidebar-group {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-      }
-
-      .t-doc__sidebar .sidebar-heading,
-      .t-doc__sidebar .sidebar-heading-link {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-      }
-
-      .t-doc__sidebar .sidebar-heading-link-title {
-        word-break: normal !important;
-        overflow-wrap: break-word;
-      }
-    CSS
-  }
-%>
-
 <main style="height: 100dvh; padding: 0;">
-  <div id="api-reference"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
-  <script>
-    Scalar.createApiReference('#api-reference', <%= raw(json_escape(scalar_config.to_json)) %>)
+  <style>
+    .scalar-api-reference {
+      --scalar-sidebar-width: 18rem;
+    }
+
+    .t-doc__sidebar {
+      padding-left: 24px !important;
+      padding-right: 24px !important;
+    }
+
+    .t-doc__sidebar nav.sidebar-pages,
+    .t-doc__sidebar .sidebar-group {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    .t-doc__sidebar .sidebar-heading,
+    .t-doc__sidebar .sidebar-heading-link {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    .t-doc__sidebar .sidebar-heading-link-title {
+      word-break: normal !important;
+      overflow-wrap: break-word;
+    }
+  </style>
+  <script
+    id="api-reference"
+    data-url="/dev/api/openapi.json">
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 </main>

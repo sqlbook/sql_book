@@ -45,15 +45,11 @@ Current OpenAPI coverage is intentionally focused on the workspace/team contract
   - view: `app/views/dev/api_docs/show.html.erb`
   - spec source: `config/openapi/v1.json`
 - Current embed approach:
-  - `Scalar.createApiReference(...)` in the ERB view
-  - config is passed inline from Rails
-  - custom CSS is injected there for layout polish
+  - script-tag embed with `id="api-reference"` and `data-url="/dev/api/openapi.json"`
+  - Scalar bootstraps from the CDN script loaded in the ERB view
+  - custom CSS is injected in the same view for layout polish
 - Current UI choices:
-  - `showOperationId: true`
-  - alphabetic tag sort
-  - method sort within tags
   - `searchHotKey: "k"`
-  - `documentDownloadType: "json"`
   - sidebar width and spacing tuned for readability
 
 ## OpenAPI authoring rules
@@ -88,8 +84,6 @@ For docs to stay human and LLM friendly:
   - provides docs/client variable defaults without hardcoding deploy hosts
 - `x-scalar-active-environment`
   - sets the default Scalar environment
-- `x-enum-varnames`
-  - makes numeric enums easier to understand for humans and tool consumers
 
 ## Consumption model
 - Product UI consumes the API through Rails controllers/services directly.
