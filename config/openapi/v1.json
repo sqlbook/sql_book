@@ -3,11 +3,12 @@
   "info": {
     "title": "sqlbook API",
     "version": "v1",
-    "description": "Workspace and team management API used by chat runtime and app surfaces."
+    "description": "Workspace and team management API used by chat runtime and app surfaces.\n\nThis API is session-authenticated, strictly workspace-scoped, and server-authoritative: every request is checked against the current user, the current workspace, and the same role/scope rules used by the product UI and chat runtime.\n\nFor LLM and tool consumers, treat each operation as an executable contract. Do not infer permissions from docs alone: always rely on response status and error_code. Mutating actions may still be blocked by role or workspace scope even when the payload is structurally valid."
   },
   "servers": [
     {
-      "url": "/"
+      "url": "/",
+      "description": "Current sqlbook app origin"
     }
   ],
   "security": [
@@ -15,11 +16,54 @@
       "cookieAuth": []
     }
   ],
+  "tags": [
+    {
+      "name": "Workspace",
+      "description": "Operations that modify the current workspace itself. These stay in the active workspace only and never cross workspace boundaries.",
+      "x-displayName": "Workspace"
+    },
+    {
+      "name": "Members",
+      "description": "Operations for listing, inviting, updating, and removing workspace members. These mirror the team-management surface in the app.",
+      "x-displayName": "Members"
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "Workspace management",
+      "tags": ["Workspace"]
+    },
+    {
+      "name": "Team management",
+      "tags": ["Members"]
+    }
+  ],
+  "x-scalar-active-environment": "current-origin",
+  "x-scalar-environments": {
+    "current-origin": {
+      "description": "Use the current sqlbook environment origin and example resource ids.",
+      "variables": {
+        "apiUrl": {
+          "description": "Base URL for the current environment.",
+          "default": "/"
+        },
+        "workspaceId": {
+          "description": "Example workspace id used in code samples.",
+          "default": "7"
+        },
+        "memberId": {
+          "description": "Example workspace member id used in code samples.",
+          "default": "27"
+        }
+      }
+    }
+  },
   "paths": {
     "/api/v1/workspaces/{workspace_id}": {
       "patch": {
         "operationId": "workspaceUpdateName",
-        "summary": "Update workspace name",
+        "summary": "Rename workspace",
+        "description": "Renames the current workspace. This is a low-risk write in chat, but API callers should still expect server-side permission checks. The new name should be sent as a clean target value without surrounding conversational punctuation.",
         "tags": ["Workspace"],
         "parameters": [
           {
@@ -31,11 +75,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["name"],
-                "properties": {
-                  "name": {
-                    "type": "string"
+                "$ref": "#/components/schemas/WorkspaceRenameRequest"
+              },
+              "examples": {
+                "renameWorkspace": {
+                  "summary": "Rename the workspace",
+                  "value": {
+                    "name": "Bumanarama"
                   }
                 }
               }
@@ -44,19 +90,33 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/WorkspaceRenamed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
             "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"Bumanarama\"}'"
+          }
+        ]
       },
       "delete": {
         "operationId": "workspaceDelete",
         "summary": "Delete workspace",
+        "description": "Deletes the current workspace. This is a destructive operation and is owner-only. Successful responses may include a redirect path for product surfaces that should return to the workspace index.",
         "tags": ["Workspace"],
         "parameters": [
           {
@@ -65,21 +125,35 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/WorkspaceDeleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
             "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
       }
     },
     "/api/v1/workspaces/{workspace_id}/members": {
       "get": {
         "operationId": "memberList",
-        "summary": "List workspace members",
+        "summary": "List members",
+        "description": "Returns detailed member data for the current workspace. Consumers should expect names, emails, role labels, role ids, and status labels in the response payload.",
         "tags": ["Members"],
         "parameters": [
           {
@@ -88,16 +162,30 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/MembersListed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
       },
       "post": {
         "operationId": "memberInvite",
-        "summary": "Invite workspace member",
+        "summary": "Invite member",
+        "description": "Invites a new member into the current workspace. `first_name`, `last_name`, and `email` are required. If `role` is omitted, the server defaults to the standard User role.",
         "tags": ["Members"],
         "parameters": [
           {
@@ -109,22 +197,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["first_name", "last_name", "email"],
-                "properties": {
-                  "first_name": {
-                    "type": "string"
-                  },
-                  "last_name": {
-                    "type": "string"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "role": {
-                    "type": "integer",
-                    "description": "Optional role id. Defaults to User when omitted."
+                "$ref": "#/components/schemas/MemberInviteRequest"
+              },
+              "examples": {
+                "inviteDefaultUser": {
+                  "summary": "Invite a standard user",
+                  "value": {
+                    "first_name": "Bob",
+                    "last_name": "Jenkins",
+                    "email": "hello@sqlbook.com"
                   }
                 }
               }
@@ -133,21 +214,35 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/MemberInvited"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
             "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"first_name\":\"Bob\",\"last_name\":\"Jenkins\",\"email\":\"hello@sqlbook.com\"}'"
+          }
+        ]
       }
     },
     "/api/v1/workspaces/{workspace_id}/members/resend-invite": {
       "post": {
         "operationId": "memberResendInvite",
-        "summary": "Resend pending invitation",
+        "summary": "Resend invite",
+        "description": "Resends a pending invitation. Provide either `member_id` or `email`. Only pending invitations can be resent, and resend cooldown rules are enforced server-side.",
         "tags": ["Members"],
         "parameters": [
           {
@@ -159,14 +254,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "member_id": {
-                    "type": "integer"
-                  },
-                  "email": {
-                    "type": "string",
-                    "format": "email"
+                "$ref": "#/components/schemas/MemberResendInviteRequest"
+              },
+              "examples": {
+                "byEmail": {
+                  "summary": "Resend by email",
+                  "value": {
+                    "email": "hello@sqlbook.com"
                   }
                 }
               }
@@ -175,21 +269,35 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/MemberInviteResent"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
             "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members/resend-invite' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"email\":\"hello@sqlbook.com\"}'"
+          }
+        ]
       }
     },
     "/api/v1/workspaces/{workspace_id}/members/{id}/role": {
       "patch": {
         "operationId": "memberUpdateRole",
-        "summary": "Update member role",
+        "summary": "Update role",
+        "description": "Updates the role for an existing workspace member. This is a high-risk write in chat and remains server-authorized here as well. Role values must be one of the editable non-owner roles allowed by policy.",
         "tags": ["Members"],
         "parameters": [
           {
@@ -204,11 +312,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["role"],
-                "properties": {
-                  "role": {
-                    "type": "integer"
+                "$ref": "#/components/schemas/MemberUpdateRoleRequest"
+              },
+              "examples": {
+                "promoteToAdmin": {
+                  "summary": "Promote member to admin",
+                  "value": {
+                    "role": 2
                   }
                 }
               }
@@ -217,21 +327,35 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/MemberRoleUpdated"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
             "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members/{{memberId}}/role' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"role\":2}'"
+          }
+        ]
       }
     },
     "/api/v1/workspaces/{workspace_id}/members/{id}": {
       "delete": {
         "operationId": "memberRemove",
-        "summary": "Remove workspace member",
+        "summary": "Remove member",
+        "description": "Removes a workspace member. Owners cannot be removed. Accepted members may trigger downstream notification side effects after removal.",
         "tags": ["Members"],
         "parameters": [
           {
@@ -243,15 +367,28 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/ToolExecuted"
+            "$ref": "#/components/responses/MemberRemoved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
           },
           "403": {
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
             "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members/{{memberId}}' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
       }
     }
   },
@@ -260,7 +397,8 @@
       "cookieAuth": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "_sqlbook_session"
+        "name": "_sqlbook_session",
+        "description": "Use the authenticated sqlbook session cookie."
       }
     },
     "parameters": {
@@ -268,36 +406,223 @@
         "name": "workspace_id",
         "in": "path",
         "required": true,
+        "description": "The current workspace id.",
         "schema": {
-          "type": "integer"
+          "type": "integer",
+          "example": 7
         }
       },
       "memberId": {
         "name": "id",
         "in": "path",
         "required": true,
+        "description": "The target workspace member id.",
         "schema": {
-          "type": "integer"
+          "type": "integer",
+          "example": 27
         }
       }
     },
     "responses": {
-      "ToolExecuted": {
-        "description": "Tool execution succeeded",
+      "WorkspaceRenamed": {
+        "description": "Workspace name updated",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ToolResponse"
+              "$ref": "#/components/schemas/WorkspaceRenamedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Workspace name updated to Bumanarama.",
+                  "data": {
+                    "workspace_name": "Bumanarama"
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "WorkspaceDeleted": {
+        "description": "Workspace deleted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WorkspaceDeletedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Workspace deleted. All affected users were notified.",
+                  "data": {
+                    "redirect_path": "/app/workspaces",
+                    "failed_notifications": 0
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "MembersListed": {
+        "description": "Workspace members returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MembersListedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Found 2 team members.",
+                  "data": {
+                    "members": [
+                      {
+                        "id": 26,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com",
+                        "role": "Owner",
+                        "role_id": 1,
+                        "status": "Accepted"
+                      },
+                      {
+                        "id": 27,
+                        "name": "Bob Smith",
+                        "email": "hello@sitelabs.ai",
+                        "role": "Admin",
+                        "role_id": 2,
+                        "status": "Accepted"
+                      }
+                    ]
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "MemberInvited": {
+        "description": "Workspace invitation sent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MutationResultResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Invitation sent to hello@sqlbook.com.",
+                  "data": {},
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "MemberInviteResent": {
+        "description": "Pending invitation resent",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MutationResultResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "A fresh invitation has been sent to hello@sqlbook.com.",
+                  "data": {},
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "MemberRoleUpdated": {
+        "description": "Member role updated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MutationResultResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Bob Smith is now Admin.",
+                  "data": {},
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "MemberRemoved": {
+        "description": "Member removed from workspace",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/MutationResultResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Bob Smith has been removed from the workspace.",
+                  "data": {},
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "ToolUnauthorized": {
+        "description": "Authentication required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UnauthorizedResponse"
+            },
+            "examples": {
+              "unauthorized": {
+                "value": {
+                  "status": "unauthorized",
+                  "error_code": "unauthorized",
+                  "message": "Authentication required"
+                }
+              }
             }
           }
         }
       },
       "ToolForbidden": {
-        "description": "Action forbidden for current role/scope",
+        "description": "Action forbidden for current role or workspace scope",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ToolResponse"
+              "$ref": "#/components/schemas/ForbiddenResponse"
+            },
+            "examples": {
+              "forbidden": {
+                "value": {
+                  "status": "forbidden",
+                  "error_code": "forbidden",
+                  "message": "I can't run that action with your current workspace permissions.",
+                  "data": {}
+                }
+              }
             }
           }
         }
@@ -307,26 +632,331 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/ToolResponse"
+              "$ref": "#/components/schemas/ValidationErrorResponse"
+            },
+            "examples": {
+              "validationError": {
+                "value": {
+                  "status": "validation_error",
+                  "error_code": "validation_error",
+                  "message": "Please provide a workspace name.",
+                  "data": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "ToolExecutionError": {
+        "description": "Unexpected server-side execution error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ExecutionErrorResponse"
+            },
+            "examples": {
+              "executionError": {
+                "value": {
+                  "status": "execution_error",
+                  "error_code": "execution_error",
+                  "message": "There was an unexpected error while running that action.",
+                  "data": {}
+                }
+              }
             }
           }
         }
       }
     },
     "schemas": {
-      "ToolResponse": {
+      "RoleId": {
+        "type": "integer",
+        "description": "Editable workspace role id.",
+        "enum": [2, 3, 4],
+        "x-enum-varnames": ["ADMIN", "USER", "READ_ONLY"],
+        "example": 3
+      },
+      "MemberSummary": {
         "type": "object",
-        "required": ["status", "message", "data"],
+        "additionalProperties": false,
+        "required": ["id", "name", "email", "role", "role_id", "status"],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "description": "Localized role label."
+          },
+          "role_id": {
+            "$ref": "#/components/schemas/RoleId"
+          },
+          "status": {
+            "type": "string",
+            "description": "Localized status label."
+          }
+        }
+      },
+      "EmptyData": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "WorkspaceRenameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The new workspace name.",
+            "minLength": 1
+          }
+        }
+      },
+      "MemberInviteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["first_name", "last_name", "email"],
+        "properties": {
+          "first_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "last_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "$ref": "#/components/schemas/RoleId"
+          }
+        }
+      },
+      "MemberResendInviteRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "member_id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "MemberUpdateRoleRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role"],
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/RoleId"
+          }
+        }
+      },
+      "WorkspaceNameData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["workspace_name"],
+        "properties": {
+          "workspace_name": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceDeleteData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["redirect_path", "failed_notifications"],
+        "properties": {
+          "redirect_path": {
+            "type": "string",
+            "example": "/app/workspaces"
+          },
+          "failed_notifications": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "MemberListData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["members"],
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberSummary"
+            }
+          }
+        }
+      },
+      "WorkspaceRenamedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed", "forbidden", "validation_error", "execution_error"]
+            "enum": ["executed"]
           },
           "message": {
             "type": "string"
           },
+          "data": {
+            "$ref": "#/components/schemas/WorkspaceNameData"
+          },
           "error_code": {
-            "type": ["string", "null"]
+            "type": "null"
+          }
+        }
+      },
+      "WorkspaceDeletedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/WorkspaceDeleteData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "MembersListedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MemberListData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "MutationResultResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/EmptyData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "UnauthorizedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "error_code", "message"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["unauthorized"]
+          },
+          "error_code": {
+            "type": "string",
+            "enum": ["unauthorized"]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ForbiddenResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "error_code", "message"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["forbidden"]
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "error_code", "message", "data"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["validation_error"]
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ExecutionErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "error_code", "message", "data"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["execution_error"]
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
           },
           "data": {
             "type": "object",

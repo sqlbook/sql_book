@@ -34,3 +34,17 @@
 - Toast locale copy is plain text; do not use HTML entities like `&apos;` in toast translation strings.
 - See `docs/TOASTS_MASTER_REF.md` for toast-specific copy/encoding/interpolation rules.
 - For workspace chat, all deterministic system copy (UI labels, validation text, status rows, fixed executor/planner text) must use locale keys and ship with `en` + `es` entries.
+
+## API Docs Contract Safety
+- Treat `config/openapi/v1.json` as a maintained contract, not optional documentation.
+- Any change to documented API behavior must update the OpenAPI document in the same change.
+- API docs must stay usable for both humans and LLM/tool consumers:
+  - short summaries for navigation
+  - explicit descriptions for scope/risk/behavior
+  - typed request and response schemas
+  - concrete examples for success and error paths
+- Keep docs environment-safe:
+  - no hardcoded staging/production hostnames in the spec
+  - prefer relative server URLs and Scalar environment variables
+- Validate docs changes with `bundle exec rake openapi:validate`.
+- See `docs/API_MASTER_REF.md` for the full authoring and maintenance workflow.

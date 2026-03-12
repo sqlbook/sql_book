@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-09
+Last updated: 2026-03-12
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -8,6 +8,7 @@ Single source of truth for workspace chat architecture, scope, permissions, conf
 Related references:
 - `docs/WORKSPACES_MASTER_REF.md`
 - `docs/ROLES_RIGHTS_MASTER_REF.md`
+- `docs/API_MASTER_REF.md`
 - `docs/TRANSLATIONS_MASTER_REF.md`
 - `docs/ENGINEERING_GUARDRAILS.md`
 - `docs/ENV_VARS.md`
@@ -31,7 +32,8 @@ Related references:
 ## Core architecture
 - Runtime orchestrator: `Chat::RuntimeService`
   - single-model structured-output decision path
-  - optional planner fallback only if model output is missing/invalid
+  - planner fallback is used only when `OPENAI_API_KEY` is unavailable
+  - if model returns non-JSON text, runtime uses that assistant text instead of collapsing to generic capability copy
   - supports multimodal image context (bounded inline subset)
 - Shared tooling foundation:
   - `Tooling::Registry`
@@ -166,6 +168,7 @@ High-risk writes (inline confirmation required):
 4. If tool call is high-risk write, create confirmation card.
 5. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
 6. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+7. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
 
 ## Idempotency behavior (writes)
 - Write actions use deterministic idempotency keys scoped by workspace/thread/actor/tool/payload.
@@ -227,6 +230,7 @@ High-risk writes (inline confirmation required):
   - confirmation card labels
   - status rows
   - planner fallback copy
+  - runtime retry copy for planning failures
   - executor/API validation and result copy
   - client-side validation/fallback errors
 - LLM free-form responses are dynamic and are not locale-key managed.

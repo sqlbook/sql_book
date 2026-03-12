@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-09
+Last updated: 2026-03-12
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -14,6 +14,7 @@ Related references:
 - `docs/ROLES_RIGHTS_MASTER_REF.md` for canonical role capability matrix and UI affordance expectations.
 - `docs/EMAILS_MASTER_REF.md` for full mailer inventory and trigger ownership.
 - `docs/CHAT_MASTER_REF.md` for chat-specific architecture, lifecycle, and localization rules.
+- `docs/API_MASTER_REF.md` for documented workspace/team API contracts and docs maintenance rules.
 
 ## Core routes
 - Workspaces:
@@ -42,6 +43,7 @@ Related references:
   - `POST /api/v1/workspaces/:workspace_id/members/resend-invite`
   - `PATCH /api/v1/workspaces/:workspace_id/members/:id/role`
   - `DELETE /api/v1/workspaces/:workspace_id/members/:id`
+- OpenAPI/Scalar governance for these routes lives in `docs/API_MASTER_REF.md`.
 
 ## Roles and authorization
 - Roles in `Member`:

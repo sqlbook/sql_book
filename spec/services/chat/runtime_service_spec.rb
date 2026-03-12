@@ -95,6 +95,22 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(true)
     end
 
+    it 'uses non-structured model output as a conversational fallback' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      response = double('response', body: { output_text: 'Sure. What email should I invite?' }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(message: 'hello there', workspace:, actor:, tool_metadata:).call
+
+      expect(decision.assistant_message).to eq('Sure. What email should I invite?')
+      expect(decision.tool_calls).to eq([])
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
     it 'asks for missing names when invite email follow-up is present but model returns no tool' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {

@@ -11,6 +11,7 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
       expect(response.body).to include('api-reference')
       expect(response.body).to include('/dev/api/openapi.json')
       expect(response.body).to include('@scalar/api-reference')
+      expect(response.body).to include('Scalar.createApiReference')
     end
   end
 
@@ -21,6 +22,9 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
       expect(payload['openapi']).to start_with('3.')
+      expect(payload.fetch('tags', []).map { |tag| tag['name'] }).to include('Workspace', 'Members')
+      expect(payload['x-tagGroups']).to be_present
+      expect(payload['x-scalar-environments']).to be_present
       expect(payload.fetch('paths', {}).keys).to include(
         '/api/v1/workspaces/{workspace_id}',
         '/api/v1/workspaces/{workspace_id}/members',
@@ -28,6 +32,7 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
         '/api/v1/workspaces/{workspace_id}/members/{id}/role',
         '/api/v1/workspaces/{workspace_id}/members/{id}'
       )
+      expect(payload.dig('paths', '/api/v1/workspaces/{workspace_id}', 'patch', 'x-codeSamples')).to be_present
     end
   end
 end

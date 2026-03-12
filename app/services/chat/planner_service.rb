@@ -43,6 +43,17 @@ module Chat
       someone somebody anyone anybody person people team teammate teammates mate mates
       member members user users my our else another one this that
     ].freeze
+    CHAT_MODEL_FALLBACK = 'gpt-4.1-mini'
+    PLAN_SCHEMA = {
+      'type' => 'object',
+      'required' => %w[assistant_message action_type payload],
+      'additionalProperties' => false,
+      'properties' => {
+        'assistant_message' => { 'type' => 'string' },
+        'action_type' => { 'type' => %w[string null] },
+        'payload' => { 'type' => 'object' }
+      }
+    }.freeze
 
     def initialize(message:, workspace:, actor:, attachments: [], conversation_messages: [])
       @message = message.to_s.strip
@@ -53,10 +64,7 @@ module Chat
     end
 
     def call
-      heuristic = heuristic_plan
-      return heuristic if heuristic
-
-      llm_plan || default_help_plan
+      llm_plan || heuristic_plan || default_help_plan
     rescue StandardError => e
       Rails.logger.warn("Chat planner failed, falling back to heuristic planner: #{e.class} #{e.message}")
       heuristic_plan || default_help_plan
@@ -70,37 +78,49 @@ module Chat
       attachments.size
     end
 
-    def llm_plan # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def llm_plan
       return nil if api_key.blank?
 
-      response = http_client.request(request)
-      return nil unless response.is_a?(Net::HTTPSuccess)
+      chat_model_candidates.each do |model|
+        plan = llm_plan_for_model(model:)
+        return plan if plan
+      end
 
-      parsed = JSON.parse(response.body)
-      json_text = parsed.fetch('output_text', '').to_s
-      return nil if json_text.blank?
+      nil
+    rescue StandardError => e
+      Rails.logger.warn("Chat planner request failed: #{e.class} #{e.message}")
+      nil
+    end
 
-      planned = JSON.parse(json_text)
+    def llm_plan_for_model(model:)
+      response = planner_response_for(model:)
+      return nil unless response
+
+      planned = planner_payload_from_response(response_body: response.body, model:)
+      return nil unless planned.is_a?(Hash)
+
+      build_plan_from_llm_payload(planned:)
+    end
+
+    def build_plan_from_llm_payload(planned:)
       action_type = planned['action_type'].to_s.presence
       payload = planned['payload'].is_a?(Hash) ? planned['payload'] : {}
       assistant_message = planned['assistant_message'].to_s.presence || fallback_assistant_message(action_type:)
 
       Plan.new(assistant_message:, action_type:, payload:)
-    rescue JSON::ParserError
-      nil
     end
 
-    def request
+    def request(payload:)
       req = Net::HTTP::Post.new(endpoint)
       req['Authorization'] = "Bearer #{api_key}"
       req['Content-Type'] = 'application/json'
-      req.body = request_payload.to_json
+      req.body = payload.to_json
       req
     end
 
-    def request_payload
+    def request_payload(model:)
       {
-        model: ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini'),
+        model:,
         input: [
           {
             role: 'system',
@@ -123,6 +143,7 @@ module Chat
                   ].join(' '),
                   'Never claim to have executed actions that are out of scope.',
                   'Never propose cross-workspace actions; stay in the current workspace only.',
+                  'In this workspace context, user/member/team member refer to workspace members.',
                   'Use the recent conversation context to resolve follow-up references like "their names/details".',
                   [
                     'When the user asks for team members, `member.list` means detailed member output',
@@ -167,7 +188,8 @@ module Chat
             role: 'user',
             content: user_input_content
           }
-        ]
+        ],
+        text: plan_format
       }
     end
 
@@ -587,6 +609,90 @@ module Chat
       return I18n.t('app.workspaces.chat.planner.fallback_with_action') if action_type.present?
 
       I18n.t('app.workspaces.chat.planner.fallback_without_action')
+    end
+
+    def plan_format
+      {
+        format: {
+          type: 'json_schema',
+          name: 'chat_planner_plan',
+          schema: PLAN_SCHEMA,
+          strict: true
+        }
+      }
+    end
+
+    def response_text_from(parsed)
+      direct = parsed.fetch('output_text', '').to_s.strip
+      return direct if direct.present?
+
+      Array(parsed['output']).flat_map do |output_item|
+        Array(output_item['content']).filter_map do |content_item|
+          content_text(content_item)
+        end
+      end.join("\n").strip
+    end
+
+    def content_text(content_item)
+      raw_text = content_item['text']
+      value = raw_text.is_a?(Hash) ? raw_text['value'] : raw_text
+      value.to_s.strip.presence
+    end
+
+    def parse_json_object(raw_json)
+      JSON.parse(raw_json)
+    rescue JSON::ParserError
+      parse_extracted_json(raw_json:)
+    end
+
+    def extract_json_object(raw_text)
+      text = raw_text.to_s
+      start_idx = text.index('{')
+      end_idx = text.rindex('}')
+      return nil unless start_idx && end_idx && end_idx > start_idx
+
+      text[start_idx..end_idx]
+    end
+
+    def parse_extracted_json(raw_json:)
+      extracted = extract_json_object(raw_json)
+      return nil if extracted.blank?
+
+      JSON.parse(extracted)
+    rescue JSON::ParserError
+      nil
+    end
+
+    def planner_response_for(model:)
+      response = http_client.request(request(payload: request_payload(model:)))
+      return response if response.is_a?(Net::HTTPSuccess)
+
+      log_response_failure(context: 'planner', model:, response:)
+      nil
+    end
+
+    def planner_payload_from_response(response_body:, model:)
+      parsed = JSON.parse(response_body)
+      json_text = response_text_from(parsed)
+      return nil if json_text.blank?
+
+      parse_json_object(json_text)
+    rescue JSON::ParserError => e
+      Rails.logger.warn("Chat planner JSON parse failed (model=#{model}): #{e.class} #{e.message}")
+      nil
+    end
+
+    def log_response_failure(context:, model:, response:)
+      body = response.body.to_s.gsub(/\s+/, ' ').strip
+      preview = body[0, 220]
+      Rails.logger.warn("Chat #{context} response failed (model=#{model}): status=#{response.code} body=#{preview}")
+    end
+
+    def chat_model_candidates
+      configured_model = ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini').to_s.strip
+      candidates = [configured_model.presence || 'gpt-5-mini']
+      candidates << CHAT_MODEL_FALLBACK unless candidates.include?(CHAT_MODEL_FALLBACK)
+      candidates
     end
 
     def http_client

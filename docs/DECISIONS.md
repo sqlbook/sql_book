@@ -82,6 +82,7 @@ Use this file to record major choices and why they were made.
   - `Tooling::Registry` + workspace/team tool catalog are now the canonical execution surface
   - write idempotency keys prevent duplicate side effects on retries
   - API v1 workspace/team routes and public Scalar docs (`/dev/api`) are now maintained contracts
+  - `docs/API_MASTER_REF.md` owns the API-doc setup and maintenance workflow
 - Revisit when:
   - broader domain namespaces (`datasource.*`, `query.*`, `dashboard.*`) are promoted into shared tooling
   - model/provider strategy changes require runtime contract updates

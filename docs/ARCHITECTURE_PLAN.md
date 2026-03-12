@@ -24,6 +24,7 @@ Build a reliable multi-source analytics/query SaaS that stays simple to operate 
   - connector catalog and setup UX
   - workspace-scoped chat assistant for workspace/team management actions (v1), powered by shared tool registry + LLM-first runtime
   - documented workspace/team API contracts at `/dev/api` (OpenAPI + Scalar), auth-protected at execution layer
+  - API-doc maintenance governed by `docs/API_MASTER_REF.md`
   - SQL query editor
   - connector-aware schema explorer
   - saved queries

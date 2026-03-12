@@ -180,6 +180,20 @@ If any check is missing:
 - trigger a fresh deploy on web + worker
 - run `bundle exec rails db:migrate` in web shell, then redeploy
 
+## API docs verification (staging shell)
+Use this after API/OpenAPI/Scalar changes to prove docs and spec are current in the deployed environment.
+
+```bash
+echo "RENDER_GIT_COMMIT=$RENDER_GIT_COMMIT"
+grep -n 'Scalar.createApiReference' app/views/dev/api_docs/show.html.erb
+grep -n 'showOperationId' app/views/dev/api_docs/show.html.erb
+grep -n 'x-scalar-environments' config/openapi/v1.json
+grep -n 'x-codeSamples' config/openapi/v1.json
+bundle exec rake openapi:validate
+curl -I http://127.0.0.1:3000/dev/api
+curl http://127.0.0.1:3000/dev/api/openapi.json | head
+```
+
 ## Notes and decisions
 - 2026-02-15: Chose 5 GB staging Postgres storage to minimize initial cost.
 - 2026-02-15: Renamed Render project from `My project` to `sqlbook`.

@@ -105,6 +105,7 @@ en:
           action_canceled: Okay, I canceled that action.
           request_already_pending: That request is already pending confirmation.
           request_already_processed: I already processed that request.
+          runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
         errors:
           message_or_image_required: Message content or at least one image is required.
           max_images: You can attach up to %{count} images per message.

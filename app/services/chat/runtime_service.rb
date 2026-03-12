@@ -18,6 +18,7 @@ module Chat
     MAX_INLINE_IMAGE_COUNT = 2
     MAX_INLINE_IMAGE_SIZE = 5.megabytes
     EMAIL_REGEX = /[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i
+    CHAT_MODEL_FALLBACK = 'gpt-4.1-mini'
     NAME_WITH_EMAIL_REGEX = /
       \b([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)
       (?:
@@ -82,10 +83,12 @@ module Chat
     def compose_tool_result_message(tool_name:, tool_arguments:, execution:)
       return execution.user_message if api_key.blank?
 
-      response = perform_request(payload: tool_result_request_payload(tool_name:, tool_arguments:, execution:))
-      return execution.user_message unless response.is_a?(Net::HTTPSuccess)
-
-      parsed_tool_result_message(response_body: response.body, fallback_message: execution.user_message)
+      rendered = render_tool_result_with_models(
+        tool_name:,
+        tool_arguments:,
+        execution:
+      )
+      rendered.presence || execution.user_message
     rescue StandardError => e
       Rails.logger.warn("Chat runtime result rendering failed: #{e.class} #{e.message}")
       execution.user_message
@@ -98,15 +101,39 @@ module Chat
     def llm_decision
       return nil if api_key.blank?
 
-      response = perform_request(payload: decision_request_payload)
-      return nil unless response.is_a?(Net::HTTPSuccess)
+      decision_from_models
+    end
 
-      parsed_response = JSON.parse(response.body)
-      response_text = response_text_from(parsed_response)
-      return nil if response_text.blank?
+    def decision_from_models
+      chat_model_candidates.each do |model|
+        decision = decision_for_model(model:)
+        return decision if decision
+      end
 
-      parse_decision_json(response_text)
-    rescue JSON::ParserError
+      nil
+    end
+
+    def decision_for_model(model:)
+      response = decision_response_for(model:)
+      return nil unless response
+
+      decision_from_response_body(response_body: response.body)
+    rescue JSON::ParserError => e
+      Rails.logger.warn("Chat runtime decision parse failed (model=#{model}): #{e.class} #{e.message}")
+      nil
+    end
+
+    def render_tool_result_with_models(tool_name:, tool_arguments:, execution:)
+      chat_model_candidates.each do |model|
+        rendered = rendered_tool_result_for_model(
+          model:,
+          tool_name:,
+          tool_arguments:,
+          execution:
+        )
+        return rendered if rendered.present?
+      end
+
       nil
     end
 
@@ -122,7 +149,22 @@ module Chat
       )
     end
 
-    def fallback_decision # rubocop:disable Metrics/AbcSize
+    def fallback_decision
+      return planner_fallback_decision if api_key.blank?
+
+      fallback_message_decision
+    end
+
+    def fallback_message_decision
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.messages.runtime_retry'),
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      )
+    end
+
+    def planner_fallback_decision # rubocop:disable Metrics/AbcSize
       plan = Chat::PlannerService.new(
         message:,
         workspace:,
@@ -150,13 +192,66 @@ module Chat
       )
     end
 
-    def fallback_message_decision
+    def decision_response_for(model:)
+      response = perform_request(payload: decision_request_payload(model:))
+      return response if response.is_a?(Net::HTTPSuccess)
+
+      log_response_failure(context: 'decision', model:, response:)
+      nil
+    end
+
+    def decision_from_response_body(response_body:)
+      parsed_response = JSON.parse(response_body)
+      response_text = response_text_from(parsed_response)
+      return nil if response_text.blank?
+
+      parse_decision_json(response_text) || non_structured_decision(response_text:)
+    end
+
+    def non_structured_decision(response_text:)
+      cleaned = response_text.to_s.gsub(/\s+/, ' ').strip
+      return nil if cleaned.blank?
+      return nil if cleaned.start_with?('{', '[')
+
       Decision.new(
-        assistant_message: I18n.t('app.workspaces.chat.planner.default_help'),
+        assistant_message: cleaned,
         tool_calls: [],
         missing_information: [],
         finalize_without_tools: true
       )
+    end
+
+    def rendered_tool_result_for_model(model:, tool_name:, tool_arguments:, execution:)
+      response = tool_result_response_for(
+        model:,
+        tool_name:,
+        tool_arguments:,
+        execution:
+      )
+      return nil unless response
+
+      parsed_tool_result_message(
+        response_body: response.body,
+        fallback_message: execution.user_message
+      )
+    rescue JSON::ParserError => e
+      Rails.logger.warn("Chat runtime tool result parse failed (model=#{model}): #{e.class} #{e.message}")
+      nil
+    end
+
+    def tool_result_response_for(model:, tool_name:, tool_arguments:, execution:)
+      response = perform_request(
+        payload: tool_result_request_payload(
+          model:,
+          tool_name:,
+          tool_arguments:,
+          execution:
+        )
+      )
+      return response if response.is_a?(Net::HTTPSuccess)
+
+      log_response_failure(context: 'tool_result', model:, response:)
+      nil
     end
 
     def request(payload:)
@@ -167,9 +262,9 @@ module Chat
       req
     end
 
-    def decision_request_payload
+    def decision_request_payload(model:)
       {
-        model: ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini'),
+        model:,
         input: [
           {
             role: 'system',
@@ -189,9 +284,9 @@ module Chat
       }
     end
 
-    def tool_result_request_payload(tool_name:, tool_arguments:, execution:)
+    def tool_result_request_payload(model:, tool_name:, tool_arguments:, execution:)
       {
-        model: ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini'),
+        model:,
         input: [
           {
             role: 'system',
@@ -240,8 +335,14 @@ module Chat
         'You are sqlbook\'s workspace chat assistant operating inside one workspace.',
         'Keep the conversation natural and task-focused.',
         "Reply in the user locale: #{actor_locale}.",
+        'In this workspace context, user/member/team member refer to workspace members.',
         'Prioritize solving the user request over listing capabilities.',
         'Only provide capability summaries when the user explicitly asks what you can do.',
+        'Use tool metadata schemas as your source of truth for required fields and argument shapes.',
+        'Extract required fields directly from natural-language user messages whenever possible.',
+        'If the user provides first name, last name, and email in one message, prepare member.invite immediately.',
+        'Treat "users" as workspace team members in this context.',
+        'For "who are my users/members/team members" requests, call member.list.',
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
         'For member.invite, required fields are first_name, last_name, and email.',
@@ -449,8 +550,7 @@ module Chat
 
     def invite_context_active?
       message.match?(INVITE_INTENT_REGEX) ||
-        invite_context_in_recent_messages? ||
-        invite_details_present_in_message?
+        invite_context_in_recent_messages?
     end
 
     def invite_context_in_recent_messages?
@@ -460,10 +560,6 @@ module Chat
       return false unless recent_assistant_message
 
       conversation_entry_content(recent_assistant_message).match?(INVITE_CONTEXT_REGEX)
-    end
-
-    def invite_details_present_in_message?
-      parsed_email.present? || parsed_name_payload.present?
     end
 
     def inferred_invite_details
@@ -594,6 +690,22 @@ module Chat
       return false if PLACEHOLDER_NAME_PARTS.include?(last)
 
       true
+    end
+
+    def chat_model_candidates
+      configured_model = ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini').to_s.strip
+      candidates = [configured_model.presence || 'gpt-5-mini']
+      candidates << CHAT_MODEL_FALLBACK unless candidates.include?(CHAT_MODEL_FALLBACK)
+      candidates
+    end
+
+    def log_response_failure(context:, model:, response:)
+      body = response.body.to_s.gsub(/\s+/, ' ').strip
+      preview = body[0, 220]
+      Rails.logger.warn(
+        "Chat runtime #{context} response failed (model=#{model}): " \
+        "status=#{response.code} body=#{preview}"
+      )
     end
 
     def api_key
