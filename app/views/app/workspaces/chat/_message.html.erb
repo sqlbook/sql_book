@@ -1,3 +1,6 @@
+<% thinking_label = I18n.t('app.workspaces.chat.statuses.thinking') %>
+<% render_message = !message.system? || (message.content.to_s.strip.casecmp(thinking_label.to_s.strip).zero? && message.status == ChatMessage::Statuses::PENDING) %>
+<% if render_message %>
 <article class="chat-message <%= "chat-message-#{message.role_name}" %>" data-message-id="<%= message.id %>">
   <% if message.user? %>
     <div class="chat-user-bubble">
@@ -14,18 +17,15 @@
       <% end %>
     </div>
   <% elsif message.system? %>
-    <% thinking_label = I18n.t('app.workspaces.chat.statuses.thinking') %>
-    <% if message.content.to_s.strip.casecmp(thinking_label.to_s.strip).zero? && message.status == ChatMessage::Statuses::PENDING %>
-      <p class="chat-system-row chat-system-row-thinking">
-        <%= thinking_label %>
-        <span class="chat-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
-      </p>
-    <% else %>
-      <p class="chat-system-row"><%= message.content %></p>
-    <% end %>
+    <p class="chat-system-row chat-system-row-thinking">
+      <%= thinking_label %>
+      <span class="chat-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>
+    </p>
   <% else %>
     <div class="chat-assistant-block">
-      <p class="chat-message-body"><%= message.content %></p>
+      <div class="chat-message-body">
+        <%= render_chat_markdown(message.content) %>
+      </div>
 
       <% action_request_id = message.metadata.to_h["action_request_id"] %>
       <% action_request = action_requests_by_id[action_request_id.to_i] if action_request_id.present? %>
@@ -64,3 +64,4 @@
   <% end %>
 
 </article>
+<% end %>

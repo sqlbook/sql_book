@@ -116,7 +116,9 @@
 
         <article class="chat-message chat-message-assistant">
           <div class="chat-assistant-block">
-            <p class="chat-message-body">I can rename this workspace once you confirm.</p>
+            <div class="chat-message-body">
+              <%= render_chat_markdown("I can rename this workspace once you confirm.\n\n- Current name: `Bananarama`\n- Proposed name: `Bumanarama`") %>
+            </div>
 
             <div class="chat-inline-card">
               <p class="chat-inline-card-title"><%= I18n.t('app.workspaces.chat.cards.confirmation_needed') %></p>
@@ -134,7 +136,9 @@
 
         <article class="chat-message chat-message-assistant">
           <div class="chat-assistant-block">
-            <p class="chat-message-body">I couldn't complete that action.</p>
+            <div class="chat-message-body">
+              <%= render_chat_markdown("I couldn't complete that action.\n\n> Please try again once the pending confirmation has been cleared.") %>
+            </div>
             <div class="chat-inline-card chat-inline-card-error">
               <p class="chat-inline-card-title">Error</p>
               <p class="chat-inline-card-body">Could not confirm that action.</p>
@@ -144,7 +148,9 @@
 
         <article class="chat-message chat-message-assistant">
           <div class="chat-assistant-block">
-            <p class="chat-message-body">Done. Workspace renamed to Bumanarama.</p>
+            <div class="chat-message-body">
+              <%= render_chat_markdown("Done. Workspace renamed to **Bumanarama**.\n\n| Field | Value |\n| --- | --- |\n| Previous name | Bananarama |\n| Current name | Bumanarama |") %>
+            </div>
             <div class="chat-inline-card chat-inline-card-success">
               <p class="chat-inline-card-title">Success</p>
               <p class="chat-inline-card-body">Workspace name updated to Bumanarama.</p>

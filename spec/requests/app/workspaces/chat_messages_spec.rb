@@ -50,7 +50,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
     it 'creates a basic message and assistant reply' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'Hello chat' }, as: :json
-      end.to change(ChatMessage, :count).by(3)
+      end.to change(ChatMessage, :count).by(2)
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
@@ -265,6 +265,57 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       payload = response.parsed_body
       expect(payload['status']).to eq('requires_confirmation')
       expect(payload.dig('action_request', 'action_type')).to eq('member.remove')
+    end
+
+    it 'allows written confirmation for a pending high-risk action' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'remove user chris@example.com' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'I confirm' },
+             as: :json
+      end.to change { workspace.members.exists?(user: teammate) }.from(true).to(false)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('has been removed')
+    end
+
+    it 'allows written cancellation for a pending high-risk action' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'remove user chris@example.com' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'cancel that' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('canceled')
+      expect(workspace.members.exists?(user: teammate)).to be(true)
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq('Okay, I canceled that action.')
     end
 
     it 'rejects non-image attachments' do

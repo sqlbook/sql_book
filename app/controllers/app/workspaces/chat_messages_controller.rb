@@ -6,6 +6,10 @@ module App
   module Workspaces
     class ChatMessagesController < ApplicationController # rubocop:disable Metrics/ClassLength
       IDEMPOTENCY_WINDOW = 10.minutes
+      CONFIRM_MESSAGE_REGEX = /
+        \A\s*(?:i\s+confirm|confirm|yes(?:\s+please)?|go\s+ahead|do\s+it|proceed|continue|si|sí)\b
+      /ix
+      CANCEL_MESSAGE_REGEX = /\A\s*(?:cancel|stop|never\s+mind|do\s+not|don't|no)\b/i
 
       before_action :require_authentication!
 
@@ -28,7 +32,16 @@ module App
         return render_validation_error(message: user_message.errors.full_messages.to_sentence) unless user_message.save
 
         assign_thread_title_from_first_message(user_message:)
-        append_system_message(content: I18n.t('app.workspaces.chat.statuses.thinking'))
+
+        pending_action_request = pending_confirmation_action_request
+        if pending_action_request
+          command_response = render_pending_action_command_response(
+            user_message:,
+            action_request: pending_action_request
+          )
+          return command_response if command_response
+        end
+
         action_payload_context = action_payload_context_for(message: user_message)
 
         runtime = Chat::RuntimeService.new(
@@ -91,7 +104,6 @@ module App
           )
         end
 
-        append_system_message(content: I18n.t('app.workspaces.chat.statuses.checking_permissions'))
         execution = action_executor.execute(action_type: tool_call.tool_name, payload:)
         if execution.status == 'executed' && read_tool?(tool_definition)
           execution.user_message = runtime.compose_tool_result_message(
@@ -187,14 +199,6 @@ module App
 
         images.each { |image| message.images.attach(image) }
         message
-      end
-
-      def append_system_message(content:)
-        chat_thread.chat_messages.create!(
-          role: ChatMessage::Roles::SYSTEM,
-          status: ChatMessage::Statuses::COMPLETED,
-          content:
-        )
       end
 
       def assign_thread_title_from_first_message(user_message:)
@@ -327,8 +331,6 @@ module App
           }
         )
 
-        append_system_message(content: I18n.t('app.workspaces.chat.statuses.ready_to_confirm'))
-
         render json: {
           status: 'requires_confirmation',
           thread_id: chat_thread.id,
@@ -347,8 +349,6 @@ module App
             result_data: execution.data
           }
         )
-        append_system_message(content: I18n.t('app.workspaces.chat.statuses.done'))
-
         render json: {
           status: execution.status,
           thread_id: chat_thread.id,
@@ -369,8 +369,6 @@ module App
               action_state: 'requires_confirmation'
             }
           )
-          append_system_message(content: I18n.t('app.workspaces.chat.statuses.ready_to_confirm'))
-
           return render json: {
             status: 'requires_confirmation',
             thread_id: chat_thread.id,
@@ -541,6 +539,117 @@ module App
           'validation_error' => ChatActionRequest::Statuses::VALIDATION_ERROR,
           'execution_error' => ChatActionRequest::Statuses::EXECUTION_ERROR
         }.fetch(result_status, ChatActionRequest::Statuses::EXECUTION_ERROR)
+      end
+
+      def pending_confirmation_action_request
+        chat_thread.chat_action_requests
+          .pending_confirmation
+          .where(requested_by: current_user)
+          .order(id: :desc)
+          .first
+      end
+
+      def render_pending_action_command_response(user_message:, action_request:)
+        case pending_action_command
+        when :confirm
+          render_pending_action_confirmation(user_message:, action_request:)
+        when :cancel
+          render_pending_action_cancellation(user_message:, action_request:)
+        end
+      end
+
+      def pending_action_command
+        content = params[:content].to_s.strip
+        return :confirm if content.match?(CONFIRM_MESSAGE_REGEX)
+        return :cancel if content.match?(CANCEL_MESSAGE_REGEX)
+
+        nil
+      end
+
+      def render_pending_action_confirmation(user_message:, action_request:) # rubocop:disable Metrics/AbcSize
+        if action_request.expired?
+          return render_non_action_response(
+            user_message:,
+            assistant_content: I18n.t('app.workspaces.chat.errors.confirmation_expired')
+          )
+        end
+
+        execution = action_executor.execute(action_type: action_request.action_type, payload: action_request.payload)
+        action_request.update!(
+          status: status_for_result(result_status: execution.status),
+          result_payload: {
+            'user_message' => execution.user_message,
+            'data' => execution.data
+          },
+          executed_at: Time.current
+        )
+        set_workspace_delete_toast(action_request:, execution:)
+
+        assistant_message = chat_thread.chat_messages.create!(
+          role: ChatMessage::Roles::ASSISTANT,
+          status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
+          content: execution.user_message,
+          metadata: {
+            action_request_id: action_request.id,
+            action_state: execution.status,
+            confirmed_via_chat: true
+          }
+        )
+
+        render json: {
+          status: execution.status,
+          thread_id: chat_thread.id,
+          messages: [serialize_message(message: user_message), serialize_message(message: assistant_message)],
+          data: execution.data,
+          redirect_path: execution.data[:redirect_path]
+        }
+      end
+
+      def render_pending_action_cancellation(user_message:, action_request:)
+        action_request.update!(
+          status: ChatActionRequest::Statuses::CANCELED,
+          result_payload: { canceled_by: current_user.id }
+        )
+
+        assistant_message = chat_thread.chat_messages.create!(
+          role: ChatMessage::Roles::ASSISTANT,
+          status: ChatMessage::Statuses::COMPLETED,
+          content: I18n.t('app.workspaces.chat.messages.action_canceled'),
+          metadata: {
+            action_request_id: action_request.id,
+            action_state: 'canceled',
+            canceled_via_chat: true
+          }
+        )
+
+        render json: {
+          status: 'canceled',
+          thread_id: chat_thread.id,
+          messages: [serialize_message(message: user_message), serialize_message(message: assistant_message)],
+          action_request_id: action_request.id
+        }
+      end
+
+      def set_workspace_delete_toast(action_request:, execution:)
+        return unless action_request.action_type == 'workspace.delete'
+        return unless execution.status == 'executed'
+
+        # We intentionally persist flash across this JSON response so Turbo.visit can display it on the next page load.
+        # rubocop:disable Rails/ActionControllerFlashBeforeRender
+        flash[:toast] = if execution.data[:failed_notifications].to_i.zero?
+                          {
+                            type: 'success',
+                            title: I18n.t('common.toasts.workspace_successfully_deleted_title'),
+                            body: I18n.t('toasts.workspaces.deleted.body')
+                          }
+                        else
+                          {
+                            type: 'information',
+                            title: I18n.t('common.toasts.workspace_successfully_deleted_title'),
+                            body: I18n.t('toasts.workspaces.deleted_partial.body')
+                          }
+                        end
+        # rubocop:enable Rails/ActionControllerFlashBeforeRender
       end
     end
   end

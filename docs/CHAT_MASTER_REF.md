@@ -189,6 +189,10 @@ High-risk writes (inline confirmation required):
 
 ## Confirmation lifecycle
 - Confirmation required only for high-risk writes.
+- Users can confirm/cancel pending actions either:
+  - via inline chat buttons
+  - via explicit follow-up chat messages such as confirmation/cancellation replies
+- Pending confirmation assistant messages should render inline `Confirm` / `Cancel` controls in the chat UI while the action remains pending.
 - Confirm endpoint validates:
   - request is pending
   - token is valid
@@ -213,8 +217,11 @@ High-risk writes (inline confirmation required):
 ## Message stream UX behavior
 - User messages render immediately on submit (optimistic append) before runtime response returns.
 - Message timestamps are intentionally hidden in chat stream UI.
-- System `Thinking` rows render animated trailing ellipsis only while pending/optimistic; persisted completed rows render static label text.
+- System `Thinking` rows render animated trailing ellipsis only while pending/optimistic.
+- Transient status rows such as `Thinking`, `Checking permissions`, and `Done` should disappear once the assistant reply/result has rendered; they are not durable conversation content.
 - Sticky composer area includes an opaque mask so older messages are hidden until scrolled above the composer.
+- Assistant content now supports sanitized markdown rendering for lists, tables, emphasis, links, blockquotes, and code blocks.
+- Markdown is rendered server-side and sanitized before output; raw HTML from model output is not trusted.
 
 ## Attachment behavior (v1)
 - Accepted MIME types:

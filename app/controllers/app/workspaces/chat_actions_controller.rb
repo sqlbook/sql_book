@@ -10,8 +10,6 @@ module App
         validation_error = confirmation_validation_error
         return render_action_error(status: :unprocessable_entity, message: validation_error) if validation_error
 
-        append_system_message(content: I18n.t('app.workspaces.chat.statuses.checking_permissions'))
-
         execution = Chat::ActionExecutor.new(workspace:, actor: current_user).execute(
           action_type: action_request.action_type,
           payload: action_request.payload
@@ -27,7 +25,6 @@ module App
         )
 
         append_execution_message(execution:)
-        append_system_message(content: I18n.t('app.workspaces.chat.statuses.done'))
         set_workspace_delete_toast(execution:)
 
         render json: {
@@ -93,14 +90,6 @@ module App
         return false if submitted_token.bytesize != stored_token.bytesize
 
         ActiveSupport::SecurityUtils.secure_compare(stored_token, submitted_token)
-      end
-
-      def append_system_message(content:)
-        chat_thread.chat_messages.create!(
-          role: ChatMessage::Roles::SYSTEM,
-          status: ChatMessage::Statuses::COMPLETED,
-          content:
-        )
       end
 
       def append_execution_message(execution:)

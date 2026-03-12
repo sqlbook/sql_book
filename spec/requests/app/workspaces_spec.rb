@@ -207,6 +207,66 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to have_selector('h1', text: 'Where should we begin?')
       end
 
+      it 'renders pending confirmation controls for a chat action request' do
+        thread = create(:chat_thread, workspace:, created_by: user, title: 'Remove member')
+        user_message = create(
+          :chat_message,
+          chat_thread: thread,
+          user:,
+          role: ChatMessage::Roles::USER,
+          content: 'Remove Chris Smith'
+        )
+        action_request = create(
+          :chat_action_request,
+          chat_thread: thread,
+          chat_message: user_message,
+          requested_by: user,
+          action_type: 'member.remove',
+          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION
+        )
+        create(
+          :chat_message,
+          chat_thread: thread,
+          role: ChatMessage::Roles::ASSISTANT,
+          content: 'I can remove Chris Smith once you confirm.',
+          metadata: { action_request_id: action_request.id, action_state: 'requires_confirmation' }
+        )
+
+        get "/app/workspaces/#{workspace.id}", params: { thread_id: thread.id }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to have_selector('.chat-inline-card-actions')
+        expect(response.body).to have_selector('button[data-action="workspace-chat#confirmAction"]', text: 'Confirm')
+        expect(response.body).to have_selector('button[data-action="workspace-chat#cancelAction"]', text: 'Cancel')
+      end
+
+      it 'renders assistant markdown as structured html' do
+        thread = create(:chat_thread, workspace:, created_by: user, title: 'Markdown reply')
+        create(
+          :chat_message,
+          chat_thread: thread,
+          role: ChatMessage::Roles::ASSISTANT,
+          content: <<~MARKDOWN
+            Here are your team members:
+
+            - Christopher Pattison
+            - Bob Smith
+
+            | Role | Status |
+            | --- | --- |
+            | Owner | Accepted |
+            | Admin | Accepted |
+          MARKDOWN
+        )
+
+        get "/app/workspaces/#{workspace.id}", params: { thread_id: thread.id }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to have_selector('.chat-assistant-block ul li', text: 'Christopher Pattison')
+        expect(response.body).to have_selector('.chat-assistant-block table')
+        expect(response.body).to have_selector('.chat-assistant-block th', text: 'Role')
+      end
+
       it 'renders breadcrumbs with workspace as the current page' do
         get "/app/workspaces/#{workspace.id}"
 

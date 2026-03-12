@@ -7,6 +7,7 @@ ruby '3.4.2'
 gem 'aws-actionmailer-ses', '~> 1'
 gem 'aws-sdk-rails'
 gem 'bootsnap', require: false
+gem 'commonmarker'
 gem 'dartsass-rails'
 gem 'jbuilder'
 gem 'kamal'

@@ -125,6 +125,8 @@ Related references:
 - Thread/message route access is constrained to `created_by == current_user` within the current workspace.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
 - Chat stream hides per-message timestamps; `Thinking` status uses animated ellipsis.
+- Pending high-risk actions can be confirmed either from inline chat buttons or with explicit follow-up confirmation/cancellation chat messages.
+- Pending confirmation cards are part of the workspace chat UI contract and should render visible `Confirm` / `Cancel` controls while the request is still pending.
 - Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.
 - Chat runtime/planner use strict Responses API JSON schema; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side. If logs show `Invalid schema for response_format`, fix the runtime/planner schema contract before treating the issue as prompt/model quality.
 

@@ -367,6 +367,8 @@ module Chat
         'Write the final user-facing response from tool output.',
         'Be clear and concise; do not mention internal tool names.',
         'If data is present, answer directly from that data.',
+        'You may use markdown for lists, tables, inline emphasis, and code when it improves readability.',
+        'Prefer short paragraphs and markdown bullet lists when presenting collections.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
         'For member list results, include useful member details instead of only counts.',
         "Reply in the user locale: #{actor_locale}."

@@ -495,6 +495,81 @@
     word-break: break-word;
   }
 
+  .chat-assistant-block .chat-message-body {
+    white-space: normal;
+  }
+
+  .chat-assistant-block .chat-message-body p,
+  .chat-assistant-block .chat-message-body ul,
+  .chat-assistant-block .chat-message-body ol {
+    margin: 0;
+  }
+
+  .chat-assistant-block .chat-message-body p + p,
+  .chat-assistant-block .chat-message-body p + ul,
+  .chat-assistant-block .chat-message-body p + ol,
+  .chat-assistant-block .chat-message-body ul + p,
+  .chat-assistant-block .chat-message-body ol + p {
+    margin-top: 0.75rem;
+  }
+
+  .chat-assistant-block .chat-message-body ul,
+  .chat-assistant-block .chat-message-body ol {
+    padding-left: 1.25rem;
+  }
+
+  .chat-assistant-block .chat-message-body pre,
+  .chat-assistant-block .chat-message-body code {
+    background: var(--gray-850);
+    border-radius: 0.375rem;
+  }
+
+  .chat-assistant-block .chat-message-body code {
+    padding: 0.125rem 0.375rem;
+  }
+
+  .chat-assistant-block .chat-message-body pre {
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  .chat-assistant-block .chat-message-body pre code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .chat-assistant-block .chat-message-body blockquote {
+    border-left: 2px solid var(--gray-500);
+    color: var(--gray-250);
+    margin: 0;
+    padding-left: 0.75rem;
+  }
+
+  .chat-assistant-block .chat-message-body table {
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    margin-top: 0.75rem;
+    width: 100%;
+  }
+
+  .chat-assistant-block .chat-message-body th,
+  .chat-assistant-block .chat-message-body td {
+    border-bottom: 1px solid var(--gray-700);
+    padding: 0.5rem 0.625rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .chat-assistant-block .chat-message-body th {
+    color: var(--cream-250);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .chat-assistant-block .chat-message-body a {
+    color: var(--red-500);
+    text-decoration: underline;
+  }
+
   .chat-message-meta {
     color: var(--gray-500);
     font-size: 0.75rem;
