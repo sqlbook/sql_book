@@ -177,9 +177,9 @@ module Chat
                     'Before proposing write actions, collect required fields first.',
                     'If required fields are missing, set action_type to null and ask a concise follow-up question.',
                     'Required fields: workspace.update_name(name), member.invite(first_name,last_name,email),',
-                    'member.resend_invite(email or member_id),',
-                    'member.update_role(email or member_id, role),',
-                    'member.remove(email or member_id).'
+                    'member.resend_invite(email or member_id or full_name),',
+                    'member.update_role(email or member_id or full_name, role),',
+                    'member.remove(email or member_id or full_name).'
                   ].join(' '),
                   [
                     'For workspace.update_name, payload.name must be a clean target name only,',
@@ -417,8 +417,8 @@ module Chat
     end
 
     def member_resend_plan
-      email = parsed_email
-      if email.blank?
+      member_reference = resolved_member_reference_payload
+      if member_reference.empty?
         return Plan.new(
           assistant_message: I18n.t('app.workspaces.chat.planner.member_resend_needs_member'),
           action_type: nil,
@@ -429,22 +429,22 @@ module Chat
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_resend'),
         action_type: 'member.resend_invite',
-        payload: { 'email' => email }
+        payload: member_reference
       )
     end
 
     def member_role_update_plan # rubocop:disable Metrics/MethodLength
-      email = parsed_email
+      member_reference = resolved_member_reference_payload
       role = parsed_role
 
-      if email.blank? && role.nil?
+      if member_reference.empty? && role.nil?
         return Plan.new(
           assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update_needs_member_and_role'),
           action_type: nil,
           payload: {}
         )
       end
-      if email.blank?
+      if member_reference.empty?
         return Plan.new(
           assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update_needs_member'),
           action_type: nil,
@@ -462,16 +462,13 @@ module Chat
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update'),
         action_type: 'member.update_role',
-        payload: {
-          'email' => email,
-          'role' => role
-        }
+        payload: member_reference.merge('role' => role)
       )
     end
 
     def member_remove_plan
-      email = parsed_email
-      if email.blank?
+      member_reference = resolved_member_reference_payload
+      if member_reference.empty?
         return Plan.new(
           assistant_message: I18n.t('app.workspaces.chat.planner.member_remove_needs_member'),
           action_type: nil,
@@ -482,7 +479,7 @@ module Chat
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_remove'),
         action_type: 'member.remove',
-        payload: { 'email' => email }
+        payload: member_reference
       )
     end
 
@@ -510,6 +507,13 @@ module Chat
 
     def parsed_email
       parse_email_from(text: message)
+    end
+
+    def resolved_member_reference_payload
+      resolved_reference = member_reference_resolver.reference_payload(text: message)
+      return resolved_reference if resolved_reference.present?
+
+      parsed_email.present? ? { 'email' => parsed_email } : {}
     end
 
     def invite_details
@@ -712,6 +716,10 @@ module Chat
 
     def api_key
       ENV.fetch('OPENAI_API_KEY', nil)
+    end
+
+    def member_reference_resolver
+      @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
     end
   end
 end

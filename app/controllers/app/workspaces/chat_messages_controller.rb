@@ -290,7 +290,9 @@ module App
       end
 
       def member_reference_missing?(payload:)
-        payload['member_id'].to_s.strip.blank? && payload['email'].to_s.strip.blank?
+        payload['member_id'].to_s.strip.blank? &&
+          payload['email'].to_s.strip.blank? &&
+          payload['full_name'].to_s.strip.blank?
       end
 
       def render_non_action_response(user_message:, assistant_content:)

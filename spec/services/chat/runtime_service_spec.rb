@@ -146,6 +146,46 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(true)
     end
 
+    it 'turns remove-by-name requests into member.remove when model returns no tool' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I can remove Chris Smith from this workspace. Please confirm if you want me to proceed.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Can we delete the user Chris Smith?',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).call
+
+      expect(decision.tool_calls.size).to eq(1)
+      expect(decision.tool_calls.first.tool_name).to eq('member.remove')
+      expect(decision.tool_calls.first.arguments).to include(
+        'email' => 'chris@example.com',
+        'full_name' => 'Chris Smith'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
     it 'asks for missing names when invite email follow-up is present but model returns no tool' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {
@@ -282,6 +322,35 @@ RSpec.describe Chat::RuntimeService do
       )
       expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name'))
       expect(decision.finalize_without_tools).to be(true)
+    end
+  end
+
+  describe '#compose_tool_result_message' do
+    it 'preserves markdown line breaks from tool result rendering' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      response = double(
+        'response',
+        body: { output_text: "Here are your team members:\n\n- **Chris Smith**\n- **Bob Smith**" }.to_json
+      )
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      execution = Struct.new(:status, :data, :user_message).new('executed', { 'members' => [] }, 'fallback')
+      rendered = described_class.new(
+        message: 'Who are my team members?',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).compose_tool_result_message(
+        tool_name: 'member.list',
+        tool_arguments: {},
+        execution:
+      )
+
+      expect(rendered).to include("\n\n- **Chris Smith**")
     end
   end
 end

@@ -56,7 +56,7 @@ module Tooling
                        [
                          I18n.t('app.workspaces.chat.executor.member_list_found', count: members.size),
                          members.map { |member| member_list_item_line(member:) }.join("\n")
-                       ].join("\n")
+                       ].join("\n\n")
                      end
 
       executed(message: user_message, data: { members: })
@@ -154,17 +154,15 @@ module Tooling
     attr_reader :workspace, :actor
 
     def target_member(arguments:)
-      member_id = arguments['member_id'].to_i if arguments['member_id'].present?
-      return workspace.members.find_by(id: member_id) if member_id
-
-      email = arguments['email'].to_s.strip.downcase
-      return nil if email.blank?
-
-      workspace.members.joins(:user).find_by(users: { email: })
+      member_reference_resolver.resolve(payload: arguments)
     end
 
     def existing_member?(email:)
       workspace.members.joins(:user).exists?(users: { email: })
+    end
+
+    def member_reference_resolver
+      @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
     end
 
     def member_list_item_line(member:)

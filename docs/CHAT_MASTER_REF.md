@@ -147,9 +147,9 @@ High-risk writes (inline confirmation required):
 ## Required action fields (v1)
 - `workspace.update_name`: `name`
 - `member.invite`: `first_name`, `last_name`, `email` (role optional; defaults to `USER`)
-- `member.resend_invite`: `email` or `member_id`
-- `member.update_role`: (`email` or `member_id`) + `role`
-- `member.remove`: `email` or `member_id`
+- `member.resend_invite`: `email` or `member_id` or `full_name`
+- `member.update_role`: (`email` or `member_id` or `full_name`) + `role`
+- `member.remove`: `email` or `member_id` or `full_name`
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -193,6 +193,7 @@ High-risk writes (inline confirmation required):
   - via inline chat buttons
   - via explicit follow-up chat messages such as confirmation/cancellation replies
 - Pending confirmation assistant messages should render inline `Confirm` / `Cancel` controls in the chat UI while the action remains pending.
+- High-risk member actions should resolve a uniquely named workspace member into a concrete pending action request so the confirmation card can render, rather than asking for free-text confirmation with no action request behind it.
 - Confirm endpoint validates:
   - request is pending
   - token is valid
@@ -222,6 +223,7 @@ High-risk writes (inline confirmation required):
 - Sticky composer area includes an opaque mask so older messages are hidden until scrolled above the composer.
 - Assistant content now supports sanitized markdown rendering for lists, tables, emphasis, links, blockquotes, and code blocks.
 - Markdown is rendered server-side and sanitized before output; raw HTML from model output is not trusted.
+- Runtime result rendering must preserve line breaks and paragraph spacing; collapsing all whitespace before markdown render breaks lists and tables into plain paragraphs.
 
 ## Attachment behavior (v1)
 - Accepted MIME types:

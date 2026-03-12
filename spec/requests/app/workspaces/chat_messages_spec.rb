@@ -267,6 +267,27 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload.dig('action_request', 'action_type')).to eq('member.remove')
     end
 
+    it 'creates a pending removal action when user names the member instead of email' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Can we delete the user Chris Smith?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('requires_confirmation')
+      expect(payload.dig('action_request', 'action_type')).to eq('member.remove')
+      expect(payload.dig('action_request', 'payload', 'email')).to eq('chris@example.com')
+    end
+
     it 'allows written confirmation for a pending high-risk action' do
       teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
       create(

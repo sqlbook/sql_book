@@ -153,17 +153,15 @@ module Chat
     end
 
     def target_member(payload:)
-      member_id = payload['member_id'].to_i if payload['member_id'].present?
-      return workspace.members.find_by(id: member_id) if member_id
-
-      email = payload['email'].to_s.strip.downcase
-      return nil if email.blank?
-
-      workspace.members.joins(:user).find_by(users: { email: })
+      member_reference_resolver.resolve(payload:)
     end
 
     def normalized_role(role)
       role.to_i if role.to_s.match?(/\A\d+\z/)
+    end
+
+    def member_reference_resolver
+      @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
     end
 
     def allow

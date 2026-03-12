@@ -141,13 +141,13 @@ en:
           member_invite_needs_email: Sure. What email should I send the invitation to?
           member_invite_needs_name: Sure. What are their first and last name?
           member_resend: I can resend that pending invitation once you confirm.
-          member_resend_needs_member: Sure. Which team member should I resend the invitation to? Share their email.
+          member_resend_needs_member: Sure. Which team member should I resend the invitation to? Share their name or email.
           member_role_update: I can update that team member role once you confirm.
           member_role_update_needs_member_and_role: Sure. Which team member should I update, and what role should they have (Admin, User, or Read only)?
-          member_role_update_needs_member: Sure. Which team member should I update? Share their email.
+          member_role_update_needs_member: Sure. Which team member should I update? Share their name or email.
           member_role_update_needs_role: Sure. What role should they have (Admin, User, or Read only)?
           member_remove: I can remove that team member once you confirm.
-          member_remove_needs_member: Sure. Which team member should I remove? Share their email.
+          member_remove_needs_member: Sure. Which team member should I remove? Share their name or email.
           attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
           fallback_with_action: I can help with that. Please confirm to proceed.
           fallback_without_action: I can help with workspace and team actions.
@@ -161,7 +161,7 @@ en:
           workspace_delete_partial: Workspace deleted, but we could not notify some users by email.
           member_list_found: Found %{count} team members.
           member_list_none: No team members were found in this workspace.
-          member_list_item: "- %{name} (%{email_label}: %{email}, %{role_label}: %{role}, %{status_label}: %{status})"
+          member_list_item: "- **%{name}** — %{email_label}: %{email} — %{role_label}: %{role} — %{status_label}: %{status}"
           member_unknown_name: Unnamed member
           member_unknown_email: No email
           member_unknown_role: Unknown role

@@ -63,7 +63,8 @@ module Tooling
           'type' => 'object',
           'properties' => {
             'member_id' => { 'type' => 'integer' },
-            'email' => { 'type' => 'string', 'format' => 'email' }
+            'email' => { 'type' => 'string', 'format' => 'email' },
+            'full_name' => { 'type' => 'string' }
           }
         },
         output_schema: { 'type' => 'object' },
@@ -80,6 +81,7 @@ module Tooling
           'properties' => {
             'member_id' => { 'type' => 'integer' },
             'email' => { 'type' => 'string', 'format' => 'email' },
+            'full_name' => { 'type' => 'string' },
             'role' => { 'type' => 'integer', 'enum' => Chat::Policy::EDITABLE_ROLES }
           }
         },
@@ -95,7 +97,8 @@ module Tooling
           'type' => 'object',
           'properties' => {
             'member_id' => { 'type' => 'integer' },
-            'email' => { 'type' => 'string', 'format' => 'email' }
+            'email' => { 'type' => 'string', 'format' => 'email' },
+            'full_name' => { 'type' => 'string' }
           }
         },
         output_schema: { 'type' => 'object' },

@@ -110,13 +110,13 @@ es:
           member_invite_needs_email: Claro. ¿A qué correo envío la invitación?
           member_invite_needs_name: Claro. ¿Cuál es su nombre y apellido?
           member_resend: Puedo reenviar esa invitación pendiente cuando lo confirmes.
-          member_resend_needs_member: Claro. ¿A qué miembro quieres que le reenvíe la invitación? Comparte su correo.
+          member_resend_needs_member: Claro. ¿A qué miembro quieres que le reenvíe la invitación? Comparte su nombre o correo.
           member_role_update: Puedo actualizar el rol de ese miembro cuando lo confirmes.
           member_role_update_needs_member_and_role: Claro. ¿Qué miembro quieres actualizar y qué rol debe tener (Admin, Usuario o Solo lectura)?
-          member_role_update_needs_member: Claro. ¿Qué miembro quieres actualizar? Comparte su correo.
+          member_role_update_needs_member: Claro. ¿Qué miembro quieres actualizar? Comparte su nombre o correo.
           member_role_update_needs_role: Claro. ¿Qué rol debe tener (Admin, Usuario o Solo lectura)?
           member_remove: Puedo eliminar a ese miembro del equipo cuando lo confirmes.
-          member_remove_needs_member: Claro. ¿Qué miembro quieres eliminar? Comparte su correo.
+          member_remove_needs_member: Claro. ¿Qué miembro quieres eliminar? Comparte su nombre o correo.
           attachments_context: Puedo ver %{count} imagen(es) adjunta(s). Dime qué acción de equipo o espacio quieres ejecutar.
           fallback_with_action: Puedo ayudarte con eso. Confirma para continuar.
           fallback_without_action: Puedo ayudarte con acciones de espacio y equipo.
@@ -130,7 +130,7 @@ es:
           workspace_delete_partial: El espacio se eliminó, pero no pudimos notificar por correo a algunos usuarios.
           member_list_found: Se encontraron %{count} miembros del equipo.
           member_list_none: No se encontraron miembros del equipo en este espacio.
-          member_list_item: "- %{name} (%{email_label}: %{email}, %{role_label}: %{role}, %{status_label}: %{status})"
+          member_list_item: "- **%{name}** — %{email_label}: %{email} — %{role_label}: %{role} — %{status_label}: %{status}"
           member_unknown_name: Miembro sin nombre
           member_unknown_email: Sin correo
           member_unknown_role: Rol desconocido

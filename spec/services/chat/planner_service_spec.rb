@@ -143,5 +143,29 @@ RSpec.describe Chat::PlannerService do
 
       expect(plan.action_type).to eq('member.list')
     end
+
+    it 'resolves member removal by a unique workspace member name' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      plan = described_class.new(
+        message: 'Can we delete the user Chris Smith?',
+        workspace:,
+        actor:
+      ).call
+
+      expect(plan.action_type).to eq('member.remove')
+      expect(plan.payload).to include(
+        'member_id' => workspace.members.find_by(user: teammate).id,
+        'email' => 'chris@example.com',
+        'full_name' => 'Chris Smith'
+      )
+    end
   end
 end

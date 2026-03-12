@@ -30,6 +30,7 @@ module Chat
     /ix
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
+    MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
     PLACEHOLDER_NAME_PARTS = %w[
       someone somebody anyone anybody person people team teammate teammates mate mates
       member members user users my our else another one this that
@@ -209,7 +210,7 @@ module Chat
     end
 
     def non_structured_decision(response_text:)
-      cleaned = response_text.to_s.gsub(/\s+/, ' ').strip
+      cleaned = normalized_markdown_text(response_text)
       return nil if cleaned.blank?
       return nil if cleaned.start_with?('{', '[')
 
@@ -349,9 +350,22 @@ module Chat
         'If invite context exists, collect missing invite fields and continue until all required fields are present.',
         'Do not fall back to a generic capability summary during invite follow-ups.',
         'When asked for team member names/details, use member.list and include detailed entries.',
+        [
+          'For member.resend_invite, member.update_role, and member.remove,',
+          'you may target a member by email, member_id, or full_name.'
+        ].join(' '),
+        [
+          'If the user names a workspace member directly, prefer a concrete tool call',
+          'over a free-text confirmation question.'
+        ].join(' '),
+        [
+          'When a write action requires confirmation, still return the tool call so',
+          'the app can render inline confirm and cancel controls.'
+        ].join(' '),
         'Never execute cross-workspace actions.',
         'Never invent permissions or claim execution outside provided tools.',
         'Do not wrap payload values with extra punctuation not intended by user input.',
+        'Use markdown when it improves readability, especially bullet lists or tables for collections.',
         'Output strict JSON with keys: assistant_message, tool_calls, missing_information, finalize_without_tools.',
         'tool_calls must be an array of objects: { tool_name, arguments }.',
         'arguments must be a JSON string encoding an object, for example "{}" or "{\"email\":\"sam@example.com\"}".',
@@ -367,8 +381,10 @@ module Chat
         'Write the final user-facing response from tool output.',
         'Be clear and concise; do not mention internal tool names.',
         'If data is present, answer directly from that data.',
-        'You may use markdown for lists, tables, inline emphasis, and code when it improves readability.',
-        'Prefer short paragraphs and markdown bullet lists when presenting collections.',
+        'Use markdown when it improves readability.',
+        'Preserve meaningful paragraph breaks.',
+        'When presenting collections, use real markdown bullet lists or tables instead of inline dash-separated text.',
+        'For member list results, put each member on its own bullet or row.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
         'For member list results, include useful member details instead of only counts.',
         "Reply in the user locale: #{actor_locale}."
@@ -483,7 +499,7 @@ module Chat
 
     def parsed_tool_result_message(response_body:, fallback_message:)
       parsed = JSON.parse(response_body)
-      formatted = response_text_from(parsed).to_s.gsub(/\s+/, ' ').strip
+      formatted = normalized_markdown_text(response_text_from(parsed))
       formatted.presence || fallback_message
     rescue JSON::ParserError
       fallback_message
@@ -544,6 +560,10 @@ module Chat
     def apply_deterministic_guards(decision)
       return decision if decision.nil?
       return decision unless no_tool_selected?(decision)
+
+      member_remove_decision = member_remove_follow_up_decision
+      return member_remove_decision if member_remove_decision
+
       return decision unless invite_context_active?
 
       invite_details = inferred_invite_details
@@ -551,6 +571,20 @@ module Chat
       return invite_follow_up_decision(invite_details:) if missing_fields.empty?
 
       invite_missing_details_decision(missing_fields:)
+    end
+
+    def member_remove_follow_up_decision
+      return nil unless message.match?(MEMBER_REMOVE_INTENT_REGEX)
+
+      member_reference = resolved_member_reference_payload
+      return nil if member_reference.empty?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.member_remove'),
+        tool_calls: [ToolCall.new(tool_name: 'member.remove', arguments: member_reference)],
+        missing_information: [],
+        finalize_without_tools: false
+      )
     end
 
     def no_tool_selected?(decision)
@@ -644,6 +678,13 @@ module Chat
       parsed_name_payload_from(text: message)
     end
 
+    def resolved_member_reference_payload
+      resolved_reference = member_reference_resolver.reference_payload(text: message)
+      return resolved_reference if resolved_reference.present?
+
+      parsed_email.present? ? { 'email' => parsed_email } : {}
+    end
+
     def parse_email_from(text:)
       text[EMAIL_REGEX].to_s.downcase.presence
     end
@@ -701,6 +742,10 @@ module Chat
       true
     end
 
+    def normalized_markdown_text(value)
+      value.to_s.gsub("\r\n", "\n").gsub(/\n{3,}/, "\n\n").strip
+    end
+
     def chat_model_candidates
       configured_model = ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini').to_s.strip
       candidates = [configured_model.presence || 'gpt-5-mini']
@@ -723,6 +768,10 @@ module Chat
 
     def endpoint
       @endpoint ||= OpenaiConfiguration.responses_endpoint
+    end
+
+    def member_reference_resolver
+      @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
     end
   end
 end
