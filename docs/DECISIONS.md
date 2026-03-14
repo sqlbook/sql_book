@@ -97,11 +97,24 @@ Use this file to record major choices and why they were made.
   - avoids weak/ambiguous invite payloads derived from partial or placeholder text
   - improves deterministic validation and translation-safe follow-up prompts
 - Consequences:
-  - `member.invite` now requires `first_name`, `last_name`, `email` in tool schema and API contract
+  - `member.invite` now requires `first_name`, `last_name`, `email`, and `role` in tool schema and API contract
   - chat runtime/planner follow-ups collect missing invite fields instead of executing with partial data
   - signup identity gate for OTP step requires non-blank `email`, `first_name`, `last_name`
 - Revisit when:
   - ownership transfer + advanced identity workflows are added to chat and API surfaces
+
+### Decision: Preserve chat continuity with structured recent action context, not shadow memory docs
+- Status: Accepted
+- Why:
+  - long-form conversational quality depends on the model seeing recent state it can trust
+  - the server already knows exact recent action outcomes, member identities, and pending states
+  - parallel LLM-maintained "memory" documents would create drift and debugging overhead
+- Consequences:
+  - each turn should be rebuilt from recent transcript + structured recent action results + pending state
+  - assistant follow-ups such as invite-back, role questions, and confirmation replies can reuse authoritative server context
+  - summaries are only for long-thread compression, not as a second source of truth
+- Revisit when:
+  - the chat surface expands into much longer multi-domain workflows that need formal summarization strategy
 
 ## Template
 ### Decision: <title>

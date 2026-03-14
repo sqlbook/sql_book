@@ -99,7 +99,8 @@ module App
           content: execution.user_message,
           metadata: {
             action_request_id: action_request.id,
-            action_state: execution.status
+            action_state: execution.status,
+            result_data: execution.data
           }
         )
       end

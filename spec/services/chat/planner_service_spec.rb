@@ -38,7 +38,9 @@ RSpec.describe Chat::PlannerService do
       plan = described_class.new(message: 'invite my team', workspace:, actor:).call
 
       expect(plan.action_type).to be_nil
-      expect(plan.assistant_message).to eq('Sure. Please share their first name, last name, and email address.')
+      expect(plan.assistant_message).to eq(
+        'Sure. Please share their first name, last name, email address, and role (Admin, User, or Read only).'
+      )
     end
 
     it 'keeps resend intent distinct from invite intent' do
@@ -93,11 +95,31 @@ RSpec.describe Chat::PlannerService do
         ]
       ).call
 
+      expect(plan.action_type).to be_nil
+      expect(plan.assistant_message).to eq('Sure. What role should I give them (Admin, User, or Read only)?')
+    end
+
+    it 'executes invite follow-up once the role is provided' do
+      plan = described_class.new(
+        message: 'Admin',
+        workspace:,
+        actor:,
+        conversation_messages: [
+          { role: 'user', content: 'Can I invite someone else?' },
+          {
+            role: 'assistant',
+            content: I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
+          },
+          { role: 'user', content: 'Their name is Bob Jenkins and their email is hello@sqlbook.com' }
+        ]
+      ).call
+
       expect(plan.action_type).to eq('member.invite')
       expect(plan.payload).to include(
         'first_name' => 'Bob',
         'last_name' => 'Jenkins',
-        'email' => 'hello@sqlbook.com'
+        'email' => 'hello@sqlbook.com',
+        'role' => Member::Roles::ADMIN
       )
     end
 
@@ -112,12 +134,8 @@ RSpec.describe Chat::PlannerService do
         ]
       ).call
 
-      expect(plan.action_type).to eq('member.invite')
-      expect(plan.payload).to include(
-        'first_name' => 'Chris',
-        'last_name' => 'Smith',
-        'email' => 'hello@sqlbook.com'
-      )
+      expect(plan.action_type).to be_nil
+      expect(plan.assistant_message).to eq('Sure. What role should I give them (Admin, User, or Read only)?')
     end
 
     it 'treats member detail follow-ups as member listing when prior context is team members' do
@@ -166,6 +184,103 @@ RSpec.describe Chat::PlannerService do
         'email' => 'chris@example.com',
         'full_name' => 'Chris Smith'
       )
+    end
+
+    it 'uses recent removed member context when asked to invite them back, but still asks for role' do
+      plan = described_class.new(
+        message: 'Thanks, could you invite him back actually?',
+        workspace:,
+        actor:,
+        conversation_messages: [
+          {
+            role: 'assistant',
+            content: 'Chris Smith has been removed from the workspace.',
+            metadata: {
+              result_data: {
+                removed_member: {
+                  full_name: 'Chris Smith',
+                  first_name: 'Chris',
+                  last_name: 'Smith',
+                  email: 'hello@sqlbook.com',
+                  role_name: 'User',
+                  status_name: 'Accepted'
+                }
+              }
+            }
+          }
+        ]
+      ).call
+
+      expect(plan.action_type).to be_nil
+      expect(plan.assistant_message).to eq('Sure. What role should I give them (Admin, User, or Read only)?')
+    end
+
+    it 'executes invite-back flow once the role is supplied after the role prompt' do
+      plan = described_class.new(
+        message: 'User',
+        workspace:,
+        actor:,
+        conversation_messages: [
+          {
+            role: 'assistant',
+            content: 'Chris Smith has been removed from the workspace.',
+            metadata: {
+              result_data: {
+                removed_member: {
+                  full_name: 'Chris Smith',
+                  first_name: 'Chris',
+                  last_name: 'Smith',
+                  email: 'hello@sqlbook.com',
+                  role_name: 'User',
+                  status_name: 'Accepted'
+                }
+              }
+            }
+          },
+          { role: 'user', content: 'Thanks, could you invite him back actually?' },
+          {
+            role: 'assistant',
+            content: 'Sure. What role should I give them (Admin, User, or Read only)?'
+          }
+        ]
+      ).call
+
+      expect(plan.action_type).to eq('member.invite')
+      expect(plan.payload).to include(
+        'first_name' => 'Chris',
+        'last_name' => 'Smith',
+        'email' => 'hello@sqlbook.com',
+        'role' => Member::Roles::USER
+      )
+    end
+
+    it 'answers recent invited-member role questions from structured context' do
+      plan = described_class.new(
+        message: 'Awesome, but what role did you add him as?',
+        workspace:,
+        actor:,
+        conversation_messages: [
+          {
+            role: 'assistant',
+            content: 'Invitation sent to hello@sqlbook.com.',
+            metadata: {
+              result_data: {
+                invited_member: {
+                  full_name: 'Chris Smith',
+                  first_name: 'Chris',
+                  last_name: 'Smith',
+                  email: 'hello@sqlbook.com',
+                  role_name: 'User',
+                  status_name: 'Pending'
+                }
+              }
+            }
+          }
+        ]
+      ).call
+
+      expect(plan.action_type).to be_nil
+      expect(plan.assistant_message).to eq('I invited Chris Smith as User. Their invitation is currently Pending.')
     end
   end
 end

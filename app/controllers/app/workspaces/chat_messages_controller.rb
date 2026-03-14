@@ -218,16 +218,18 @@ module App
       end
 
       def planner_conversation_messages
-        recent_messages = chat_thread.chat_messages
+        recent_messages = ChatMessage.where(chat_thread:)
           .where(role: [ChatMessage::Roles::USER, ChatMessage::Roles::ASSISTANT])
-          .order(id: :desc)
-          .limit(8)
-          .pluck(:role, :content)
-          .reverse
+          .reorder(id: :asc)
+          .last(12)
 
-        recent_messages.map do |role, content|
-          role_name = role.to_i == ChatMessage::Roles::USER ? 'user' : 'assistant'
-          { role: role_name, content: content.to_s }
+        recent_messages.map do |message|
+          role_name = message.role.to_i == ChatMessage::Roles::USER ? 'user' : 'assistant'
+          {
+            role: role_name,
+            content: message.content.to_s,
+            metadata: message.metadata
+          }
         end
       end
 
@@ -265,11 +267,16 @@ module App
         when 'member.invite'
           missing_email = payload['email'].to_s.strip.blank?
           missing_name = payload['first_name'].to_s.strip.blank? || payload['last_name'].to_s.strip.blank?
+          missing_role = payload['role'].to_s.strip.blank?
+          if missing_email && missing_name && missing_role
+            return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
+          end
           if missing_email && missing_name
             return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
           end
           return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_email
           return I18n.t('app.workspaces.chat.planner.member_invite_needs_name') if missing_name
+          return I18n.t('app.workspaces.chat.planner.member_invite_needs_role') if missing_role
         when 'member.resend_invite'
           return I18n.t('app.workspaces.chat.planner.member_resend_needs_member') if member_reference_missing?(payload:)
         when 'member.update_role'
@@ -594,7 +601,8 @@ module App
           metadata: {
             action_request_id: action_request.id,
             action_state: execution.status,
-            confirmed_via_chat: true
+            confirmed_via_chat: true,
+            result_data: execution.data
           }
         )
 

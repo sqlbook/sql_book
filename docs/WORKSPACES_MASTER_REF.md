@@ -120,7 +120,7 @@ Related references:
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - Low-risk chat writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`).
 - High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
-- Chat invite execution requires `first_name`, `last_name`, and `email`; runtime/planner follow-ups collect missing fields before execution.
+- Chat invite execution requires `first_name`, `last_name`, `email`, and `role`; runtime/planner follow-ups collect missing fields before execution.
 - Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
 - Thread/message route access is constrained to `created_by == current_user` within the current workspace.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
@@ -130,6 +130,7 @@ Related references:
 - Member-targeting chat actions should accept a unique member name as well as email/member id, so requests like "remove Chris Smith" resolve into a real pending action instead of a plain assistant prompt.
 - Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.
 - Chat runtime/planner use strict Responses API JSON schema; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side. If logs show `Invalid schema for response_format`, fix the runtime/planner schema contract before treating the issue as prompt/model quality.
+- Chat context should be rebuilt from recent transcript plus structured recent action results (`metadata.result_data`), not by introducing parallel LLM-maintained memory documents.
 
 ## Workspace settings save behavior
 - General tab workspace-name form uses change detection:

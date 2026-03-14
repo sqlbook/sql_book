@@ -90,10 +90,8 @@ module Chat
       return deny(reason_code: 'forbidden_role') unless can_manage_members?
 
       requested_role = normalized_role(payload['role'])
-      return deny(reason_code: 'validation_error') if payload['role'].present? && requested_role.nil?
-
-      requested_role ||= Member::Roles::USER
-      return deny(reason_code: 'validation_error') unless EDITABLE_ROLES.include?(requested_role)
+      return allow if payload['role'].blank? || requested_role.nil?
+      return deny(reason_code: 'forbidden_role') unless EDITABLE_ROLES.include?(requested_role)
       return deny(reason_code: 'forbidden_role') if higher_than_actor_role?(requested_role:)
 
       allow

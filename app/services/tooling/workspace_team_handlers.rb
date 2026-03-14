@@ -76,9 +76,7 @@ module Tooling
       )
       return validation_error(message: error_message) if error_message
 
-      role ||= Member::Roles::USER
-
-      WorkspaceInvitationService.new(workspace:).invite!(
+      member = WorkspaceInvitationService.new(workspace:).invite!(
         invited_by: actor,
         first_name:,
         last_name:,
@@ -86,7 +84,12 @@ module Tooling
         role:
       )
 
-      executed(message: I18n.t('app.workspaces.chat.executor.member_invite_sent', email:))
+      executed(
+        message: I18n.t('app.workspaces.chat.executor.member_invite_sent', email:),
+        data: {
+          invited_member: member_payload(member:)
+        }
+      )
     end
 
     def member_resend_invite(arguments:) # rubocop:disable Metrics/AbcSize
@@ -100,7 +103,12 @@ module Tooling
       end
 
       WorkspaceInvitationService.new(workspace:).resend!(member:)
-      executed(message: I18n.t('app.workspaces.chat.executor.member_resend_sent', email: member.user.email))
+      executed(
+        message: I18n.t('app.workspaces.chat.executor.member_resend_sent', email: member.user.email),
+        data: {
+          invited_member: member_payload(member:)
+        }
+      )
     end
 
     def member_update_role(arguments:)
@@ -118,7 +126,10 @@ module Tooling
           'app.workspaces.chat.executor.member_role_updated',
           name: member.user.full_name,
           role: member.role_name
-        )
+        ),
+        data: {
+          member: member_payload(member:)
+        }
       )
     end
 
@@ -131,6 +142,7 @@ module Tooling
 
       removed_user = member.user
       removed_member_was_accepted = member.status == Member::Status::ACCEPTED
+      removed_member_payload = member_payload(member:)
       member.destroy!
 
       if removed_member_was_accepted
@@ -138,14 +150,20 @@ module Tooling
       end
 
       executed(
-        message: I18n.t('app.workspaces.chat.executor.member_remove_success', name: removed_user.full_name)
+        message: I18n.t('app.workspaces.chat.executor.member_remove_success', name: removed_user.full_name),
+        data: {
+          removed_member: removed_member_payload
+        }
       )
     rescue StandardError => e
       Rails.logger.error(
         "Workspace member removal notification failed for user #{removed_user.id}: #{e.class} #{e.message}"
       )
       executed(
-        message: I18n.t('app.workspaces.chat.executor.member_remove_success', name: removed_user.full_name)
+        message: I18n.t('app.workspaces.chat.executor.member_remove_success', name: removed_user.full_name),
+        data: {
+          removed_member: removed_member_payload
+        }
       )
     end
 
@@ -178,6 +196,20 @@ module Tooling
       )
     end
 
+    def member_payload(member:) # rubocop:disable Metrics/AbcSize
+      {
+        'member_id' => member.id,
+        'email' => member.user&.email.to_s,
+        'first_name' => member.user&.first_name.to_s,
+        'last_name' => member.user&.last_name.to_s,
+        'full_name' => member.user&.full_name.to_s,
+        'role' => member.role,
+        'role_name' => member.role_name,
+        'status' => member.status,
+        'status_name' => member.status_name
+      }
+    end
+
     def member_field(value, fallback_key:)
       value.to_s.strip.presence || I18n.t("app.workspaces.chat.executor.#{fallback_key}")
     end
@@ -188,10 +220,11 @@ module Tooling
       raw_role.to_i
     end
 
-    def invite_validation_error_message(first_name:, last_name:, email:, role:, raw_role:)
+    def invite_validation_error_message(first_name:, last_name:, email:, role:, raw_role:) # rubocop:disable Metrics/CyclomaticComplexity
       return I18n.t('app.workspaces.chat.executor.member_invite_first_name_required') if first_name.blank?
       return I18n.t('app.workspaces.chat.executor.member_invite_last_name_required') if last_name.blank?
       return I18n.t('app.workspaces.chat.executor.member_invite_email_required') if email.blank?
+      return I18n.t('app.workspaces.chat.executor.member_invite_role_required') if raw_role.blank?
       return I18n.t('app.workspaces.chat.executor.member_invite_already_member') if existing_member?(email:)
       return I18n.t('app.workspaces.chat.executor.member_role_invalid') if raw_role.present? && role.nil?
 

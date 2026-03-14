@@ -106,9 +106,12 @@ es:
           workspace_rename_needs_name: Claro. ¿Qué nombre nuevo quieres para el espacio?
           member_list: Voy a listar ahora los miembros actuales del equipo del espacio.
           member_invite: Puedo enviar esa invitación cuando lo confirmes.
+          member_invite_needs_email_name_and_role: Claro. Comparte su nombre, apellido, correo electrónico y rol (Administrador, Usuario o Solo lectura).
           member_invite_needs_email_and_name: Claro. Comparte su nombre, apellido y correo electrónico.
           member_invite_needs_email: Claro. ¿A qué correo envío la invitación?
           member_invite_needs_name: Claro. ¿Cuál es su nombre y apellido?
+          member_invite_needs_role: Claro. ¿Qué rol quieres darle (Administrador, Usuario o Solo lectura)?
+          member_invite_role_answer: Invité a %{name} como %{role}. Su invitación está actualmente en estado %{status}.
           member_resend: Puedo reenviar esa invitación pendiente cuando lo confirmes.
           member_resend_needs_member: Claro. ¿A qué miembro quieres que le reenvíe la invitación? Comparte su nombre o correo.
           member_role_update: Puedo actualizar el rol de ese miembro cuando lo confirmes.
@@ -138,6 +141,7 @@ es:
           member_invite_first_name_required: Indica un nombre.
           member_invite_last_name_required: Indica un apellido.
           member_invite_email_required: Indica una dirección de correo válida.
+          member_invite_role_required: Elige un rol para esta invitación.
           member_invite_already_member: Este usuario ya está en el equipo del espacio.
           member_invite_sent: Invitación enviada a %{email}.
           member_not_found: No se encontró al miembro del equipo.

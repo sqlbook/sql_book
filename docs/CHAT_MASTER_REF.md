@@ -36,6 +36,7 @@ Related references:
   - if model returns non-JSON text, runtime uses that assistant text instead of collapsing to generic capability copy
   - supports multimodal image context (bounded inline subset)
   - uses Responses API `json_schema` structured output; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side to satisfy strict schema validation
+  - rebuilds each turn from recent transcript plus structured recent action context, rather than relying on parallel LLM-authored memory documents
 - Shared tooling foundation:
   - `Tooling::Registry`
   - `Tooling::WorkspaceTeamRegistry`
@@ -146,7 +147,7 @@ High-risk writes (inline confirmation required):
 
 ## Required action fields (v1)
 - `workspace.update_name`: `name`
-- `member.invite`: `first_name`, `last_name`, `email` (role optional; defaults to `USER`)
+- `member.invite`: `first_name`, `last_name`, `email`, `role`
 - `member.resend_invite`: `email` or `member_id` or `full_name`
 - `member.update_role`: (`email` or `member_id` or `full_name`) + `role`
 - `member.remove`: `email` or `member_id` or `full_name`
@@ -160,16 +161,35 @@ High-risk writes (inline confirmation required):
 
 ## Runtime decision flow
 1. User message is persisted immediately.
-2. Runtime returns structured decision:
+2. Runtime rebuilds turn context from:
+   - recent transcript (`user` + `assistant` turns, oldest -> newest)
+   - pending confirmation state
+   - structured recent action results persisted in assistant-message `metadata.result_data`
+3. Runtime returns structured decision:
    - `assistant_message`
    - `tool_calls[]` (`tool_name`, `arguments`)
    - `missing_information[]`
    - `finalize_without_tools`
-3. If `missing_information` exists, assistant asks follow-up (no execution).
-4. If tool call is high-risk write, create confirmation card.
-5. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
-6. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
-7. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+4. If `missing_information` exists, assistant asks follow-up (no execution).
+5. If tool call is high-risk write, create confirmation card.
+6. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
+7. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+8. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+
+## Context assembly rules
+- Chat should stay conversational, but server state remains authoritative.
+- Do not introduce shadow "memory docs" or parallel LLM-maintained records just to preserve context.
+- Preferred turn context ingredients:
+  - recent raw transcript
+  - structured recent tool/action results
+  - current pending confirmation / unresolved required fields
+  - compact summaries only if threads become too long for direct transcript slices
+- Recent action result context should support follow-ups such as:
+  - "invite him back" after a remove action
+  - "what role did you add him as?" after an invite action
+- Structured result data is persisted on assistant messages for both:
+  - auto-executed actions
+  - confirmed high-risk actions
 
 ## Responses API schema guardrail
 - Chat runtime and planner both use strict Responses API `json_schema` output.

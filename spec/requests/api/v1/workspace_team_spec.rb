@@ -36,12 +36,13 @@ RSpec.describe 'API v1 workspace/team tools', type: :request do
       expect(workspace.reload.name).to eq('Renamed from API')
     end
 
-    it 'invites a member with default user role when role is omitted' do
+    it 'invites a member when a role is provided' do
       post "/api/v1/workspaces/#{workspace.id}/members",
            params: {
              first_name: 'Bob',
              last_name: 'Jenkins',
-             email: 'hello@sqlbook.com'
+             email: 'hello@sqlbook.com',
+             role: Member::Roles::USER
            },
            as: :json
 
@@ -50,6 +51,19 @@ RSpec.describe 'API v1 workspace/team tools', type: :request do
       invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
       expect(invited_member).to be_present
       expect(invited_member.role).to eq(Member::Roles::USER)
+    end
+
+    it 'returns validation error when invite role is omitted' do
+      post "/api/v1/workspaces/#{workspace.id}/members",
+           params: {
+             first_name: 'Bob',
+             last_name: 'Jenkins',
+             email: 'hello@sqlbook.com'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['status']).to eq('validation_error')
     end
   end
 

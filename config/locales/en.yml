@@ -137,9 +137,12 @@ en:
           workspace_rename_needs_name: Sure. What should the new workspace name be?
           member_list: I will list the current workspace team members now.
           member_invite: I can send that invitation once you confirm.
+          member_invite_needs_email_name_and_role: Sure. Please share their first name, last name, email address, and role (Admin, User, or Read only).
           member_invite_needs_email_and_name: Sure. Please share their first name, last name, and email address.
           member_invite_needs_email: Sure. What email should I send the invitation to?
           member_invite_needs_name: Sure. What are their first and last name?
+          member_invite_needs_role: Sure. What role should I give them (Admin, User, or Read only)?
+          member_invite_role_answer: I invited %{name} as %{role}. Their invitation is currently %{status}.
           member_resend: I can resend that pending invitation once you confirm.
           member_resend_needs_member: Sure. Which team member should I resend the invitation to? Share their name or email.
           member_role_update: I can update that team member role once you confirm.
@@ -169,6 +172,7 @@ en:
           member_invite_first_name_required: Please provide a first name.
           member_invite_last_name_required: Please provide a last name.
           member_invite_email_required: Please provide a valid email address.
+          member_invite_role_required: Please choose a role for this invitation.
           member_invite_already_member: This user is already in the workspace team.
           member_invite_sent: Invitation sent to %{email}.
           member_not_found: Team member not found.

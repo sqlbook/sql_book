@@ -31,6 +31,11 @@ module Chat
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
+    READ_ONLY_ROLE_REGEX = /
+      \A(?:read[-\s]?only|readonly)\z|
+      \bas\s+(?:read[-\s]?only|readonly)\b|
+      \brole\b.*\b(?:read[-\s]?only|readonly)\b
+    /x
     PLACEHOLDER_NAME_PARTS = %w[
       someone somebody anyone anybody person people team teammate teammates mate mates
       member members user users my our else another one this that
@@ -340,13 +345,30 @@ module Chat
         'Prioritize solving the user request over listing capabilities.',
         'Only provide capability summaries when the user explicitly asks what you can do.',
         'Use tool metadata schemas as your source of truth for required fields and argument shapes.',
+        'Use structured recent action context as authoritative when it is provided.',
+        'Track the most recent invited, removed, or role-updated member across the thread.',
         'Extract required fields directly from natural-language user messages whenever possible.',
-        'If the user provides first name, last name, and email in one message, prepare member.invite immediately.',
+        [
+          'If the user provides first name, last name, email, and role in one message,',
+          'prepare member.invite immediately.'
+        ].join(' '),
         'Treat "users" as workspace team members in this context.',
         'For "who are my users/members/team members" requests, call member.list.',
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
-        'For member.invite, required fields are first_name, last_name, and email.',
+        'For member.invite, required fields are first_name, last_name, email, and role.',
+        [
+          'Never choose or assume an invite role on the user\'s behalf.',
+          'Ask for the role if it was not explicitly provided.'
+        ].join(' '),
+        [
+          'If the user says "invite them back" or similar, reuse the recent member identity',
+          'if available, but still ask for role unless the user explicitly gave one.'
+        ].join(' '),
+        [
+          'If the user asks what role a recently invited member was added as,',
+          'answer from the recent structured invite result.'
+        ].join(' '),
         'If invite context exists, collect missing invite fields and continue until all required fields are present.',
         'Do not fall back to a generic capability summary during invite follow-ups.',
         'When asked for team member names/details, use member.list and include detailed entries.',
@@ -410,9 +432,7 @@ module Chat
       content
     end
 
-    def conversation_context_line
-      return 'Recent conversation: none' if conversation_messages.empty?
-
+    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
       lines = conversation_messages.last(10).map do |entry|
         role = conversation_entry_role(entry)
         content = conversation_entry_content(entry)
@@ -421,9 +441,13 @@ module Chat
         "#{role}: #{content}"
       end.compact
 
-      return 'Recent conversation: none' if lines.empty?
+      structured_lines = conversation_context_resolver.structured_context_lines
+      return 'Recent conversation: none' if lines.empty? && structured_lines.empty?
 
-      "Recent conversation:\n#{lines.join("\n")}"
+      parts = []
+      parts << "Recent conversation:\n#{lines.join("\n")}" if lines.any?
+      parts << "Recent structured context:\n#{structured_lines.join("\n")}" if structured_lines.any?
+      parts.join("\n")
     end
 
     def attachment_context_line
@@ -557,9 +581,12 @@ module Chat
       actor.preferred_locale.presence || I18n.default_locale.to_s
     end
 
-    def apply_deterministic_guards(decision)
+    def apply_deterministic_guards(decision) # rubocop:disable Metrics/MethodLength
       return decision if decision.nil?
       return decision unless no_tool_selected?(decision)
+
+      role_answer_decision = recent_invited_member_role_answer_decision
+      return role_answer_decision if role_answer_decision
 
       member_remove_decision = member_remove_follow_up_decision
       return member_remove_decision if member_remove_decision
@@ -597,41 +624,80 @@ module Chat
     end
 
     def invite_context_in_recent_messages?
-      recent_assistant_message = conversation_messages.reverse.find do |entry|
-        conversation_entry_role(entry) == 'assistant'
-      end
-      return false unless recent_assistant_message
-
-      conversation_entry_content(recent_assistant_message).match?(INVITE_CONTEXT_REGEX)
+      invite_follow_up_context?
     end
 
     def inferred_invite_details
-      details = invite_details_from_recent_user_messages
+      details = conversation_context_resolver.invite_seed_details(text: message)
+        .slice('email', 'first_name', 'last_name')
+        .merge(invite_details_from_recent_user_messages)
       details['email'] = parsed_email if parsed_email.present?
-      details.merge(parsed_name_payload)
+      details.merge!(parsed_name_payload)
+      details['role'] ||= parsed_role
+      details
     end
 
-    def invite_details_from_recent_user_messages # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def invite_details_from_recent_user_messages
       details = {}
-      conversation_messages.reverse.each do |entry|
-        next unless conversation_entry_role(entry) == 'user'
-
-        text = conversation_entry_content(entry)
-        details['email'] ||= parse_email_from(text:)
-        parsed_name = parsed_name_payload_from(text:)
-        details['first_name'] ||= parsed_name['first_name']
-        details['last_name'] ||= parsed_name['last_name']
-        break if missing_invite_fields(invite_details: details).empty?
+      recent_user_conversation_texts.each do |text|
+        merge_recent_invite_details!(details:, text:)
+        break if invite_details_complete?(details:)
       end
 
       details
     end
 
-    def missing_invite_fields(invite_details:)
+    def invite_follow_up_context?
+      recent_assistant_text = recent_assistant_content
+      return false if recent_assistant_text.blank?
+
+      recent_assistant_text.match?(INVITE_CONTEXT_REGEX) ||
+        invite_follow_up_prompts.include?(recent_assistant_text)
+    end
+
+    def recent_user_conversation_texts
+      conversation_messages.reverse_each.filter_map do |entry|
+        conversation_entry_content(entry) if conversation_entry_role(entry) == 'user'
+      end
+    end
+
+    def merge_recent_invite_details!(details:, text:)
+      invite_details_from_text(text:).each do |key, value|
+        details[key] ||= value
+      end
+    end
+
+    def invite_details_from_text(text:)
+      parsed_name = parsed_name_payload_from(text:)
+
+      {
+        'email' => parse_email_from(text:),
+        'first_name' => parsed_name['first_name'],
+        'last_name' => parsed_name['last_name'],
+        'role' => parsed_role_from(text:)
+      }.compact_blank
+    end
+
+    def invite_details_complete?(details:)
+      missing_invite_fields(invite_details: details).empty?
+    end
+
+    def invite_follow_up_prompts
+      @invite_follow_up_prompts ||= %w[
+        member_invite_needs_role
+        member_invite_needs_name
+        member_invite_needs_email
+        member_invite_needs_email_and_name
+        member_invite_needs_email_name_and_role
+      ].map { |key| I18n.t("app.workspaces.chat.planner.#{key}").downcase }
+    end
+
+    def missing_invite_fields(invite_details:) # rubocop:disable Metrics/AbcSize
       fields = []
       fields << 'email' if invite_details['email'].to_s.strip.blank?
       fields << 'first_name' if invite_details['first_name'].to_s.strip.blank?
       fields << 'last_name' if invite_details['last_name'].to_s.strip.blank?
+      fields << 'role' if invite_details['role'].to_s.strip.blank?
       fields
     end
 
@@ -640,7 +706,7 @@ module Chat
         'email' => invite_details['email'],
         'first_name' => invite_details['first_name'],
         'last_name' => invite_details['last_name'],
-        'role' => Member::Roles::USER
+        'role' => invite_details['role']
       }
 
       Decision.new(
@@ -662,9 +728,13 @@ module Chat
     end
 
     def invite_missing_details_prompt(missing_fields:)
+      return I18n.t('app.workspaces.chat.planner.member_invite_needs_role') if missing_fields == ['role']
       return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_fields == ['email']
       if missing_fields.intersect?(%w[first_name last_name]) && missing_fields.exclude?('email')
         return I18n.t('app.workspaces.chat.planner.member_invite_needs_name')
+      end
+      if missing_fields.intersect?(%w[first_name last_name email]) && missing_fields.include?('role')
+        return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
       end
 
       I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
@@ -674,6 +744,10 @@ module Chat
       parse_email_from(text: message)
     end
 
+    def parsed_role
+      parsed_role_from(text: message)
+    end
+
     def parsed_name_payload
       parsed_name_payload_from(text: message)
     end
@@ -681,12 +755,24 @@ module Chat
     def resolved_member_reference_payload
       resolved_reference = member_reference_resolver.reference_payload(text: message)
       return resolved_reference if resolved_reference.present?
+      if (context_member = conversation_context_resolver.recent_member_reference(text: message))
+        return context_member.slice('member_id', 'email', 'full_name').compact_blank
+      end
 
       parsed_email.present? ? { 'email' => parsed_email } : {}
     end
 
     def parse_email_from(text:)
       text[EMAIL_REGEX].to_s.downcase.presence
+    end
+
+    def parsed_role_from(text:)
+      lowered = text.to_s.downcase
+      return Member::Roles::ADMIN if lowered.match?(/\Aadmin\z|\bas\s+admin\b|\brole\b.*\badmin\b/)
+      return Member::Roles::READ_ONLY if lowered.match?(READ_ONLY_ROLE_REGEX)
+      return Member::Roles::USER if lowered.match?(/\Auser\z|\bas\s+user\b|\brole\b.*\buser\b/)
+
+      nil
     end
 
     def parsed_name_payload_from(text:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
@@ -697,6 +783,8 @@ module Chat
         payload = normalized_name_payload(match)
         return payload if valid_name_payload?(payload)
       end
+
+      return {} if text.match?(/\b(?:invite|invitar)\s+(?:him|her|them)\b/i)
 
       invite_name_match = text.match(
         /\b(?:invite|invitar)\s+([a-z][a-z'\-\.]+)\s+([a-z][a-z'\-\.]+)/i
@@ -746,6 +834,25 @@ module Chat
       value.to_s.gsub("\r\n", "\n").gsub(/\n{3,}/, "\n\n").strip
     end
 
+    def recent_invited_member_role_answer_decision
+      return nil unless conversation_context_resolver.role_question_context_active?(text: message)
+
+      invited_member = conversation_context_resolver.recent_invited_member_for_role_question(text: message)
+      return nil unless invited_member
+
+      Decision.new(
+        assistant_message: I18n.t(
+          'app.workspaces.chat.planner.member_invite_role_answer',
+          name: invited_member['full_name'].presence || invited_member['email'],
+          role: invited_member['role_name'],
+          status: invited_member['status_name']
+        ),
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      )
+    end
+
     def chat_model_candidates
       configured_model = ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini').to_s.strip
       candidates = [configured_model.presence || 'gpt-5-mini']
@@ -772,6 +879,19 @@ module Chat
 
     def member_reference_resolver
       @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
+    end
+
+    def conversation_context_resolver
+      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(conversation_messages:)
+    end
+
+    def recent_assistant_content
+      recent_assistant_text = conversation_messages.reverse.find do |entry|
+        conversation_entry_role(entry) == 'assistant'
+      end
+      return if recent_assistant_text.blank?
+
+      conversation_entry_content(recent_assistant_text).downcase
     end
   end
 end

@@ -185,7 +185,7 @@
       "post": {
         "operationId": "memberInvite",
         "summary": "Invite member",
-        "description": "Invites a new member into the current workspace. `first_name`, `last_name`, and `email` are required. If `role` is omitted, the server defaults to the standard User role.",
+        "description": "Invites a new member into the current workspace. `first_name`, `last_name`, `email`, and `role` are all required.",
         "tags": ["Members"],
         "parameters": [
           {
@@ -200,12 +200,13 @@
                 "$ref": "#/components/schemas/MemberInviteRequest"
               },
               "examples": {
-                "inviteDefaultUser": {
-                  "summary": "Invite a standard user",
+                "inviteUser": {
+                  "summary": "Invite a user",
                   "value": {
                     "first_name": "Bob",
                     "last_name": "Jenkins",
-                    "email": "hello@sqlbook.com"
+                    "email": "hello@sqlbook.com",
+                    "role": 3
                   }
                 }
               }
@@ -233,7 +234,7 @@
           {
             "lang": "Shell",
             "label": "curl",
-            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"first_name\":\"Bob\",\"last_name\":\"Jenkins\",\"email\":\"hello@sqlbook.com\"}'"
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/members' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"first_name\":\"Bob\",\"last_name\":\"Jenkins\",\"email\":\"hello@sqlbook.com\",\"role\":3}'"
           }
         ]
       }
@@ -723,7 +724,7 @@
       "MemberInviteRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["first_name", "last_name", "email"],
+        "required": ["first_name", "last_name", "email", "role"],
         "properties": {
           "first_name": {
             "type": "string",

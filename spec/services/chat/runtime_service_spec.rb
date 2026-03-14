@@ -220,7 +220,7 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(true)
     end
 
-    it 'forces member.invite when invite follow-up context provides all required fields' do
+    it 'asks for role when invite follow-up context provides name and email but no role' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {
         assistant_message: 'I can help with workspace and team actions.',
@@ -249,12 +249,50 @@ RSpec.describe Chat::RuntimeService do
         }
       ).call
 
+      expect(decision.tool_calls).to be_empty
+      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_role'))
+      expect(decision.missing_information).to eq([I18n.t('app.workspaces.chat.planner.member_invite_needs_role')])
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
+    it 'forces member.invite when invite follow-up context has name, email, and role across turns' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I can help with workspace and team actions.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Admin',
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          conversation_messages: [
+            { role: 'user', content: 'Can I invite someone else?' },
+            {
+              role: 'assistant',
+              content: I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
+            },
+            { role: 'user', content: 'Bob Jenkins hello@sqlbook.com' }
+          ]
+        }
+      ).call
+
       expect(decision.tool_calls.size).to eq(1)
       expect(decision.tool_calls.first.tool_name).to eq('member.invite')
       expect(decision.tool_calls.first.arguments['email']).to eq('hello@sqlbook.com')
       expect(decision.tool_calls.first.arguments['first_name']).to eq('Bob')
       expect(decision.tool_calls.first.arguments['last_name']).to eq('Jenkins')
-      expect(decision.tool_calls.first.arguments['role']).to eq(Member::Roles::USER)
+      expect(decision.tool_calls.first.arguments['role']).to eq(Member::Roles::ADMIN)
       expect(decision.finalize_without_tools).to be(false)
     end
 
@@ -286,12 +324,9 @@ RSpec.describe Chat::RuntimeService do
         }
       ).call
 
-      expect(decision.tool_calls.size).to eq(1)
-      expect(decision.tool_calls.first.tool_name).to eq('member.invite')
-      expect(decision.tool_calls.first.arguments['email']).to eq('hello@sqlbook.com')
-      expect(decision.tool_calls.first.arguments['first_name']).to eq('Chris')
-      expect(decision.tool_calls.first.arguments['last_name']).to eq('Smith')
-      expect(decision.finalize_without_tools).to be(false)
+      expect(decision.tool_calls).to be_empty
+      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_role'))
+      expect(decision.finalize_without_tools).to be(true)
     end
 
     it 'asks for required invite fields when invite intent is present but model returns generic no-tool output' do
@@ -318,9 +353,58 @@ RSpec.describe Chat::RuntimeService do
 
       expect(decision.tool_calls).to be_empty
       expect(decision.missing_information).to eq(
-        [I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')]
+        [I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')]
       )
-      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name'))
+      expect(decision.assistant_message).to eq(
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
+      )
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
+    it 'answers recent invited-member role questions from structured context when the model returns no tool' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I do not have enough current context to tell which person you mean.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Awesome, but what role did you add him as?',
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          conversation_messages: [
+            {
+              role: 'assistant',
+              content: 'Invitation sent to hello@sqlbook.com.',
+              metadata: {
+                result_data: {
+                  invited_member: {
+                    full_name: 'Chris Smith',
+                    first_name: 'Chris',
+                    last_name: 'Smith',
+                    email: 'hello@sqlbook.com',
+                    role_name: 'User',
+                    status_name: 'Pending'
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls).to be_empty
+      expect(decision.assistant_message).to eq('I invited Chris Smith as User. Their invitation is currently Pending.')
       expect(decision.finalize_without_tools).to be(true)
     end
   end

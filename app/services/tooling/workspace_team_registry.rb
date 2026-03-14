@@ -43,7 +43,7 @@ module Tooling
         description: 'Invite a member to the current workspace.',
         input_schema: {
           'type' => 'object',
-          'required' => %w[first_name last_name email],
+          'required' => %w[first_name last_name email role],
           'properties' => {
             'email' => { 'type' => 'string', 'format' => 'email' },
             'first_name' => { 'type' => 'string', 'min_length' => 1 },

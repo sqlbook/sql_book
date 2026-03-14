@@ -24,6 +24,7 @@ class WorkspaceInvitationService
       member = create_member!(user:, role:, invited_by:)
 
       WorkspaceMailer.invite(member:).deliver_now
+      member
     end
   end
 

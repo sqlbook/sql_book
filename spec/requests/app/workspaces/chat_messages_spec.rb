@@ -6,7 +6,11 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
   let(:user) { create(:user) }
   let(:workspace) { create(:workspace_with_owner, owner: user) }
 
-  before { sign_in(user) }
+  before do
+    sign_in(user)
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return(nil)
+  end
 
   describe 'GET /app/workspaces/:workspace_id/chat/messages' do
     it 'returns the active thread messages' do
@@ -183,11 +187,11 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('ok')
       expect(payload['messages'].last['role']).to eq('assistant')
       expect(payload['messages'].last['content']).to eq(
-        'Sure. Please share their first name, last name, and email address.'
+        'Sure. Please share their first name, last name, email address, and role (Admin, User, or Read only).'
       )
     end
 
-    it 'continues invite flow after email follow-up in mixed context threads without confirmation' do
+    it 'asks for a role after invite follow-up provides name and email' do
       post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
       thread_id = response.parsed_body['thread_id']
 
@@ -204,14 +208,46 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
+      expect(payload['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        'Sure. What role should I give them (Admin, User, or Read only)?'
+      )
+      invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
+      expect(invited_member).not_to be_present
+    end
+
+    it 'continues invite flow after a role follow-up in mixed context threads' do
+      post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Can I invite someone else?' },
+           as: :json
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'Their name is Bob Jenkins and their email is hello@sqlbook.com'
+           },
+           as: :json
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'Admin'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
       expect(payload['status']).to eq('executed')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('hello@sqlbook.com')
       invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
       expect(invited_member).to be_present
-      expect(invited_member.role).to eq(Member::Roles::USER)
+      expect(invited_member.role).to eq(Member::Roles::ADMIN)
     end
 
-    it 'parses first/last name and email from a single follow-up message' do
+    it 'asks for a role when first/last name and email are provided in a single follow-up message' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'Can I invite someone else?' },
            as: :json
@@ -226,13 +262,76 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
-      expect(payload['status']).to eq('executed')
-      expect(payload.dig('messages', -1, 'content')).to include('hello@sqlbook.com')
+      expect(payload['status']).to eq('ok')
+      expect(payload.dig('messages', -1, 'content')).to eq(
+        'Sure. What role should I give them (Admin, User, or Read only)?'
+      )
 
       invited_user = User.find_by(email: 'hello@sqlbook.com')
-      expect(invited_user).to be_present
-      expect(invited_user.first_name).to eq('Chris')
-      expect(invited_user.last_name).to eq('Smith')
+      expect(invited_user).not_to be_present
+    end
+
+    it 'uses recent removed-member context for invite-back requests but still requires a role' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'hello@sqlbook.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'remove user hello@sqlbook.com' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'I confirm' },
+           as: :json
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Thanks could you invite him back actually?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        'Sure. What role should I give them (Admin, User, or Read only)?'
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'User' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('hello@sqlbook.com')
+    end
+
+    it 'answers invite role follow-ups from recent structured invite context' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Can I invite someone else?' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Chris Smith, hello@sqlbook.com' },
+           as: :json
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'User' },
+           as: :json
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'What role did you add him as?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        'I invited Chris Smith as User. Their invitation is currently Pending.'
+      )
     end
 
     it 'asks for workspace name before proposing a rename action' do

@@ -37,6 +37,7 @@ Current OpenAPI coverage is intentionally focused on the workspace/team contract
 - Humans need a browsable contract reference for product and integration work.
 - Chat/runtime work needs a stable, typed contract that explains payloads, response shapes, role/scope rules, and error semantics.
 - A good OpenAPI document reduces prompt bloat because more behavior can be expressed in the contract itself.
+- For workspace chat specifically, the API/tool contract should remain the authoritative description of required fields and validation behavior, while recent conversational state is supplied separately by the chat runtime.
 
 ## Scalar setup
 - Library: Scalar API Reference (open source docs UI rendered from OpenAPI).

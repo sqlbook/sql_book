@@ -29,7 +29,8 @@ Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook i
 
 ### Workspace chat (v1)
 - [ ] Chat message submit does not 500 on write actions (rename/invite/resend/remove).
-- [ ] Invite flow asks for required fields (`first_name`, `last_name`, `email`) and executes when provided.
+- [ ] Invite flow asks for required fields (`first_name`, `last_name`, `email`, `role`) and executes when provided.
+- [ ] Invite-back / recent-member follow-ups reuse prior thread context without losing track of the member identity or role.
 - [ ] High-risk actions still require inline confirmation and confirm/cancel behaves correctly.
 - [ ] Sidebar split/overlay behavior still matches viewport rules (`260px` desktop, full overlay at `<=760px`).
 
