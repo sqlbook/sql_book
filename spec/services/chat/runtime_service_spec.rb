@@ -209,14 +209,14 @@ RSpec.describe Chat::RuntimeService do
         context: {
           conversation_messages: [
             { role: 'user', content: 'Can I invite someone else?' },
-            { role: 'assistant', content: 'Sure. Please share their first name, last name, and email address.' }
+            { role: 'assistant', content: I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name') }
           ]
         }
       ).call
 
       expect(decision.tool_calls).to be_empty
-      expect(decision.missing_information).to eq([I18n.t('app.workspaces.chat.planner.member_invite_needs_name')])
-      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_name'))
+      expect(decision.missing_information).to eq([I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role')])
+      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role'))
       expect(decision.finalize_without_tools).to be(true)
     end
 
@@ -243,7 +243,7 @@ RSpec.describe Chat::RuntimeService do
         context: {
           conversation_messages: [
             { role: 'user', content: 'Can I invite someone else?' },
-            { role: 'assistant', content: 'Sure. Please share their first name, last name, and email address.' },
+            { role: 'assistant', content: I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name') },
             { role: 'user', content: 'hello@sqlbook.com' }
           ]
         }
@@ -319,7 +319,7 @@ RSpec.describe Chat::RuntimeService do
         context: {
           conversation_messages: [
             { role: 'user', content: 'Can I invite someone else?' },
-            { role: 'assistant', content: 'Sure. Please share their first name, last name, and email address.' }
+            { role: 'assistant', content: I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name') }
           ]
         }
       ).call
@@ -405,6 +405,130 @@ RSpec.describe Chat::RuntimeService do
 
       expect(decision.tool_calls).to be_empty
       expect(decision.assistant_message).to eq('I invited Chris Smith as User. Their invitation is currently Pending.')
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
+    it 'asks for name and role together when only invite email is available' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I can help with workspace and team actions.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Could you invite another for me please? hello@sqlbook.com',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).call
+
+      expect(decision.tool_calls).to be_empty
+      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role'))
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
+    it 'accepts hedged role replies during invite follow-up' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I can help with workspace and team actions.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'I think admin',
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          conversation_messages: [
+            { role: 'user', content: 'Could you invite another for me please? hello@sqlbook.com' },
+            { role: 'assistant', content: I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role') },
+            { role: 'user', content: 'Chris Smith' }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('member.invite')
+      expect(decision.tool_calls.first.arguments).to include(
+        'email' => 'hello@sqlbook.com',
+        'first_name' => 'Chris',
+        'last_name' => 'Smith',
+        'role' => Member::Roles::ADMIN
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'answers recent member follow-up questions from current workspace state when the model returns no tool' do
+      invited_user = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'hello@sqlbook.com')
+      create(
+        :member,
+        workspace:,
+        user: invited_user,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I do not have enough current context to tell which person you mean.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Which user are we talking about here?',
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          conversation_messages: [
+            {
+              role: 'assistant',
+              content: 'Invitation sent to hello@sqlbook.com.',
+              metadata: {
+                result_data: {
+                  invited_member: {
+                    full_name: 'Chris Smith',
+                    first_name: 'Chris',
+                    last_name: 'Smith',
+                    email: 'hello@sqlbook.com',
+                    role_name: 'User',
+                    status_name: 'Pending'
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls).to be_empty
+      expect(decision.assistant_message).to eq(
+        'We’re talking about Chris Smith (hello@sqlbook.com). They are currently Accepted as Admin in this workspace.'
+      )
       expect(decision.finalize_without_tools).to be(true)
     end
   end

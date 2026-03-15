@@ -81,6 +81,9 @@ module App
           return render_non_action_response(user_message:, assistant_content: missing_details_message)
         end
 
+        preflight_result = action_executor.preflight(action_type: tool_call.tool_name, payload:)
+        return render_execution_response(user_message:, execution: preflight_result) if preflight_result
+
         idempotency_key = nil
         if write_tool?(tool_definition) && idempotency_supported?
           idempotency_key = idempotency_key_for(tool_name: tool_call.tool_name, payload: tool_call.arguments.to_h)
@@ -268,15 +271,12 @@ module App
           missing_email = payload['email'].to_s.strip.blank?
           missing_name = payload['first_name'].to_s.strip.blank? || payload['last_name'].to_s.strip.blank?
           missing_role = payload['role'].to_s.strip.blank?
-          if missing_email && missing_name && missing_role
-            return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
-          end
-          if missing_email && missing_name
-            return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
-          end
-          return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_email
-          return I18n.t('app.workspaces.chat.planner.member_invite_needs_name') if missing_name
-          return I18n.t('app.workspaces.chat.planner.member_invite_needs_role') if missing_role
+          missing_fields = []
+          missing_fields << 'email' if missing_email
+          missing_fields.push('first_name', 'last_name') if missing_name
+          missing_fields << 'role' if missing_role
+          prompt_key = Chat::InvitePromptResolver.key_for(missing_fields:)
+          return I18n.t(prompt_key) if prompt_key.present?
         when 'member.resend_invite'
           return I18n.t('app.workspaces.chat.planner.member_resend_needs_member') if member_reference_missing?(payload:)
         when 'member.update_role'

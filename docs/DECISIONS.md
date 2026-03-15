@@ -112,6 +112,8 @@ Use this file to record major choices and why they were made.
 - Consequences:
   - each turn should be rebuilt from recent transcript + structured recent action results + pending state
   - assistant follow-ups such as invite-back, role questions, and confirmation replies can reuse authoritative server context
+  - recent-member status/identity follow-ups should refresh against current workspace membership state rather than trusting stale prior tool output
+  - invite follow-ups should request all still-missing fields together, and hedged role replies like `I think admin` should still count as explicit role instructions
   - summaries are only for long-thread compression, not as a second source of truth
 - Revisit when:
   - the chat surface expands into much longer multi-domain workflows that need formal summarization strategy

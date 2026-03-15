@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-12
+Last updated: 2026-03-14
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -121,6 +121,8 @@ Related references:
 - Low-risk chat writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`).
 - High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
 - Chat invite execution requires `first_name`, `last_name`, `email`, and `role`; runtime/planner follow-ups collect missing fields before execution.
+- Invite follow-ups should ask for all currently missing invite fields together (for example `name + role` when only email is known).
+- Natural role replies such as `I think admin` should still resolve to the intended role.
 - Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
 - Thread/message route access is constrained to `created_by == current_user` within the current workspace.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.
@@ -131,6 +133,7 @@ Related references:
 - Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.
 - Chat runtime/planner use strict Responses API JSON schema; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side. If logs show `Invalid schema for response_format`, fix the runtime/planner schema contract before treating the issue as prompt/model quality.
 - Chat context should be rebuilt from recent transcript plus structured recent action results (`metadata.result_data`), not by introducing parallel LLM-maintained memory documents.
+- Recent invite/member follow-ups should refresh against current workspace membership state before answering status/identity questions.
 
 ## Workspace settings save behavior
 - General tab workspace-name form uses change detection:
@@ -258,6 +261,9 @@ Related references:
 
 ## Team invitation flow
 Source: `WorkspaceInvitationService`
+
+- If an invitation email already belongs to an existing sqlbook user, invitation flow must not overwrite that user’s stored first/last name.
+- Chat-driven invites must preserve the same rule as the manual team invite flow.
 
 1. Owner/admin submits invite form from team tab.
 2. Service finds or creates invitee `User` by email.

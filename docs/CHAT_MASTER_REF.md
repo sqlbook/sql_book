@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-12
+Last updated: 2026-03-14
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -171,10 +171,11 @@ High-risk writes (inline confirmation required):
    - `missing_information[]`
    - `finalize_without_tools`
 4. If `missing_information` exists, assistant asks follow-up (no execution).
-5. If tool call is high-risk write, create confirmation card.
-6. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
-7. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
-8. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+5. Preflight policy/scope validation runs before any confirmation UI is created.
+6. If tool call is high-risk write and preflight passes, create confirmation card.
+7. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
+8. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+9. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
@@ -182,11 +183,13 @@ High-risk writes (inline confirmation required):
 - Preferred turn context ingredients:
   - recent raw transcript
   - structured recent tool/action results
+  - refreshed current workspace state for the most recently referenced member when a follow-up asks who/status/confirmation
   - current pending confirmation / unresolved required fields
   - compact summaries only if threads become too long for direct transcript slices
 - Recent action result context should support follow-ups such as:
   - "invite him back" after a remove action
   - "what role did you add him as?" after an invite action
+  - "have they accepted?" or "which user are we talking about?" after an invite is later accepted in another session
 - Structured result data is persisted on assistant messages for both:
   - auto-executed actions
   - confirmed high-risk actions
@@ -209,6 +212,7 @@ High-risk writes (inline confirmation required):
 
 ## Confirmation lifecycle
 - Confirmation required only for high-risk writes.
+- High-risk actions must never render a confirmation card if preflight policy/scope validation already knows the actor cannot perform them.
 - Users can confirm/cancel pending actions either:
   - via inline chat buttons
   - via explicit follow-up chat messages such as confirmation/cancellation replies
@@ -220,6 +224,18 @@ High-risk writes (inline confirmation required):
   - token is not expired
 - Cancel endpoint marks pending requests canceled and appends assistant confirmation text.
 - Pending confirmation expiry: `15 minutes`.
+
+## Invite follow-up rules
+- `member.invite` always requires `first_name`, `last_name`, `email`, and `role`.
+- Invite follow-up prompts should ask for all currently missing invite fields in one message, not drip-feed one property per turn.
+- Natural role replies such as `admin`, `I think admin`, or `make them admin` should be treated as explicit role instructions.
+- Chat must not silently assume a role when the user has not provided one.
+- If the invite email belongs to an existing sqlbook user, chat invite execution must not overwrite that user’s stored first/last name; only workspace membership/invitation state should change.
+
+## Recent-member continuity rules
+- Follow-up questions about the most recently invited/removed/updated member should resolve against recent structured action context first.
+- When possible, chat should refresh that recent member against current workspace membership state before answering status/identity/clarification follow-ups.
+- This is how prompts like `Have they accepted?`, `Which user are we talking about?`, and `Are you sure?` stay grounded even if membership changed in another browser session.
 
 ## Thread/sidebar UX behavior
 - Sidebar width is fixed at `260px` on desktop.

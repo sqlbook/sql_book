@@ -31,11 +31,6 @@ module Chat
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
-    READ_ONLY_ROLE_REGEX = /
-      \A(?:read[-\s]?only|readonly)\z|
-      \bas\s+(?:read[-\s]?only|readonly)\b|
-      \brole\b.*\b(?:read[-\s]?only|readonly)\b
-    /x
     PLACEHOLDER_NAME_PARTS = %w[
       someone somebody anyone anybody person people team teammate teammates mate mates
       member members user users my our else another one this that
@@ -358,6 +353,10 @@ module Chat
         'Use missing_information for required fields that are still absent.',
         'For member.invite, required fields are first_name, last_name, email, and role.',
         [
+          'If invite context exists, collect all currently missing invite fields',
+          'in one follow-up and continue until all required fields are present.'
+        ].join(' '),
+        [
           'Never choose or assume an invite role on the user\'s behalf.',
           'Ask for the role if it was not explicitly provided.'
         ].join(' '),
@@ -369,7 +368,8 @@ module Chat
           'If the user asks what role a recently invited member was added as,',
           'answer from the recent structured invite result.'
         ].join(' '),
-        'If invite context exists, collect missing invite fields and continue until all required fields are present.',
+        'Treat natural role replies like "I think admin" or "make them admin" as explicit role instructions.',
+        'Avoid repeating the same filler opening like "Sure." in consecutive replies.',
         'Do not fall back to a generic capability summary during invite follow-ups.',
         'When asked for team member names/details, use member.list and include detailed entries.',
         [
@@ -581,17 +581,21 @@ module Chat
       actor.preferred_locale.presence || I18n.default_locale.to_s
     end
 
-    def apply_deterministic_guards(decision) # rubocop:disable Metrics/MethodLength
-      return decision if decision.nil?
-      return decision unless no_tool_selected?(decision)
+    def apply_deterministic_guards(decision)
+      return decision if decision.nil? || !no_tool_selected?(decision)
 
-      role_answer_decision = recent_invited_member_role_answer_decision
-      return role_answer_decision if role_answer_decision
+      deterministic_follow_up_decision || decision
+    end
 
-      member_remove_decision = member_remove_follow_up_decision
-      return member_remove_decision if member_remove_decision
+    def deterministic_follow_up_decision
+      recent_member_context_answer_decision ||
+        recent_invited_member_role_answer_decision ||
+        member_remove_follow_up_decision ||
+        invite_follow_up_guard_decision
+    end
 
-      return decision unless invite_context_active?
+    def invite_follow_up_guard_decision
+      return nil unless invite_context_active?
 
       invite_details = inferred_invite_details
       missing_fields = missing_invite_fields(invite_details:)
@@ -687,6 +691,8 @@ module Chat
         member_invite_needs_role
         member_invite_needs_name
         member_invite_needs_email
+        member_invite_needs_email_and_role
+        member_invite_needs_name_and_role
         member_invite_needs_email_and_name
         member_invite_needs_email_name_and_role
       ].map { |key| I18n.t("app.workspaces.chat.planner.#{key}").downcase }
@@ -728,16 +734,8 @@ module Chat
     end
 
     def invite_missing_details_prompt(missing_fields:)
-      return I18n.t('app.workspaces.chat.planner.member_invite_needs_role') if missing_fields == ['role']
-      return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_fields == ['email']
-      if missing_fields.intersect?(%w[first_name last_name]) && missing_fields.exclude?('email')
-        return I18n.t('app.workspaces.chat.planner.member_invite_needs_name')
-      end
-      if missing_fields.intersect?(%w[first_name last_name email]) && missing_fields.include?('role')
-        return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
-      end
-
-      I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
+      prompt_key = Chat::InvitePromptResolver.key_for(missing_fields:)
+      I18n.t(prompt_key)
     end
 
     def parsed_email
@@ -767,12 +765,7 @@ module Chat
     end
 
     def parsed_role_from(text:)
-      lowered = text.to_s.downcase
-      return Member::Roles::ADMIN if lowered.match?(/\Aadmin\z|\bas\s+admin\b|\brole\b.*\badmin\b/)
-      return Member::Roles::READ_ONLY if lowered.match?(READ_ONLY_ROLE_REGEX)
-      return Member::Roles::USER if lowered.match?(/\Auser\z|\bas\s+user\b|\brole\b.*\buser\b/)
-
-      nil
+      Chat::RoleParser.parse(text:)
     end
 
     def parsed_name_payload_from(text:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
@@ -853,6 +846,32 @@ module Chat
       )
     end
 
+    def recent_member_context_answer_decision
+      return nil unless recent_member_context_question?
+
+      member = conversation_context_resolver.current_member_for_recent_reference(text: message)
+      return nil unless member
+
+      Decision.new(
+        assistant_message: I18n.t(
+          'app.workspaces.chat.planner.member_recent_reference_answer',
+          name: member['full_name'].presence || member['email'],
+          email: member['email'],
+          role: member['role_name'],
+          status: member['status_name']
+        ),
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      )
+    end
+
+    def recent_member_context_question?
+      conversation_context_resolver.identity_question?(text: message) ||
+        conversation_context_resolver.status_question?(text: message) ||
+        conversation_context_resolver.clarification_question?(text: message)
+    end
+
     def chat_model_candidates
       configured_model = ENV.fetch('OPENAI_CHAT_MODEL', 'gpt-5-mini').to_s.strip
       candidates = [configured_model.presence || 'gpt-5-mini']
@@ -882,7 +901,7 @@ module Chat
     end
 
     def conversation_context_resolver
-      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(conversation_messages:)
+      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(workspace:, conversation_messages:)
     end
 
     def recent_assistant_content

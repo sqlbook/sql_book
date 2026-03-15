@@ -24,11 +24,6 @@ module Chat
         invitation|invite|invitar|invitacion|correo|email
       )\b
     /x
-    READ_ONLY_ROLE_REGEX = /
-      \A(?:read[-\s]?only|readonly)\z|
-      \bas\s+(?:read[-\s]?only|readonly)\b|
-      \brole\b.*\b(?:read[-\s]?only|readonly)\b
-    /x
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     MEMBER_DETAIL_REGEX = /
       \b(
@@ -182,7 +177,10 @@ module Chat
                   ].join(' '),
                   [
                     'Before proposing write actions, collect required fields first.',
-                    'If required fields are missing, set action_type to null and ask a concise follow-up question.',
+                    [
+                      'If required fields are missing, set action_type to null',
+                      'and ask for all currently missing fields in one concise follow-up message.'
+                    ].join(' '),
                     'Required fields: workspace.update_name(name), member.invite(first_name,last_name,email,role),',
                     'member.resend_invite(email or member_id or full_name),',
                     'member.update_role(email or member_id or full_name, role),',
@@ -200,6 +198,8 @@ module Chat
                     'If the user asks what role a recently invited member was added as,',
                     'answer from the recent structured invite result.'
                   ].join(' '),
+                  'Treat natural role replies like "I think admin" or "make them admin" as explicit role instructions.',
+                  'Avoid repeating the same filler opening like "Sure." in consecutive replies.',
                   [
                     'For workspace.update_name, payload.name must be a clean target name only,',
                     'without wrapping quotes and without trailing conversational punctuation.'
@@ -299,6 +299,9 @@ module Chat
       return default_help_plan if message.blank? && attachment_count.zero?
 
       lower = message.downcase
+
+      recent_member_context_plan = recent_member_context_answer_plan
+      return recent_member_context_plan if recent_member_context_plan
 
       role_context_plan = recent_invited_member_role_context_plan
       return role_context_plan if role_context_plan
@@ -501,12 +504,7 @@ module Chat
     end
 
     def parsed_role_from(text:)
-      lowered = text.to_s.downcase
-      return Member::Roles::ADMIN if lowered.match?(/\Aadmin\z|\bas\s+admin\b|\brole\b.*\badmin\b/)
-      return Member::Roles::READ_ONLY if lowered.match?(READ_ONLY_ROLE_REGEX)
-      return Member::Roles::USER if lowered.match?(/\Auser\z|\bas\s+user\b|\brole\b.*\buser\b/)
-
-      nil
+      Chat::RoleParser.parse(text:)
     end
 
     def parsed_workspace_name
@@ -534,6 +532,31 @@ module Chat
         action_type: nil,
         payload: {}
       )
+    end
+
+    def recent_member_context_answer_plan
+      return nil unless recent_member_context_question?
+
+      member = conversation_context_resolver.current_member_for_recent_reference(text: message)
+      return nil unless member
+
+      Plan.new(
+        assistant_message: I18n.t(
+          'app.workspaces.chat.planner.member_recent_reference_answer',
+          name: member['full_name'].presence || member['email'],
+          email: member['email'],
+          role: member['role_name'],
+          status: member['status_name']
+        ),
+        action_type: nil,
+        payload: {}
+      )
+    end
+
+    def recent_member_context_question?
+      conversation_context_resolver.identity_question?(text: message) ||
+        conversation_context_resolver.status_question?(text: message) ||
+        conversation_context_resolver.clarification_question?(text: message)
     end
 
     def cleaned_name(value)
@@ -655,16 +678,8 @@ module Chat
     end
 
     def invite_missing_details_message(missing_fields:)
-      return I18n.t('app.workspaces.chat.planner.member_invite_needs_role') if missing_fields == ['role']
-      return I18n.t('app.workspaces.chat.planner.member_invite_needs_email') if missing_fields == ['email']
-      if missing_fields.intersect?(%w[first_name last_name]) && missing_fields.exclude?('email')
-        return I18n.t('app.workspaces.chat.planner.member_invite_needs_name')
-      end
-      if missing_fields.intersect?(%w[first_name last_name email]) && missing_fields.include?('role')
-        return I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
-      end
-
-      I18n.t('app.workspaces.chat.planner.member_invite_needs_email_and_name')
+      prompt_key = Chat::InvitePromptResolver.key_for(missing_fields:)
+      I18n.t(prompt_key)
     end
 
     def recent_user_conversation_texts
@@ -699,6 +714,8 @@ module Chat
         member_invite_needs_role
         member_invite_needs_name
         member_invite_needs_email
+        member_invite_needs_email_and_role
+        member_invite_needs_name_and_role
         member_invite_needs_email_and_name
         member_invite_needs_email_name_and_role
       ].map { |key| I18n.t("app.workspaces.chat.planner.#{key}").downcase }
@@ -811,7 +828,7 @@ module Chat
     end
 
     def conversation_context_resolver
-      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(conversation_messages:)
+      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(workspace:, conversation_messages:)
     end
 
     def recent_assistant_content

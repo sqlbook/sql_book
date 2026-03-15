@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chat
-  class ActionExecutor
+  class ActionExecutor # rubocop:disable Metrics/ClassLength
     Result = Struct.new(:status, :user_message, :data, :error_code, keyword_init: true)
 
     def initialize(workspace:, actor:, registry: nil)
@@ -13,12 +13,20 @@ module Chat
       )
     end
 
-    def execute(action_type:, payload:) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def preflight(action_type:, payload:)
       normalized_payload = payload.to_h
       return forbidden_result(reason_code: 'forbidden_scope') if scope_mismatch?(payload: normalized_payload)
 
       decision = policy.authorize(action_type:, payload: normalized_payload)
-      return forbidden_result(reason_code: decision.reason_code) unless decision.allowed
+      return nil if decision.allowed
+
+      denied_result(action_type:, payload: normalized_payload, reason_code: decision.reason_code)
+    end
+
+    def execute(action_type:, payload:) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      normalized_payload = payload.to_h
+      preflight_result = preflight(action_type:, payload: normalized_payload)
+      return preflight_result if preflight_result
 
       execution = registry.execute(name: action_type, arguments: normalized_payload)
       map_tooling_result(execution)
@@ -36,6 +44,12 @@ module Chat
     private
 
     attr_reader :workspace, :actor, :handlers, :registry
+
+    def denied_result(action_type:, payload:, reason_code:)
+      return validation_result(action_type:, payload:) if reason_code == 'validation_error'
+
+      forbidden_result(reason_code:)
+    end
 
     def policy
       @policy ||= Chat::Policy.new(workspace:, actor:)
@@ -68,6 +82,60 @@ module Chat
       !user_message_scope.exists?(id: payload_message_id)
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+    def validation_result(action_type:, payload:)
+      case action_type
+      when 'member.resend_invite'
+        member_resend_validation_result(payload:)
+      when 'member.update_role'
+        member_role_update_validation_result(payload:)
+      when 'member.remove'
+        member_remove_validation_result(payload:)
+      else
+        validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_not_found'))
+      end
+    end
+
+    def member_resend_validation_result(payload:)
+      member = target_member(payload:)
+      return validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_not_found')) unless member
+
+      validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_resend_only_pending'))
+    end
+
+    def member_role_update_validation_result(payload:)
+      member = target_member(payload:)
+      return validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_not_found')) unless member
+
+      requested_role = payload['role'].to_i
+      unless valid_role?(requested_role)
+        return validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_role_invalid'))
+      end
+
+      validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_role_invalid'))
+    end
+
+    def member_remove_validation_result(payload:)
+      member = target_member(payload:)
+      return validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_not_found')) unless member
+      if member.owner?
+        return validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_remove_owner_forbidden'))
+      end
+
+      validation_error_result(message: I18n.t('app.workspaces.chat.executor.member_not_found'))
+    end
+
+    def target_member(payload:)
+      member_reference_resolver.resolve(payload:)
+    end
+
+    def member_reference_resolver
+      @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
+    end
+
+    def valid_role?(role)
+      Chat::Policy::EDITABLE_ROLES.include?(role)
+    end
 
     def forbidden_result(reason_code:)
       Result.new(

@@ -187,7 +187,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('ok')
       expect(payload['messages'].last['role']).to eq('assistant')
       expect(payload['messages'].last['content']).to eq(
-        'Sure. Please share their first name, last name, email address, and role (Admin, User, or Read only).'
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
       )
     end
 
@@ -210,10 +210,22 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       payload = response.parsed_body
       expect(payload['status']).to eq('ok')
       expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
-        'Sure. What role should I give them (Admin, User, or Read only)?'
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_role')
       )
       invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
       expect(invited_member).not_to be_present
+    end
+
+    it 'asks for name and role together when only the invite email is supplied' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Could you invite another for me please? hello@sqlbook.com' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role')
+      )
     end
 
     it 'continues invite flow after a role follow-up in mixed context threads' do
@@ -247,6 +259,37 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(invited_member.role).to eq(Member::Roles::ADMIN)
     end
 
+    it 'accepts a hedged role reply during an invite follow-up' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Could you invite another for me please? hello@sqlbook.com' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'Chris Smith'
+           },
+           as: :json
+
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_role')
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: 'I think admin'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      invited_member = workspace.members.joins(:user).find_by(users: { email: 'hello@sqlbook.com' })
+      expect(invited_member).to be_present
+      expect(invited_member.role).to eq(Member::Roles::ADMIN)
+    end
+
     it 'asks for a role when first/last name and email are provided in a single follow-up message' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'Can I invite someone else?' },
@@ -264,7 +307,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       payload = response.parsed_body
       expect(payload['status']).to eq('ok')
       expect(payload.dig('messages', -1, 'content')).to eq(
-        'Sure. What role should I give them (Admin, User, or Read only)?'
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_role')
       )
 
       invited_user = User.find_by(email: 'hello@sqlbook.com')
@@ -297,7 +340,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('ok')
       expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
-        'Sure. What role should I give them (Admin, User, or Read only)?'
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_role')
       )
 
       post app_workspace_chat_messages_path(workspace),
@@ -331,6 +374,54 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('ok')
       expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
         'I invited Chris Smith as User. Their invitation is currently Pending.'
+      )
+    end
+
+    it 'does not overwrite an existing user name when chat invites them with different names' do
+      existing_user = create(:user, first_name: 'Robert', last_name: 'Jones', email: 'hello@sqlbook.com')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Invite Chris Smith hello@sqlbook.com as admin' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(existing_user.reload.first_name).to eq('Robert')
+      expect(existing_user.last_name).to eq('Jones')
+
+      invited_member = workspace.members.find_by(user: existing_user)
+      expect(invited_member).to be_present
+      expect(invited_member.role).to eq(Member::Roles::ADMIN)
+    end
+
+    it 'answers recent invite follow-ups from current workspace state after acceptance' do
+      invited_user = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'hello@sqlbook.com')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Invite Chris Smith hello@sqlbook.com as admin' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      invited_member = workspace.members.find_by(user: invited_user)
+      invited_member.update!(status: Member::Status::ACCEPTED)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Have they accepted their invite?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        'We’re talking about Chris Smith (hello@sqlbook.com). They are currently Accepted as Admin in this workspace.'
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Which user are we talking about here?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        'We’re talking about Chris Smith (hello@sqlbook.com). They are currently Accepted as Admin in this workspace.'
       )
     end
 
@@ -385,6 +476,38 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('requires_confirmation')
       expect(payload.dig('action_request', 'action_type')).to eq('member.remove')
       expect(payload.dig('action_request', 'payload', 'email')).to eq('chris@example.com')
+    end
+
+    it 'rejects forbidden high-risk actions before confirmation for non-managing members' do
+      owner = create(:user)
+      restricted_workspace = create(:workspace_with_owner, owner:)
+      create(
+        :member,
+        workspace: restricted_workspace,
+        user:,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      create(
+        :member,
+        workspace: restricted_workspace,
+        user: teammate,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      expect do
+        post app_workspace_chat_messages_path(restricted_workspace),
+             params: { content: 'Remove user bob@example.com' },
+             as: :json
+      end.not_to change(ChatActionRequest, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('forbidden')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        I18n.t('app.workspaces.chat.executor.forbidden')
+      )
     end
 
     it 'allows written confirmation for a pending high-risk action' do
