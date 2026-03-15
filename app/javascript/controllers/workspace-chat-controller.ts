@@ -353,7 +353,8 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private fetchJson(path: string, body: FormData, method = 'POST'): Promise<JsonPayload> {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const csrfToken = this.csrfToken();
+    this.appendAuthenticityToken(body, csrfToken);
 
     return fetch(path, {
       method,
@@ -371,6 +372,16 @@ export default class extends Controller<HTMLDivElement> {
 
       return data;
     });
+  }
+
+  private csrfToken(): string {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  }
+
+  private appendAuthenticityToken(body: FormData, csrfToken: string): void {
+    if (!csrfToken || body.has('authenticity_token')) return;
+
+    body.set('authenticity_token', csrfToken);
   }
 
   private syncFileInput(): void {

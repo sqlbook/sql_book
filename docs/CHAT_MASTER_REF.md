@@ -222,6 +222,9 @@ High-risk writes (inline confirmation required):
   - via inline chat buttons
   - via explicit follow-up chat messages such as confirmation/cancellation replies
 - Pending confirmation assistant messages should render inline `Confirm` / `Cancel` controls in the chat UI while the action remains pending.
+- Stimulus inline action requests (`confirm`, `cancel`, thread delete/rename) must send Rails CSRF protection in both places:
+  - `X-CSRF-Token` header from the page meta tag
+  - `authenticity_token` field in ad-hoc `FormData` bodies
 - High-risk member actions should resolve a uniquely named workspace member into a concrete pending action request so the confirmation card can render, rather than asking for free-text confirmation with no action request behind it.
 - Confirm endpoint validates:
   - request is pending
