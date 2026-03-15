@@ -215,8 +215,12 @@ RSpec.describe Chat::RuntimeService do
       ).call
 
       expect(decision.tool_calls).to be_empty
-      expect(decision.missing_information).to eq([I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role')])
-      expect(decision.assistant_message).to eq(I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role'))
+      expect(decision.missing_information).to eq(
+        [I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role')]
+      )
+      expect(decision.assistant_message).to eq(
+        I18n.t('app.workspaces.chat.planner.member_invite_needs_name_and_role')
+      )
       expect(decision.finalize_without_tools).to be(true)
     end
 

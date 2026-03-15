@@ -106,6 +106,56 @@ en:
           request_already_pending: That request is already pending confirmation.
           request_already_processed: I already processed that request.
           runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
+        responses:
+          forbidden:
+            variants:
+              - "You can't %{action} with your current workspace role. Please ask %{allowed_roles}."
+              - "That action isn't available from your current workspace role. %{allowed_roles} can help with it."
+              - "I can't do that from your current role in this workspace. %{allowed_roles} can take care of it."
+          validation:
+            variants:
+              - "%{detail}"
+              - "I can help with that, but I still need one detail: %{detail}"
+              - "Before I can do that, I need this from you: %{detail}"
+          execution_error:
+            variants:
+              - "%{detail}"
+              - "I ran into a problem while doing that: %{detail}"
+              - "Something went wrong on my side while trying that: %{detail}"
+          success:
+            workspace_update_name:
+              variants:
+                - "The workspace is now called %{name}."
+                - "Done. I renamed the workspace to %{name}."
+                - "I've updated the workspace name to %{name}."
+            workspace_delete_success:
+              variants:
+                - "The workspace has been deleted, and everyone affected has been notified."
+                - "Done. The workspace has been deleted and the notifications have been sent."
+            workspace_delete_partial:
+              variants:
+                - "The workspace has been deleted, but I couldn't notify some users by email."
+                - "The workspace is gone, though a few email notifications didn't go out."
+            member_invite:
+              variants:
+                - "I've sent an invitation to %{email} as %{role}."
+                - "Invitation sent to %{email} with the %{role} role."
+                - "Done. %{email} has been invited as %{role}."
+            member_resend_invite:
+              variants:
+                - "I've sent a fresh invitation to %{email}."
+                - "Done. I resent the invitation to %{email}."
+                - "A new invitation is on its way to %{email}."
+            member_update_role:
+              variants:
+                - "%{name} is now %{role}."
+                - "I updated %{name}'s role to %{role}."
+                - "Done. %{name} now has the %{role} role."
+            member_remove:
+              variants:
+                - "%{name} has been removed from this workspace."
+                - "I removed %{name} from the workspace."
+                - "Done. %{name} is no longer part of this workspace."
         errors:
           message_or_image_required: Message content or at least one image is required.
           max_images: You can attach up to %{count} images per message.
@@ -159,6 +209,18 @@ en:
           fallback_without_action: I can help with workspace and team actions.
         executor:
           forbidden: I can't run that action with your current workspace permissions.
+          forbidden_with_allowed_roles: You can't %{action} with your current workspace role. Please ask %{allowed_roles}.
+          forbidden_actions:
+            workspace_update_name: rename this workspace
+            workspace_delete: delete this workspace
+            member_list: view the team members list
+            member_invite: invite team members
+            member_resend_invite: resend team invitations
+            member_update_role: change team member roles
+            member_remove: remove team members
+          allowed_roles:
+            owner: a Workspace owner
+            admin_or_owner: an Admin or Workspace owner
           unexpected_error: There was an unexpected error while running that action.
           workspace_name_required: Please provide a workspace name.
           workspace_name_updated: Workspace name updated to %{name}.

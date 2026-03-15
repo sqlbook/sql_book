@@ -44,6 +44,7 @@ Related references:
 - Server-authoritative policy/execution:
   - `Chat::Policy` for role/scope checks
   - `Chat::ActionExecutor` for normalized execution statuses
+  - `Chat::ResponseComposer` for final user-facing execution replies
 - Schema-drift safety:
   - if `chat_action_requests.idempotency_key` is not present yet, write idempotency dedupe is skipped to prevent request-time 500s during partial deploy/migration windows
 
@@ -157,7 +158,10 @@ High-risk writes (inline confirmation required):
 - Role and outrank rules mirror workspace team-management permissions.
 - `workspace.delete` is owner-only.
 - `member.invite` / `member.update_role` restrict target roles to editable non-owner roles.
+- `member.list` is visible only to workspace `OWNER` and `ADMIN` roles.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
+- Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
+- Execution/preflight wording should be composed separately from the executor so chat can vary phrasing naturally and avoid repeating the same template back-to-back.
 
 ## Runtime decision flow
 1. User message is persisted immediately.
@@ -174,8 +178,9 @@ High-risk writes (inline confirmation required):
 5. Preflight policy/scope validation runs before any confirmation UI is created.
 6. If tool call is high-risk write and preflight passes, create confirmation card.
 7. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
-8. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
-9. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+8. `Chat::ResponseComposer` converts execution/preflight results into user-facing assistant copy using locale-backed variants and recent assistant history to reduce repetition.
+9. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+10. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.

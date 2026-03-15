@@ -47,6 +47,17 @@ RSpec.describe Chat::Policy, type: :service do
       expect(decision.reason_code).to eq('forbidden_role')
     end
 
+    it 'blocks user-role members from listing team members' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(action_type: 'member.list', payload: {})
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
+    end
+
     it 'blocks actions when actor is not a member of the workspace' do
       outsider = create(:user)
       policy = described_class.new(workspace:, actor: outsider)
@@ -68,7 +79,7 @@ RSpec.describe Chat::Policy, type: :service do
       )
 
       expect(decision.allowed).to be(false)
-      expect(decision.reason_code).to eq('validation_error')
+      expect(decision.reason_code).to eq('forbidden_role')
     end
 
     it 'blocks owner role updates through chat' do

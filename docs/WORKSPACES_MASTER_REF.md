@@ -60,7 +60,7 @@ Related references:
   - Chat home (`GET /app/workspaces/:id`): all accepted roles
   - Chat read route (`chat/messages#index`): all accepted roles
   - Chat action route (`chat/messages#create`):
-    - read-only actions (`member.list`) allowed for all accepted roles
+    - team visibility action (`member.list`) allowed only for owner/admin
     - mutating actions policy-gated by role and target constraints
   - Chat confirm/cancel routes (`chat/actions#confirm`, `chat/actions#cancel`): requester-only and workspace-scoped
   - Data source settings routes (`data_sources*`, `data_sources/set_up#index`): owner/admin only
@@ -120,6 +120,10 @@ Related references:
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - Low-risk chat writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`).
 - High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
+- Chat permission visibility should mirror workspace UI permissions:
+  - `OWNER` / `ADMIN` can view workspace settings and the team member list
+  - `USER` / `READ_ONLY` should not see the workspace settings nav item and should receive a permission response if they ask chat for the team member list
+- Desktop/mobile workspace navigation should omit the workspace settings entry entirely for `USER` and `READ_ONLY` roles.
 - Chat invite execution requires `first_name`, `last_name`, `email`, and `role`; runtime/planner follow-ups collect missing fields before execution.
 - Invite follow-ups should ask for all currently missing invite fields together (for example `name + role` when only email is known).
 - Natural role replies such as `I think admin` should still resolve to the intended role.
@@ -129,6 +133,8 @@ Related references:
 - Chat stream hides per-message timestamps; `Thinking` status uses animated ellipsis.
 - Pending high-risk actions can be confirmed either from inline chat buttons or with explicit follow-up confirmation/cancellation chat messages.
 - Pending confirmation cards are part of the workspace chat UI contract and should render visible `Confirm` / `Cancel` controls while the request is still pending.
+- Permission-denied chat replies should say which workspace roles can perform the requested action, rather than only returning a flat refusal.
+- Execution/preflight replies should be phrased by a response-composition layer rather than only echoing deterministic executor copy, so repeated denials or success messages do not sound robotic.
 - Member-targeting chat actions should accept a unique member name as well as email/member id, so requests like "remove Chris Smith" resolve into a real pending action instead of a plain assistant prompt.
 - Write idempotency dedupe requires `chat_action_requests.idempotency_key` migration; if missing temporarily, writes still execute and dedupe is skipped.
 - Chat runtime/planner use strict Responses API JSON schema; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side. If logs show `Invalid schema for response_format`, fix the runtime/planner schema contract before treating the issue as prompt/model quality.

@@ -40,15 +40,17 @@
            icon: 'ri-dashboard-line',
            label: I18n.t('app.navigation.dashboards'),
            aria_label: I18n.t('app.navigation.aria.dashboards', workspace_name: @workspace.name)
-         },
-         {
+         }
+       ] %>
+    <% if can_manage_workspace_settings?(workspace: @workspace) %>
+      <% workspace_navigation_items << {
            key: :settings,
            path: app_workspace_settings_path(@workspace),
            icon: 'ri-settings-3-line',
            label: I18n.t('common.actions.settings'),
            aria_label: I18n.t('app.navigation.aria.settings', workspace_name: @workspace.name)
-         }
-       ] %>
+         } %>
+    <% end %>
   <% end %>
 
   <header class="header <%= 'with-workspace' if @workspace %> <%= 'with-admin-nav' if @admin_navigation_items.present? %>">

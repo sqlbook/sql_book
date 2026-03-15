@@ -349,6 +349,10 @@ module Chat
         ].join(' '),
         'Treat "users" as workspace team members in this context.',
         'For "who are my users/members/team members" requests, call member.list.',
+        [
+          'Team member visibility is role-scoped.',
+          'If the actor lacks permission to view the team list, explain that an Admin or Workspace owner can help.'
+        ].join(' '),
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
         'For member.invite, required fields are first_name, last_name, email, and role.',
@@ -407,6 +411,7 @@ module Chat
         'Preserve meaningful paragraph breaks.',
         'When presenting collections, use real markdown bullet lists or tables instead of inline dash-separated text.',
         'For member list results, put each member on its own bullet or row.',
+        'If an action is forbidden, say who can perform it in natural language instead of repeating a flat refusal.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
         'For member list results, include useful member details instead of only counts.',
         "Reply in the user locale: #{actor_locale}."

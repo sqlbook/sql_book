@@ -505,9 +505,31 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('forbidden')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
-        I18n.t('app.workspaces.chat.executor.forbidden')
+      message = response.parsed_body.dig('messages', -1, 'content')
+      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
+      expect(message).to include('remove')
+    end
+
+    it 'rejects member list requests for user-role members with allowed-role guidance' do
+      owner = create(:user)
+      restricted_workspace = create(:workspace_with_owner, owner:)
+      create(
+        :member,
+        workspace: restricted_workspace,
+        user:,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
       )
+
+      post app_workspace_chat_messages_path(restricted_workspace),
+           params: { content: 'Show current team members' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('forbidden')
+      message = response.parsed_body.dig('messages', -1, 'content')
+      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
+      expect(message).to include('team')
     end
 
     it 'allows written confirmation for a pending high-risk action' do

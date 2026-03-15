@@ -14,17 +14,21 @@ module App
           action_type: action_request.action_type,
           payload: action_request.payload
         )
+        assistant_content = chat_response_composer.compose(
+          execution:,
+          action_type: action_request.action_type
+        )
 
         action_request.update!(
           status: status_for_result(result_status: execution.status),
           result_payload: {
-            'user_message' => execution.user_message,
+            'user_message' => assistant_content,
             'data' => execution.data
           },
           executed_at: Time.current
         )
 
-        append_execution_message(execution:)
+        append_execution_message(execution:, assistant_content:)
         set_workspace_delete_toast(execution:)
 
         render json: {
@@ -92,17 +96,33 @@ module App
         ActiveSupport::SecurityUtils.secure_compare(stored_token, submitted_token)
       end
 
-      def append_execution_message(execution:)
+      def append_execution_message(execution:, assistant_content:)
         chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
           status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
-          content: execution.user_message,
+          content: assistant_content,
           metadata: {
             action_request_id: action_request.id,
             action_state: execution.status,
-            result_data: execution.data
+            result_data: execution.data,
+            action_type: action_request.action_type
           }
         )
+      end
+
+      def chat_response_composer
+        @chat_response_composer ||= Chat::ResponseComposer.new(
+          workspace:,
+          actor: current_user,
+          prior_assistant_messages: prior_assistant_messages
+        )
+      end
+
+      def prior_assistant_messages
+        @prior_assistant_messages ||= chat_thread.chat_messages
+          .where(role: ChatMessage::Roles::ASSISTANT)
+          .order(id: :desc)
+          .limit(3)
       end
 
       def set_workspace_delete_toast(execution:)

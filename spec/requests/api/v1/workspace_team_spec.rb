@@ -82,4 +82,20 @@ RSpec.describe 'API v1 workspace/team tools', type: :request do
       expect(response.parsed_body['status']).to eq('forbidden')
     end
   end
+
+  describe 'restricted roles' do
+    let(:member_user) { create(:user) }
+
+    before do
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      sign_in(member_user)
+    end
+
+    it 'blocks member listing for user-role members' do
+      get "/api/v1/workspaces/#{workspace.id}/members"
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.parsed_body['status']).to eq('forbidden')
+    end
+  end
 end

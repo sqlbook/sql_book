@@ -316,6 +316,15 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to have_selector('h1', text: 'Where should we begin?')
       end
+
+      it 'does not render the workspace settings navigation item' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).not_to have_selector(
+          "a.workspace-desktop-nav-item[href='#{app_workspace_settings_path(workspace)}']",
+          text: 'Settings'
+        )
+      end
     end
 
     context 'when current user is read-only in the workspace' do
@@ -328,6 +337,15 @@ RSpec.describe 'App::Workspaces', type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to have_selector('h1', text: 'Where should we begin?')
+      end
+
+      it 'does not render the workspace settings navigation item' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).not_to have_selector(
+          "a.workspace-desktop-nav-item[href='#{app_workspace_settings_path(workspace)}']",
+          text: 'Settings'
+        )
       end
     end
 

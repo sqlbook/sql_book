@@ -118,6 +118,20 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - the chat surface expands into much longer multi-domain workflows that need formal summarization strategy
 
+### Decision: Separate chat execution truth from final user-facing wording
+- Status: Accepted
+- Why:
+  - repetitive robotic replies were coming from deterministic executor copy being rendered directly
+  - permissions/validation must stay server-truthful, but phrasing quality should still feel conversational
+  - locale-backed response variants are easier to maintain and test when composed in one place
+- Consequences:
+  - `Chat::ActionExecutor` remains authoritative for status/data/error outcomes
+  - `Chat::ResponseComposer` now turns execution/preflight outcomes into final assistant-facing copy
+  - forbidden replies can name which roles are allowed without repeating the exact same sentence on consecutive turns
+  - write-action success replies can mention structured details like invite role instead of relying on a flat handler string
+- Revisit when:
+  - we expand chat composition beyond workspace/team actions and need a broader presentation contract across more tool namespaces
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

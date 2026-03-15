@@ -82,7 +82,13 @@ module App
         end
 
         preflight_result = action_executor.preflight(action_type: tool_call.tool_name, payload:)
-        return render_execution_response(user_message:, execution: preflight_result) if preflight_result
+        if preflight_result
+          return render_execution_response(
+            user_message:,
+            execution: preflight_result,
+            action_type: tool_call.tool_name
+          )
+        end
 
         idempotency_key = nil
         if write_tool?(tool_definition) && idempotency_supported?
@@ -115,17 +121,29 @@ module App
             execution:
           )
         end
+        assistant_content = compose_execution_message(execution:, action_type: tool_call.tool_name)
         if write_tool?(tool_definition)
           persist_auto_executed_request(
             user_message:,
             action_type: tool_call.tool_name,
             payload:,
-            execution:,
+            execution_snapshot: {
+              result_payload: {
+                'user_message' => assistant_content,
+                'data' => execution.data
+              },
+              status: execution.status
+            },
             idempotency_key:
           )
         end
 
-        render_execution_response(user_message:, execution:)
+        render_execution_response(
+          user_message:,
+          execution:,
+          action_type: tool_call.tool_name,
+          assistant_content:
+        )
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
@@ -348,14 +366,16 @@ module App
         }
       end
 
-      def render_execution_response(user_message:, execution:)
+      def render_execution_response(user_message:, execution:, action_type:, assistant_content: nil)
+        assistant_content ||= compose_execution_message(execution:, action_type:)
         assistant_message = chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
           status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
-          content: execution.user_message,
+          content: assistant_content,
           metadata: {
             execution_status: execution.status,
-            result_data: execution.data
+            result_data: execution.data,
+            action_type:
           }
         )
         render json: {
@@ -511,17 +531,20 @@ module App
           .first
       end
 
-      def persist_auto_executed_request(user_message:, action_type:, payload:, execution:, idempotency_key:)
+      def persist_auto_executed_request(
+        user_message:,
+        action_type:,
+        payload:,
+        execution_snapshot:,
+        idempotency_key:
+      )
         attributes = {
           chat_message: user_message,
           requested_by: current_user,
           action_type:,
           payload:,
-          result_payload: {
-            'user_message' => execution.user_message,
-            'data' => execution.data
-          },
-          status: status_for_result(result_status: execution.status),
+          result_payload: execution_snapshot[:result_payload],
+          status: status_for_result(result_status: execution_snapshot[:status]),
           executed_at: Time.current
         }.merge(idempotency_attributes(idempotency_key:))
 
@@ -584,10 +607,11 @@ module App
         end
 
         execution = action_executor.execute(action_type: action_request.action_type, payload: action_request.payload)
+        assistant_content = compose_execution_message(execution:, action_type: action_request.action_type)
         action_request.update!(
           status: status_for_result(result_status: execution.status),
           result_payload: {
-            'user_message' => execution.user_message,
+            'user_message' => assistant_content,
             'data' => execution.data
           },
           executed_at: Time.current
@@ -597,12 +621,13 @@ module App
         assistant_message = chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
           status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
-          content: execution.user_message,
+          content: assistant_content,
           metadata: {
             action_request_id: action_request.id,
             action_state: execution.status,
             confirmed_via_chat: true,
-            result_data: execution.data
+            result_data: execution.data,
+            action_type: action_request.action_type
           }
         )
 
@@ -638,6 +663,27 @@ module App
           messages: [serialize_message(message: user_message), serialize_message(message: assistant_message)],
           action_request_id: action_request.id
         }
+      end
+
+      def compose_execution_message(execution:, action_type:)
+        return execution.user_message if execution.status == 'executed' && action_type == 'member.list'
+
+        chat_response_composer.compose(execution:, action_type:)
+      end
+
+      def chat_response_composer
+        @chat_response_composer ||= Chat::ResponseComposer.new(
+          workspace:,
+          actor: current_user,
+          prior_assistant_messages: prior_assistant_messages
+        )
+      end
+
+      def prior_assistant_messages
+        @prior_assistant_messages ||= chat_thread.chat_messages
+          .where(role: ChatMessage::Roles::ASSISTANT)
+          .order(id: :desc)
+          .limit(3)
       end
 
       def set_workspace_delete_toast(action_request:, execution:)

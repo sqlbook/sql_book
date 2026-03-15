@@ -83,7 +83,9 @@ module Chat
     end
 
     def authorize_member_list(**)
-      allow
+      return allow if can_manage_members?
+
+      deny(reason_code: 'forbidden_role')
     end
 
     def authorize_member_invite(payload:)

@@ -124,7 +124,7 @@ module Chat
       req
     end
 
-    def request_payload(model:)
+    def request_payload(model:) # rubocop:disable Metrics/AbcSize
       {
         model:,
         input: [
@@ -154,6 +154,13 @@ module Chat
                   [
                     'When the user asks for team members, `member.list` means detailed member output',
                     '(name, email, role, status), not only a count.'
+                  ].join(' '),
+                  [
+                    'Team member visibility is role-scoped.',
+                    [
+                      'If the actor lacks permission to view the team list,',
+                      'explain that an Admin or Workspace owner can help.'
+                    ].join(' ')
                   ].join(' '),
                   [
                     'If the user asks a follow-up after a member list response (for example names, emails,',

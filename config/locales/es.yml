@@ -75,6 +75,56 @@ es:
           request_already_pending: Esa solicitud ya está pendiente de confirmación.
           request_already_processed: Ya procesé esa solicitud.
           runtime_retry: Tuve un problema al planificar esa solicitud. Reformúlala y lo intento de nuevo.
+        responses:
+          forbidden:
+            variants:
+              - "No puedes %{action} con tu rol actual en este espacio. Pídeselo a %{allowed_roles}."
+              - "Esa acción no está disponible con tu rol actual en este espacio. %{allowed_roles} puede ayudarte."
+              - "No puedo hacerlo desde tu rol actual en este espacio. %{allowed_roles} puede encargarse."
+          validation:
+            variants:
+              - "%{detail}"
+              - "Puedo ayudarte con eso, pero todavía me falta un detalle: %{detail}"
+              - "Antes de poder hacerlo, necesito esto de tu parte: %{detail}"
+          execution_error:
+            variants:
+              - "%{detail}"
+              - "Me encontré con un problema al intentar hacerlo: %{detail}"
+              - "Algo salió mal de mi lado mientras lo intentaba: %{detail}"
+          success:
+            workspace_update_name:
+              variants:
+                - "El espacio ahora se llama %{name}."
+                - "Hecho. Cambié el nombre del espacio a %{name}."
+                - "Ya actualicé el nombre del espacio a %{name}."
+            workspace_delete_success:
+              variants:
+                - "El espacio se ha eliminado y ya se ha avisado a todas las personas afectadas."
+                - "Hecho. El espacio se eliminó y se enviaron las notificaciones."
+            workspace_delete_partial:
+              variants:
+                - "El espacio se ha eliminado, pero no pude avisar por correo a algunas personas."
+                - "El espacio ya no existe, aunque algunas notificaciones por correo no se enviaron."
+            member_invite:
+              variants:
+                - "He enviado una invitación a %{email} con el rol %{role}."
+                - "Invitación enviada a %{email} como %{role}."
+                - "Hecho. %{email} ha sido invitado como %{role}."
+            member_resend_invite:
+              variants:
+                - "He enviado una nueva invitación a %{email}."
+                - "Hecho. Reenvié la invitación a %{email}."
+                - "Ya va de camino una invitación nueva para %{email}."
+            member_update_role:
+              variants:
+                - "%{name} ahora es %{role}."
+                - "Actualicé el rol de %{name} a %{role}."
+                - "Hecho. %{name} ahora tiene el rol %{role}."
+            member_remove:
+              variants:
+                - "%{name} ha sido eliminado de este espacio."
+                - "Eliminé a %{name} del espacio."
+                - "Hecho. %{name} ya no forma parte de este espacio."
         errors:
           message_or_image_required: Se requiere contenido del mensaje o al menos una imagen.
           max_images: Puedes adjuntar hasta %{count} imágenes por mensaje.
@@ -128,6 +178,18 @@ es:
           fallback_without_action: Puedo ayudarte con acciones de espacio y equipo.
         executor:
           forbidden: No puedo ejecutar esa acción con tus permisos actuales en este espacio.
+          forbidden_with_allowed_roles: No puedes %{action} con tu rol actual en este espacio. Pídeselo a %{allowed_roles}.
+          forbidden_actions:
+            workspace_update_name: cambiar el nombre de este espacio
+            workspace_delete: eliminar este espacio
+            member_list: ver la lista de miembros del equipo
+            member_invite: invitar a miembros del equipo
+            member_resend_invite: reenviar invitaciones del equipo
+            member_update_role: cambiar los roles de los miembros del equipo
+            member_remove: eliminar a miembros del equipo
+          allowed_roles:
+            owner: un propietario del espacio
+            admin_or_owner: un administrador o un propietario del espacio
           unexpected_error: Hubo un error inesperado al ejecutar esa acción.
           workspace_name_required: Indica un nombre para el espacio.
           workspace_name_updated: Nombre del espacio actualizado a %{name}.
