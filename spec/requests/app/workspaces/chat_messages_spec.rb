@@ -228,6 +228,23 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       )
     end
 
+    it 'extracts an inline invite role from the initial natural-language request' do
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             content: [
+               'Can you invite a new admin called Christopher Pattison?',
+               'Their email address is chris.pattison@protonmail.com'
+             ].join(' ')
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      invited_member = workspace.members.joins(:user).find_by(users: { email: 'chris.pattison@protonmail.com' })
+      expect(invited_member).to be_present
+      expect(invited_member.role).to eq(Member::Roles::ADMIN)
+    end
+
     it 'continues invite flow after a role follow-up in mixed context threads' do
       post app_workspace_chat_messages_path(workspace), params: { content: 'show my team members' }, as: :json
       thread_id = response.parsed_body['thread_id']

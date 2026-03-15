@@ -259,6 +259,41 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(true)
     end
 
+    it 'extracts inline invite roles from the initial request text' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'I can help with workspace and team actions.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: [
+          'Can you invite a new admin called Christopher Pattison?',
+          'Their email address is chris.pattison@protonmail.com'
+        ].join(' '),
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).call
+
+      expect(decision.tool_calls.size).to eq(1)
+      expect(decision.tool_calls.first.tool_name).to eq('member.invite')
+      expect(decision.tool_calls.first.arguments).to include(
+        'email' => 'chris.pattison@protonmail.com',
+        'first_name' => 'Christopher',
+        'last_name' => 'Pattison',
+        'role' => Member::Roles::ADMIN
+      )
+    end
+
     it 'forces member.invite when invite follow-up context has name, email, and role across turns' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {

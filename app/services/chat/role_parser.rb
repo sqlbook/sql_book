@@ -2,9 +2,14 @@
 
 module Chat
   class RoleParser
+    ROLE_INLINE_REFERENCE = /
+      (?=\s+(?:called|named|with|whose|who|at|for)\b)
+    /ix
+
     READ_ONLY_ROLE_REGEX = /
       \A(?:i\s+(?:think|guess|mean)\s+)?(?:read[-\s]?only|readonly)\.?\z|
-      \b(?:as|role|make|set|give)\b.*\b(?:read[-\s]?only|readonly)\b
+      \b(?:as|role|make|set|give)\b.*\b(?:read[-\s]?only|readonly)\b|
+      \b(?:read[-\s]?only|readonly)\b#{ROLE_INLINE_REFERENCE}
     /ix
 
     class << self
@@ -25,14 +30,19 @@ module Chat
 
       def user_role?(lowered)
         lowered.match?(
-          /\A(?:i\s+(?:think|guess|mean)\s+)?user\.?\z|\b(?:as|role|make|set|give)\b.*\buser\b/i
+          /
+            \A(?:i\s+(?:think|guess|mean)\s+)?user\.?\z|
+            \b(?:as|role|make|set|give)\b.*\buser\b|
+            \buser\b#{ROLE_INLINE_REFERENCE}
+          /ix
         )
       end
 
       def admin_role_regex
         /
           \A(?:i\s+(?:think|guess|mean)\s+)?(?:admin|administrator)\.?\z|
-          \b(?:as|role|make|set|give)\b.*\b(?:admin|administrator)\b
+          \b(?:as|role|make|set|give)\b.*\b(?:admin|administrator)\b|
+          \b(?:admin|administrator)\b#{ROLE_INLINE_REFERENCE}
         /ix
       end
     end
