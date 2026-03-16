@@ -212,6 +212,7 @@ High-risk writes (inline confirmation required):
   - refreshed current workspace state for the most recently referenced member when a follow-up asks who/status/confirmation
   - current pending confirmation / unresolved required fields
   - compact summaries only if threads become too long for direct transcript slices
+- Structured recent action results are context, not truth. Before asserting a mutable workspace fact (for example a member's current role or invite status), chat should verify the current state against live workspace data.
 - Recent action result context should support follow-ups such as:
   - "invite him back" after a remove action
   - "what role did you add him as?" after an invite action
@@ -238,6 +239,7 @@ High-risk writes (inline confirmation required):
 - Expired or superseded pending confirmations must never be accepted.
 - Completed writes are historical context only; they must not block future attempts or replay as if they were current execution.
 - For member role updates and similar member-targeted writes, explicit instructions in the current user message (for example `Promote Bob Smith to Admin`) override stale or incorrect model payload fields before execution.
+- Executed write summaries should not feed stale human-readable success strings back into planning as if they were the current source of truth; current member/workspace snapshots are authoritative for factual follow-ups.
 - Prevents duplicate side effects on retries or repeated Enter submits.
 - Requires DB migrations:
   - `20260309102000_add_idempotency_key_to_chat_action_requests`

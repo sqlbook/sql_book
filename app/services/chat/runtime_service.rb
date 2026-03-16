@@ -605,8 +605,8 @@ module Chat
     end
 
     def deterministic_follow_up_decision
-      recent_member_context_answer_decision ||
-        recent_invited_member_role_answer_decision ||
+      recent_invited_member_role_answer_decision ||
+        recent_member_context_answer_decision ||
         member_remove_follow_up_decision ||
         invite_follow_up_guard_decision
     end
@@ -873,7 +873,7 @@ module Chat
     end
 
     def recent_member_context_answer_decision
-      return nil unless recent_member_context_question?
+      return nil unless conversation_context_resolver.member_state_request?(text: message)
 
       member = conversation_context_resolver.current_member_for_recent_reference(text: message)
       return nil unless member
@@ -890,12 +890,6 @@ module Chat
         missing_information: [],
         finalize_without_tools: true
       )
-    end
-
-    def recent_member_context_question?
-      conversation_context_resolver.identity_question?(text: message) ||
-        conversation_context_resolver.status_question?(text: message) ||
-        conversation_context_resolver.clarification_question?(text: message)
     end
 
     def chat_model_candidates

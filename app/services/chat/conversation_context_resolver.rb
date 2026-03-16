@@ -14,6 +14,13 @@ module Chat
     ROLE_QUESTION_REGEX = /\b(role|admin|user|read\s*only|readonly)\b/i
     STATUS_QUESTION_REGEX = /\b(accepted|accept|pending|joined|join|in\s+the\s+workspace|already\s+in|status|invite)\b/i
     DETAIL_QUESTION_REGEX = /\b(name|names|detail|details|email|emails)\b/i
+    VERIFICATION_REGEX = /\b(check|verify|look|actually|in\s+fact|already|currently|right\s+now|still)\b/i
+    ROLE_CHANGE_COMMAND_REGEX = /
+      \b(remove|delete)\b|
+      \b(promote|demote)\b|
+      \b(change|update)\b.*\brole\b|
+      \b(make|set|turn)\b.*\b(admin|user|read\s*only|readonly)\b
+    /ix
 
     def initialize(workspace:, conversation_messages:)
       @workspace = workspace
@@ -54,7 +61,7 @@ module Chat
     end
 
     def role_question_context_active?(text:)
-      role_question?(text:) || recent_user_role_question?
+      role_question?(text:)
     end
 
     def identity_question?(text:)
@@ -78,11 +85,17 @@ module Chat
         clarification_question?(text:) || detail_question?(text:)
     end
 
-    def current_member_for_recent_reference(text:)
-      member = recent_member_reference(text:) || latest_member_reference
-      return nil unless member
+    def member_state_request?(text:)
+      return false if role_change_command?(text:)
+      return false if current_member_for_recent_reference(text:).blank?
 
-      current_member_snapshot(member:)
+      factual_follow_up?(text:) || role_state_discussion?(text:)
+    end
+
+    def current_member_for_recent_reference(text:)
+      current_member_from_explicit_reference(text:) ||
+        current_member_from_recent_reference(text:) ||
+        current_member_from_latest_reference
     end
 
     def invite_seed_details(text:)
@@ -183,16 +196,6 @@ module Chat
       text.to_s.match?(ROLE_QUESTION_REGEX)
     end
 
-    def recent_user_role_question?
-      recent_user_messages.any? { |entry| role_question?(text: conversation_entry_content(entry)) }
-    end
-
-    def recent_user_messages
-      conversation_messages.reverse_each.select do |entry|
-        conversation_entry_role(entry) == 'user'
-      end.first(3)
-    end
-
     def result_data(entry)
       metadata = entry_metadata(entry)
       metadata['result_data'] || metadata[:result_data] || {}
@@ -255,6 +258,56 @@ module Chat
         'status' => member.status,
         'status_name' => member.status_name
       }
+    end
+
+    def current_member_from_explicit_reference(text:)
+      member = member_reference_resolver.resolve(text:)
+      return nil unless member
+
+      member_snapshot(member:)
+    end
+
+    def current_member_from_recent_reference(text:)
+      member = recent_member_reference(text:)
+      return nil unless member
+
+      current_member_snapshot(member:)
+    end
+
+    def current_member_from_latest_reference
+      member = latest_member_reference
+      return nil unless member
+
+      current_member_snapshot(member:)
+    end
+
+    def verification_phrase?(text:)
+      text.to_s.match?(VERIFICATION_REGEX)
+    end
+
+    def role_change_command?(text:)
+      text.to_s.match?(ROLE_CHANGE_COMMAND_REGEX)
+    end
+
+    def factual_follow_up?(text:)
+      identity_question?(text:) ||
+        status_question?(text:) ||
+        clarification_question?(text:) ||
+        detail_question?(text:) ||
+        verification_phrase?(text:)
+    end
+
+    def role_state_discussion?(text:)
+      role_question?(text:) && (verification_phrase?(text:) || question_like?(text:))
+    end
+
+    def question_like?(text:)
+      normalized = text.to_s
+      normalized.include?('?') || normalized.match?(/\A\s*(what|which|who|is|are|do|does|did|can|could|would)\b/i)
+    end
+
+    def member_reference_resolver
+      @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
     end
   end
 end

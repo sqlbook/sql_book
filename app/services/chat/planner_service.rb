@@ -320,11 +320,11 @@ module Chat
 
       lower = message.downcase
 
-      recent_member_context_plan = recent_member_context_answer_plan
-      return recent_member_context_plan if recent_member_context_plan
-
       role_context_plan = recent_invited_member_role_context_plan
       return role_context_plan if role_context_plan
+
+      recent_member_context_plan = recent_member_context_answer_plan
+      return recent_member_context_plan if recent_member_context_plan
 
       return workspace_delete_plan if lower.match?(/\b(delete|remove)\b.*\bworkspace\b/)
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
@@ -556,7 +556,7 @@ module Chat
     end
 
     def recent_member_context_answer_plan
-      return nil unless recent_member_context_question?
+      return nil unless conversation_context_resolver.member_state_request?(text: message)
 
       member = conversation_context_resolver.current_member_for_recent_reference(text: message)
       return nil unless member
@@ -572,12 +572,6 @@ module Chat
         action_type: nil,
         payload: {}
       )
-    end
-
-    def recent_member_context_question?
-      conversation_context_resolver.identity_question?(text: message) ||
-        conversation_context_resolver.status_question?(text: message) ||
-        conversation_context_resolver.clarification_question?(text: message)
     end
 
     def cleaned_name(value)

@@ -821,6 +821,79 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(promoted_member.role).to eq(Member::Roles::ADMIN)
     end
 
+    it 'verifies current member state against the workspace instead of stale executed action history' do
+      thread = create(:chat_thread, workspace:, created_by: user)
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      member = create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: 'Bob Smith is now User.',
+        metadata: {
+          result_data: {
+            member: {
+              member_id: member.id,
+              email: teammate.email,
+              full_name: teammate.full_name,
+              role: Member::Roles::USER,
+              role_name: 'User',
+              status: Member::Status::ACCEPTED,
+              status_name: 'Accepted'
+            }
+          }
+        }
+      )
+      create(
+        :chat_action_request,
+        chat_thread: thread,
+        requested_by: user,
+        source_message: create(
+          :chat_message,
+          chat_thread: thread,
+          user:,
+          role: ChatMessage::Roles::USER,
+          status: ChatMessage::Statuses::COMPLETED,
+          content: 'Promote Bob Smith to User'
+        ),
+        action_type: 'member.update_role',
+        payload: {
+          'email' => teammate.email,
+          'full_name' => teammate.full_name,
+          'role' => Member::Roles::USER,
+          'workspace_id' => workspace.id
+        },
+        action_fingerprint: 'member.update_role:stale',
+        idempotency_key: 'member.update_role:stale:1',
+        status: ChatActionRequest::Statuses::EXECUTED,
+        result_payload: { 'user_message' => 'Bob Smith is now User.' },
+        executed_at: 10.minutes.ago
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id: thread.id,
+             content: 'If you look at the team members you will see that Bob Smith is in fact an admin already'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include('Bob Smith')
+      expect(assistant_content).to include('Admin')
+      expect(assistant_content).not_to include('User')
+    end
+
     it 'does not append duplicate confirmation copy when the assistant already asked to confirm' do
       teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
       create(

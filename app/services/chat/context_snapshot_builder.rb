@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chat
-  class ContextSnapshotBuilder
+  class ContextSnapshotBuilder # rubocop:disable Metrics/ClassLength
     TRANSCRIPT_LIMIT = 12
 
     def initialize(chat_thread:, workspace:, actor:, current_message_text:)
@@ -57,11 +57,7 @@ module Chat
 
     def action_summary_lines
       recent_action_requests.filter_map do |request|
-        next if request.result_payload.blank? && !request.pending_confirmation?
-
-        payload = request.result_payload.to_h
-        message = payload['user_message'].to_s.strip.presence || request.action_type
-        "Recent action: #{request.action_type} | #{request.status_name} | #{message}"
+        action_summary_line_for(request:)
       end
     end
 
@@ -100,6 +96,31 @@ module Chat
         status: request.status_name,
         message: request.result_payload.to_h['user_message'].to_s
       }
+    end
+
+    def action_summary_line_for(request:)
+      return pending_action_summary_line(request:) if request.pending_confirmation?
+      return failure_action_summary_line(request:) if failed_action_request?(request)
+
+      nil
+    end
+
+    def pending_action_summary_line(request:)
+      "Pending action: #{request.action_type} | awaiting confirmation"
+    end
+
+    def failure_action_summary_line(request:)
+      payload = request.result_payload.to_h
+      message = payload['user_message'].to_s.strip.presence || request.action_type
+      "Recent failed action: #{request.action_type} | #{request.status_name} | #{message}"
+    end
+
+    def failed_action_request?(request)
+      [
+        ChatActionRequest::Statuses::FORBIDDEN,
+        ChatActionRequest::Statuses::VALIDATION_ERROR,
+        ChatActionRequest::Statuses::EXECUTION_ERROR
+      ].include?(request.status)
     end
   end
 end
