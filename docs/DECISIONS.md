@@ -132,6 +132,22 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - we expand chat composition beyond workspace/team actions and need a broader presentation contract across more tool namespaces
 
+## 2026-03-16
+### Decision: Move workspace chat to a server-authoritative turn orchestrator with explicit action lifecycle semantics
+- Status: Accepted
+- Why:
+  - prompt + docs + transcript alone were not enough to make chat reliable across retries, old threads, confirmations, and member-targeted writes
+  - the app needs to own state, permissions, idempotency, and post-write truth instead of trusting model payloads
+  - repeated staging bugs were different expressions of the same missing runtime architecture
+- Consequences:
+  - `Chat::TurnOrchestrator` is now the controller-facing entrypoint for chat turns
+  - `Chat::ContextSnapshotBuilder`, `Chat::IntentReconciler`, `Chat::ExecutionTruthReconciler`, and `Chat::ActionRequestLifecycle` are part of the canonical runtime path
+  - `ChatActionRequest` lifecycle now distinguishes `action_fingerprint` (semantic identity) from `idempotency_key` (attempt identity)
+  - only active pending confirmations can be refreshed/reused; completed writes remain context only and never replay as current execution
+  - explicit current-turn instructions override stale model payload fields for member-targeted writes
+- Revisit when:
+  - chat expands beyond workspace/team actions and we want to generalize the same orchestrator contracts to datasource/query/dashboard domains
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

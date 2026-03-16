@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-14
+Last updated: 2026-03-16
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -140,6 +140,12 @@ Related references:
 - Chat runtime/planner use strict Responses API JSON schema; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side. If logs show `Invalid schema for response_format`, fix the runtime/planner schema contract before treating the issue as prompt/model quality.
 - Chat context should be rebuilt from recent transcript plus structured recent action results (`metadata.result_data`), not by introducing parallel LLM-maintained memory documents.
 - Recent invite/member follow-ups should refresh against current workspace membership state before answering status/identity questions.
+- Chat action lifecycle now distinguishes:
+  - `action_fingerprint` for semantic action identity
+  - `idempotency_key` for per-turn attempt identity
+  - `source_message_id` for the user turn that created the attempt
+  - `superseded_at` for stale pending confirmations
+- Repeating the same write request in an old thread should create a fresh attempt for the new turn, rather than replaying or blocking on the old write record.
 
 ## Workspace settings save behavior
 - General tab workspace-name form uses change detection:

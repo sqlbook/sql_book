@@ -30,11 +30,16 @@ sqlbook lets users:
 ## Current Chat Runtime Snapshot
 - Chat execution scope remains limited to workspace + team management actions.
 - Shared tool registry is now the canonical server execution interface for chat actions.
+- Chat turn orchestration is now server-authoritative:
+  - `Chat::TurnOrchestrator` owns turn flow
+  - `Chat::RuntimeService` proposes intent
+  - reconciliation, preflight, confirmation, idempotency, and truth refresh are app-owned
 - Public API docs for workspace/team contracts are available at `/dev/api` (API routes remain auth-protected).
 - `docs/API_MASTER_REF.md` is the canonical reference for OpenAPI/Scalar setup and API-doc maintenance rules.
 - Destructive writes (`workspace.delete`, `member.remove`) require confirmation; other allowed writes, including `member.update_role`, auto-run after preflight.
 - Invite flows require full identity (`first_name`, `last_name`, `email`) plus an explicit `role` before `member.invite` executes.
 - Chat context is assembled from recent transcript + structured recent action results, not shadow LLM-maintained memory records.
+- Chat write lifecycle now separates semantic identity from attempt identity so old-thread retries create fresh attempts without replaying stale results.
 - Chat surface uses split sibling panels (history + conversation) on desktop and overlay history on mobile (`<=760px`).
 - Message stream keeps the latest content in view (bottom-oriented UX), hides per-message timestamps, and shows animated `Thinking...` status rows.
 

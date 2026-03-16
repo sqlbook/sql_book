@@ -107,6 +107,11 @@ en:
           request_already_processed: I already processed that request.
           runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
         responses:
+          confirmation:
+            variants:
+              - "I can %{action} once you confirm."
+              - "Please confirm if you want me to %{action}."
+              - "If you'd like me to %{action}, confirm and I'll take it from there."
           forbidden:
             variants:
               - "You can't %{action} with your current workspace role. Please ask %{allowed_roles}."

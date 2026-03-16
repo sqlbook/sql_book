@@ -67,6 +67,7 @@ module Chat
       @actor = actor
       @attachments = Array(context[:attachments]).compact
       @conversation_messages = Array(context[:conversation_messages]).compact
+      @context_snapshot = context[:context_snapshot]
       @tool_metadata = Array(tool_metadata).compact
     end
 
@@ -97,7 +98,7 @@ module Chat
 
     private
 
-    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :tool_metadata
+    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :context_snapshot, :tool_metadata
 
     def llm_decision
       return nil if api_key.blank?
@@ -171,7 +172,8 @@ module Chat
         workspace:,
         actor:,
         attachments:,
-        conversation_messages:
+        conversation_messages:,
+        context_snapshot:
       ).call
 
       return fallback_message_decision if plan.nil?
@@ -437,8 +439,8 @@ module Chat
       content
     end
 
-    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
-      lines = conversation_messages.last(10).map do |entry|
+    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      lines = transcript_messages.last(10).map do |entry|
         role = conversation_entry_role(entry)
         content = conversation_entry_content(entry)
         next if role.blank? || content.blank?
@@ -446,7 +448,11 @@ module Chat
         "#{role}: #{content}"
       end.compact
 
-      structured_lines = conversation_context_resolver.structured_context_lines
+      structured_lines = if context_snapshot.present?
+                           Array(context_snapshot.structured_context_lines)
+                         else
+                           conversation_context_resolver.structured_context_lines
+                         end
       return 'Recent conversation: none' if lines.empty? && structured_lines.empty?
 
       parts = []
@@ -476,6 +482,12 @@ module Chat
       raw = entry[:content].presence || entry['content'].presence || ''
       cleaned = raw.to_s.gsub(/\s+/, ' ').strip
       cleaned[0, 400]
+    end
+
+    def transcript_messages
+      return context_snapshot.conversation_messages if context_snapshot.present?
+
+      conversation_messages
     end
 
     def inline_multimodal_images
@@ -906,7 +918,10 @@ module Chat
     end
 
     def conversation_context_resolver
-      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(workspace:, conversation_messages:)
+      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(
+        workspace:,
+        conversation_messages: transcript_messages
+      )
     end
 
     def recent_assistant_content

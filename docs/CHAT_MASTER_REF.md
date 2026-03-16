@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-14
+Last updated: 2026-03-16
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -30,13 +30,25 @@ Related references:
   - owner-role promotion via chat
 
 ## Core architecture
-- Runtime orchestrator: `Chat::RuntimeService`
+- Turn orchestration entrypoint: `Chat::TurnOrchestrator`
+  - controller-thin boundary for each chat submission
+  - owns turn context assembly, intent reconciliation, preflight, confirmation policy, execution, and final outcome rendering
+- LLM/runtime layer:
+  - `Chat::RuntimeService` handles structured intent classification and optional read-result phrasing
   - single-model structured-output decision path
   - planner fallback is used only when `OPENAI_API_KEY` is unavailable
   - if model returns non-JSON text, runtime uses that assistant text instead of collapsing to generic capability copy
   - supports multimodal image context (bounded inline subset)
   - uses Responses API `json_schema` structured output; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side to satisfy strict schema validation
+- Context/state layer:
+  - `Chat::ContextSnapshotBuilder`
+  - `Chat::ContextSnapshot`
+  - `Chat::ConversationContextResolver`
   - rebuilds each turn from recent transcript plus structured recent action context, rather than relying on parallel LLM-authored memory documents
+- Intent reconciliation layer:
+  - `Chat::IntentReconciler`
+  - explicit current-turn instructions override stale or incorrect model payload fields before execution
+  - current DB/member resolution overrides stale conversational guesses
 - Shared tooling foundation:
   - `Tooling::Registry`
   - `Tooling::WorkspaceTeamRegistry`
@@ -44,9 +56,9 @@ Related references:
 - Server-authoritative policy/execution:
   - `Chat::Policy` for role/scope checks
   - `Chat::ActionExecutor` for normalized execution statuses
+  - `Chat::ExecutionTruthReconciler` for post-write DB refresh before final reply composition
+  - `Chat::ActionRequestLifecycle` for action fingerprint / attempt lifecycle handling
   - `Chat::ResponseComposer` for final user-facing execution replies
-- Schema-drift safety:
-  - if `chat_action_requests.idempotency_key` is not present yet, write idempotency dedupe is skipped to prevent request-time 500s during partial deploy/migration windows
 
 ## Data model
 - `ChatThread` (`chat_threads`)
@@ -57,10 +69,13 @@ Related references:
   - status: `pending`, `completed`, `failed`
   - supports image attachments via Active Storage (`has_many_attached :images`)
 - `ChatActionRequest` (`chat_action_requests`)
-  - structured action proposal with payload
+  - structured action proposal / execution record with payload
   - confirmation token + expiry
   - lifecycle status: pending confirmation / executed / canceled / forbidden / validation error / execution error
-  - idempotency key for deduplicating repeated write requests
+  - `action_fingerprint`: stable semantic identity for the action within a thread
+  - `idempotency_key`: per-attempt identity anchored to the source user message
+  - `source_message_id`: the user turn that created the attempt
+  - `superseded_at`: stale pending confirmations are marked superseded instead of remaining actionable
 
 ## HTTP interfaces
 App routes:
@@ -179,10 +194,13 @@ High-risk writes (inline confirmation required):
 5. Preflight policy/scope validation runs before any confirmation UI is created.
 6. If tool call is high-risk write and preflight passes, create confirmation card.
 7. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
-8. If an old thread repeats the same action after the idempotency window, chat should recover the existing action record instead of raising a duplicate-key error.
-8. `Chat::ResponseComposer` converts execution/preflight results into user-facing assistant copy using locale-backed variants and recent assistant history to reduce repetition.
-9. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
-10. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+8. `Chat::ActionRequestLifecycle` decides whether to:
+   - refresh an active pending confirmation
+   - supersede stale pending confirmations
+   - create a fresh write attempt for a new user turn
+9. `Chat::ResponseComposer` converts execution/preflight results into user-facing assistant copy using locale-backed variants and recent assistant history to reduce repetition.
+10. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+11. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
@@ -210,13 +228,18 @@ High-risk writes (inline confirmation required):
 - Runtime/planner parse those JSON strings back into hashes server-side before execution.
 - If staging logs show `Invalid schema for response_format`, fix the schema contract first; changing prompts or models will not resolve that class of failure.
 
-## Idempotency behavior (writes)
-- Write actions use deterministic idempotency keys scoped by workspace/thread/actor/tool/payload.
-- Duplicate submissions inside the idempotency window only reuse a still-pending confirmation request.
-- Auto-executed writes should run again against current state and then recover/update the existing action record if the same idempotency key already exists.
+## Action lifecycle and idempotency behavior
+- `action_fingerprint` identifies the semantic action within a thread.
+- `idempotency_key` identifies the specific attempt created by one user turn.
+- Same semantic action on a new turn creates a fresh attempt with a new `idempotency_key`.
+- Only still-active pending confirmations may be refreshed/reused.
+- Expired or superseded pending confirmations must never be accepted.
+- Completed writes are historical context only; they must not block future attempts or replay as if they were current execution.
+- For member role updates and similar member-targeted writes, explicit instructions in the current user message (for example `Promote Bob Smith to Admin`) override stale or incorrect model payload fields before execution.
 - Prevents duplicate side effects on retries or repeated Enter submits.
-- Requires DB migration `20260309102000_add_idempotency_key_to_chat_action_requests`.
-- If that migration is not applied yet in an environment, writes still execute but dedupe is skipped until migration is applied.
+- Requires DB migrations:
+  - `20260309102000_add_idempotency_key_to_chat_action_requests`
+  - `20260316143000_refactor_chat_action_request_lifecycle`
 
 ## Confirmation lifecycle
 - Confirmation required only for high-risk writes.
@@ -228,7 +251,7 @@ High-risk writes (inline confirmation required):
 - Stimulus inline action requests (`confirm`, `cancel`, thread delete/rename) must send Rails CSRF protection in both places:
   - `X-CSRF-Token` header from the page meta tag
   - `authenticity_token` field in ad-hoc `FormData` bodies
-- If a repeated high-risk request hits an old pending confirmation with the same idempotency key, stale confirmations must be refreshed with a new token/expiry instead of surfacing a `422` uniqueness error or reusing an expired button state.
+- If a repeated high-risk request hits an old pending confirmation from a previous turn, the stale request should be superseded or refreshed safely rather than surfacing a `422` uniqueness error or reusing an expired button state.
 - High-risk member actions should resolve a uniquely named workspace member into a concrete pending action request so the confirmation card can render, rather than asking for free-text confirmation with no action request behind it.
 - Confirm endpoint validates:
   - request is pending

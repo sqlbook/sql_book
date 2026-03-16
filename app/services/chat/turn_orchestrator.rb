@@ -1,0 +1,330 @@
+# frozen_string_literal: true
+
+module Chat
+  class TurnOrchestrator # rubocop:disable Metrics/ClassLength
+    CONFIRM_MESSAGE_REGEX = /
+      \A\s*(?:i\s+confirm|confirm|yes(?:\s+please)?|go\s+ahead|do\s+it|proceed|continue|si|sí)\b
+    /ix
+    CANCEL_MESSAGE_REGEX = /\A\s*(?:cancel|stop|never\s+mind|do\s+not|don't|no)\b/i
+
+    # rubocop:disable Metrics/ParameterLists
+    def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
+      @workspace = workspace
+      @chat_thread = chat_thread
+      @actor = actor
+      @user_message = user_message
+      @content = content.to_s
+      @tool_metadata = tool_metadata || Tooling::WorkspaceTeamRegistry.tool_metadata
+    end
+    # rubocop:enable Metrics/ParameterLists
+
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+    def call
+      @context_snapshot = build_context_snapshot
+
+      if active_pending_action.present? && pending_action_command.present?
+        return pending_action_command == :confirm ? confirm_pending_action : cancel_pending_action
+      end
+
+      decision = runtime_service.call
+      intent = intent_reconciler.reconcile(decision:)
+      if intent.finalize_without_tools || intent.action_type.blank?
+        return render_non_action(intent.assistant_message.presence || intent.missing_information.join(' '))
+      end
+      return render_non_action(intent.assistant_message) if intent.missing?
+
+      preflight_result = action_executor.preflight(action_type: intent.action_type, payload: intent.payload)
+      return render_execution(intent:, execution: preflight_result) if preflight_result
+
+      return render_confirmation(intent:) if intent.confirmation_required?
+
+      execute_intent(intent:)
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+
+    private
+
+    attr_reader :workspace, :chat_thread, :actor, :user_message, :content, :tool_metadata, :context_snapshot
+
+    def build_context_snapshot
+      ContextSnapshotBuilder.new(
+        chat_thread:,
+        workspace:,
+        actor:,
+        current_message_text: content
+      ).call
+    end
+
+    def active_pending_action
+      @active_pending_action ||= action_request_lifecycle.active_pending_confirmation
+    end
+
+    def pending_action_command
+      return :confirm if content.match?(CONFIRM_MESSAGE_REGEX)
+      return :cancel if content.match?(CANCEL_MESSAGE_REGEX)
+
+      nil
+    end
+
+    def runtime_service
+      @runtime_service ||= RuntimeService.new(
+        message: content,
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          attachments: user_message.images.attachments,
+          conversation_messages: context_snapshot.conversation_messages,
+          context_snapshot:
+        }
+      )
+    end
+
+    def intent_reconciler
+      @intent_reconciler ||= IntentReconciler.new(
+        workspace:,
+        actor:,
+        chat_thread:,
+        source_message: user_message,
+        message_text: content,
+        tool_metadata:,
+        context_snapshot:
+      )
+    end
+
+    def action_executor
+      @action_executor ||= ActionExecutor.new(workspace:, actor:)
+    end
+
+    def action_request_lifecycle
+      @action_request_lifecycle ||= ActionRequestLifecycle.new(chat_thread:, actor:)
+    end
+
+    def execution_truth_reconciler
+      @execution_truth_reconciler ||= ExecutionTruthReconciler.new(workspace:)
+    end
+
+    def response_composer
+      @response_composer ||= ResponseComposer.new(
+        workspace:,
+        actor:,
+        prior_assistant_messages: prior_assistant_messages
+      )
+    end
+
+    def prior_assistant_messages
+      @prior_assistant_messages ||= chat_thread.chat_messages
+        .where(role: ChatMessage::Roles::ASSISTANT)
+        .order(id: :desc)
+        .limit(3)
+    end
+
+    def render_non_action(assistant_content)
+      assistant_message = create_assistant_message(
+        content: assistant_content,
+        status: ChatMessage::Statuses::COMPLETED
+      )
+
+      TurnOutcome.new(
+        status: 'ok',
+        user_message:,
+        assistant_message:,
+        assistant_content:,
+        action_type: nil,
+        data: {}
+      )
+    end
+
+    def render_confirmation(intent:)
+      action_request = action_request_lifecycle.persist_pending_confirmation!(
+        source_message: user_message,
+        action_type: intent.action_type,
+        payload: intent.payload
+      )
+      assistant_content = response_composer.confirmation_message(
+        action_type: intent.action_type,
+        proposed_message: intent.assistant_message
+      )
+      assistant_message = create_assistant_message(
+        content: assistant_content,
+        status: ChatMessage::Statuses::COMPLETED,
+        metadata: {
+          action_request_id: action_request.id,
+          action_state: 'requires_confirmation',
+          action_type: intent.action_type
+        }
+      )
+
+      TurnOutcome.new(
+        status: 'requires_confirmation',
+        user_message:,
+        assistant_message:,
+        assistant_content:,
+        action_type: intent.action_type,
+        action_request:,
+        data: {}
+      )
+    end
+
+    # rubocop:disable Metrics/AbcSize
+    def execute_intent(intent:)
+      action_request_lifecycle.supersede_pending_confirmations!
+
+      execution = action_executor.execute(action_type: intent.action_type, payload: intent.payload)
+      execution = execution_truth_reconciler.call(action_type: intent.action_type, payload: intent.payload, execution:)
+      assistant_content = compose_execution_message(intent:, execution:)
+      action_request = nil
+
+      if intent.write?
+        action_request = action_request_lifecycle.persist_auto_executed_request!(
+          source_message: user_message,
+          action_type: intent.action_type,
+          payload: intent.payload,
+          execution_snapshot: {
+            result_payload: {
+              'user_message' => assistant_content,
+              'data' => execution.data
+            },
+            status: execution.status
+          }
+        )
+      end
+
+      render_execution(intent:, execution:, assistant_content:, action_request:)
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def render_execution(intent:, execution:, assistant_content: nil, action_request: nil)
+      assistant_content ||= compose_execution_message(intent:, execution:)
+      assistant_message = create_assistant_message(
+        content: assistant_content,
+        status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
+        metadata: {
+          action_request_id: action_request&.id,
+          action_state: execution.status,
+          result_data: execution.data,
+          action_type: intent.action_type
+        }.compact
+      )
+
+      TurnOutcome.new(
+        status: execution.status,
+        user_message:,
+        assistant_message:,
+        assistant_content:,
+        action_type: intent.action_type,
+        action_request:,
+        execution:,
+        data: execution.data,
+        error_code: execution.error_code,
+        redirect_path: execution.data[:redirect_path]
+      )
+    end
+
+    # rubocop:disable Metrics/AbcSize
+    def confirm_pending_action
+      if active_pending_action.expired?
+        return render_non_action(I18n.t('app.workspaces.chat.errors.confirmation_expired'))
+      end
+
+      execution = action_executor.execute(
+        action_type: active_pending_action.action_type,
+        payload: active_pending_action.payload
+      )
+      execution = execution_truth_reconciler.call(
+        action_type: active_pending_action.action_type,
+        payload: active_pending_action.payload,
+        execution:
+      )
+      assistant_content = response_composer.compose(
+        execution:,
+        action_type: active_pending_action.action_type
+      )
+      action_request_lifecycle.mark_executed!(
+        action_request: active_pending_action,
+        result_status: execution.status,
+        result_payload: {
+          'user_message' => assistant_content,
+          'data' => execution.data
+        }
+      )
+
+      assistant_message = create_assistant_message(
+        content: assistant_content,
+        status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
+        metadata: {
+          action_request_id: active_pending_action.id,
+          action_state: execution.status,
+          confirmed_via_chat: true,
+          result_data: execution.data,
+          action_type: active_pending_action.action_type
+        }
+      )
+
+      TurnOutcome.new(
+        status: execution.status,
+        user_message:,
+        assistant_message:,
+        assistant_content:,
+        action_type: active_pending_action.action_type,
+        action_request: active_pending_action,
+        execution:,
+        data: execution.data,
+        error_code: execution.error_code,
+        redirect_path: execution.data[:redirect_path]
+      )
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def cancel_pending_action
+      action_request_lifecycle.mark_canceled!(action_request: active_pending_action, canceled_by: actor)
+
+      assistant_content = I18n.t('app.workspaces.chat.messages.action_canceled')
+      assistant_message = create_assistant_message(
+        content: assistant_content,
+        status: ChatMessage::Statuses::COMPLETED,
+        metadata: {
+          action_request_id: active_pending_action.id,
+          action_state: 'canceled',
+          canceled_via_chat: true,
+          action_type: active_pending_action.action_type
+        }
+      )
+
+      TurnOutcome.new(
+        status: 'canceled',
+        user_message:,
+        assistant_message:,
+        assistant_content:,
+        action_type: active_pending_action.action_type,
+        action_request: active_pending_action,
+        data: {}
+      )
+    end
+
+    def compose_execution_message(intent:, execution:)
+      if execution.status == 'executed' && intent.read? && intent.action_type == 'member.list'
+        return execution.user_message
+      end
+
+      if execution.status == 'executed' && intent.read?
+        return runtime_service.compose_tool_result_message(
+          tool_name: intent.action_type,
+          tool_arguments: intent.payload,
+          execution:
+        )
+      end
+
+      response_composer.compose(execution:, action_type: intent.action_type)
+    end
+
+    def create_assistant_message(content:, status:, metadata: {})
+      chat_thread.chat_messages.create!(
+        role: ChatMessage::Roles::ASSISTANT,
+        status:,
+        content:,
+        metadata:
+      )
+    end
+  end
+end

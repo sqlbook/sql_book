@@ -143,7 +143,10 @@ CREATE TABLE public.chat_action_requests (
     executed_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    idempotency_key character varying
+    idempotency_key character varying,
+    source_message_id bigint,
+    action_fingerprint character varying,
+    superseded_at timestamp(6) without time zone
 );
 
 
@@ -855,6 +858,13 @@ ALTER TABLE ONLY public.workspaces
 
 
 --
+-- Name: idx_chat_action_requests_active_pending_fingerprint; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_chat_action_requests_active_pending_fingerprint ON public.chat_action_requests USING btree (chat_thread_id, requested_by_id, action_fingerprint) WHERE ((status = 1) AND (superseded_at IS NULL));
+
+
+--
 -- Name: index_active_storage_attachments_on_blob_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -880,6 +890,13 @@ CREATE UNIQUE INDEX index_active_storage_blobs_on_key ON public.active_storage_b
 --
 
 CREATE UNIQUE INDEX index_active_storage_variant_records_uniqueness ON public.active_storage_variant_records USING btree (blob_id, variation_digest);
+
+
+--
+-- Name: index_chat_action_requests_on_action_fingerprint; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_action_requests_on_action_fingerprint ON public.chat_action_requests USING btree (action_fingerprint);
 
 
 --
@@ -1190,12 +1207,21 @@ ALTER TABLE ONLY public.chat_action_requests
 
 
 --
+-- Name: chat_action_requests fk_rails_f0e2d1b847; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_action_requests
+    ADD CONSTRAINT fk_rails_f0e2d1b847 FOREIGN KEY (source_message_id) REFERENCES public.chat_messages(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260316143000'),
 ('20260309102000'),
 ('20260307150100'),
 ('20260307150000'),

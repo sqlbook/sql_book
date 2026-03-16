@@ -14,18 +14,23 @@ module App
           action_type: action_request.action_type,
           payload: action_request.payload
         )
+        execution = Chat::ExecutionTruthReconciler.new(workspace:).call(
+          action_type: action_request.action_type,
+          payload: action_request.payload,
+          execution:
+        )
         assistant_content = chat_response_composer.compose(
           execution:,
           action_type: action_request.action_type
         )
 
-        action_request.update!(
-          status: status_for_result(result_status: execution.status),
+        action_request_lifecycle.mark_executed!(
+          action_request: action_request,
+          result_status: execution.status,
           result_payload: {
             'user_message' => assistant_content,
             'data' => execution.data
-          },
-          executed_at: Time.current
+          }
         )
 
         append_execution_message(execution:, assistant_content:)
@@ -41,10 +46,7 @@ module App
 
       def cancel
         if action_request.pending_confirmation?
-          action_request.update!(
-            status: ChatActionRequest::Statuses::CANCELED,
-            result_payload: { canceled_by: current_user.id }
-          )
+          action_request_lifecycle.mark_canceled!(action_request:, canceled_by: current_user)
 
           chat_thread.chat_messages.create!(
             role: ChatMessage::Roles::ASSISTANT,
@@ -78,7 +80,7 @@ module App
       end
 
       def confirmation_validation_error
-        unless action_request.pending_confirmation?
+        unless action_request.pending_confirmation? && !action_request.superseded?
           return I18n.t('app.workspaces.chat.errors.action_not_pending_confirmation')
         end
         return I18n.t('app.workspaces.chat.errors.confirmation_expired') if action_request.expired?
@@ -144,6 +146,10 @@ module App
           'validation_error' => ChatActionRequest::Statuses::VALIDATION_ERROR,
           'execution_error' => ChatActionRequest::Statuses::EXECUTION_ERROR
         }.fetch(result_status, ChatActionRequest::Statuses::EXECUTION_ERROR)
+      end
+
+      def action_request_lifecycle
+        @action_request_lifecycle ||= Chat::ActionRequestLifecycle.new(chat_thread:, actor: current_user)
       end
 
       def render_action_error(status:, message:)

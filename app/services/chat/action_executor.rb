@@ -166,12 +166,7 @@ module Chat
     end
 
     def allowed_roles_key(action_type)
-      case action_type
-      when 'workspace.delete'
-        'owner'
-      else
-        'admin_or_owner'
-      end
+      Chat::Policy.allowed_roles_key_for(action_type)
     end
 
     def validation_error_result(message:, code: 'validation_error')

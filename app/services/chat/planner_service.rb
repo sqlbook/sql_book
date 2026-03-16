@@ -55,13 +55,16 @@ module Chat
       }
     }.freeze
 
-    def initialize(message:, workspace:, actor:, attachments: [], conversation_messages: [])
+    # rubocop:disable Metrics/ParameterLists
+    def initialize(message:, workspace:, actor:, attachments: [], conversation_messages: [], context_snapshot: nil)
       @message = message.to_s.strip
       @workspace = workspace
       @actor = actor
       @attachments = Array(attachments).compact
       @conversation_messages = Array(conversation_messages).compact
+      @context_snapshot = context_snapshot
     end
+    # rubocop:enable Metrics/ParameterLists
 
     def call
       llm_plan || heuristic_plan || default_help_plan
@@ -72,7 +75,7 @@ module Chat
 
     private
 
-    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages
+    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :context_snapshot
 
     def attachment_count
       attachments.size
@@ -257,8 +260,8 @@ module Chat
       "Image attachments count: #{attachment_count} (#{details.join('; ')})"
     end
 
-    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
-      lines = conversation_messages.last(8).map do |entry|
+    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      lines = transcript_messages.last(8).map do |entry|
         role = conversation_entry_role(entry)
         content = conversation_entry_content(entry)
         next if role.blank? || content.blank?
@@ -266,7 +269,11 @@ module Chat
         "#{role}: #{content}"
       end.compact
 
-      structured_lines = conversation_context_resolver.structured_context_lines
+      structured_lines = if context_snapshot.present?
+                           Array(context_snapshot.structured_context_lines)
+                         else
+                           conversation_context_resolver.structured_context_lines
+                         end
       return 'Recent conversation: none' if lines.empty? && structured_lines.empty?
 
       parts = []
@@ -283,6 +290,12 @@ module Chat
       raw = entry[:content].presence || entry['content'].presence || ''
       cleaned = raw.to_s.gsub(/\s+/, ' ').strip
       cleaned[0, 280]
+    end
+
+    def transcript_messages
+      return context_snapshot.conversation_messages if context_snapshot.present?
+
+      conversation_messages
     end
 
     def inline_multimodal_images
@@ -370,7 +383,7 @@ module Chat
       return false unless lowered_message.match?(MEMBER_DETAIL_REGEX)
       return false if invite_follow_up_with_email?
 
-      recent_text = conversation_messages.last(8).map { |entry| conversation_entry_content(entry).downcase }.join(' ')
+      recent_text = transcript_messages.last(8).map { |entry| conversation_entry_content(entry).downcase }.join(' ')
       recent_text.match?(MEMBER_CONTEXT_REGEX)
     end
 
@@ -836,7 +849,10 @@ module Chat
     end
 
     def conversation_context_resolver
-      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(workspace:, conversation_messages:)
+      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(
+        workspace:,
+        conversation_messages: transcript_messages
+      )
     end
 
     def recent_assistant_content

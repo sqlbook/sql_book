@@ -21,6 +21,11 @@ class ChatMessage < ApplicationRecord
   belongs_to :user, optional: true
 
   has_many :chat_action_requests, dependent: :nullify, inverse_of: :chat_message
+  has_many :source_chat_action_requests,
+           class_name: 'ChatActionRequest',
+           foreign_key: :source_message_id,
+           dependent: :nullify,
+           inverse_of: :source_message
   has_many_attached :images
 
   validates :role, inclusion: { in: [Roles::USER, Roles::ASSISTANT, Roles::SYSTEM] }

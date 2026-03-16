@@ -44,6 +44,10 @@ module Chat
       WRITE_ACTIONS.include?(action_type)
     end
 
+    def self.allowed_roles_key_for(action_type)
+      action_type == 'workspace.delete' ? 'owner' : 'admin_or_owner'
+    end
+
     def initialize(workspace:, actor:)
       @workspace = workspace
       @actor = actor
@@ -83,7 +87,7 @@ module Chat
     end
 
     def authorize_member_list(**)
-      return allow if can_manage_members?
+      return allow if can_view_members?
 
       deny(reason_code: 'forbidden_role')
     end
@@ -133,15 +137,19 @@ module Chat
     end
 
     def current_role
-      @current_role ||= workspace.members.find_by(user_id: actor.id)&.role
+      @current_role ||= capabilities.role
     end
 
     def can_manage_workspace?
-      [Member::Roles::OWNER, Member::Roles::ADMIN].include?(current_role)
+      capabilities.can_manage_workspace_settings?
     end
 
     def can_manage_members?
-      can_manage_workspace?
+      capabilities.can_manage_workspace_members?
+    end
+
+    def can_view_members?
+      capabilities.can_view_team_members?
     end
 
     def can_manage_member?(member:)
@@ -162,6 +170,10 @@ module Chat
 
     def member_reference_resolver
       @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
+    end
+
+    def capabilities
+      @capabilities ||= WorkspaceCapabilityResolver.new(workspace:, actor:)
     end
 
     def allow

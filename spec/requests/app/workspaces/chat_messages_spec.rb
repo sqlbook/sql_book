@@ -134,21 +134,26 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(ChatActionRequest.order(:id).last.status).to eq(ChatActionRequest::Statuses::EXECUTED)
     end
 
-    it 'deduplicates repeated low-risk writes with idempotency keys' do
+    it 'creates a fresh low-risk write attempt per new user turn' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'rename workspace to Repeated Name' },
            as: :json
       thread_id = response.parsed_body['thread_id']
+      first_request = ChatActionRequest.order(:id).last
 
       expect do
         post app_workspace_chat_messages_path(workspace),
              params: { thread_id:, content: 'rename workspace to Repeated Name' },
              as: :json
-      end.not_to change(ChatActionRequest, :count)
+      end.to change(ChatActionRequest, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
       expect(workspace.reload.name).to eq('Repeated Name')
+      latest_request = ChatActionRequest.order(:id).last
+      expect(latest_request.id).not_to eq(first_request.id)
+      expect(latest_request.action_fingerprint).to eq(first_request.action_fingerprint)
+      expect(latest_request.idempotency_key).not_to eq(first_request.idempotency_key)
     end
 
     it 'still executes writes when idempotency column is unavailable' do
@@ -177,7 +182,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(workspace.reload.name).to eq('Bumanarama')
     end
 
-    it 'reuses a stale confirmation request instead of failing on idempotency collisions' do
+    it 'creates a fresh confirmation attempt and supersedes the stale one' do
       thread = ChatThread.active_for(workspace:, user:)
       prior_message = create(
         :chat_message,
@@ -192,17 +197,18 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         'thread_id' => thread.id,
         'message_id' => prior_message.id
       }
-      stale_tool_arguments = { 'email' => 'hello@sqlbook.com' }
-      stale_key = Digest::SHA256.hexdigest(
-        "#{workspace.id}:#{thread.id}:#{user.id}:member.remove:#{JSON.generate(stale_tool_arguments.sort.to_h)}"
-      )
+      lifecycle = Chat::ActionRequestLifecycle.new(chat_thread: thread, actor: user)
+      stale_fingerprint = lifecycle.action_fingerprint_for(action_type: 'member.remove', payload: stale_payload)
+      stale_key = lifecycle.idempotency_key_for(action_fingerprint: stale_fingerprint, source_message: prior_message)
       stale_request = create(
         :chat_action_request,
         chat_thread: thread,
         chat_message: prior_message,
+        source_message: prior_message,
         requested_by: user,
         action_type: 'member.remove',
         payload: stale_payload,
+        action_fingerprint: stale_fingerprint,
         status: ChatActionRequest::Statuses::PENDING_CONFIRMATION,
         confirmation_expires_at: 1.minute.ago,
         idempotency_key: stale_key
@@ -237,17 +243,21 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         post app_workspace_chat_messages_path(workspace),
              params: { thread_id: thread.id, content: 'Could you remove hello@sqlbook.com please?' },
              as: :json
-      end.not_to change(ChatActionRequest, :count)
+      end.to change(ChatActionRequest, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('requires_confirmation')
       stale_request.reload
-      expect(stale_request.pending_confirmation?).to be(true)
-      expect(stale_request.confirmation_expires_at).to be > Time.current
-      expect(stale_request.chat_message.content).to eq('Could you remove hello@sqlbook.com please?')
+      latest_request = ChatActionRequest.order(:id).last
+      expect(stale_request.superseded_at).to be_present
+      expect(latest_request).not_to eq(stale_request)
+      expect(latest_request.pending_confirmation?).to be(true)
+      expect(latest_request.confirmation_expires_at).to be > Time.current
+      expect(latest_request.idempotency_key).not_to eq(stale_request.idempotency_key)
+      expect(latest_request.chat_message.content).to eq('Could you remove hello@sqlbook.com please?')
     end
 
-    it 'reuses a stale auto-executed request instead of failing on idempotency collisions' do
+    it 'creates a fresh auto-executed attempt on a new turn instead of replaying the old one' do
       thread = ChatThread.active_for(workspace:, user:)
       prior_message = create(
         :chat_message,
@@ -273,22 +283,18 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         'thread_id' => thread.id,
         'message_id' => prior_message.id
       }
-      stale_tool_arguments = {
-        'member_id' => member.id,
-        'email' => 'bob@example.com',
-        'full_name' => 'Bob Smith',
-        'role' => Member::Roles::ADMIN
-      }
-      stale_key = Digest::SHA256.hexdigest(
-        "#{workspace.id}:#{thread.id}:#{user.id}:member.update_role:#{JSON.generate(stale_tool_arguments.sort.to_h)}"
-      )
+      lifecycle = Chat::ActionRequestLifecycle.new(chat_thread: thread, actor: user)
+      stale_fingerprint = lifecycle.action_fingerprint_for(action_type: 'member.update_role', payload: stale_payload)
+      stale_key = lifecycle.idempotency_key_for(action_fingerprint: stale_fingerprint, source_message: prior_message)
       stale_request = create(
         :chat_action_request,
         chat_thread: thread,
         chat_message: prior_message,
+        source_message: prior_message,
         requested_by: user,
         action_type: 'member.update_role',
         payload: stale_payload,
+        action_fingerprint: stale_fingerprint,
         status: ChatActionRequest::Statuses::EXECUTED,
         result_payload: { 'user_message' => 'Old result' },
         executed_at: 20.minutes.ago,
@@ -301,12 +307,16 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         post app_workspace_chat_messages_path(workspace),
              params: { thread_id: thread.id, content: 'Promote Bob Smith to Admin' },
              as: :json
-      end.not_to change(ChatActionRequest, :count)
+      end.to change(ChatActionRequest, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
       stale_request.reload
       expect(stale_request.status_name).to eq('executed')
+      latest_request = ChatActionRequest.order(:id).last
+      expect(latest_request).not_to eq(stale_request)
+      expect(latest_request.action_fingerprint).to eq(stale_request.action_fingerprint)
+      expect(latest_request.idempotency_key).not_to eq(stale_request.idempotency_key)
       promoted_member = workspace.members.joins(:user).find_by(users: { email: 'bob@example.com' })
       expect(promoted_member.role).to eq(Member::Roles::ADMIN)
     end
@@ -337,22 +347,18 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         'thread_id' => thread.id,
         'message_id' => prior_message.id
       }
-      stale_tool_arguments = {
-        'member_id' => member.id,
-        'email' => 'bob@example.com',
-        'full_name' => 'Bob Smith',
-        'role' => Member::Roles::ADMIN
-      }
-      stale_key = Digest::SHA256.hexdigest(
-        "#{workspace.id}:#{thread.id}:#{user.id}:member.update_role:#{JSON.generate(stale_tool_arguments.sort.to_h)}"
-      )
+      lifecycle = Chat::ActionRequestLifecycle.new(chat_thread: thread, actor: user)
+      stale_fingerprint = lifecycle.action_fingerprint_for(action_type: 'member.update_role', payload: stale_payload)
+      stale_key = lifecycle.idempotency_key_for(action_fingerprint: stale_fingerprint, source_message: prior_message)
       create(
         :chat_action_request,
         chat_thread: thread,
         chat_message: prior_message,
+        source_message: prior_message,
         requested_by: user,
         action_type: 'member.update_role',
         payload: stale_payload,
+        action_fingerprint: stale_fingerprint,
         status: ChatActionRequest::Statuses::EXECUTED,
         result_payload: { 'user_message' => 'Bob Smith is now User.' },
         executed_at: 2.minutes.ago,
@@ -365,7 +371,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         post app_workspace_chat_messages_path(workspace),
              params: { thread_id: thread.id, content: 'Promote Bob Smith to Admin' },
              as: :json
-      end.not_to change(ChatActionRequest, :count)
+      end.to change(ChatActionRequest, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
@@ -716,6 +722,48 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload.dig('messages', -1, 'content')).to include('Bob Smith')
       expect(payload.dig('messages', -1, 'content')).to include('Admin')
       expect(ChatActionRequest.order(:id).last.status_name).to eq('executed')
+      promoted_member = workspace.members.joins(:user).find_by(users: { email: 'bob@example.com' })
+      expect(promoted_member.role).to eq(Member::Roles::ADMIN)
+    end
+
+    it 'uses the explicit role named in the user message when runtime payload is wrong' do
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+      allow(Chat::RuntimeService).to receive(:new).and_return(
+        instance_double(
+          Chat::RuntimeService,
+          call: Chat::RuntimeService::Decision.new(
+            assistant_message: 'Updating the role now.',
+            tool_calls: [
+              Chat::RuntimeService::ToolCall.new(
+                tool_name: 'member.update_role',
+                arguments: {
+                  'email' => 'bob@example.com',
+                  'full_name' => 'Bob Smith',
+                  'role' => Member::Roles::USER
+                }
+              )
+            ],
+            missing_information: [],
+            finalize_without_tools: false
+          )
+        )
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Promote Bob Smith to Admin' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Admin')
+
       promoted_member = workspace.members.joins(:user).find_by(users: { email: 'bob@example.com' })
       expect(promoted_member.role).to eq(Member::Roles::ADMIN)
     end

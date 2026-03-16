@@ -1,6 +1,6 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-03-09
+Last updated: 2026-03-16
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
@@ -93,12 +93,22 @@ Super-admin is separate from workspace roles:
   - User: deny
   - Read-only: deny
 - `member.list`
-  - Owner/Admin/User/Read-only: allow
+  - Owner: allow
+  - Admin: allow
+  - User: deny
+  - Read-only: deny
 - `member.invite`, `member.resend_invite`, `member.update_role`, `member.remove`
   - Owner: allow (except owner-removal/promotion constraints)
   - Admin: allow only for lower roles and non-owner targets
   - User: deny
   - Read-only: deny
+
+### Shared capability surface
+- `WorkspaceCapabilityResolver` is the canonical shared capability surface for:
+  - workspace header/settings visibility
+  - chat preflight/policy behavior
+  - other workspace-scoped affordance checks
+- UI visibility should mirror capability checks, but server enforcement remains authoritative.
 
 ### Data source management
 - Route scope:

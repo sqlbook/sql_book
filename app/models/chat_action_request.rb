@@ -14,6 +14,10 @@ class ChatActionRequest < ApplicationRecord
 
   belongs_to :chat_thread
   belongs_to :chat_message, optional: true
+  belongs_to :source_message,
+             class_name: 'ChatMessage',
+             optional: true,
+             inverse_of: :source_chat_action_requests
 
   belongs_to :requested_by,
              class_name: 'User',
@@ -37,9 +41,18 @@ class ChatActionRequest < ApplicationRecord
   before_validation :assign_confirmation_defaults, on: :create
 
   scope :pending_confirmation, -> { where(status: Statuses::PENDING_CONFIRMATION) }
+  scope :active, -> { where(superseded_at: nil) }
 
   def pending_confirmation?
     status == Statuses::PENDING_CONFIRMATION
+  end
+
+  def active_pending_confirmation?
+    pending_confirmation? && !superseded? && !expired?
+  end
+
+  def superseded?
+    superseded_at.present?
   end
 
   def expired?
@@ -64,6 +77,8 @@ class ChatActionRequest < ApplicationRecord
 
     self.confirmation_token ||= SecureRandom.hex(20)
     self.confirmation_expires_at ||= CONFIRMATION_WINDOW.from_now
+    self.source_message ||= chat_message
+    self.chat_message ||= source_message
   end
 
   def idempotency_supported?

@@ -74,11 +74,14 @@ FactoryBot.define do
   factory :chat_action_request do
     chat_thread { create(:chat_thread) }
     chat_message { create(:chat_message, chat_thread:) }
+    source_message { chat_message }
     requested_by { create(:user) }
     action_type { 'member.invite' }
     status { ChatActionRequest::Statuses::PENDING_CONFIRMATION }
     payload { { 'email' => 'invitee@example.com', 'role' => Member::Roles::USER } }
     result_payload { {} }
+    action_fingerprint { SecureRandom.hex(16) }
+    idempotency_key { SecureRandom.hex(16) }
     confirmation_token { SecureRandom.hex(20) }
     confirmation_expires_at { 15.minutes.from_now }
   end

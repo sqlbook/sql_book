@@ -29,6 +29,21 @@ module Chat
       select_candidate(candidates:, fallback:)
     end
 
+    # rubocop:disable Metrics/CyclomaticComplexity
+    def confirmation_message(action_type:, proposed_message:)
+      candidate = proposed_message.to_s.strip
+      return candidate if candidate.present? && confirmation_prompt?(candidate)
+
+      action = translated_action(action_type:)
+      fallback = I18n.t('app.workspaces.chat.messages.confirmation_default')
+      message = confirmation_candidates(action:).find { |value| !prior_message_match?(value) }
+
+      message.presence || candidate.presence || fallback
+    rescue I18n::MissingTranslationData
+      candidate.presence || fallback
+    end
+    # rubocop:enable Metrics/CyclomaticComplexity
+
     private
 
     attr_reader :workspace, :actor, :prior_assistant_messages
@@ -146,12 +161,18 @@ module Chat
       I18n.t("app.workspaces.chat.executor.allowed_roles.#{allowed_roles_key(action_type)}")
     end
 
+    def confirmation_candidates(action:)
+      Array(I18n.t('app.workspaces.chat.responses.confirmation.variants')).map do |template|
+        I18n.t(template, default: template, action:)
+      end
+    end
+
     def translation_action_key(action_type)
       action_type.to_s.tr('.', '_')
     end
 
     def allowed_roles_key(action_type)
-      action_type == 'workspace.delete' ? 'owner' : 'admin_or_owner'
+      Chat::Policy.allowed_roles_key_for(action_type)
     end
 
     def select_candidate(candidates:, fallback:)
@@ -172,6 +193,10 @@ module Chat
 
     def normalize_text(text)
       text.to_s.downcase.gsub(/\s+/, ' ').gsub(/[[:punct:]]+/, '').strip
+    end
+
+    def confirmation_prompt?(content)
+      content.to_s.downcase.match?(/\b(confirm|confirmed|confirmation|confirma|confirmar)\b/)
     end
   end
 end

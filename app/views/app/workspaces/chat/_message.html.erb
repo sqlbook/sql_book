@@ -30,7 +30,7 @@
       <% action_request_id = message.metadata.to_h["action_request_id"] %>
       <% action_request = action_requests_by_id[action_request_id.to_i] if action_request_id.present? %>
 
-      <% if action_request&.pending_confirmation? %>
+      <% if action_request&.active_pending_confirmation? %>
         <% action_label = I18n.t("app.workspaces.chat.action_labels.#{action_request.action_type.tr('.', '_')}", default: action_request.action_type) %>
         <div class="chat-inline-card">
           <p class="chat-inline-card-title"><%= I18n.t('app.workspaces.chat.cards.confirmation_needed') %></p>

@@ -40,39 +40,35 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
   end
 
   def workspace_role_for(workspace:)
-    workspace.members.find_by(user_id: current_user.id)&.role
+    workspace_capability_resolver(workspace:).role
   end
 
   def can_manage_workspace_settings?(workspace:)
-    [Member::Roles::OWNER, Member::Roles::ADMIN].include?(workspace_role_for(workspace:))
+    workspace_capability_resolver(workspace:).can_manage_workspace_settings?
   end
 
   def can_manage_workspace_members?(workspace:)
-    can_manage_workspace_settings?(workspace:)
+    workspace_capability_resolver(workspace:).can_manage_workspace_members?
   end
 
   def can_manage_data_sources?(workspace:)
-    can_manage_workspace_settings?(workspace:)
+    workspace_capability_resolver(workspace:).can_manage_data_sources?
   end
 
   def can_write_queries?(workspace:)
-    !workspace_role_for(workspace:).in?([nil, Member::Roles::READ_ONLY])
+    workspace_capability_resolver(workspace:).can_write_queries?
   end
 
   def can_destroy_query?(workspace:, query:)
-    role = workspace_role_for(workspace:)
-    return false if role.nil? || role == Member::Roles::READ_ONLY
-    return true if [Member::Roles::OWNER, Member::Roles::ADMIN].include?(role)
-
-    query.author_id == current_user.id
+    workspace_capability_resolver(workspace:).can_destroy_query?(query:)
   end
 
   def can_write_dashboards?(workspace:)
-    can_write_queries?(workspace:)
+    workspace_capability_resolver(workspace:).can_write_dashboards?
   end
 
   def can_destroy_dashboards?(workspace:)
-    [Member::Roles::OWNER, Member::Roles::ADMIN].include?(workspace_role_for(workspace:))
+    workspace_capability_resolver(workspace:).can_destroy_dashboards?
   end
 
   def deny_workspace_access!(workspace:, fallback_tab: nil, fallback_path: nil)
@@ -153,6 +149,14 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
   end
 
   private
+
+  def workspace_capability_resolver(workspace:)
+    @workspace_capability_resolvers ||= {}
+    @workspace_capability_resolvers[workspace.id] ||= WorkspaceCapabilityResolver.new(
+      workspace:,
+      actor: current_user
+    )
+  end
 
   def set_locale
     locale = resolved_locale
