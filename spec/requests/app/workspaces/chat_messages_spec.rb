@@ -177,6 +177,76 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(workspace.reload.name).to eq('Bumanarama')
     end
 
+    it 'reuses a stale confirmation request instead of failing on idempotency collisions' do
+      thread = ChatThread.active_for(workspace:, user:)
+      prior_message = create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::USER,
+        content: 'Old remove request'
+      )
+      stale_payload = {
+        'email' => 'hello@sqlbook.com',
+        'workspace_id' => workspace.id,
+        'thread_id' => thread.id,
+        'message_id' => prior_message.id
+      }
+      stale_tool_arguments = { 'email' => 'hello@sqlbook.com' }
+      stale_key = Digest::SHA256.hexdigest(
+        "#{workspace.id}:#{thread.id}:#{user.id}:member.remove:#{JSON.generate(stale_tool_arguments.sort.to_h)}"
+      )
+      stale_request = create(
+        :chat_action_request,
+        chat_thread: thread,
+        chat_message: prior_message,
+        requested_by: user,
+        action_type: 'member.remove',
+        payload: stale_payload,
+        status: ChatActionRequest::Statuses::PENDING_CONFIRMATION,
+        confirmation_expires_at: 1.minute.ago,
+        idempotency_key: stale_key
+      )
+
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'hello@sqlbook.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+      allow(Chat::RuntimeService).to receive(:new).and_return(
+        instance_double(
+          Chat::RuntimeService,
+          call: Chat::RuntimeService::Decision.new(
+            assistant_message: 'Please confirm to proceed.',
+            tool_calls: [
+              Chat::RuntimeService::ToolCall.new(
+                tool_name: 'member.remove',
+                arguments: { 'email' => 'hello@sqlbook.com' }
+              )
+            ],
+            missing_information: [],
+            finalize_without_tools: false
+          )
+        )
+      )
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id: thread.id, content: 'Could you remove hello@sqlbook.com please?' },
+             as: :json
+      end.not_to change(ChatActionRequest, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('requires_confirmation')
+      stale_request.reload
+      expect(stale_request.pending_confirmation?).to be(true)
+      expect(stale_request.confirmation_expires_at).to be > Time.current
+      expect(stale_request.chat_message.content).to eq('Could you remove hello@sqlbook.com please?')
+    end
+
     it 'asks for required invite details before proposing an invite action' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'invite my team mates' }, as: :json

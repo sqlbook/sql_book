@@ -334,7 +334,7 @@ module App
         }
       end
 
-      def render_confirmation_response(user_message:, action_type:, payload:, assistant_content:, idempotency_key:) # rubocop:disable Metrics/AbcSize
+      def render_confirmation_response(user_message:, action_type:, payload:, assistant_content:, idempotency_key:)
         action_request_attributes = {
           chat_message: user_message,
           requested_by: current_user,
@@ -344,7 +344,30 @@ module App
         }.merge(idempotency_attributes(idempotency_key:))
 
         action_request = chat_thread.chat_action_requests.create!(action_request_attributes)
+      rescue ActiveRecord::RecordInvalid => e
+        raise unless idempotency_collision?(e)
 
+        action_request = recover_confirmation_request!(
+          user_message:,
+          action_type:,
+          payload:,
+          idempotency_key:
+        )
+
+        render_confirmation_json(
+          user_message:,
+          action_request:,
+          assistant_content:
+        )
+      else
+        render_confirmation_json(
+          user_message:,
+          action_request:,
+          assistant_content:
+        )
+      end
+
+      def render_confirmation_json(user_message:, action_request:, assistant_content:)
         assistant_message = chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
           status: ChatMessage::Statuses::COMPLETED,
@@ -388,6 +411,7 @@ module App
 
       def render_existing_write_response(user_message:, action_request:, assistant_content:) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         if action_request.pending_confirmation?
+          refresh_confirmation_request!(action_request:, user_message:) if action_request.expired?
           pending_content = assistant_content.presence || I18n.t('app.workspaces.chat.messages.request_already_pending')
           assistant_message = chat_thread.chat_messages.create!(
             role: ChatMessage::Roles::ASSISTANT,
@@ -531,6 +555,16 @@ module App
           .first
       end
 
+      def conflicting_write_request(idempotency_key:)
+        return nil unless idempotency_supported?
+        return nil if idempotency_key.blank?
+
+        chat_thread.chat_action_requests
+          .where(requested_by: current_user, idempotency_key:)
+          .order(id: :desc)
+          .first
+      end
+
       def persist_auto_executed_request(
         user_message:,
         action_type:,
@@ -579,6 +613,41 @@ module App
           .where(requested_by: current_user)
           .order(id: :desc)
           .first
+      end
+
+      def recover_confirmation_request!(user_message:, action_type:, payload:, idempotency_key:)
+        action_request = conflicting_write_request(idempotency_key:)
+        raise ActiveRecord::RecordInvalid, ChatActionRequest.new unless action_request
+
+        action_request.update!(
+          chat_message: user_message,
+          action_type:,
+          payload:,
+          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION,
+          result_payload: {},
+          executed_at: nil,
+          confirmation_token: SecureRandom.hex(20),
+          confirmation_expires_at: ChatActionRequest::CONFIRMATION_WINDOW.from_now
+        )
+        action_request
+      end
+
+      def refresh_confirmation_request!(action_request:, user_message:)
+        action_request.update!(
+          chat_message: user_message,
+          status: ChatActionRequest::Statuses::PENDING_CONFIRMATION,
+          result_payload: {},
+          executed_at: nil,
+          confirmation_token: SecureRandom.hex(20),
+          confirmation_expires_at: ChatActionRequest::CONFIRMATION_WINDOW.from_now
+        )
+      end
+
+      def idempotency_collision?(error)
+        record = error.record
+        return false unless record.is_a?(ChatActionRequest)
+
+        record.errors.added?(:idempotency_key, :taken)
       end
 
       def render_pending_action_command_response(user_message:, action_request:)
