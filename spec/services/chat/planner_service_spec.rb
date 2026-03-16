@@ -186,6 +186,31 @@ RSpec.describe Chat::PlannerService do
       )
     end
 
+    it 'treats promote phrasing as a member role update intent' do
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      member = create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      plan = described_class.new(
+        message: 'Promote Bob Smith to Admin',
+        workspace:,
+        actor:
+      ).call
+
+      expect(plan.action_type).to eq('member.update_role')
+      expect(plan.payload).to include(
+        'member_id' => member.id,
+        'email' => 'bob@example.com',
+        'full_name' => 'Bob Smith',
+        'role' => Member::Roles::ADMIN
+      )
+    end
+
     it 'uses recent removed member context when asked to invite them back, but still asks for role' do
       plan = described_class.new(
         message: 'Thanks, could you invite him back actually?',

@@ -318,6 +318,7 @@ module Chat
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
       return member_invite_plan if member_invite_intent?(lower)
       return member_role_update_plan if lower.match?(/\b(change|update)\b.*\brole\b/)
+      return member_role_update_plan if lower.match?(/\b(promote|demote)\b/)
       return member_remove_plan if lower.match?(/\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/)
       return member_list_plan if member_list_intent?(lower)
 

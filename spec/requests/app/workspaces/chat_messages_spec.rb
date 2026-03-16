@@ -565,6 +565,69 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload.dig('action_request', 'payload', 'email')).to eq('chris@example.com')
     end
 
+    it 'auto-executes member role updates without confirmation' do
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { content: 'Promote Bob Smith to Admin' },
+             as: :json
+      end.to change(ChatActionRequest, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('executed')
+      expect(payload.dig('messages', -1, 'content')).to include('Bob Smith')
+      expect(payload.dig('messages', -1, 'content')).to include('Admin')
+      expect(ChatActionRequest.order(:id).last.status_name).to eq('executed')
+      promoted_member = workspace.members.joins(:user).find_by(users: { email: 'bob@example.com' })
+      expect(promoted_member.role).to eq(Member::Roles::ADMIN)
+    end
+
+    it 'does not append duplicate confirmation copy when the assistant already asked to confirm' do
+      teammate = create(:user, first_name: 'Chris', last_name: 'Smith', email: 'chris@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+      allow(Chat::RuntimeService).to receive(:new).and_return(
+        instance_double(
+          Chat::RuntimeService,
+          call: Chat::RuntimeService::Decision.new(
+            assistant_message: 'I can remove Chris Smith. Please confirm to proceed.',
+            tool_calls: [
+              Chat::RuntimeService::ToolCall.new(
+                tool_name: 'member.remove',
+                arguments: { 'email' => 'chris@example.com' }
+              )
+            ],
+            missing_information: [],
+            finalize_without_tools: false
+          )
+        )
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Remove Chris Smith' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('requires_confirmation')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        'I can remove Chris Smith. Please confirm to proceed.'
+      )
+    end
+
     it 'rejects forbidden high-risk actions before confirmation for non-managing members' do
       owner = create(:user)
       restricted_workspace = create(:workspace_with_owner, owner:)

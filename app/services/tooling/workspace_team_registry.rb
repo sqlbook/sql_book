@@ -87,7 +87,7 @@ module Tooling
         },
         output_schema: { 'type' => 'object' },
         risk_level: 'high',
-        confirmation_mode: 'required',
+        confirmation_mode: 'none',
         handler_method: :member_update_role
       },
       {

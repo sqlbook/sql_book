@@ -32,7 +32,7 @@ sqlbook lets users:
 - Shared tool registry is now the canonical server execution interface for chat actions.
 - Public API docs for workspace/team contracts are available at `/dev/api` (API routes remain auth-protected).
 - `docs/API_MASTER_REF.md` is the canonical reference for OpenAPI/Scalar setup and API-doc maintenance rules.
-- High-risk writes (`workspace.delete`, `member.update_role`, `member.remove`) require confirmation; low-risk writes auto-run.
+- Destructive writes (`workspace.delete`, `member.remove`) require confirmation; other allowed writes, including `member.update_role`, auto-run after preflight.
 - Invite flows require full identity (`first_name`, `last_name`, `email`) plus an explicit `role` before `member.invite` executes.
 - Chat context is assembled from recent transcript + structured recent action results, not shadow LLM-maintained memory records.
 - Chat surface uses split sibling panels (history + conversation) on desktop and overlay history on mobile (`<=760px`).

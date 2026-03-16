@@ -77,8 +77,8 @@ Super-admin is separate from workspace roles:
   - read actions are available to all accepted roles
   - mutating action execution is additionally policy-gated by action type + target role constraints
   - confirmation policy is risk-based:
-    - high-risk writes require confirmation (`workspace.delete`, `member.update_role`, `member.remove`)
-    - low-risk writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`)
+    - destructive writes require confirmation (`workspace.delete`, `member.remove`)
+    - auto-run writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`
   - confirm/cancel is limited to the same requesting user and workspace/thread scope
 
 ### Workspace chat action allowlist (v1)

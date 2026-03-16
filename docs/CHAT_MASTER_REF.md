@@ -136,14 +136,14 @@ Blocked prefixes:
 Read actions (`confirmation_mode: none`):
 - `member.list`
 
-Low-risk writes (auto-run, no confirmation):
+Auto-run writes (no confirmation):
 - `workspace.update_name`
 - `member.invite`
 - `member.resend_invite`
+- `member.update_role`
 
 High-risk writes (inline confirmation required):
 - `workspace.delete`
-- `member.update_role`
 - `member.remove`
 
 ## Required action fields (v1)
@@ -162,6 +162,7 @@ High-risk writes (inline confirmation required):
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
 - Execution/preflight wording should be composed separately from the executor so chat can vary phrasing naturally and avoid repeating the same template back-to-back.
+- Only destructive chat writes require confirmation in v1 (`workspace.delete`, `member.remove`). `member.update_role` now auto-executes after preflight passes.
 
 ## Runtime decision flow
 1. User message is persisted immediately.

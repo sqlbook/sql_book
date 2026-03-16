@@ -63,7 +63,7 @@ Use this file to record major choices and why they were made.
   - allows incremental delivery toward broader chat-driven workflows
 - Consequences:
   - chat actions are constrained to workspace/team management in v1
-  - high-risk mutating actions require inline confirmation; low-risk writes auto-run
+  - destructive actions require inline confirmation; other allowed writes auto-run after preflight
   - payloads carry workspace/thread/message identifiers and are scope-validated server-side
   - fixed/system chat copy is locale-key based (`en`/`es`) rather than hardcoded
 - Revisit when:

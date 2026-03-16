@@ -118,8 +118,8 @@ Related references:
   - `query.*`
   - `dashboard.*`
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
-- Low-risk chat writes auto-run (`workspace.update_name`, `member.invite`, `member.resend_invite`).
-- High-risk chat writes require explicit inline confirmation (`workspace.delete`, `member.update_role`, `member.remove`).
+- Auto-run chat writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`.
+- Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`).
 - Chat permission visibility should mirror workspace UI permissions:
   - `OWNER` / `ADMIN` can view workspace settings and the team member list
   - `USER` / `READ_ONLY` should not see the workspace settings nav item and should receive a permission response if they ask chat for the team member list

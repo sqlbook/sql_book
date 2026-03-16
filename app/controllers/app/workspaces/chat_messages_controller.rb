@@ -372,10 +372,7 @@ module App
         assistant_message = chat_thread.chat_messages.create!(
           role: ChatMessage::Roles::ASSISTANT,
           status: ChatMessage::Statuses::COMPLETED,
-          content: [
-            assistant_content.presence || I18n.t('app.workspaces.chat.messages.confirmation_default'),
-            I18n.t('app.workspaces.chat.messages.confirm_suffix')
-          ].join(' '),
+          content: confirmation_message_content(assistant_content),
           metadata: {
             action_request_id: action_request.id,
             action_state: 'requires_confirmation'
@@ -417,7 +414,7 @@ module App
           assistant_message = chat_thread.chat_messages.create!(
             role: ChatMessage::Roles::ASSISTANT,
             status: ChatMessage::Statuses::COMPLETED,
-            content: [pending_content, I18n.t('app.workspaces.chat.messages.confirm_suffix')].join(' '),
+            content: confirmation_message_content(pending_content),
             metadata: {
               action_request_id: action_request.id,
               action_state: 'requires_confirmation'
@@ -642,6 +639,18 @@ module App
           confirmation_token: SecureRandom.hex(20),
           confirmation_expires_at: ChatActionRequest::CONFIRMATION_WINDOW.from_now
         )
+      end
+
+      def confirmation_message_content(assistant_content)
+        base_content = assistant_content.presence || I18n.t('app.workspaces.chat.messages.confirmation_default')
+        return base_content if confirmation_prompt?(base_content)
+
+        [base_content, I18n.t('app.workspaces.chat.messages.confirm_suffix')].join(' ')
+      end
+
+      def confirmation_prompt?(content)
+        normalized = content.to_s.downcase
+        normalized.match?(/\b(confirm|confirmed|confirmation|confirma|confirmar)\b/)
       end
 
       def render_pending_action_command_response(user_message:, action_request:)
