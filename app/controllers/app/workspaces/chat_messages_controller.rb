@@ -344,8 +344,9 @@ module App
         }.merge(idempotency_attributes(idempotency_key:))
 
         action_request = chat_thread.chat_action_requests.create!(action_request_attributes)
-      rescue ActiveRecord::RecordInvalid => e
-        raise unless idempotency_collision?(e)
+      rescue ActiveRecord::RecordInvalid
+        action_request = conflicting_write_request(idempotency_key:)
+        raise unless action_request
 
         action_request = recover_confirmation_request!(
           user_message:,
@@ -641,13 +642,6 @@ module App
           confirmation_token: SecureRandom.hex(20),
           confirmation_expires_at: ChatActionRequest::CONFIRMATION_WINDOW.from_now
         )
-      end
-
-      def idempotency_collision?(error)
-        record = error.record
-        return false unless record.is_a?(ChatActionRequest)
-
-        record.errors.added?(:idempotency_key, :taken)
       end
 
       def render_pending_action_command_response(user_message:, action_request:)
