@@ -581,8 +581,17 @@ module App
         }.merge(idempotency_attributes(idempotency_key:))
 
         chat_thread.chat_action_requests.create!(attributes)
-      rescue ActiveRecord::RecordNotUnique
-        nil
+      rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+        conflicting_request = conflicting_write_request(idempotency_key:)
+        raise unless conflicting_request
+
+        recover_auto_executed_request!(
+          action_request: conflicting_request,
+          user_message:,
+          action_type:,
+          payload:,
+          execution_snapshot:
+        )
       end
 
       def idempotency_attributes(idempotency_key:)
@@ -626,6 +635,26 @@ module App
           executed_at: nil,
           confirmation_token: SecureRandom.hex(20),
           confirmation_expires_at: ChatActionRequest::CONFIRMATION_WINDOW.from_now
+        )
+        action_request
+      end
+
+      def recover_auto_executed_request!(
+        action_request:,
+        user_message:,
+        action_type:,
+        payload:,
+        execution_snapshot:
+      )
+        action_request.update!(
+          chat_message: user_message,
+          action_type:,
+          payload:,
+          status: status_for_result(result_status: execution_snapshot[:status]),
+          result_payload: execution_snapshot[:result_payload],
+          executed_at: Time.current,
+          confirmation_token: nil,
+          confirmation_expires_at: nil
         )
         action_request
       end

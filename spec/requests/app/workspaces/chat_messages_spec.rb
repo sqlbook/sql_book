@@ -247,6 +247,70 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(stale_request.chat_message.content).to eq('Could you remove hello@sqlbook.com please?')
     end
 
+    it 'reuses a stale auto-executed request instead of failing on idempotency collisions' do
+      thread = ChatThread.active_for(workspace:, user:)
+      prior_message = create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::USER,
+        content: 'Old role update request'
+      )
+      teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
+      member = create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+      stale_payload = {
+        'member_id' => member.id,
+        'email' => 'bob@example.com',
+        'full_name' => 'Bob Smith',
+        'role' => Member::Roles::ADMIN,
+        'workspace_id' => workspace.id,
+        'thread_id' => thread.id,
+        'message_id' => prior_message.id
+      }
+      stale_tool_arguments = {
+        'member_id' => member.id,
+        'email' => 'bob@example.com',
+        'full_name' => 'Bob Smith',
+        'role' => Member::Roles::ADMIN
+      }
+      stale_key = Digest::SHA256.hexdigest(
+        "#{workspace.id}:#{thread.id}:#{user.id}:member.update_role:#{JSON.generate(stale_tool_arguments.sort.to_h)}"
+      )
+      stale_request = create(
+        :chat_action_request,
+        chat_thread: thread,
+        chat_message: prior_message,
+        requested_by: user,
+        action_type: 'member.update_role',
+        payload: stale_payload,
+        status: ChatActionRequest::Statuses::EXECUTED,
+        result_payload: { 'user_message' => 'Old result' },
+        executed_at: 20.minutes.ago,
+        created_at: 20.minutes.ago,
+        updated_at: 20.minutes.ago,
+        idempotency_key: stale_key
+      )
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id: thread.id, content: 'Promote Bob Smith to Admin' },
+             as: :json
+      end.not_to change(ChatActionRequest, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      stale_request.reload
+      expect(stale_request.status_name).to eq('executed')
+      promoted_member = workspace.members.joins(:user).find_by(users: { email: 'bob@example.com' })
+      expect(promoted_member.role).to eq(Member::Roles::ADMIN)
+    end
+
     it 'asks for required invite details before proposing an invite action' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'invite my team mates' }, as: :json

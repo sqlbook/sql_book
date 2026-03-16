@@ -179,6 +179,7 @@ High-risk writes (inline confirmation required):
 5. Preflight policy/scope validation runs before any confirmation UI is created.
 6. If tool call is high-risk write and preflight passes, create confirmation card.
 7. If tool call is read or low-risk write, execute immediately via `Chat::ActionExecutor`.
+8. If an old thread repeats the same action after the idempotency window, chat should recover the existing action record instead of raising a duplicate-key error.
 8. `Chat::ResponseComposer` converts execution/preflight results into user-facing assistant copy using locale-backed variants and recent assistant history to reduce repetition.
 9. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
 10. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
