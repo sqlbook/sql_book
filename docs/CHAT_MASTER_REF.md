@@ -212,7 +212,8 @@ High-risk writes (inline confirmation required):
 
 ## Idempotency behavior (writes)
 - Write actions use deterministic idempotency keys scoped by workspace/thread/actor/tool/payload.
-- Duplicate submissions inside the idempotency window reuse prior request state/result.
+- Duplicate submissions inside the idempotency window only reuse a still-pending confirmation request.
+- Auto-executed writes should run again against current state and then recover/update the existing action record if the same idempotency key already exists.
 - Prevents duplicate side effects on retries or repeated Enter submits.
 - Requires DB migration `20260309102000_add_idempotency_key_to_chat_action_requests`.
 - If that migration is not applied yet in an environment, writes still execute but dedupe is skipped until migration is applied.

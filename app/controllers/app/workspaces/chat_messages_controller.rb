@@ -94,7 +94,7 @@ module App
         if write_tool?(tool_definition) && idempotency_supported?
           idempotency_key = idempotency_key_for(tool_name: tool_call.tool_name, payload: tool_call.arguments.to_h)
           existing_request = existing_write_request(idempotency_key:)
-          if existing_request
+          if existing_request&.pending_confirmation?
             return render_existing_write_response(
               user_message:,
               action_request: existing_request,
