@@ -106,6 +106,21 @@ en:
           request_already_pending: That request is already pending confirmation.
           request_already_processed: I already processed that request.
           runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
+          capability_summary_intro: "I can help with workspace and team management in this workspace. Right now I can:"
+          capability_summary_footer: If you want, ask me to do one of those directly.
+          capability_summary_restricted: In this chat I'm focused on workspace and team management. With your current workspace role, I can't make those changes for you here. Please ask %{allowed_roles}.
+          scope_limited_intro: I'm here to help with sqlbook workspace and team management, not as a general-purpose assistant.
+          scope_limited_supported_intro: "Right now I can help with:"
+          scope_limited_footer: If you want, ask me to do one of those directly.
+          scope_limited_restricted: I'm here to help with sqlbook workspace and team management, not as a general-purpose assistant. With your current workspace role, please ask %{allowed_roles} if you need workspace or team changes.
+          capability_items:
+            member_list: List team members
+            member_invite: Invite a team member
+            member_resend_invite: Resend a pending invite
+            member_update_role: Change a team member's role
+            member_remove: Remove a team member
+            workspace_update_name: Rename the workspace
+            workspace_delete: Delete the workspace
         responses:
           confirmation:
             variants:

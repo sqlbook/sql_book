@@ -201,6 +201,7 @@ High-risk writes (inline confirmation required):
 9. `Chat::ResponseComposer` converts execution/preflight results into user-facing assistant copy using locale-backed variants and recent assistant history to reduce repetition.
 10. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
 11. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
+12. Clearly off-scope or general-purpose questions should be intercepted before tool planning and answered with a scope-limited help message rather than being forced through stale action context.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
@@ -215,6 +216,7 @@ High-risk writes (inline confirmation required):
   - "invite him back" after a remove action
   - "what role did you add him as?" after an invite action
   - "have they accepted?" or "which user are we talking about?" after an invite is later accepted in another session
+- Referential member follow-ups such as "what are their names and details?" should stay in scope when a recent member/team result is present, even if the message does not repeat words like `member` or `team`.
 - Structured result data is persisted on assistant messages for both:
   - auto-executed actions
   - confirmed high-risk actions
@@ -295,6 +297,7 @@ High-risk writes (inline confirmation required):
 - Assistant content now supports sanitized markdown rendering for lists, tables, emphasis, links, blockquotes, and code blocks.
 - Markdown is rendered server-side and sanitized before output; raw HTML from model output is not trusted.
 - Runtime result rendering must preserve line breaks and paragraph spacing; collapsing all whitespace before markdown render breaks lists and tables into plain paragraphs.
+- Same-thread non-confirmation chat responses (`executed`, `forbidden`, `validation_error`, `execution_error`, `canceled`) should render inline from the JSON response without requiring a full Turbo page revisit, so successful low-risk writes always produce a visible assistant acknowledgement.
 
 ## Attachment behavior (v1)
 - Accepted MIME types:

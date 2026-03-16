@@ -6,6 +6,21 @@ module Chat
       \A\s*(?:i\s+confirm|confirm|yes(?:\s+please)?|go\s+ahead|do\s+it|proceed|continue|si|sí)\b
     /ix
     CANCEL_MESSAGE_REGEX = /\A\s*(?:cancel|stop|never\s+mind|do\s+not|don't|no)\b/i
+    CAPABILITY_QUESTION_REGEX = /
+      \b(
+        what\ can\ you\ do|what\ do\ you\ do|how\ can\ you\ help|
+        what\ can\ you\ help\ with|what\ are\ you\ able\ to\ do
+      )\b
+    /ix
+    GENERAL_QUESTION_REGEX = /\A\s*(?:what|when|where|who|why|how|do|does|did|can|could|would|is|are|tell)\b/i
+    IN_SCOPE_TOPIC_REGEX = /
+      \b(
+        workspace|team|teammate|member|members|user|users|
+        invite|invitation|role|roles|admin|owner|read\s*only|readonly|
+        rename|delete|remove|resend|promote|demote
+      )\b
+    /ix
+    PRODUCT_TOPIC_REGEX = /\b(analytics|analysis|data\s+sources?|queries?|dashboards?|charts?|reports?|sql)\b/i
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
@@ -25,6 +40,9 @@ module Chat
       if active_pending_action.present? && pending_action_command.present?
         return pending_action_command == :confirm ? confirm_pending_action : cancel_pending_action
       end
+
+      return render_non_action(capability_summary_message) if capability_question?
+      return render_non_action(scope_limited_message) if off_scope_general_question?
 
       decision = runtime_service.call
       intent = intent_reconciler.reconcile(decision:)
@@ -325,6 +343,111 @@ module Chat
         content:,
         metadata:
       )
+    end
+
+    def capability_question?
+      content.match?(CAPABILITY_QUESTION_REGEX)
+    end
+
+    def off_scope_general_question?
+      return false if capability_question?
+      return false unless question_like? || product_topic_question?
+      return false if content.match?(IN_SCOPE_TOPIC_REGEX)
+      return false if recent_member_context_question?
+
+      true
+    end
+
+    def question_like?
+      content.match?(GENERAL_QUESTION_REGEX) || content.include?('?')
+    end
+
+    def product_topic_question?
+      content.match?(PRODUCT_TOPIC_REGEX)
+    end
+
+    def recent_member_context_question?
+      conversation_context_resolver.member_follow_up_question?(text: content)
+    end
+
+    def capability_summary_message
+      actions = capability_action_items
+      return restricted_capability_message if actions.empty?
+
+      [
+        I18n.t('app.workspaces.chat.messages.capability_summary_intro'),
+        actions.map { |action| "- #{action}" }.join("\n"),
+        I18n.t('app.workspaces.chat.messages.capability_summary_footer')
+      ].join("\n\n")
+    end
+
+    def scope_limited_message
+      actions = capability_action_items
+      return restricted_scope_message if actions.empty?
+
+      [
+        I18n.t('app.workspaces.chat.messages.scope_limited_intro'),
+        I18n.t('app.workspaces.chat.messages.scope_limited_supported_intro'),
+        actions.map { |action| "- #{action}" }.join("\n"),
+        I18n.t('app.workspaces.chat.messages.scope_limited_footer')
+      ].join("\n\n")
+    end
+
+    def restricted_capability_message
+      I18n.t(
+        'app.workspaces.chat.messages.capability_summary_restricted',
+        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner')
+      )
+    end
+
+    def restricted_scope_message
+      I18n.t(
+        'app.workspaces.chat.messages.scope_limited_restricted',
+        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner')
+      )
+    end
+
+    def capability_action_items
+      snapshot = context_snapshot.capability_snapshot.to_h.symbolize_keys
+      items = []
+      items.concat(view_capability_items(snapshot:))
+      items.concat(member_management_capability_items(snapshot:))
+      items.concat(workspace_management_capability_items(snapshot:))
+      items
+    end
+
+    def conversation_context_resolver
+      @conversation_context_resolver ||= Chat::ConversationContextResolver.new(
+        workspace:,
+        conversation_messages: context_snapshot.conversation_messages
+      )
+    end
+
+    def view_capability_items(snapshot:)
+      return [] unless snapshot[:can_view_team_members]
+
+      [I18n.t('app.workspaces.chat.messages.capability_items.member_list')]
+    end
+
+    def member_management_capability_items(snapshot:)
+      return [] unless snapshot[:can_manage_workspace_members]
+
+      %w[
+        member_invite
+        member_resend_invite
+        member_update_role
+        member_remove
+      ].map do |key|
+        I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
+      end
+    end
+
+    def workspace_management_capability_items(snapshot:)
+      return [] unless snapshot[:can_manage_workspace_settings]
+
+      %w[workspace_update_name workspace_delete].map do |key|
+        I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
+      end
     end
   end
 end

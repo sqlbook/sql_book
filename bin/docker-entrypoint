@@ -1,7 +1,17 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
+rails_server_command=false
+
+if [ "${1:-}" = "./bin/rails" ] && [ "${2:-}" = "server" ]; then
+  rails_server_command=true
+fi
+
+if [ "${1:-}" = "./bin/thrust" ] && [ "${2:-}" = "./bin/rails" ] && [ "${3:-}" = "server" ]; then
+  rails_server_command=true
+fi
+
+# If running the web server, create or migrate the database before boot.
+if [ "$rails_server_command" = true ]; then
   ./bin/rails db:prepare
 fi
 

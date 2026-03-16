@@ -726,6 +726,59 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(promoted_member.role).to eq(Member::Roles::ADMIN)
     end
 
+    it 'returns a deterministic capability summary for meta capability questions' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'What can you do for me?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include('workspace and team management')
+      expect(assistant_content).to include('List team members')
+      expect(assistant_content).to include('Invite a team member')
+    end
+
+    it 'does not leak stale invite follow-up prompts into unrelated off-scope questions' do
+      thread = create(:chat_thread, workspace:, created_by: user)
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: I18n.t('app.workspaces.chat.planner.member_invite_needs_email_name_and_role')
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'Do you know anything about analytics?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include('not as a general-purpose assistant')
+      expect(assistant_content).to include('workspace and team management')
+      expect(assistant_content).not_to include('first name')
+      expect(assistant_content).not_to include('email address')
+    end
+
+    it 'explains its product scope for unrelated general questions' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'What day of the week is it?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include('not as a general-purpose assistant')
+      expect(assistant_content).to include('workspace and team management')
+      expect(assistant_content).not_to include('first name')
+      expect(assistant_content).not_to include('email address')
+    end
+
     it 'uses the explicit role named in the user message when runtime payload is wrong' do
       teammate = create(:user, first_name: 'Bob', last_name: 'Smith', email: 'bob@example.com')
       create(

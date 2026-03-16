@@ -641,11 +641,20 @@ module Chat
 
     def invite_context_active?
       message.match?(INVITE_INTENT_REGEX) ||
-        invite_context_in_recent_messages?
+        invite_follow_up_message?
     end
 
     def invite_context_in_recent_messages?
       invite_follow_up_context?
+    end
+
+    def invite_follow_up_message?
+      return false unless invite_context_in_recent_messages?
+
+      parsed_email.present? ||
+        parsed_name_payload.present? ||
+        parsed_role.present? ||
+        message.match?(/\b(him|her|them)\b/i)
     end
 
     def inferred_invite_details

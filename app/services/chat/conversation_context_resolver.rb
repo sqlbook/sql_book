@@ -13,6 +13,7 @@ module Chat
     CLARIFICATION_REGEX = /\b(are\s+you\s+sure|really|seriously)\b/i
     ROLE_QUESTION_REGEX = /\b(role|admin|user|read\s*only|readonly)\b/i
     STATUS_QUESTION_REGEX = /\b(accepted|accept|pending|joined|join|in\s+the\s+workspace|already\s+in|status|invite)\b/i
+    DETAIL_QUESTION_REGEX = /\b(name|names|detail|details|email|emails)\b/i
 
     def initialize(workspace:, conversation_messages:)
       @workspace = workspace
@@ -66,6 +67,15 @@ module Chat
 
     def clarification_question?(text:)
       text.to_s.match?(CLARIFICATION_REGEX)
+    end
+
+    def detail_question?(text:)
+      text.to_s.match?(DETAIL_QUESTION_REGEX)
+    end
+
+    def member_follow_up_question?(text:)
+      pronoun_reference?(text:) || identity_question?(text:) || status_question?(text:) ||
+        clarification_question?(text:) || detail_question?(text:)
     end
 
     def current_member_for_recent_reference(text:)
@@ -166,7 +176,7 @@ module Chat
     end
 
     def referential_follow_up?(text:)
-      pronoun_reference?(text:) || identity_question?(text:) || clarification_question?(text:)
+      member_follow_up_question?(text:)
     end
 
     def role_question?(text:)

@@ -5,6 +5,22 @@ const MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
 
 type JsonPayload = Record<string, unknown>;
+type ChatAttachmentPayload = {
+  id: number;
+  filename: string;
+  content_type: string;
+  byte_size: number;
+  url: string;
+};
+
+type ChatMessagePayload = {
+  id: number;
+  role: string;
+  status: string;
+  content: string;
+  metadata?: Record<string, unknown>;
+  images?: ChatAttachmentPayload[];
+};
 
 export default class extends Controller<HTMLDivElement> {
   static targets = [
@@ -149,6 +165,7 @@ export default class extends Controller<HTMLDivElement> {
 
     const draftContent = this.textInputTarget.value;
     const content = draftContent.trim();
+    const requestThreadId = this.currentThreadId();
     if (!content && this.selectedFiles.length === 0) {
       this.setAttachmentError(this.translate('messageRequiredError'));
       return;
@@ -174,6 +191,11 @@ export default class extends Controller<HTMLDivElement> {
 
         const threadId = this.numberValue(data.thread_id);
         if (threadId > 0 && this.currentThreadId() <= 0) this.persistSidebarPreference(true);
+
+        if (this.shouldRenderInlineResponse(data, threadId, requestThreadId)) {
+          this.applyInlineResponse(data, threadId);
+          return;
+        }
 
         this.visitWorkspace(threadId);
       })
@@ -615,6 +637,179 @@ export default class extends Controller<HTMLDivElement> {
     }
 
     return 0;
+  }
+
+  private shouldRenderInlineResponse(data: JsonPayload, threadId: number, requestThreadId: number): boolean {
+    const status = this.stringValue(data.status);
+    if (!['executed', 'forbidden', 'validation_error', 'execution_error', 'canceled'].includes(status)) {
+      return false;
+    }
+
+    if (threadId <= 0 || requestThreadId <= 0 || threadId !== requestThreadId) return false;
+
+    return this.payloadMessages(data).length > 0;
+  }
+
+  private applyInlineResponse(data: JsonPayload, threadId: number): void {
+    if (this.hasThreadInputTarget) this.threadInputTarget.value = String(threadId);
+
+    this.removeOptimisticMessages();
+    this.appendServerMessages(this.payloadMessages(data));
+    this.updateThreadUrl(threadId);
+    this.scrollConversationToBottom(true);
+  }
+
+  private payloadMessages(data: JsonPayload): ChatMessagePayload[] {
+    const rawMessages = data.messages;
+    if (!Array.isArray(rawMessages)) return [];
+
+    return rawMessages.filter((message): message is ChatMessagePayload => {
+      return Boolean(message && typeof message === 'object' && 'id' in message && 'role' in message);
+    });
+  }
+
+  private appendServerMessages(messages: ChatMessagePayload[]): void {
+    const messageStream = this.ensureMessageStream();
+    if (!messageStream) return;
+
+    messages.forEach((message) => {
+      if (this.messageAlreadyRendered(messageStream, message.id)) return;
+
+      const article = this.buildMessageArticle(message);
+      if (!article) return;
+
+      messageStream.appendChild(article);
+    });
+  }
+
+  private messageAlreadyRendered(messageStream: HTMLElement, messageId: number): boolean {
+    return messageStream.querySelector(`[data-message-id="${messageId}"]`) !== null;
+  }
+
+  private buildMessageArticle(message: ChatMessagePayload): HTMLElement | null {
+    const article = document.createElement('article');
+    article.className = `chat-message chat-message-${message.role}`;
+    article.dataset.messageId = String(message.id);
+
+    if (message.role === 'user') {
+      article.appendChild(this.buildUserMessage(message));
+      return article;
+    }
+
+    if (message.role === 'assistant') {
+      article.appendChild(this.buildAssistantMessage(message));
+      return article;
+    }
+
+    if (message.role === 'system') {
+      const row = document.createElement('p');
+      row.className = 'chat-system-row chat-system-row-thinking';
+      row.textContent = message.content;
+      article.appendChild(row);
+      return article;
+    }
+
+    return null;
+  }
+
+  private buildUserMessage(message: ChatMessagePayload): HTMLElement {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-user-bubble';
+
+    if (message.content) {
+      const body = document.createElement('p');
+      body.className = 'chat-message-body';
+      body.textContent = message.content;
+      bubble.appendChild(body);
+    }
+
+    const images = Array.isArray(message.images) ? message.images : [];
+    if (images.length > 0) {
+      const grid = document.createElement('div');
+      grid.className = 'chat-image-grid';
+
+      images.forEach((image) => {
+        const imageTag = document.createElement('img');
+        imageTag.className = 'chat-image-thumb';
+        imageTag.alt = image.filename;
+        imageTag.src = image.url;
+        grid.appendChild(imageTag);
+      });
+
+      bubble.appendChild(grid);
+    }
+
+    return bubble;
+  }
+
+  private buildAssistantMessage(message: ChatMessagePayload): HTMLElement {
+    const block = document.createElement('div');
+    block.className = 'chat-assistant-block';
+
+    const body = document.createElement('div');
+    body.className = 'chat-message-body';
+    this.appendAssistantContent(body, message.content || '');
+    block.appendChild(body);
+
+    return block;
+  }
+
+  private appendAssistantContent(container: HTMLElement, content: string): void {
+    const normalized = content.replace(/\r\n/g, '\n').trim();
+    if (!normalized) return;
+
+    const paragraphs = normalized.split(/\n{2,}/);
+    paragraphs.forEach((paragraph) => {
+      const trimmed = paragraph.trim();
+      if (!trimmed) return;
+
+      if (this.bulletParagraph(trimmed)) {
+        container.appendChild(this.buildBulletList(trimmed));
+        return;
+      }
+
+      const node = document.createElement('p');
+      this.appendTextWithLineBreaks(node, trimmed);
+      container.appendChild(node);
+    });
+  }
+
+  private bulletParagraph(paragraph: string): boolean {
+    const lines = paragraph.split('\n').map((line) => line.trim()).filter(Boolean);
+    if (lines.length === 0) return false;
+
+    return lines.every((line) => /^[-*•]\s+/.test(line));
+  }
+
+  private buildBulletList(paragraph: string): HTMLElement {
+    const list = document.createElement('ul');
+    paragraph
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .forEach((line) => {
+        const item = document.createElement('li');
+        item.textContent = line.replace(/^[-*•]\s+/, '');
+        list.appendChild(item);
+      });
+
+    return list;
+  }
+
+  private appendTextWithLineBreaks(node: HTMLElement, text: string): void {
+    text.split('\n').forEach((line, index) => {
+      if (index > 0) node.appendChild(document.createElement('br'));
+      node.append(line);
+    });
+  }
+
+  private updateThreadUrl(threadId: number): void {
+    if (threadId <= 0) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('thread_id', String(threadId));
+    url.searchParams.delete('new_chat');
+    window.history.replaceState({}, '', `${url.pathname}?${url.searchParams.toString()}`);
   }
 
   private updateThreadSearchVisibility(): void {

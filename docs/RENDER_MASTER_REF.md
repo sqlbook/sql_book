@@ -140,6 +140,11 @@ PGUSER=sqlbook PGPASSWORD="$POSTGRES_PASSWORD" PGHOST="$POSTGRES_HOST" \
 psql -d sqlbook_events_production -c "GRANT SELECT ON sessions TO sqlbook_readonly;"
 ```
 
+Current deploy note:
+- The production container starts the web app via `./bin/thrust ./bin/rails server`.
+- `bin/docker-entrypoint` must treat that wrapped command as a Rails server boot so `db:prepare` runs on deploy.
+- If staging serves new code but crashes on missing columns, open the Render web shell and run `bundle exec rails db:prepare` immediately.
+
 ## Asset deploy guardrail (staging + production)
 If any frontend assets changed (SCSS/JS/views that reference assets), precompile assets in production mode before or during deploy.
 
@@ -169,6 +174,7 @@ grep -n 'idempotency_key' app/controllers/app/workspaces/chat_messages_controlle
 grep -n \"'arguments' => { 'type' => 'string' }\" app/services/chat/runtime_service.rb
 grep -n \"'payload' => { 'type' => 'string' }\" app/services/chat/planner_service.rb
 bundle exec rails db:migrate:status | grep 20260309102000
+bundle exec rails db:migrate:status | grep 20260316143000
 ```
 
 Then verify compiled CSS fingerprint + critical rules:

@@ -75,6 +75,21 @@ es:
           request_already_pending: Esa solicitud ya está pendiente de confirmación.
           request_already_processed: Ya procesé esa solicitud.
           runtime_retry: Tuve un problema al planificar esa solicitud. Reformúlala y lo intento de nuevo.
+          capability_summary_intro: "Puedo ayudarte con la gestión del espacio de trabajo y su equipo dentro de este espacio. Ahora mismo puedo:"
+          capability_summary_footer: Si quieres, pídeme directamente una de esas acciones.
+          capability_summary_restricted: En este chat estoy centrado en la gestión del espacio de trabajo y del equipo. Con tu rol actual en este espacio, no puedo hacer esos cambios por ti aquí. Pídeselo a %{allowed_roles}.
+          scope_limited_intro: Estoy aquí para ayudarte con la gestión del espacio de trabajo y del equipo en sqlbook, no como un asistente de propósito general.
+          scope_limited_supported_intro: "Ahora mismo puedo ayudarte con:"
+          scope_limited_footer: Si quieres, pídeme directamente una de esas acciones.
+          scope_limited_restricted: Estoy aquí para ayudarte con la gestión del espacio de trabajo y del equipo en sqlbook, no como un asistente de propósito general. Con tu rol actual en este espacio, pídeselo a %{allowed_roles} si necesitas cambios en el espacio o el equipo.
+          capability_items:
+            member_list: Mostrar los miembros del equipo
+            member_invite: Invitar a un miembro del equipo
+            member_resend_invite: Reenviar una invitación pendiente
+            member_update_role: Cambiar el rol de un miembro del equipo
+            member_remove: Eliminar a un miembro del equipo
+            workspace_update_name: Cambiar el nombre del espacio
+            workspace_delete: Eliminar el espacio
         responses:
           confirmation:
             variants:
