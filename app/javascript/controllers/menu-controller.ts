@@ -19,14 +19,10 @@ export default class extends Controller<HTMLMenuElement> {
 
   public changeWorkspace(event: Event): void {
     const target = event.target as HTMLSelectElement;
+    const rootTemplate = target.dataset.workspaceRootTemplate || '/app/workspaces/__WORKSPACE_ID__';
+    const destination = rootTemplate.replace('__WORKSPACE_ID__', target.value);
 
-    // Ignore everything after the 5th position as it will have
-    // a data_source_id and will not be mappable
-    const parts = location.pathname.split('/').slice(0, 5);
-    // Replace the workspace_id
-    parts[3] = target.value;
-
-    window.Turbo.visit(parts.join('/'), { action: 'replace' });
+    window.Turbo.visit(destination, { action: 'replace' });
   }
 
   private closeOtherMenus(): void {

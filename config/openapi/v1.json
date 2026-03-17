@@ -560,7 +560,7 @@
               "success": {
                 "value": {
                   "status": "executed",
-                  "message": "Bob Smith is now Admin.",
+                  "message": "Bob Smith now has the role Admin.",
                   "data": {},
                   "error_code": null
                 }

@@ -137,9 +137,9 @@ es:
                 - "Ya va de camino una invitación nueva para %{email}."
             member_update_role:
               variants:
-                - "%{name} ahora es %{role}."
+                - "%{name} ahora tiene el rol %{role}."
                 - "Actualicé el rol de %{name} a %{role}."
-                - "Hecho. %{name} ahora tiene el rol %{role}."
+                - "Hecho. El rol de %{name} ahora es %{role}."
             member_remove:
               variants:
                 - "%{name} ha sido eliminado de este espacio."
@@ -234,7 +234,7 @@ es:
           member_resend_cooldown: Espera un poco antes de volver a reenviar esa invitación.
           member_resend_sent: Se ha enviado una invitación nueva a %{email}.
           member_role_invalid: Elige un rol válido.
-          member_role_updated: "%{name} ahora es %{role}."
+          member_role_updated: "%{name} ahora tiene el rol %{role}."
           member_remove_owner_forbidden: No se pueden eliminar los propietarios del espacio.
           member_remove_success: "%{name} ha sido eliminado del espacio."
           inferred_first_name: Equipo

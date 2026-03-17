@@ -292,6 +292,15 @@ RSpec.describe 'App::Workspaces', type: :request do
           expect(response.body).to have_selector(selector, text: label)
         end
       end
+
+      it 'routes workspace switchers to the workspace chat root' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).to have_selector(
+          "select[name='workspace_id'][data-workspace-root-template='#{app_workspace_path('__WORKSPACE_ID__')}']",
+          count: 2
+        )
+      end
     end
 
     context 'when current user is an admin of the workspace' do

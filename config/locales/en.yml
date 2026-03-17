@@ -168,9 +168,9 @@ en:
                 - "A new invitation is on its way to %{email}."
             member_update_role:
               variants:
-                - "%{name} is now %{role}."
+                - "%{name} now has the role %{role}."
                 - "I updated %{name}'s role to %{role}."
-                - "Done. %{name} now has the %{role} role."
+                - "Done. %{name}'s role is now %{role}."
             member_remove:
               variants:
                 - "%{name} has been removed from this workspace."
@@ -265,7 +265,7 @@ en:
           member_resend_cooldown: Please wait before resending that invitation.
           member_resend_sent: A fresh invitation has been sent to %{email}.
           member_role_invalid: Please choose a valid role.
-          member_role_updated: "%{name} is now %{role}."
+          member_role_updated: "%{name} now has the role %{role}."
           member_remove_owner_forbidden: Workspace owners cannot be removed.
           member_remove_success: "%{name} has been removed from the workspace."
           inferred_first_name: Team
@@ -454,7 +454,7 @@ en:
           body: "%{name} has been removed from this workspace."
         role_updated:
           title: Role change complete
-          body: "%{name} is now %{role}."
+          body: "%{name} now has the role %{role}."
         role_update_failed:
           title: Role change failure
           body: There was an unexpected error when changing the role of your team member. Please try again.

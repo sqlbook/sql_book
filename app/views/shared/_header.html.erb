@@ -60,8 +60,17 @@
           <%= render "shared/logo" %>
         <% end %>
 
+        <% workspace_root_template = app_workspace_path('__WORKSPACE_ID__') %>
+
         <div class="select desktop-workspace-switcher" data-controller="menu">
-          <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: @workspace.id), { "data-action": "change->menu#changeWorkspace" } %>
+          <%= select_tag :workspace_id,
+                         options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: @workspace.id),
+                         {
+                           data: {
+                             action: 'change->menu#changeWorkspace',
+                             workspace_root_template: workspace_root_template
+                           }
+                         } %>
           <i class="ri-arrow-drop-down-line"></i>
         </div>
       </div>
@@ -92,7 +101,14 @@
           <div class="dropdown" data-menu-target="dropdown" data-action="keydown.esc->menu#close" tabindex="0">
             <label class="text-small category heading"><%= I18n.t('app.navigation.workspace') %></label>
             <div class="select">
-              <%= select_tag :workspace_id, options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: @workspace.id), { "data-action": "change->menu#changeWorkspace" } %>
+              <%= select_tag :workspace_id,
+                             options_from_collection_for_select(@current_user.workspaces, :id, :name, selected: @workspace.id),
+                             {
+                               data: {
+                                 action: 'change->menu#changeWorkspace',
+                                 workspace_root_template: workspace_root_template
+                               }
+                             } %>
               <i class="ri-arrow-drop-down-line"></i>
             </div>
 
