@@ -3,6 +3,7 @@
 module Translations
   class CatalogSyncService # rubocop:disable Metrics/ClassLength
     LOCALE_FILE_PATH = Rails.root.join('config/locales/en.yml').freeze
+    SYNC_SIGNATURE_CACHE_KEY = 'translations:catalog_sync:locale_signature'
     EXCLUDED_KEY_PREFIXES = %w[admin. toasts.admin.].freeze
     KEY_USAGE_BY_PATH_RULES = [
       {
@@ -130,6 +131,15 @@ module Translations
     ].freeze
 
     class << self
+      def sync_from_locale_file_if_stale!
+        signature = locale_file_signature
+        cached_signature = Rails.cache.read(SYNC_SIGNATURE_CACHE_KEY)
+        return if cached_signature == signature && TranslationKey.exists?
+
+        sync_from_locale_file!
+        Rails.cache.write(SYNC_SIGNATURE_CACHE_KEY, signature)
+      end
+
       def sync_from_locale_file!
         remove_excluded_keys!
         locale_data = YAML.safe_load_file(LOCALE_FILE_PATH)
@@ -142,6 +152,11 @@ module Translations
       end
 
       private
+
+      def locale_file_signature
+        stat = File.stat(LOCALE_FILE_PATH)
+        "#{stat.size}:#{stat.mtime.to_i}"
+      end
 
       def remove_excluded_keys!
         table = TranslationKey.arel_table

@@ -3,6 +3,12 @@
 require 'rails_helper'
 
 RSpec.describe Translations::CatalogSyncService, type: :service do
+  around do |example|
+    Rails.cache.clear
+    example.run
+    Rails.cache.clear
+  end
+
   describe '.sync_from_locale_file!' do
     before do
       TranslationValueRevision.delete_all
@@ -62,6 +68,26 @@ RSpec.describe Translations::CatalogSyncService, type: :service do
       described_class.sync_from_locale_file!
 
       expect(TranslationKey.find_by(key: 'admin.translations.title')).to be_nil
+    end
+  end
+
+  describe '.sync_from_locale_file_if_stale!' do
+    let(:cache_store) { ActiveSupport::Cache::MemoryStore.new }
+
+    before do
+      TranslationValueRevision.delete_all
+      TranslationValue.delete_all
+      TranslationKey.delete_all
+      allow(Rails).to receive(:cache).and_return(cache_store)
+    end
+
+    it 'skips a repeat sync when the locale file signature has not changed' do
+      allow(described_class).to receive(:sync_from_locale_file!).and_call_original
+
+      described_class.sync_from_locale_file_if_stale!
+      described_class.sync_from_locale_file_if_stale!
+
+      expect(described_class).to have_received(:sync_from_locale_file!).once
     end
   end
 end

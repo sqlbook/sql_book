@@ -1,6 +1,6 @@
 # Translations Master Reference
 
-Last updated: 2026-03-07
+Last updated: 2026-03-19
 
 ## Service and goal
 - Service: database-backed internationalization for the signed-in and email experiences.
@@ -48,6 +48,9 @@ Persistence behavior:
   - fallback order in practice:
     1. exact key in requested locale
     2. exact key in default locale (`en`)
+- Admin catalog sync behavior:
+  - the translations manager still auto-syncs the English catalog from `config/locales/en.yml`
+  - sync is guarded by a cached locale-file signature, so unchanged locale files do not trigger a full catalog rescan on every page load
 
 ## Admin exclusion
 - Admin interface copy is intentionally excluded from the translation catalog.

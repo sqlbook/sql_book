@@ -298,7 +298,7 @@ High-risk writes (inline confirmation required):
 - In existing threads, the composer should restore focus after message submission so users can continue typing without manually clicking back into the field.
 - Message timestamps are intentionally hidden in chat stream UI.
 - System `Thinking` rows render animated trailing ellipsis only while pending/optimistic.
-- Transient status rows such as `Thinking`, `Checking permissions`, and `Done` should disappear once the assistant reply/result has rendered; they are not durable conversation content.
+- Transient runtime status rows are not durable conversation content and should disappear once the assistant reply/result has rendered.
 - Sticky composer area includes an opaque mask so older messages are hidden until scrolled above the composer.
 - Assistant content now supports sanitized markdown rendering for lists, tables, emphasis, links, blockquotes, and code blocks.
 - Markdown is rendered server-side and sanitized before output; raw HTML from model output is not trusted.

@@ -96,15 +96,9 @@ en:
           action_update: Action update
         statuses:
           thinking: Thinking
-          checking_permissions: Checking permissions
-          ready_to_confirm: Ready to confirm
-          done: Done
         messages:
-          confirm_suffix: Please confirm to continue.
           confirmation_default: I can run that action once you confirm.
           action_canceled: Okay, I canceled that action.
-          request_already_pending: That request is already pending confirmation.
-          request_already_processed: I already processed that request.
           runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
           capability_summary_intro: "I can help with workspace and team management in this workspace. Right now I can:"
           capability_summary_footer: If you want, ask me to do one of those directly.

@@ -186,7 +186,7 @@ module App
       end
 
       def sync_catalog!
-        Translations::CatalogSyncService.sync_from_locale_file!
+        Translations::CatalogSyncService.sync_from_locale_file_if_stale!
       end
 
       def filter_params

@@ -65,15 +65,9 @@ es:
           action_update: Actualización de acción
         statuses:
           thinking: Pensando
-          checking_permissions: Comprobando permisos
-          ready_to_confirm: Listo para confirmar
-          done: Hecho
         messages:
-          confirm_suffix: Por favor confirma para continuar.
           confirmation_default: Puedo ejecutar esa acción cuando la confirmes.
           action_canceled: Vale, cancelé esa acción.
-          request_already_pending: Esa solicitud ya está pendiente de confirmación.
-          request_already_processed: Ya procesé esa solicitud.
           runtime_retry: Tuve un problema al planificar esa solicitud. Reformúlala y lo intento de nuevo.
           capability_summary_intro: "Puedo ayudarte con la gestión del espacio de trabajo y su equipo dentro de este espacio. Ahora mismo puedo:"
           capability_summary_footer: Si quieres, pídeme directamente una de esas acciones.
