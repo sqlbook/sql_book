@@ -69,6 +69,11 @@
     </div>
 
     <div class="chat-history-sidebar-list" data-workspace-chat-target="threadList">
+      <p class="chat-history-sidebar-empty <%= 'visible' if @chat_threads.empty? %>"
+         data-workspace-chat-target="threadListEmpty">
+        <%= I18n.t('app.workspaces.chat.sidebar.empty') %>
+      </p>
+
       <% @chat_threads.each do |thread| %>
         <% thread_title = thread.title.presence || I18n.t('app.workspaces.chat.threads.untitled') %>
         <% thread_active = @chat_thread&.id == thread.id %>
@@ -113,11 +118,6 @@
         </div>
       <% end %>
     </div>
-
-    <p class="chat-history-sidebar-empty <%= 'visible' if @chat_threads.empty? %>"
-       data-workspace-chat-target="threadListEmpty">
-      <%= I18n.t('app.workspaces.chat.sidebar.empty') %>
-    </p>
   </aside>
 
   <main class="chat-pane">
@@ -136,7 +136,7 @@
 
     <% if @chat_messages.empty? %>
       <section class="chat-empty-state">
-        <%= image_tag "waving-quokka.svg", alt: "", class: "chat-empty-state-image", width: 72, height: 72 %>
+        <%= image_tag "waving-quokka.svg", alt: "", class: "chat-empty-state-image", width: 50, height: 50 %>
 
         <h1><%= I18n.t('app.workspaces.chat.title') %></h1>
 

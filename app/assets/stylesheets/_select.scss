@@ -1,7 +1,7 @@
 .select {
   background: var(--gray-850);
   border: 1px solid var(--gray-500);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--border-radius-md);
   height: 2rem;
   margin: 0;
   padding: 0;
@@ -22,6 +22,7 @@
     appearance: none;
     background: none;
     border: none;
+    border-radius: inherit;
     color: var(--cream-250);
     cursor: pointer;
     font: inherit;

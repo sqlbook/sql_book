@@ -1,7 +1,7 @@
 .app-workspaces-show,
 .app-chat_components-show {
   .workspace-chat-page {
-    --chat-panel-padding: 32px;
+    --chat-panel-padding: 24px;
     --chat-bottom-safe-space: 8rem;
   }
 }
@@ -143,7 +143,7 @@
     flex: 1;
     flex-direction: column;
     gap: 2px;
-    margin: 16px -20px 0;
+    margin: 16px -12px 0;
     min-height: 0;
     overflow-y: auto;
     padding: 0;
@@ -152,7 +152,7 @@
   .chat-history-sidebar-empty {
     color: var(--gray-500);
     display: none;
-    margin: 16px 0 0;
+    margin: 0 12px;
 
     &.visible {
       display: block;
@@ -339,9 +339,9 @@
   }
 
   .chat-pane-sidebar-open {
-    left: 32px;
+    left: var(--chat-panel-padding);
     position: absolute;
-    top: 32px;
+    top: var(--chat-panel-padding);
     z-index: 4;
   }
 
@@ -370,8 +370,12 @@
     .chat-empty-state-image {
       display: block;
       height: auto;
-      margin: 0 auto;
-      width: 4.5rem;
+      margin: 0 auto 32px;
+      width: 50px;
+    }
+
+    h1 {
+      margin: 0;
     }
 
     &.chat-empty-state-active {
@@ -394,10 +398,10 @@
   .chat-suggestion-chips {
     align-items: center;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.5rem;
     justify-content: center;
-    margin: 24px 0 32px;
+    margin: 32px 0 48px;
     max-width: 47.5rem;
     width: 100%;
   }
@@ -443,7 +447,7 @@
     color: var(--cream-250);
     margin: 0 0 0 auto;
     max-width: min(80%, 44rem);
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
     width: fit-content;
 
     .chat-message-body {
@@ -652,17 +656,18 @@
 
   .chat-composer-input-row {
     align-items: center;
-    background: var(--gray-800);
+    background: var(--gray-850);
     border: 1px solid var(--gray-500);
-    border-radius: var(--border-radius-sm);
+    border-radius: var(--border-radius-md);
     display: flex;
     gap: 0.5rem;
     height: 3.5rem;
     padding: 0 0.75rem;
     transition: opacity 140ms ease;
 
+    &:hover,
     &:focus-within {
-      background: var(--gray-800);
+      background: var(--black);
       border-color: var(--red-500);
     }
   }
@@ -715,6 +720,11 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     margin: 0.5rem 0 0;
+
+    &:empty {
+      display: none;
+      margin: 0;
+    }
   }
 
   .chat-attachment-preview {
@@ -747,7 +757,11 @@
   .chat-attachment-error {
     color: var(--red-500);
     margin: 0.5rem 0 0;
-    min-height: 1.5rem;
+
+    &:empty {
+      display: none;
+      margin: 0;
+    }
   }
 
   .chat-image-grid {
@@ -816,14 +830,18 @@
     }
 
     .chat-pane-sidebar-open {
-      left: 32px;
-      top: 32px;
+      left: var(--chat-panel-padding);
+      top: var(--chat-panel-padding);
     }
 
     .chat-message-stream,
     .chat-composer,
     .chat-suggestion-chips {
       max-width: 100%;
+    }
+
+    .chat-suggestion-chips {
+      flex-wrap: wrap;
     }
 
     .chat-user-bubble,

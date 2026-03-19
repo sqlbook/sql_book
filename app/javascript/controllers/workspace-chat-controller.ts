@@ -102,6 +102,7 @@ export default class extends Controller<HTMLDivElement> {
     this.updateThreadSearchVisibility();
     this.refreshThreadEmptyState();
     requestAnimationFrame(() => this.scrollConversationToBottom(true));
+    this.restoreComposerFocus();
     document.addEventListener('click', this.onDocumentClick);
   }
 
@@ -166,6 +167,9 @@ export default class extends Controller<HTMLDivElement> {
     const draftContent = this.textInputTarget.value;
     const content = draftContent.trim();
     const requestThreadId = this.currentThreadId();
+    if (requestThreadId > 0) this.rememberComposerFocus(requestThreadId);
+    else this.clearComposerFocusRequest();
+
     if (!content && this.selectedFiles.length === 0) {
       this.setAttachmentError(this.translate('messageRequiredError'));
       return;
@@ -202,6 +206,7 @@ export default class extends Controller<HTMLDivElement> {
       .catch((error) => {
         this.removeOptimisticMessages();
         this.restorePendingDraft();
+        this.clearComposerFocusRequest();
         this.setAttachmentError(error.message || this.translate('genericError'));
       })
       .finally(() => {
@@ -616,6 +621,27 @@ export default class extends Controller<HTMLDivElement> {
     return `workspace-chat-sidebar:${this.workspaceIdValue}`;
   }
 
+  private composerFocusRequestKey(): string {
+    return `workspace-chat-focus:${this.workspaceIdValue}`;
+  }
+
+  private rememberComposerFocus(threadId: number): void {
+    sessionStorage.setItem(this.composerFocusRequestKey(), String(threadId));
+  }
+
+  private clearComposerFocusRequest(): void {
+    sessionStorage.removeItem(this.composerFocusRequestKey());
+  }
+
+  private restoreComposerFocus(): void {
+    const requestedThreadId = Number(sessionStorage.getItem(this.composerFocusRequestKey()));
+    if (Number.isNaN(requestedThreadId) || requestedThreadId <= 0) return;
+    if (this.currentThreadId() !== requestedThreadId) return;
+
+    this.clearComposerFocusRequest();
+    requestAnimationFrame(() => this.textInputTarget.focus());
+  }
+
   private visitWorkspace(threadId: number): void {
     const url = new URL(window.location.href);
     if (threadId > 0) {
@@ -657,6 +683,7 @@ export default class extends Controller<HTMLDivElement> {
     this.appendServerMessages(this.payloadMessages(data));
     this.updateThreadUrl(threadId);
     this.scrollConversationToBottom(true);
+    this.restoreComposerFocus();
   }
 
   private payloadMessages(data: JsonPayload): ChatMessagePayload[] {

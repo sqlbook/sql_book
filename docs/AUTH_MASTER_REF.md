@@ -1,6 +1,6 @@
 # Auth Master Reference
 
-Last updated: 2026-03-09
+Last updated: 2026-03-19
 
 ## Service and goal
 - Service: application authentication and invitation flows in sqlbook.
@@ -50,6 +50,16 @@ Related references:
 - `GET /app/account-settings` -> `App::AccountSettingsController#show`
 - `PATCH /app/account-settings` -> `App::AccountSettingsController#update`
 - `GET /app/account-settings/verify-email/:token` -> `App::AccountSettingsController#verify_email`
+
+## Auth entry-page layout behavior
+- Signup and login entry pages render inside a centered auth panel rather than directly on the page background.
+- Panel styling should match the main app container language:
+  - `gray-800` surface
+  - `24px` border radius
+  - `48px` inner padding on desktop
+  - `32px` inner padding on mobile
+- Outer page padding should mirror the panel padding at each breakpoint so the panel keeps comfortable margins on smaller viewports.
+- Invitation pages should follow the same centered panel treatment for visual consistency with signup/login.
 
 ## Signup flow
 1. User submits name/email on signup page.

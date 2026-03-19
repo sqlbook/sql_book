@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-16
+Last updated: 2026-03-19
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -278,6 +278,7 @@ High-risk writes (inline confirmation required):
 
 ## Thread/sidebar UX behavior
 - Sidebar width is fixed at `260px` on desktop.
+- Sidebar panel padding is `24px`.
 - Sidebar is closed by default only when a workspace has no persisted chat threads yet.
 - Sidebar open/closed preference is stored in session storage per workspace and reused during the same browser session.
 - On mobile (`<=760px`), sidebar opens as full chat-surface overlay and collapses after thread selection (or manual close).
@@ -288,10 +289,13 @@ High-risk writes (inline confirmation required):
 - "New chat" starts as a draft view and does not create/list a thread until first message submission.
 - Thread title is generated from the first user message (LLM-first with deterministic fallback).
 - Thread list supports local title search (filter activates at 2+ characters), inline rename, and archive/delete from row menu.
+- If there are no persisted threads, `No chats yet` should render at the top of the thread-list region directly under search, not pinned to the bottom of the sidebar.
 - Thread and message fetch/update routes are scoped by `workspace_id + current_user` to prevent cross-member history leakage.
 
 ## Message stream UX behavior
 - User messages render immediately on submit (optimistic append) before runtime response returns.
+- The composer input row should use the same field chrome as the chat-history search field for default, hover, and focus states.
+- In existing threads, the composer should restore focus after message submission so users can continue typing without manually clicking back into the field.
 - Message timestamps are intentionally hidden in chat stream UI.
 - System `Thinking` rows render animated trailing ellipsis only while pending/optimistic.
 - Transient status rows such as `Thinking`, `Checking permissions`, and `Done` should disappear once the assistant reply/result has rendered; they are not durable conversation content.
@@ -300,6 +304,17 @@ High-risk writes (inline confirmation required):
 - Markdown is rendered server-side and sanitized before output; raw HTML from model output is not trusted.
 - Runtime result rendering must preserve line breaks and paragraph spacing; collapsing all whitespace before markdown render breaks lists and tables into plain paragraphs.
 - Same-thread non-confirmation chat responses (`executed`, `forbidden`, `validation_error`, `execution_error`, `canceled`) should render inline from the JSON response without requiring a full Turbo page revisit, so successful low-risk writes always produce a visible assistant acknowledgement.
+- Attachment validation/error areas should collapse completely when empty; they must not reserve vertical space below the composer when there is no content to show.
+
+## Empty-state UX behavior
+- Empty-state quokka image renders at `50px` wide.
+- Spacing:
+  - `32px` from image to heading
+  - `32px` from heading to suggestion chips
+  - `48px` from suggestion chips to composer
+  - `8px` from composer to helper text
+- Suggestion chips should remain on one row until the viewport is narrow enough to require wrapping.
+- User message bubble padding is `8px 16px`.
 
 ## Attachment behavior (v1)
 - Accepted MIME types:

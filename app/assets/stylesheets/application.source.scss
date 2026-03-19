@@ -71,6 +71,7 @@
 @use "app/workspaces/index" as workspaces_index;
 @use "app/workspaces/new" as workspaces_new;
 @use "app/workspaces/show" as workspaces_show;
+@use "auth/base" as auth_base;
 @use "auth/invitation/show" as invitation_show;
 @use "auth/login/index" as login_index;
 @use "auth/login/new" as login_new;

@@ -1,7 +1,7 @@
 <main>
-  <h1>Log in</h1>
+  <section class="auth-panel" data-controller="form">
+    <h1>Log in</h1>
 
-  <div class="container md" data-controller="form">
     <%= form_with url: auth_login_index_path, method: :post, class: "login-form", html: { "data-form-target": "form" } do |form| %>
       <%= form.hidden_field :email, value: request.params['email'] %>
 
@@ -23,5 +23,5 @@
         <%= form.submit "[Log In]", class: "link primary", "data-form-target": "submit" %>
       </div>
     <% end %>
-  </div>
+  </section>
 </main>
