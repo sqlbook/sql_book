@@ -10,7 +10,7 @@
     <h2>Empty-state Hero Block</h2>
     <div class="chat-components-canvas">
       <section class="chat-empty-state">
-        <%= image_tag "waving-quokka.svg", alt: "", class: "chat-empty-state-image", width: 72, height: 72 %>
+        <%= image_tag "waving-quokka.svg", alt: "", class: "chat-empty-state-image", width: 50, height: 50 %>
         <h1><%= I18n.t('app.workspaces.chat.title') %></h1>
 
         <div class="chat-suggestion-chips">
@@ -117,14 +117,14 @@
         <article class="chat-message chat-message-assistant">
           <div class="chat-assistant-block">
             <div class="chat-message-body">
-              <%= render_chat_markdown("I can rename this workspace once you confirm.\n\n- Current name: `Bananarama`\n- Proposed name: `Bumanarama`") %>
+              <%= render_chat_markdown("I can remove **Chris Smith** from this workspace once you confirm.") %>
             </div>
 
             <div class="chat-inline-card">
               <p class="chat-inline-card-title"><%= I18n.t('app.workspaces.chat.cards.confirmation_needed') %></p>
               <p class="chat-inline-card-body">
                 <%= I18n.t('app.workspaces.chat.cards.action_label') %>
-                <strong><%= I18n.t('app.workspaces.chat.action_labels.workspace_update_name') %></strong>
+                <strong><%= I18n.t('app.workspaces.chat.action_labels.member_remove') %></strong>
               </p>
               <div class="chat-inline-card-actions">
                 <button type="button" class="link primary"><%= I18n.t('common.actions.confirm') %></button>
@@ -149,11 +149,11 @@
         <article class="chat-message chat-message-assistant">
           <div class="chat-assistant-block">
             <div class="chat-message-body">
-              <%= render_chat_markdown("Done. Workspace renamed to **Bumanarama**.\n\n| Field | Value |\n| --- | --- |\n| Previous name | Bananarama |\n| Current name | Bumanarama |") %>
+              <%= render_chat_markdown("Bob Smith now has the role Admin.") %>
             </div>
             <div class="chat-inline-card chat-inline-card-success">
               <p class="chat-inline-card-title">Success</p>
-              <p class="chat-inline-card-body">Workspace name updated to Bumanarama.</p>
+              <p class="chat-inline-card-body">Bob Smith now has the role Admin.</p>
             </div>
           </div>
         </article>
@@ -162,28 +162,128 @@
   </section>
 
   <section class="chat-components-section">
-    <h2>Thread Switcher / History Shell</h2>
-    <div class="chat-components-canvas">
-      <aside class="chat-thread-shell">
-        <header class="chat-thread-shell-header">
-          <h3>Conversations</h3>
-          <button type="button" class="link secondary">New thread</button>
-        </header>
-        <ul class="chat-thread-list">
-          <li class="chat-thread-item is-active">
-            <p class="chat-thread-title">Invite team members</p>
-            <p class="chat-thread-meta">Today, 16:43</p>
-          </li>
-          <li class="chat-thread-item">
-            <p class="chat-thread-title">Rename workspace</p>
-            <p class="chat-thread-meta">Today, 15:17</p>
-          </li>
-          <li class="chat-thread-item">
-            <p class="chat-thread-title">Member role updates</p>
-            <p class="chat-thread-meta">Yesterday, 10:02</p>
-          </li>
-        </ul>
-      </aside>
+    <h2>History Sidebar</h2>
+    <div class="chat-components-canvas chat-components-sidebar-showcase">
+      <div class="workspace-chat-page chat-sidebar-open">
+        <aside class="chat-history-sidebar">
+          <header class="chat-history-sidebar-header">
+            <h2><%= I18n.t('app.workspaces.chat.sidebar.heading') %></h2>
+
+            <div class="chat-history-sidebar-header-actions">
+              <button type="button"
+                      class="chat-sidebar-icon-button"
+                      aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.new_chat_aria') %>">
+                <i class="ri-add-circle-line"></i>
+              </button>
+
+              <button type="button"
+                      class="chat-sidebar-icon-button"
+                      aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.close_aria') %>">
+                <svg class="chat-sidebar-icon chat-sidebar-icon-fold"
+                     viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 5H13V19H5V5ZM19 19H15V5H19V19ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V4C21 3.44772 20.5523 3 20 3H4ZM7 12L11 8.5V15.5L7 12Z" />
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-history-sidebar-search">
+            <input type="search"
+                   class="input block fluid chat-history-search-input"
+                   placeholder="<%= I18n.t('app.workspaces.chat.sidebar.search_placeholder') %>" />
+            <button type="button"
+                    class="chat-history-search-clear visible"
+                    aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.clear_search_aria') %>">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+
+          <div class="chat-history-sidebar-list">
+            <div class="chat-history-thread-row is-active">
+              <button type="button" class="chat-history-thread-open">
+                <span class="chat-history-thread-title">Promote Bob Smith to Admin</span>
+              </button>
+
+              <div class="chat-history-thread-actions">
+                <button type="button"
+                        class="chat-history-thread-menu-toggle"
+                        aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.thread_menu_aria') %>">
+                  <i class="ri-more-2-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="chat-history-thread-row">
+              <button type="button" class="chat-history-thread-open">
+                <span class="chat-history-thread-title">Invite a new teammate</span>
+              </button>
+
+              <div class="chat-history-thread-actions">
+                <button type="button"
+                        class="chat-history-thread-menu-toggle"
+                        aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.thread_menu_aria') %>">
+                  <i class="ri-more-2-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="chat-history-thread-row menu-open">
+              <button type="button" class="chat-history-thread-open">
+                <span class="chat-history-thread-title">Rename the workspace</span>
+              </button>
+
+              <div class="chat-history-thread-actions">
+                <button type="button"
+                        class="chat-history-thread-menu-toggle"
+                        aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.thread_menu_aria') %>">
+                  <i class="ri-more-2-fill"></i>
+                </button>
+
+                <div class="chat-history-thread-menu">
+                  <button type="button" class="link secondary chat-history-thread-menu-item">
+                    <i class="ri-pencil-line"></i>
+                    <span><%= I18n.t('common.actions.rename') %></span>
+                  </button>
+                  <button type="button" class="link secondary chat-history-thread-menu-item">
+                    <i class="ri-delete-bin-line"></i>
+                    <span><%= I18n.t('common.actions.delete') %></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="workspace-chat-page chat-sidebar-open">
+        <aside class="chat-history-sidebar">
+          <header class="chat-history-sidebar-header">
+            <h2><%= I18n.t('app.workspaces.chat.sidebar.heading') %></h2>
+
+            <div class="chat-history-sidebar-header-actions">
+              <button type="button"
+                      class="chat-sidebar-icon-button"
+                      aria-label="<%= I18n.t('app.workspaces.chat.sidebar.actions.new_chat_aria') %>">
+                <i class="ri-add-circle-line"></i>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-history-sidebar-search">
+            <input type="search"
+                   class="input block fluid chat-history-search-input"
+                   placeholder="<%= I18n.t('app.workspaces.chat.sidebar.search_placeholder') %>" />
+          </div>
+
+          <div class="chat-history-sidebar-list">
+            <p class="chat-history-sidebar-empty visible">
+              <%= I18n.t('app.workspaces.chat.sidebar.empty') %>
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   </section>
 </main>

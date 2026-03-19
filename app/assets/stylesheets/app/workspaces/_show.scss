@@ -398,7 +398,7 @@
   .chat-suggestion-chips {
     align-items: center;
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 0.5rem;
     justify-content: center;
     margin: 32px 0 48px;
@@ -407,16 +407,22 @@
   }
 
   .chat-suggestion-chip {
+    align-items: center;
     background: var(--gray-850);
     border: 1px solid var(--gray-700);
     border-radius: 999px;
-    color: var(--gray-250);
+    color: var(--gray-200);
     cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 auto;
     font: inherit;
     font-size: 0.875rem;
-    line-height: 1.5rem;
+    font-weight: var(--font-weight-normal);
+    justify-content: center;
+    line-height: 1rem;
     margin: 0;
-    padding: 0.375rem 0.875rem;
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
 
     &:hover {
       background: var(--gray-800);
@@ -838,10 +844,6 @@
     .chat-composer,
     .chat-suggestion-chips {
       max-width: 100%;
-    }
-
-    .chat-suggestion-chips {
-      flex-wrap: wrap;
     }
 
     .chat-user-bubble,

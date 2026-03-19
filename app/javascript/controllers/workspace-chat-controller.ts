@@ -638,8 +638,25 @@ export default class extends Controller<HTMLDivElement> {
     if (Number.isNaN(requestedThreadId) || requestedThreadId <= 0) return;
     if (this.currentThreadId() !== requestedThreadId) return;
 
-    this.clearComposerFocusRequest();
-    requestAnimationFrame(() => this.textInputTarget.focus());
+    this.focusComposerInputAfterSubmit();
+  }
+
+  private focusComposerInputAfterSubmit(attempt = 0): void {
+    requestAnimationFrame(() => {
+      if (this.textInputTarget.readOnly && attempt < 4) {
+        this.focusComposerInputAfterSubmit(attempt + 1);
+        return;
+      }
+
+      this.textInputTarget.focus({ preventScroll: true });
+
+      if (typeof this.textInputTarget.setSelectionRange === 'function') {
+        const cursorPosition = this.textInputTarget.value.length;
+        this.textInputTarget.setSelectionRange(cursorPosition, cursorPosition);
+      }
+
+      this.clearComposerFocusRequest();
+    });
   }
 
   private visitWorkspace(threadId: number): void {
