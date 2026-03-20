@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tooling
-  module WorkspaceDataSourceRegistry # rubocop:disable Metrics/ModuleLength
+  module WorkspaceDataSourceRegistry
     module_function
 
     TOOL_CATALOG = [
@@ -19,7 +19,10 @@ module Tooling
       },
       {
         name: 'datasource.validate_connection',
-        description: 'Validate a PostgreSQL connection and return the discovered tables for the current workspace flow.',
+        description: [
+          'Validate a PostgreSQL connection',
+          'and return the discovered tables for the current workspace flow.'
+        ].join(' '),
         input_schema: {
           'type' => 'object',
           'required' => %w[host database_name username password],
@@ -40,7 +43,10 @@ module Tooling
       },
       {
         name: 'datasource.create',
-        description: 'Create a PostgreSQL data source in the current workspace using the validated connection details and selected tables.',
+        description: [
+          'Create a PostgreSQL data source in the current workspace',
+          'using the validated connection details and selected tables.'
+        ].join(' '),
         input_schema: {
           'type' => 'object',
           'required' => %w[name host database_name username password selected_tables],

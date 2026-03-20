@@ -29,7 +29,8 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
         get "/app/workspaces/#{workspace.id}/data_sources"
 
         expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
-        expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
+        expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']",
+                                               text: workspace.name)
         expect(response.body).to have_selector('.breadcrumbs-current', text: 'Data Sources')
       end
 
@@ -208,7 +209,8 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       post "/app/workspaces/#{workspace.id}/data_sources", params: { selected_tables: selected_tables }
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include(I18n.t('app.workspaces.data_sources.validation.selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES))
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.validation.selected_tables_limit',
+                                              count: DataSource::MAX_SELECTED_TABLES))
     end
 
     context 'when current user has user role permissions' do

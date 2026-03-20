@@ -2,51 +2,14 @@
 
 module App
   module Workspaces
-    module DataSourcesHelper
+    module DataSourcesHelper # rubocop:disable Metrics/ModuleLength
       include ActiveSupport::NumberHelper
 
       def data_sources_index_sections(data_sources)
         [
-          {
-            key: :external_database,
-            title: I18n.t('app.workspaces.data_sources.index.sections.external_database.title'),
-            description: I18n.t('app.workspaces.data_sources.index.sections.external_database.description'),
-            headers: [
-              I18n.t('app.workspaces.data_sources.index.columns.name'),
-              I18n.t('app.workspaces.data_sources.index.columns.type'),
-              I18n.t('app.workspaces.data_sources.index.columns.tables'),
-              I18n.t('app.workspaces.data_sources.index.columns.related_queries')
-            ],
-            rows: data_sources.select(&:external_database?),
-            row_partial: 'external_database_row',
-            empty_title: I18n.t('app.workspaces.data_sources.index.empty.external_database.title'),
-            empty_body: I18n.t('app.workspaces.data_sources.index.empty.external_database.body'),
-            empty_cta: I18n.t('common.actions.create_new')
-          },
-          {
-            key: :first_party_capture,
-            title: I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.title'),
-            description: I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.description'),
-            headers: [
-              I18n.t('app.workspaces.data_sources.index.columns.name'),
-              I18n.t('app.workspaces.data_sources.index.columns.total_events'),
-              I18n.t('app.workspaces.data_sources.index.columns.events_this_month'),
-              I18n.t('app.workspaces.data_sources.index.columns.related_queries')
-            ],
-            rows: data_sources.select(&:capture_source?),
-            row_partial: 'capture_source_row',
-            empty_title: I18n.t('app.workspaces.data_sources.index.empty.first_party_capture.title'),
-            empty_body: I18n.t('app.workspaces.data_sources.index.empty.first_party_capture.body'),
-            empty_cta: I18n.t('common.actions.create_new')
-          },
-          {
-            key: :third_party_data_library,
-            title: I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title'),
-            description: I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.description'),
-            coming_soon: true,
-            coming_soon_title: I18n.t('app.workspaces.data_sources.index.coming_soon.title'),
-            coming_soon_body: I18n.t('app.workspaces.data_sources.index.coming_soon.body')
-          }
+          external_database_section(data_sources),
+          first_party_capture_section(data_sources),
+          third_party_data_library_section
         ]
       end
 
@@ -122,24 +85,7 @@ module App
       end
 
       def wizard_available_table_groups(available_tables)
-        Array(available_tables).map do |group|
-          schema = group[:schema] || group['schema']
-          tables = Array(group[:tables] || group['tables']).map do |table|
-            table_name = table[:name] || table['name']
-            qualified_name = table[:qualified_name] || table['qualified_name'] || [schema, table_name].join('.')
-
-            {
-              name: table_name,
-              qualified_name: qualified_name,
-              columns: Array(table[:columns] || table['columns'])
-            }
-          end
-
-          {
-            schema: schema,
-            tables: tables
-          }
-        end
+        Array(available_tables).map { |group| normalized_table_group(group) }
       end
 
       def tracking_code(data_source:)
@@ -183,6 +129,83 @@ module App
       def script_websocket_url
         websocket_protocol = Rails.application.config.x.app_protocol == 'https' ? 'wss' : 'ws'
         "#{websocket_protocol}://#{Rails.application.config.x.app_host}/events/in"
+      end
+
+      private
+
+      def external_database_section(data_sources)
+        build_index_section(
+          key: :external_database,
+          section_scope: 'external_database',
+          headers: %w[name type tables related_queries],
+          rows: data_sources.select(&:external_database?),
+          row_partial: 'external_database_row'
+        )
+      end
+
+      def first_party_capture_section(data_sources)
+        build_index_section(
+          key: :first_party_capture,
+          section_scope: 'first_party_capture',
+          headers: %w[name total_events events_this_month related_queries],
+          rows: data_sources.select(&:capture_source?),
+          row_partial: 'capture_source_row'
+        )
+      end
+
+      def third_party_data_library_section
+        {
+          key: :third_party_data_library,
+          title: I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title'),
+          description: I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.description'),
+          coming_soon: true,
+          coming_soon_title: I18n.t('app.workspaces.data_sources.index.coming_soon.title'),
+          coming_soon_body: I18n.t('app.workspaces.data_sources.index.coming_soon.body')
+        }
+      end
+
+      def build_index_section(key:, section_scope:, headers:, rows:, row_partial:)
+        {
+          key:,
+          title: I18n.t("app.workspaces.data_sources.index.sections.#{section_scope}.title"),
+          description: I18n.t("app.workspaces.data_sources.index.sections.#{section_scope}.description"),
+          headers: translated_headers(headers),
+          rows:,
+          row_partial:,
+          empty_title: I18n.t("app.workspaces.data_sources.index.empty.#{section_scope}.title"),
+          empty_body: I18n.t("app.workspaces.data_sources.index.empty.#{section_scope}.body"),
+          empty_cta: I18n.t('common.actions.create_new')
+        }
+      end
+
+      def translated_headers(keys)
+        keys.map { |key| I18n.t("app.workspaces.data_sources.index.columns.#{key}") }
+      end
+
+      def normalized_table_group(group)
+        schema = value_from(group, :schema)
+
+        {
+          schema:,
+          tables: Array(value_from(group, :tables)).map do |table|
+            normalized_table_entry(schema:, table:)
+          end
+        }
+      end
+
+      def normalized_table_entry(schema:, table:)
+        table_name = value_from(table, :name)
+        qualified_name = value_from(table, :qualified_name) || [schema, table_name].join('.')
+
+        {
+          name: table_name,
+          qualified_name:,
+          columns: Array(value_from(table, :columns))
+        }
+      end
+
+      def value_from(object, key)
+        object[key] || object[key.to_s]
       end
     end
   end

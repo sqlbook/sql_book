@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DataSources
-  class CreatePostgresDataSourceService
+  class CreatePostgresDataSourceService # rubocop:disable Metrics/ClassLength
     Result = Struct.new(:success?, :data_source, :available_tables, :error_code, :message, keyword_init: true)
 
     def initialize(workspace:, attributes:)
@@ -9,47 +9,21 @@ module DataSources
       @attributes = attributes.deep_symbolize_keys
     end
 
-    def call
-      validation = ConnectionValidationService.new(source_type: 'postgres', attributes: connection_attributes).call
-      return failure(code: validation.error_code, message: validation.message, available_tables: validation.available_tables) unless validation.success?
+    def call # rubocop:disable Metrics/AbcSize
+      validation = validate_connection
+      return validation_failure(validation) unless validation.success?
 
       selected_tables = normalized_selected_tables
-      return failure(code: 'selected_tables_required', message: I18n.t('app.workspaces.data_sources.validation.selected_tables_required'), available_tables: validation.available_tables) if selected_tables.empty?
-      if selected_tables.size > DataSource::MAX_SELECTED_TABLES
-        return failure(
-          code: 'selected_tables_limit',
-          message: I18n.t('app.workspaces.data_sources.validation.selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES),
-          available_tables: validation.available_tables
-        )
-      end
+      failure = validate_selected_tables(selected_tables, validation.available_tables)
+      return failure if failure
 
-      permitted_tables = validation.available_tables.flat_map do |group|
-        Array(group[:tables]).map { |table| table[:qualified_name] || [group[:schema], table[:name]].join('.') }
-      end
-      unless (selected_tables - permitted_tables).empty?
-        return failure(code: 'invalid_selected_tables', message: I18n.t('app.workspaces.data_sources.validation.invalid_selected_tables'), available_tables: validation.available_tables)
-      end
-
-      data_source = workspace.data_sources.new(
-        name: attributes[:name],
-        source_type: :postgres,
-        status: :active,
-        last_checked_at: validation.checked_at,
-        last_error: nil,
-        config: {
-          'host' => connection_attributes[:host],
-          'port' => connection_attributes[:port].to_i,
-          'database_name' => connection_attributes[:database_name],
-          'username' => connection_attributes[:username],
-          'ssl_mode' => connection_attributes[:ssl_mode].presence || DataSource::POSTGRES_DEFAULT_SSL_MODE,
-          'extract_category_values' => ActiveModel::Type::Boolean.new.cast(connection_attributes[:extract_category_values]),
-          'selected_tables' => selected_tables
-        }
+      data_source = build_data_source(
+        selected_tables:,
+        checked_at: validation.checked_at
       )
-      data_source.connection_password = connection_attributes[:password]
       data_source.save!
 
-      Result.new(success?: true, data_source:, available_tables: validation.available_tables, error_code: nil, message: nil)
+      success(data_source:, available_tables: validation.available_tables)
     rescue ActiveRecord::RecordInvalid => e
       failure(code: 'validation_error', message: e.record.errors.full_messages.to_sentence)
     end
@@ -72,6 +46,109 @@ module DataSources
 
     def normalized_selected_tables
       Array(attributes[:selected_tables]).map(&:to_s).map(&:strip).compact_blank.uniq
+    end
+
+    def validate_connection
+      ConnectionValidationService.new(
+        source_type: 'postgres',
+        attributes: connection_attributes
+      ).call
+    end
+
+    def validation_failure(validation)
+      failure(
+        code: validation.error_code,
+        message: validation.message,
+        available_tables: validation.available_tables
+      )
+    end
+
+    def validate_selected_tables(selected_tables, available_tables)
+      return selected_tables_required_failure(available_tables) if selected_tables.empty?
+      return selected_tables_limit_failure(available_tables) if selected_tables.size > DataSource::MAX_SELECTED_TABLES
+      if invalid_selected_tables?(selected_tables, available_tables)
+        return invalid_selected_tables_failure(available_tables)
+      end
+
+      nil
+    end
+
+    def selected_tables_required_failure(available_tables)
+      failure(
+        code: 'selected_tables_required',
+        message: I18n.t('app.workspaces.data_sources.validation.selected_tables_required'),
+        available_tables:
+      )
+    end
+
+    def selected_tables_limit_failure(available_tables)
+      failure(
+        code: 'selected_tables_limit',
+        message: I18n.t(
+          'app.workspaces.data_sources.validation.selected_tables_limit',
+          count: DataSource::MAX_SELECTED_TABLES
+        ),
+        available_tables:
+      )
+    end
+
+    def invalid_selected_tables_failure(available_tables)
+      failure(
+        code: 'invalid_selected_tables',
+        message: I18n.t('app.workspaces.data_sources.validation.invalid_selected_tables'),
+        available_tables:
+      )
+    end
+
+    def invalid_selected_tables?(selected_tables, available_tables)
+      (selected_tables - permitted_tables(available_tables)).any?
+    end
+
+    def permitted_tables(available_tables)
+      available_tables.flat_map do |group|
+        Array(group[:tables]).map do |table|
+          table[:qualified_name] || [group[:schema], table[:name]].join('.')
+        end
+      end
+    end
+
+    def build_data_source(selected_tables:, checked_at:)
+      data_source = workspace.data_sources.new(
+        name: attributes[:name],
+        source_type: :postgres,
+        status: :active,
+        last_checked_at: checked_at,
+        last_error: nil,
+        config: data_source_config(selected_tables)
+      )
+      data_source.connection_password = connection_attributes[:password]
+      data_source
+    end
+
+    def data_source_config(selected_tables)
+      {
+        'host' => connection_attributes[:host],
+        'port' => connection_attributes[:port].to_i,
+        'database_name' => connection_attributes[:database_name],
+        'username' => connection_attributes[:username],
+        'ssl_mode' => connection_attributes[:ssl_mode].presence || DataSource::POSTGRES_DEFAULT_SSL_MODE,
+        'extract_category_values' => extract_category_values_flag,
+        'selected_tables' => selected_tables
+      }
+    end
+
+    def extract_category_values_flag
+      ActiveModel::Type::Boolean.new.cast(connection_attributes[:extract_category_values])
+    end
+
+    def success(data_source:, available_tables:)
+      Result.new(
+        success?: true,
+        data_source:,
+        available_tables:,
+        error_code: nil,
+        message: nil
+      )
     end
 
     def failure(code:, message:, available_tables: [])

@@ -4,6 +4,7 @@ module DataSources
   module Connectors
     class BaseConnector
       class ConnectionError < StandardError; end
+
       class QueryError < StandardError
         attr_reader :code
 
@@ -12,6 +13,7 @@ module DataSources
           @code = code
         end
       end
+
       class UnsupportedSourceTypeError < StandardError; end
 
       attr_reader :data_source

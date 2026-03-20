@@ -4,7 +4,7 @@ require 'pg'
 
 module DataSources
   module Connectors
-    class PostgresConnector < BaseConnector
+    class PostgresConnector < BaseConnector # rubocop:disable Metrics/ClassLength
       DEFAULT_STATEMENT_TIMEOUT_MS = 5_000
       DEFAULT_ROW_LIMIT = 1_000
       TABLE_LIMIT = 200
@@ -39,13 +39,13 @@ module DataSources
         limited_sql = DataSources::QuerySafetyGuard.limit_sql(sql:, max_rows:)
 
         with_connection do |connection|
-          connection.exec('BEGIN READ ONLY')
-          connection.exec("SET LOCAL statement_timeout = '#{statement_timeout_ms}ms'")
-          result = connection.exec(limited_sql)
-          connection.exec('COMMIT')
-          ActiveRecord::Result.new(result.fields, result.values)
+          execute_sql_in_readonly_transaction(
+            connection:,
+            sql: limited_sql,
+            statement_timeout_ms:
+          )
         rescue PG::Error
-          connection.exec('ROLLBACK') rescue nil
+          rollback_transaction(connection)
           raise QueryError.new(I18n.t('app.workspaces.data_sources.query_guard.query_failed'), code: 'query_failed')
         end
       end
@@ -79,14 +79,17 @@ module DataSources
       end
 
       def selected_tables
-        return Array(connection_attributes[:selected_tables]).map(&:to_s).compact_blank if connection_attributes[:selected_tables].present?
+        if connection_attributes[:selected_tables].present?
+          return Array(connection_attributes[:selected_tables]).map(&:to_s).compact_blank
+        end
+
         return data_source.selected_tables if data_source
 
         []
       end
 
       def table_list_sql(limit:)
-        <<~SQL
+        <<~SQL.squish
           SELECT table_schema, table_name
           FROM information_schema.tables
           WHERE table_type = 'BASE TABLE'
@@ -119,24 +122,8 @@ module DataSources
         table_pairs = rows.map { |row| [row['table_schema'], row['table_name']] }
         return {} if table_pairs.empty?
 
-        values_sql = table_pairs.each_with_index.map { |(_, _), index| "($#{(index * 2) + 1}, $#{(index * 2) + 2})" }.join(', ')
-        params = table_pairs.flatten
-
-        result = connection.exec_params(<<~SQL, params)
-          SELECT table_schema, table_name, column_name, data_type
-          FROM information_schema.columns
-          WHERE (table_schema, table_name) IN (#{values_sql})
-          ORDER BY table_schema, table_name, ordinal_position
-        SQL
-
-        result.each_with_object({}) do |row, lookup|
-          qualified_table = qualified_table_name(schema: row['table_schema'], table_name: row['table_name'])
-          lookup[qualified_table] ||= []
-          lookup[qualified_table] << {
-            name: row['column_name'],
-            data_type: row['data_type']
-          }
-        end
+        column_result = load_columns_result(connection:, table_pairs:)
+        build_columns_lookup(column_result)
       end
 
       def qualified_table_name(schema:, table_name:)
@@ -149,6 +136,54 @@ module DataSources
 
         normalized_rows.select do |row|
           selected_tables.include?(qualified_table_name(schema: row['table_schema'], table_name: row['table_name']))
+        end
+      end
+
+      def execute_sql_in_readonly_transaction(connection:, sql:, statement_timeout_ms:)
+        connection.exec('BEGIN READ ONLY')
+        connection.exec("SET LOCAL statement_timeout = '#{statement_timeout_ms}ms'")
+
+        result = connection.exec(sql)
+        connection.exec('COMMIT')
+
+        ActiveRecord::Result.new(result.fields, result.values)
+      end
+
+      def rollback_transaction(connection)
+        connection.exec('ROLLBACK')
+      rescue PG::Error
+        nil
+      end
+
+      def values_sql_for(table_pairs)
+        table_pairs.each_with_index.map do |(_, _), index|
+          "($#{(index * 2) + 1}, $#{(index * 2) + 2})"
+        end.join(', ')
+      end
+
+      def load_columns_result(connection:, table_pairs:)
+        connection.exec_params(columns_sql(table_pairs), table_pairs.flatten)
+      end
+
+      def columns_sql(table_pairs)
+        values_sql = values_sql_for(table_pairs)
+
+        <<~SQL.squish
+          SELECT table_schema, table_name, column_name, data_type
+          FROM information_schema.columns
+          WHERE (table_schema, table_name) IN (#{values_sql})
+          ORDER BY table_schema, table_name, ordinal_position
+        SQL
+      end
+
+      def build_columns_lookup(column_result)
+        column_result.each_with_object({}) do |row, lookup|
+          qualified_table = qualified_table_name(schema: row['table_schema'], table_name: row['table_name'])
+          lookup[qualified_table] ||= []
+          lookup[qualified_table] << {
+            name: row['column_name'],
+            data_type: row['data_type']
+          }
         end
       end
     end

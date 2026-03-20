@@ -709,7 +709,9 @@ RSpec.describe QueryService do
     before do
       allow(data_source).to receive(:connector).and_return(connector)
       allow(connector).to receive(:execute_readonly).and_raise(
-        DataSources::Connectors::BaseConnector::QueryError.new(I18n.t('app.workspaces.data_sources.query_guard.query_failed'))
+        DataSources::Connectors::BaseConnector::QueryError.new(
+          I18n.t('app.workspaces.data_sources.query_guard.query_failed')
+        )
       )
     end
 

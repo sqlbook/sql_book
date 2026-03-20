@@ -2,17 +2,19 @@
 
 class GeneralizeDataSourcesForConnectors < ActiveRecord::Migration[7.1]
   def up
-    add_column :data_sources, :name, :string
-    add_column :data_sources, :source_type, :integer, default: 0, null: false
-    add_column :data_sources, :status, :integer, default: 0, null: false
-    add_column :data_sources, :last_checked_at, :datetime
-    add_column :data_sources, :last_error, :text
-    add_column :data_sources, :config, :jsonb, default: {}, null: false
-    add_column :data_sources, :encrypted_connection_password, :text
+    change_table :data_sources, bulk: true do |table|
+      table.string :name
+      table.integer :source_type, default: 0, null: false
+      table.integer :status, default: 0, null: false
+      table.datetime :last_checked_at
+      table.text :last_error
+      table.jsonb :config, default: {}, null: false
+      table.text :encrypted_connection_password
+    end
 
     remove_index :data_sources, :url
-    add_index :data_sources, [:workspace_id, :url], unique: true, where: 'url IS NOT NULL'
-    add_index :data_sources, [:workspace_id, :source_type]
+    add_index :data_sources, %i[workspace_id url], unique: true, where: 'url IS NOT NULL'
+    add_index :data_sources, %i[workspace_id source_type]
 
     change_column_null :data_sources, :url, true
 
@@ -29,19 +31,23 @@ class GeneralizeDataSourcesForConnectors < ActiveRecord::Migration[7.1]
   end
 
   def down
+    # rubocop:disable Rails/BulkChangeTable
     change_column_null :data_sources, :url, false
     change_column_null :data_sources, :name, true
+    # rubocop:enable Rails/BulkChangeTable
 
-    remove_index :data_sources, column: [:workspace_id, :source_type]
-    remove_index :data_sources, column: [:workspace_id, :url]
+    remove_index :data_sources, column: %i[workspace_id source_type]
+    remove_index :data_sources, column: %i[workspace_id url]
     add_index :data_sources, :url, unique: true
 
-    remove_column :data_sources, :encrypted_connection_password
-    remove_column :data_sources, :config
-    remove_column :data_sources, :last_error
-    remove_column :data_sources, :last_checked_at
-    remove_column :data_sources, :status
-    remove_column :data_sources, :source_type
-    remove_column :data_sources, :name
+    change_table :data_sources, bulk: true do |table|
+      table.remove :encrypted_connection_password
+      table.remove :config
+      table.remove :last_error
+      table.remove :last_checked_at
+      table.remove :status
+      table.remove :source_type
+      table.remove :name
+    end
   end
 end

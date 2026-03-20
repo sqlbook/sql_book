@@ -32,9 +32,12 @@ module ViewHelper
     normalized_current_step = Integer(current_step)
 
     raise ArgumentError, 'total_steps must be positive' if normalized_total_steps <= 0
-    raise ArgumentError, 'current_step must be between 1 and total_steps' if normalized_current_step < 1 || normalized_current_step > normalized_total_steps
+    return [normalized_total_steps, normalized_current_step] if current_step_in_range?(
+      current_step: normalized_current_step,
+      total_steps: normalized_total_steps
+    )
 
-    [normalized_total_steps, normalized_current_step]
+    raise ArgumentError, 'current_step must be between 1 and total_steps'
   end
 
   def step_indicator_step_state(step_number:, current_step:)
@@ -57,5 +60,11 @@ module ViewHelper
       total_steps:,
       status: I18n.t("shared.step_indicator.statuses.#{state}")
     )
+  end
+
+  private
+
+  def current_step_in_range?(current_step:, total_steps:)
+    current_step.between?(1, total_steps)
   end
 end

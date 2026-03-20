@@ -35,7 +35,9 @@ RSpec.describe DataSourcesStatsService do
     allow(Time).to receive(:current).and_return(now)
   end
 
-  let(:instance) { DataSourcesStatsService.new(data_sources: [data_source_1, data_source_2, data_source_3, postgres_source]) }
+  let(:instance) do
+    DataSourcesStatsService.new(data_sources: [data_source_1, data_source_2, data_source_3, postgres_source])
+  end
 
   describe '#total_events_for' do
     it 'returns the correct counts' do

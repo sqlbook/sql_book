@@ -2,9 +2,21 @@
 
 module App
   module Workspaces
-    class DataSourcesController < ApplicationController
+    class DataSourcesController < ApplicationController # rubocop:disable Metrics/ClassLength
       WIZARD_CACHE_TTL = 1.hour
-      WIZARD_SESSION_KEY_PREFIX = 'data_source_wizard_state'.freeze
+      WIZARD_SESSION_KEY_PREFIX = 'data_source_wizard_state'
+      WIZARD_PARAM_KEYS = %i[
+        source_type
+        name
+        database_type
+        host
+        port
+        database_name
+        username
+        password
+        ssl_mode
+        extract_category_values
+      ].freeze
 
       before_action :require_authentication!
       before_action :authorize_data_source_access!
@@ -30,76 +42,29 @@ module App
         @workspace = workspace
         @wizard_state = merged_wizard_state(wizard_form_params.to_h)
 
-        unless wizard_step_two_valid?(@wizard_state)
-          persist_wizard_state!(@wizard_state.except('available_tables', 'last_checked_at'))
-          prepare_new_view(step: 2)
-          render :new, status: :unprocessable_entity
-          return
-        end
+        return render_invalid_wizard_step_two unless wizard_step_two_valid?(@wizard_state)
 
-        validation = ::DataSources::ConnectionValidationService.new(
-          source_type: 'postgres',
-          attributes: wizard_connection_attributes(@wizard_state)
-        ).call
+        validation = validate_postgres_connection(@wizard_state)
+        return handle_successful_validation(validation) if validation.success?
 
-        if validation.success?
-          persist_wizard_state!(
-            @wizard_state.merge(
-              'available_tables' => validation.available_tables,
-              'last_checked_at' => validation.checked_at&.iso8601
-            )
-          )
-
-          redirect_to new_app_workspace_data_source_path(@workspace, step: 3)
-          return
-        end
-
-        flash.now[:alert] = validation.message
-        persist_wizard_state!(@wizard_state.except('available_tables', 'last_checked_at'))
-        prepare_new_view(step: 2)
-        render :new, status: :unprocessable_entity
+        render_connection_validation_failure(validation)
       end
 
       def create
         return create_capture_source if data_source_params[:url].present?
 
         @workspace = workspace
-        result = ::DataSources::CreatePostgresDataSourceService.new(
-          workspace: @workspace,
-          attributes: postgres_create_attributes
-        ).call
+        result = create_postgres_data_source
+        return handle_postgres_create_success(result) if result.success?
 
-        if result.success?
-          clear_wizard_state!
-          flash[:toast] = {
-            type: 'success',
-            title: I18n.t('app.workspaces.data_sources.toasts.created.title'),
-            body: I18n.t('app.workspaces.data_sources.toasts.created.body', name: result.data_source.display_name)
-          }
-          redirect_to app_workspace_data_sources_path(@workspace)
-          return
-        end
-
-        flash.now[:alert] = result.message
-        persist_wizard_state!(
-          merged_wizard_state(wizard_form_params.to_h).merge(
-            'available_tables' => result.available_tables,
-            'selected_tables' => Array(wizard_form_params[:selected_tables]).map(&:to_s)
-          )
-        )
-        prepare_new_view(step: result.error_code == 'connection_failed' ? 2 : 3)
-        render :new, status: :unprocessable_entity
+        handle_postgres_create_failure(result)
       end
 
       def update
-        if data_source.capture_source? && data_source_params[:url]
-          data_source.url = data_source_params[:url]
-          data_source.name = data_source_params[:url]
-          data_source.verified_at = nil
-          return handle_invalid_data_source_update(data_source) unless data_source.save
-        end
+        return redirect_to_data_source unless capture_update_requested?
+        return redirect_to_data_source if update_capture_source
 
-        redirect_to app_workspace_data_source_path(workspace, data_source)
+        handle_invalid_data_source_update(data_source)
       end
 
       def destroy
@@ -133,10 +98,9 @@ module App
         @wizard_step = step
         @wizard_state = wizard_state
         @available_tables = Array(@wizard_state['available_tables'])
+        return unless @wizard_step == 3 && @available_tables.empty?
 
-        if @wizard_step == 3 && @available_tables.empty?
-          @wizard_step = 2
-        end
+        @wizard_step = 2
       end
 
       def data_source_params
@@ -144,19 +108,7 @@ module App
       end
 
       def wizard_form_params
-        params.permit(
-          :source_type,
-          :name,
-          :database_type,
-          :host,
-          :port,
-          :database_name,
-          :username,
-          :password,
-          :ssl_mode,
-          :extract_category_values,
-          selected_tables: []
-        )
+        params.permit(*WIZARD_PARAM_KEYS, selected_tables: [])
       end
 
       def postgres_create_attributes
@@ -253,10 +205,30 @@ module App
       end
 
       def create_capture_source
-        data_source = DataSource.new(url: params[:url], name: params[:url], workspace:, source_type: :first_party_capture)
+        data_source = DataSource.new(
+          url: params[:url],
+          name: params[:url],
+          workspace:,
+          source_type: :first_party_capture
+        )
         return handle_invalid_data_source_create(data_source) unless data_source.save
 
         redirect_to app_workspace_data_source_set_up_index_path(workspace, data_source)
+      end
+
+      def capture_update_requested?
+        data_source.capture_source? && data_source_params[:url]
+      end
+
+      def update_capture_source
+        data_source.url = data_source_params[:url]
+        data_source.name = data_source_params[:url]
+        data_source.verified_at = nil
+        data_source.save
+      end
+
+      def redirect_to_data_source
+        redirect_to app_workspace_data_source_path(workspace, data_source)
       end
 
       def send_data_source_destroy_mailer
@@ -282,20 +254,7 @@ module App
       end
 
       def wizard_step_two_valid?(state)
-        preview = workspace.data_sources.new(
-          name: state['name'],
-          source_type: :postgres,
-          status: :pending_setup,
-          config: {
-            'host' => state['host'],
-            'port' => state['port'],
-            'database_name' => state['database_name'],
-            'username' => state['username'],
-            'ssl_mode' => state['ssl_mode'],
-            'extract_category_values' => state['extract_category_values'],
-            'selected_tables' => []
-          }
-        )
+        preview = build_postgres_preview_data_source(state)
         preview.connection_password = decrypted_wizard_password(state)
 
         return true if preview.valid?
@@ -309,7 +268,7 @@ module App
 
         password = overrides[:password] || overrides['password']
         if password.present?
-          normalized_overrides['encrypted_password'] = DataSource.connection_password_encryptor.encrypt_and_sign(password)
+          normalized_overrides['encrypted_password'] = encrypted_password_value(password)
         elsif normalized_overrides.key?('encrypted_password')
           normalized_overrides['encrypted_password'] = normalized_overrides['encrypted_password'].presence
         end
@@ -351,6 +310,99 @@ module App
           state['database_name'].present? &&
           state['username'].present? &&
           decrypted_wizard_password(state).present?
+      end
+
+      def validate_postgres_connection(state)
+        ::DataSources::ConnectionValidationService.new(
+          source_type: 'postgres',
+          attributes: wizard_connection_attributes(state)
+        ).call
+      end
+
+      def render_invalid_wizard_step_two
+        persist_wizard_state!(wizard_state_without_validation_metadata(@wizard_state))
+        prepare_new_view(step: 2)
+        render :new, status: :unprocessable_entity
+      end
+
+      def handle_successful_validation(validation)
+        persist_wizard_state!(
+          @wizard_state.merge(
+            'available_tables' => validation.available_tables,
+            'last_checked_at' => validation.checked_at&.iso8601
+          )
+        )
+        redirect_to new_app_workspace_data_source_path(@workspace, step: 3)
+      end
+
+      def render_connection_validation_failure(validation)
+        flash.now[:alert] = validation.message
+        persist_wizard_state!(wizard_state_without_validation_metadata(@wizard_state))
+        prepare_new_view(step: 2)
+        render :new, status: :unprocessable_entity
+      end
+
+      def create_postgres_data_source
+        ::DataSources::CreatePostgresDataSourceService.new(
+          workspace: @workspace,
+          attributes: postgres_create_attributes
+        ).call
+      end
+
+      def handle_postgres_create_success(result)
+        clear_wizard_state!
+        flash[:toast] = {
+          type: 'success',
+          title: I18n.t('app.workspaces.data_sources.toasts.created.title'),
+          body: I18n.t(
+            'app.workspaces.data_sources.toasts.created.body',
+            name: result.data_source.display_name
+          )
+        }
+        redirect_to app_workspace_data_sources_path(@workspace)
+      end
+
+      def handle_postgres_create_failure(result)
+        flash.now[:alert] = result.message
+        persist_wizard_state!(wizard_state_for_failed_create(result))
+        prepare_new_view(step: result.error_code == 'connection_failed' ? 2 : 3)
+        render :new, status: :unprocessable_entity
+      end
+
+      def wizard_state_for_failed_create(result)
+        merged_wizard_state(wizard_form_params.to_h).merge(
+          'available_tables' => result.available_tables,
+          'selected_tables' => Array(wizard_form_params[:selected_tables]).map(&:to_s)
+        )
+      end
+
+      def wizard_state_without_validation_metadata(state)
+        state.except('available_tables', 'last_checked_at')
+      end
+
+      def build_postgres_preview_data_source(state)
+        workspace.data_sources.new(
+          name: state['name'],
+          source_type: :postgres,
+          status: :pending_setup,
+          config: preview_config(state)
+        )
+      end
+
+      def preview_config(state)
+        {
+          'host' => state['host'],
+          'port' => state['port'],
+          'database_name' => state['database_name'],
+          'username' => state['username'],
+          'ssl_mode' => state['ssl_mode'],
+          'extract_category_values' => state['extract_category_values'],
+          'selected_tables' => []
+        }
+      end
+
+      def encrypted_password_value(password)
+        DataSource.connection_password_encryptor.encrypt_and_sign(password)
       end
     end
   end

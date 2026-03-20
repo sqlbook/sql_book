@@ -119,7 +119,8 @@ RSpec.describe Chat::Policy, type: :service do
       list_decision = policy.authorize(action_type: 'datasource.list', payload: {})
       validate_decision = policy.authorize(
         action_type: 'datasource.validate_connection',
-        payload: { 'host' => 'db.example.com', 'database_name' => 'sales', 'username' => 'sqlbook', 'password' => 'secret' }
+        payload: { 'host' => 'db.example.com', 'database_name' => 'sales', 'username' => 'sqlbook',
+                   'password' => 'secret' }
       )
       create_decision = policy.authorize(
         action_type: 'datasource.create',

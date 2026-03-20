@@ -3,6 +3,8 @@
 module Api
   module V1
     class DataSourcesController < Api::BaseController
+      CONNECTION_STRING_PARAMS = %i[host database_name username password].freeze
+
       def index
         execute_tool(action_type: 'datasource.list', payload: {})
       end
@@ -24,15 +26,9 @@ module Api
       private
 
       def connection_payload
-        {
-          'host' => params[:host].to_s,
-          'port' => normalized_port,
-          'database_name' => params[:database_name].to_s,
-          'username' => params[:username].to_s,
-          'password' => params[:password].to_s,
-          'ssl_mode' => params[:ssl_mode].to_s.presence,
-          'extract_category_values' => boolean_param(:extract_category_values)
-        }.compact
+        string_connection_payload
+          .merge(optional_connection_payload)
+          .compact
       end
 
       def create_payload
@@ -57,6 +53,20 @@ module Api
         return ActiveModel::Type::Boolean.new.cast(value) if value.present?
 
         nil
+      end
+
+      def string_connection_payload
+        CONNECTION_STRING_PARAMS.each_with_object({}) do |key, payload|
+          payload[key.to_s] = params[key].to_s
+        end
+      end
+
+      def optional_connection_payload
+        {
+          'port' => normalized_port,
+          'ssl_mode' => params[:ssl_mode].to_s.presence,
+          'extract_category_values' => boolean_param(:extract_category_values)
+        }
       end
     end
   end

@@ -11,20 +11,13 @@ module DataSources
 
     def call
       connector.validate_connection!
-
-      Result.new(
-        success?: true,
-        available_tables: connector.list_tables(include_columns: false),
-        checked_at: Time.current,
-        error_code: nil,
-        message: nil
-      )
+      success_result
     rescue Connectors::BaseConnector::ConnectionError => e
-      Rails.logger.warn("Data source connection validation failed: #{source_type} #{e.class}")
-      failure(code: 'connection_failed', message: I18n.t('app.workspaces.data_sources.validation.connection_failed'))
+      log_failure(e, level: :warn)
+      failure_result
     rescue StandardError => e
-      Rails.logger.error("Data source connection validation failed unexpectedly: #{source_type} #{e.class}")
-      failure(code: 'connection_failed', message: I18n.t('app.workspaces.data_sources.validation.connection_failed'))
+      log_failure(e, level: :error)
+      failure_result
     end
 
     private
@@ -37,6 +30,34 @@ module DataSources
 
     def failure(code:, message:)
       Result.new(success?: false, available_tables: [], checked_at: nil, error_code: code, message:)
+    end
+
+    def success_result
+      Result.new(
+        success?: true,
+        available_tables: connector.list_tables(include_columns: false),
+        checked_at: Time.current,
+        error_code: nil,
+        message: nil
+      )
+    end
+
+    def failure_result
+      failure(
+        code: 'connection_failed',
+        message: I18n.t('app.workspaces.data_sources.validation.connection_failed')
+      )
+    end
+
+    def log_failure(error, level:)
+      message = "#{log_prefix(level)}: #{source_type} #{error.class}"
+      Rails.logger.public_send(level, message)
+    end
+
+    def log_prefix(level)
+      return 'Data source connection validation failed' if level == :warn
+
+      'Data source connection validation failed unexpectedly'
     end
   end
 end

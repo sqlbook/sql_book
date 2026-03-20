@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class DataSource < ApplicationRecord
+class DataSource < ApplicationRecord # rubocop:disable Metrics/ClassLength
   SOURCE_TYPES = {
     first_party_capture: 0,
     postgres: 1
@@ -87,7 +87,9 @@ class DataSource < ApplicationRecord
   end
 
   def selected_tables=(value)
-    self.config = config.merge('selected_tables' => Array(value).map(&:to_s).map(&:strip).compact_blank.uniq)
+    self.config = config.merge(
+      'selected_tables' => Array(value).map(&:to_s).map(&:strip).compact_blank.uniq
+    )
   end
 
   def extract_category_values?
@@ -113,7 +115,7 @@ class DataSource < ApplicationRecord
   def connection_password=(value)
     normalized_value = value.to_s
     @raw_connection_password = normalized_value
-    self.encrypted_connection_password = normalized_value.present? ? self.class.connection_password_encryptor.encrypt_and_sign(normalized_value) : nil
+    self.encrypted_connection_password = encrypted_password_value(normalized_value)
   end
 
   def connection_config
@@ -170,10 +172,7 @@ class DataSource < ApplicationRecord
 
     return unless postgres?
 
-    self.port = port.presence || POSTGRES_DEFAULT_PORT
-    self.ssl_mode = ssl_mode.presence || POSTGRES_DEFAULT_SSL_MODE
-    self.extract_category_values = ActiveModel::Type::Boolean.new.cast(extract_category_values)
-    self.selected_tables = selected_tables
+    apply_postgres_defaults
   end
 
   def default_capture_name
@@ -191,5 +190,18 @@ class DataSource < ApplicationRecord
     return if selected_tables.size <= MAX_SELECTED_TABLES
 
     errors.add(:selected_tables, I18n.t('models.data_source.selected_tables_limit', count: MAX_SELECTED_TABLES))
+  end
+
+  def encrypted_password_value(password)
+    return nil if password.blank?
+
+    self.class.connection_password_encryptor.encrypt_and_sign(password)
+  end
+
+  def apply_postgres_defaults
+    self.port = port.presence || POSTGRES_DEFAULT_PORT
+    self.ssl_mode = ssl_mode.presence || POSTGRES_DEFAULT_SSL_MODE
+    self.extract_category_values = ActiveModel::Type::Boolean.new.cast(extract_category_values)
+    self.selected_tables = selected_tables
   end
 end

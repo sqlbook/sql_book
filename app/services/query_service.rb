@@ -13,10 +13,11 @@ class QueryService
     @error = false
   end
 
-  def execute
-    @data ||= cache_enabled? ? Rails.cache.fetch(cache_key, expires_in: 15.minutes) { execute_query } : execute_query
+  def execute # rubocop:disable Metrics/MethodLength
+    @data ||= fetch_query_result
     self
-  rescue DataSources::Connectors::BaseConnector::QueryError, DataSources::Connectors::BaseConnector::ConnectionError => e
+  rescue DataSources::Connectors::BaseConnector::QueryError,
+         DataSources::Connectors::BaseConnector::ConnectionError => e
     handle_connector_exception(e)
     self
   rescue ActiveRecord::ActiveRecordError => e
@@ -44,6 +45,12 @@ class QueryService
   end
 
   private
+
+  def fetch_query_result
+    return execute_query unless cache_enabled?
+
+    Rails.cache.fetch(cache_key, expires_in: 15.minutes) { execute_query }
+  end
 
   def cache_key
     [

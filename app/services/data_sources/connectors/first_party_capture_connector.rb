@@ -26,22 +26,39 @@ module DataSources
         }]
       end
 
-      def execute_readonly(sql:, statement_timeout_ms: nil, max_rows: nil)
+      def execute_readonly(sql:, statement_timeout_ms: nil, max_rows: nil) # rubocop:disable Lint/UnusedMethodArgument
         old_config = EventRecord.connection_db_config.configuration_hash.dup
-        readonly_config = old_config.merge(username: readonly_username, password: readonly_password)
 
-        EventRecord.establish_connection(readonly_config)
-        EventRecord.transaction do
-          EventRecord.connection.exec_query('SET TRANSACTION READ ONLY')
-          EventRecord.connection.exec_query("SET LOCAL app.current_data_source_uuid = '#{data_source.external_uuid}'")
-          EventRecord.connection.exec_query("SET LOCAL statement_timeout = '#{statement_timeout_ms}ms'") if statement_timeout_ms.present?
-          EventRecord.connection.exec_query(sql)
-        end
+        EventRecord.establish_connection(readonly_config(old_config))
+        execute_query_in_readonly_transaction(sql:, statement_timeout_ms:)
       ensure
         EventRecord.establish_connection(old_config)
       end
 
       private
+
+      def readonly_config(old_config)
+        old_config.merge(username: readonly_username, password: readonly_password)
+      end
+
+      def execute_query_in_readonly_transaction(sql:, statement_timeout_ms:)
+        EventRecord.transaction do
+          EventRecord.connection.exec_query('SET TRANSACTION READ ONLY')
+          EventRecord.connection.exec_query(
+            "SET LOCAL app.current_data_source_uuid = '#{data_source.external_uuid}'"
+          )
+          apply_statement_timeout(statement_timeout_ms)
+          EventRecord.connection.exec_query(sql)
+        end
+      end
+
+      def apply_statement_timeout(statement_timeout_ms)
+        return if statement_timeout_ms.blank?
+
+        EventRecord.connection.exec_query(
+          "SET LOCAL statement_timeout = '#{statement_timeout_ms}ms'"
+        )
+      end
 
       def readonly_username
         'sqlbook_readonly'

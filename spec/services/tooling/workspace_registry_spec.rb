@@ -23,17 +23,23 @@ RSpec.describe Tooling::WorkspaceRegistry do
         team: instance_double(Tooling::WorkspaceTeamHandlers),
         data_sources: instance_double(Tooling::WorkspaceDataSourceHandlers)
       }
+      success_result = Tooling::Result.new(
+        status: 'executed',
+        message: 'ok',
+        data: {},
+        error_code: nil
+      )
 
-      allow(handlers[:team]).to receive(:workspace_update_name).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:team]).to receive(:workspace_delete).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:team]).to receive(:member_list).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:team]).to receive(:member_invite).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:team]).to receive(:member_resend_invite).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:team]).to receive(:member_update_role).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:team]).to receive(:member_remove).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:data_sources]).to receive(:list).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:data_sources]).to receive(:validate_connection).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
-      allow(handlers[:data_sources]).to receive(:create).and_return(Tooling::Result.new(status: 'executed', message: 'ok', data: {}, error_code: nil))
+      allow(handlers[:team]).to receive(:workspace_update_name).and_return(success_result)
+      allow(handlers[:team]).to receive(:workspace_delete).and_return(success_result)
+      allow(handlers[:team]).to receive(:member_list).and_return(success_result)
+      allow(handlers[:team]).to receive(:member_invite).and_return(success_result)
+      allow(handlers[:team]).to receive(:member_resend_invite).and_return(success_result)
+      allow(handlers[:team]).to receive(:member_update_role).and_return(success_result)
+      allow(handlers[:team]).to receive(:member_remove).and_return(success_result)
+      allow(handlers[:data_sources]).to receive(:list).and_return(success_result)
+      allow(handlers[:data_sources]).to receive(:validate_connection).and_return(success_result)
+      allow(handlers[:data_sources]).to receive(:create).and_return(success_result)
 
       registry = Tooling::Registry.new(definitions: described_class.definitions(handlers:))
       expect(registry.definition('datasource.list')).to be_present

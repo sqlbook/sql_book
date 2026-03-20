@@ -98,7 +98,8 @@ RSpec.describe DataSource, type: :model do
       data_source.selected_tables = Array.new(DataSource::MAX_SELECTED_TABLES + 1) { |index| "public.table_#{index}" }
 
       expect(data_source).not_to be_valid
-      expect(data_source.errors[:selected_tables]).to include(I18n.t('models.data_source.selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES))
+      expect(data_source.errors[:selected_tables]).to include(I18n.t('models.data_source.selected_tables_limit',
+                                                                     count: DataSource::MAX_SELECTED_TABLES))
     end
   end
 end

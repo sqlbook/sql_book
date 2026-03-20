@@ -2,6 +2,13 @@
 
 module Tooling
   class WorkspaceDataSourceHandlers # rubocop:disable Metrics/ClassLength
+    FAILURE_MESSAGE_KEYS = {
+      'selected_tables_required' => :selected_tables_required,
+      'selected_tables_limit' => :selected_tables_limit,
+      'invalid_selected_tables' => :invalid_selected_tables,
+      'connection_failed' => :connection_failed
+    }.freeze
+
     def initialize(workspace:, actor:)
       @workspace = workspace
       @actor = actor
@@ -52,32 +59,10 @@ module Tooling
     end
 
     def create(arguments:)
-      result = DataSources::CreatePostgresDataSourceService.new(
-        workspace:,
-        attributes: create_attributes(arguments:)
-      ).call
+      result = create_postgres_data_source(arguments:)
+      return successful_create_result(result) if result.success?
 
-      if result.success?
-        data_source = result.data_source
-        executed(
-          message: default_message('data_source_created', name: data_source.display_name),
-          data: {
-            'data_source' => serialize_data_source(data_source:),
-            'available_tables' => result.available_tables
-          }
-        )
-      else
-        validation_error(
-          message: normalized_failure_message(
-            result.message,
-            result.error_code,
-            default: default_failure_message(result.error_code)
-          ),
-          data: {
-            'available_tables' => result.available_tables
-          }
-        )
-      end
+      failed_create_result(result)
     end
 
     private
@@ -131,33 +116,11 @@ module Tooling
       return default if value.blank?
       return default if value.start_with?('translation missing:')
 
-      case code.to_s
-      when 'selected_tables_required'
-        default_message('selected_tables_required')
-      when 'selected_tables_limit'
-        default_message('selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES)
-      when 'invalid_selected_tables'
-        default_message('invalid_selected_tables')
-      when 'connection_failed'
-        default_message('connection_failed')
-      else
-        value
-      end
+      translated_failure_message(code) || value
     end
 
     def default_failure_message(code)
-      case code.to_s
-      when 'selected_tables_required'
-        default_message('selected_tables_required')
-      when 'selected_tables_limit'
-        default_message('selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES)
-      when 'invalid_selected_tables'
-        default_message('invalid_selected_tables')
-      when 'connection_failed'
-        default_message('connection_failed')
-      else
-        default_message('validation_error')
-      end
+      translated_failure_message(code) || default_message('validation_error')
     end
 
     def default_message(key, **args)
@@ -170,6 +133,46 @@ module Tooling
 
     def validation_error(message:, data: {}, code: 'validation_error')
       Result.new(status: 'validation_error', message:, data:, error_code: code)
+    end
+
+    def create_postgres_data_source(arguments:)
+      DataSources::CreatePostgresDataSourceService.new(
+        workspace:,
+        attributes: create_attributes(arguments:)
+      ).call
+    end
+
+    def successful_create_result(result)
+      data_source = result.data_source
+      executed(
+        message: default_message('data_source_created', name: data_source.display_name),
+        data: {
+          'data_source' => serialize_data_source(data_source:),
+          'available_tables' => result.available_tables
+        }
+      )
+    end
+
+    def failed_create_result(result)
+      validation_error(
+        message: normalized_failure_message(
+          result.message,
+          result.error_code,
+          default: default_failure_message(result.error_code)
+        ),
+        data: {
+          'available_tables' => result.available_tables
+        }
+      )
+    end
+
+    def translated_failure_message(code)
+      key = FAILURE_MESSAGE_KEYS[code.to_s]
+      return unless key
+
+      return default_message(key, count: DataSource::MAX_SELECTED_TABLES) if key == :selected_tables_limit
+
+      default_message(key)
     end
   end
 end
