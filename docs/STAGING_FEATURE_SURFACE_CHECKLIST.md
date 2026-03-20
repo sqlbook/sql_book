@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-03-09
+Last updated: 2026-03-20
 
 ## Purpose
 Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook is pre-production only.
@@ -33,6 +33,14 @@ Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook i
 - [ ] Invite-back / recent-member follow-ups reuse prior thread context without losing track of the member identity or role.
 - [ ] High-risk actions still require inline confirmation and confirm/cancel behaves correctly.
 - [ ] Sidebar split/overlay behavior still matches viewport rules (`260px` desktop, full overlay at `<=760px`).
+- [ ] Datasource chat actions (`datasource.list`, `datasource.validate_connection`, `datasource.create`) behave correctly for owner/admin roles and are blocked for user/read-only roles.
+
+### Data sources
+- [ ] Datasource home renders grouped sections for external databases and first-party capture.
+- [ ] PostgreSQL datasource wizard validates connection details and advances to table selection.
+- [ ] PostgreSQL datasource create flow succeeds and returns to datasource home.
+- [ ] Datasource API routes (`list`, `validate-connection`, `create`) behave correctly for owner/admin roles.
+- [ ] External datasource rows/cards do not display first-party event-limit messaging.
 
 ### Destructive and irreversible flows
 - [ ] Workspace delete flow succeeds for owner and blocks non-owner.

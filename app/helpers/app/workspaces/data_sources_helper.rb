@@ -54,20 +54,17 @@ module App
           {
             value: 'postgres',
             label: I18n.t('app.workspaces.data_sources.new.source_types.external_database.title'),
-            description: I18n.t('app.workspaces.data_sources.new.source_types.external_database.description'),
             selected: selected_source_type.to_s == 'postgres'
           },
           {
             value: 'first_party_capture',
             label: I18n.t('app.workspaces.data_sources.new.source_types.first_party_capture.title'),
-            description: I18n.t('app.workspaces.data_sources.new.source_types.first_party_capture.description'),
             coming_soon: true,
             disabled: true
           },
           {
             value: 'third_party_data_library',
             label: I18n.t('app.workspaces.data_sources.new.source_types.third_party_data_library.title'),
-            description: I18n.t('app.workspaces.data_sources.new.source_types.third_party_data_library.description'),
             coming_soon: true,
             disabled: true
           }

@@ -1,7 +1,5 @@
 <section class="data-source-wizard__step">
-  <p class="data-source-wizard__description">
-    <%= t('app.workspaces.data_sources.new.steps.source_type.description') %>
-  </p>
+  <p class="label block"><%= t('app.workspaces.data_sources.new.steps.source_type.label') %></p>
 
   <div class="data-source-wizard__options">
     <% wizard_source_type_options(selected_source_type: (wizard_state || {})['source_type']).each do |option| %>
@@ -12,13 +10,13 @@
         </span>
 
         <span class="data-source-type-option__content">
-          <span class="data-source-type-option__title"><%= option[:label] %></span>
-          <span class="data-source-type-option__description"><%= option[:description] %></span>
+          <span class="data-source-type-option__title">
+            <%= option[:label] %>
+            <% if option[:coming_soon] %>
+              <span class="data-source-type-option__coming-soon">(<%= t('app.workspaces.data_sources.new.coming_soon') %>)</span>
+            <% end %>
+          </span>
         </span>
-
-        <% if option[:coming_soon] %>
-          <span class="data-source-type-option__badge"><%= t('app.workspaces.data_sources.new.coming_soon') %></span>
-        <% end %>
       </label>
     <% end %>
   </div>

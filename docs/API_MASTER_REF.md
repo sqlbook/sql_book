@@ -7,6 +7,7 @@ Single source of truth for sqlbook's documented API surface, OpenAPI authoring r
 
 Related references:
 - `docs/WORKSPACES_MASTER_REF.md`
+- `docs/DATA_SOURCES_MASTER_REF.md`
 - `docs/CHAT_MASTER_REF.md`
 - `docs/ENGINEERING_GUARDRAILS.md`
 - `docs/ENV_VARS.md`

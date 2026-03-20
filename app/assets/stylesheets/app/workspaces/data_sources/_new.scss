@@ -12,13 +12,8 @@
     margin: 0 0 1.5rem 0;
     text-align: center;
 
-    h1,
-    p {
+    h1 {
       margin: 0;
-    }
-
-    p {
-      margin-bottom: .5rem;
     }
   }
 
@@ -41,7 +36,7 @@
     cursor: pointer;
     display: grid;
     gap: .75rem;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr;
     padding: .75rem;
     transition: border-color 120ms ease, background 120ms ease;
 
@@ -96,8 +91,6 @@
   }
 
   .data-source-type-option__content {
-    display: grid;
-    gap: .125rem;
     min-width: 0;
   }
 
@@ -106,16 +99,10 @@
     font-weight: var(--font-weight-medium);
   }
 
-  .data-source-type-option__description {
-    color: var(--gray-300);
-    font-size: .875rem;
-  }
-
-  .data-source-type-option__badge {
+  .data-source-type-option__coming-soon {
     color: var(--gray-300);
     font-size: .875rem;
     font-style: italic;
-    white-space: nowrap;
   }
 
   .data-source-wizard__fields {

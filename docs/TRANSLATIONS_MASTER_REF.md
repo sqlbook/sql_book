@@ -14,6 +14,7 @@ Related references:
 - `docs/ADMIN_MASTER_REF.md` for admin namespace access control and bootstrap behavior.
 - `docs/ACCOUNT_SETTINGS_MASTER_REF.md` for user locale preference updates.
 - `docs/EMAILS_MASTER_REF.md` for recipient-locale mailer behavior.
+- `docs/DATA_SOURCES_MASTER_REF.md` for datasource-specific copy surfaces and lifecycle expectations.
 - `docs/ENV_VARS.md` for translation/admin environment variables.
 - `docs/CHAT_MASTER_REF.md` for chat-specific localization and deterministic copy rules.
 

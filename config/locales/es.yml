@@ -318,6 +318,7 @@ es:
               description: Próximamente
           steps:
             source_type:
+              label: Tipo
               description: Elige el tipo de fuente que quieres añadir. En esta primera versión solo están habilitadas las bases de datos externas.
             connection:
               description: Dale un nombre a la base de datos y confirma los detalles de conexión. La validaremos antes de continuar.

@@ -385,6 +385,7 @@ en:
               description: Coming soon
           steps:
             source_type:
+              label: Type
               description: Choose the kind of source you want to add. For this first pass, only external databases are enabled.
             connection:
               description: Give the database a name and confirm the connection details. We will validate it before moving on.
