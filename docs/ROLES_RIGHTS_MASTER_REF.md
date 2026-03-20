@@ -119,6 +119,19 @@ Super-admin is separate from workspace roles:
 - User: deny
 - Read-only: deny
 
+### Data source API and chat actions
+- Route/tool scope:
+  - `GET /api/v1/workspaces/:workspace_id/data-sources`
+  - `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
+  - `POST /api/v1/workspaces/:workspace_id/data-sources`
+  - `datasource.list`
+  - `datasource.validate_connection`
+  - `datasource.create`
+- Owner: allow
+- Admin: allow
+- User: deny
+- Read-only: deny
+
 ### Query library/read
 - Route scope:
   - `GET /app/workspaces/:workspace_id/queries`

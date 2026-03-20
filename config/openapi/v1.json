@@ -26,6 +26,11 @@
       "name": "Members",
       "description": "Operations for listing, inviting, updating, and removing workspace members. These mirror the team-management surface in the app.",
       "x-displayName": "Members"
+    },
+    {
+      "name": "Data Sources",
+      "description": "Operations for listing, validating, and creating workspace data sources. In this phase the documented connector flow is PostgreSQL-only and remains workspace-scoped and session-authenticated.",
+      "x-displayName": "Data Sources"
     }
   ],
   "x-tagGroups": [
@@ -36,6 +41,10 @@
     {
       "name": "Team management",
       "tags": ["Members"]
+    },
+    {
+      "name": "Data connectivity",
+      "tags": ["Data Sources"]
     }
   ],
   "x-scalar-active-environment": "current-origin",
@@ -391,6 +400,160 @@
           }
         ]
       }
+    },
+    "/api/v1/workspaces/{workspace_id}/data-sources": {
+      "get": {
+        "operationId": "dataSourceList",
+        "summary": "List data sources",
+        "description": "Returns the data sources attached to the current workspace. The payload is safe to consume directly in chat or UI code because it is already scoped to the current workspace and includes connector type, lifecycle status, selected table counts, and related query counts.",
+        "tags": ["Data Sources"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DataSourcesListed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/data-sources' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      },
+      "post": {
+        "operationId": "dataSourceCreate",
+        "summary": "Create PostgreSQL data source",
+        "description": "Creates a PostgreSQL data source after validating the connection details and selected tables. This endpoint is workspace-scoped, session-authenticated, and owner/admin-only.",
+        "tags": ["Data Sources"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataSourceCreateRequest"
+              },
+              "examples": {
+                "postgresCreate": {
+                  "summary": "Create a PostgreSQL source",
+                  "value": {
+                    "name": "Ecomm Warehouse",
+                    "host": "db.example.com",
+                    "port": 5432,
+                    "database_name": "sales",
+                    "username": "sqlbook",
+                    "password": "secret",
+                    "ssl_mode": "prefer",
+                    "selected_tables": ["public.orders", "public.customers"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DataSourceCreated"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/data-sources' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"Ecomm Warehouse\",\"host\":\"db.example.com\",\"port\":5432,\"database_name\":\"sales\",\"username\":\"sqlbook\",\"password\":\"secret\",\"ssl_mode\":\"prefer\",\"selected_tables\":[\"public.orders\",\"public.customers\"]}'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/data-sources/validate-connection": {
+      "post": {
+        "operationId": "dataSourceValidateConnection",
+        "summary": "Validate PostgreSQL connection",
+        "description": "Tests a PostgreSQL connection without creating the data source. The response includes the tables that are discoverable with the supplied credentials, which makes it suitable for both the create flow and a chat-assisted validation step.",
+        "tags": ["Data Sources"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataSourceConnectionValidationRequest"
+              },
+              "examples": {
+                "postgresValidate": {
+                  "summary": "Validate a PostgreSQL connection",
+                  "value": {
+                    "host": "db.example.com",
+                    "port": 5432,
+                    "database_name": "sales",
+                    "username": "sqlbook",
+                    "password": "secret",
+                    "ssl_mode": "prefer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DataSourceConnectionValidated"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/data-sources/validate-connection' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"host\":\"db.example.com\",\"port\":5432,\"database_name\":\"sales\",\"username\":\"sqlbook\",\"password\":\"secret\",\"ssl_mode\":\"prefer\"}'"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -589,6 +752,137 @@
           }
         }
       },
+      "DataSourcesListed": {
+        "description": "Workspace data sources returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DataSourcesListedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "2 data sources found.",
+                  "data": {
+                    "data_sources": [
+                      {
+                        "id": 31,
+                        "name": "Sales DB",
+                        "display_name": "Sales DB",
+                        "source_type": "postgres",
+                        "status": "active",
+                        "tables_count": 1,
+                        "selected_tables": [
+                          "public.orders"
+                        ],
+                        "related_queries_count": 3,
+                        "last_checked_at": "2026-03-20T10:00:00Z",
+                        "last_error": null,
+                        "verified_at": "2026-03-20T09:58:00Z"
+                      }
+                    ]
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "DataSourceConnectionValidated": {
+        "description": "PostgreSQL connection validated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DataSourceConnectionValidatedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Connection validated successfully. 12 tables found.",
+                  "data": {
+                    "checked_at": "2026-03-20T10:00:00Z",
+                    "available_tables": [
+                      {
+                        "schema": "public",
+                        "tables": [
+                          {
+                            "name": "orders",
+                            "qualified_name": "public.orders",
+                            "columns": [
+                              {
+                                "name": "id",
+                                "data_type": "bigint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "DataSourceCreated": {
+        "description": "PostgreSQL data source created",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DataSourceCreatedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Created PostgreSQL data source Ecomm Warehouse.",
+                  "data": {
+                    "data_source": {
+                      "id": 32,
+                      "name": "Ecomm Warehouse",
+                      "display_name": "Ecomm Warehouse",
+                      "source_type": "postgres",
+                      "status": "active",
+                      "tables_count": 2,
+                      "selected_tables": [
+                        "public.orders",
+                        "public.customers"
+                      ],
+                      "related_queries_count": 0,
+                      "last_checked_at": "2026-03-20T10:00:00Z",
+                      "last_error": null,
+                      "verified_at": null
+                    },
+                    "available_tables": [
+                      {
+                        "schema": "public",
+                        "tables": [
+                          {
+                            "name": "orders",
+                            "qualified_name": "public.orders",
+                            "columns": [
+                              {
+                                "name": "id",
+                                "data_type": "bigint"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
       "ToolUnauthorized": {
         "description": "Authentication required",
         "content": {
@@ -766,6 +1060,86 @@
           }
         }
       },
+      "DataSourceConnectionValidationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["host", "database_name", "username", "password"],
+        "properties": {
+          "host": {
+            "type": "string",
+            "minLength": 1
+          },
+          "port": {
+            "type": "integer",
+            "example": 5432
+          },
+          "database_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ssl_mode": {
+            "type": "string",
+            "example": "prefer"
+          },
+          "extract_category_values": {
+            "type": "boolean",
+            "description": "Optional category extraction toggle for the source setup flow."
+          }
+        }
+      },
+      "DataSourceCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "host", "database_name", "username", "password", "selected_tables"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "host": {
+            "type": "string",
+            "minLength": 1
+          },
+          "port": {
+            "type": "integer",
+            "example": 5432
+          },
+          "database_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "username": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ssl_mode": {
+            "type": "string",
+            "example": "prefer"
+          },
+          "extract_category_values": {
+            "type": "boolean"
+          },
+          "selected_tables": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
       "WorkspaceNameData": {
         "type": "object",
         "additionalProperties": false,
@@ -800,6 +1174,156 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MemberSummary"
+            }
+          }
+        }
+      },
+      "DataSourceSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "display_name",
+          "source_type",
+          "status",
+          "tables_count",
+          "selected_tables",
+          "related_queries_count"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": ["first_party_capture", "postgres"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending_setup", "active", "error"]
+          },
+          "tables_count": {
+            "type": "integer"
+          },
+          "selected_tables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "related_queries_count": {
+            "type": "integer"
+          },
+          "last_checked_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "last_error": {
+            "type": ["string", "null"]
+          },
+          "verified_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      },
+      "DataSourceTableColumn": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "data_type"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "data_type": {
+            "type": "string"
+          }
+        }
+      },
+      "DataSourceTableSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "qualified_name", "columns"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "qualified_name": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSourceTableColumn"
+            }
+          }
+        }
+      },
+      "DataSourceTableGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["schema", "tables"],
+        "properties": {
+          "schema": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSourceTableSummary"
+            }
+          }
+        }
+      },
+      "DataSourceListData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data_sources"],
+        "properties": {
+          "data_sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSourceSummary"
+            }
+          }
+        }
+      },
+      "DataSourceValidationData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["available_tables"],
+        "properties": {
+          "checked_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "available_tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSourceTableGroup"
+            }
+          }
+        }
+      },
+      "DataSourceCreateData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["data_source", "available_tables"],
+        "properties": {
+          "data_source": {
+            "$ref": "#/components/schemas/DataSourceSummary"
+          },
+          "available_tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DataSourceTableGroup"
             }
           }
         }
@@ -858,6 +1382,66 @@
           },
           "data": {
             "$ref": "#/components/schemas/MemberListData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "DataSourcesListedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataSourceListData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "DataSourceConnectionValidatedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataSourceValidationData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "DataSourceCreatedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/DataSourceCreateData"
           },
           "error_code": {
             "type": "null"

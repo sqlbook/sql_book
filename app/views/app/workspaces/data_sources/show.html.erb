@@ -2,8 +2,8 @@
 
 <main>
   <div class="page-header">
-    <h1>Data Sources</h1>
-    <%= link_to new_app_workspace_data_source_path(@workspace), class: "link secondary create-data-source", "data-shortcut": "N", "aria-label": "Create new datasource" do %>
+    <h1><%= I18n.t('app.workspaces.data_sources.index.title') %></h1>
+    <%= link_to new_app_workspace_data_source_path(@workspace), class: "link secondary create-data-source", "data-shortcut": "N", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.create_new') do %>
       <i class="ri-add-line red-500"></i>
       <span><%= I18n.t('common.actions.create_new') %></span>
     <% end %>
@@ -16,15 +16,20 @@
 
 <aside data-controller="resizeable-page">
   <div class="tabs">
-    <%= render "shared/tabs/nav_item", tab: "source_url", name: "Source URL", icon_class: "ri-global-line", default_selected: true %>
-    <%= render "shared/tabs/nav_item", tab: "tracking_code", name: "Tracking Code", icon_class: "ri-fire-line" %>
-    <%= render "shared/tabs/nav_item", tab: "source_deletion", name: "Source Deletion", icon_class: "ri-delete-bin-line" %>
+    <% if @data_source.capture_source? %>
+      <%= render "shared/tabs/nav_item", tab: "source_url", name: I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), icon_class: "ri-global-line", default_selected: true %>
+      <%= render "shared/tabs/nav_item", tab: "tracking_code", name: I18n.t('app.workspaces.data_sources.management.tracking_code_title'), icon_class: "ri-fire-line" %>
+    <% else %>
+      <%= render "shared/tabs/nav_item", tab: "connection_details", name: I18n.t('app.workspaces.data_sources.management.connection_title'), icon_class: "ri-database-2-line", default_selected: true %>
+      <%= render "shared/tabs/nav_item", tab: "selected_tables", name: I18n.t('app.workspaces.data_sources.management.selected_tables_title'), icon_class: "ri-node-tree" %>
+    <% end %>
+    <%= render "shared/tabs/nav_item", tab: "source_deletion", name: I18n.t('app.workspaces.data_sources.management.deletion_title'), icon_class: "ri-delete-bin-line" %>
   </div>
 
-  <% if active_tab?(tab: "source_url", default_selected: true) %>
+  <% if @data_source.capture_source? && active_tab?(tab: "source_url", default_selected: true) %>
     <div data-controller="form">
       <%= form_with url: app_workspace_data_source_path(@workspace, @data_source), method: :put, class: "update-data-source-form", html: { "data-form-target": "form" } do |form| %>
-        <%= form.label :url, "URL", class: "label block" %>
+        <%= form.label :url, I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), class: "label block" %>
         <%= form.text_field :url, type: "url", placeholder: "https://", class: "input block fluid", required: true, pattern: "https://.*", value: @data_source.url %>
 
         <%= render "shared/flash" %>
@@ -34,32 +39,83 @@
     </div>
   <% end %>
 
-  <% if active_tab?(tab: "tracking_code") %>
+  <% if @data_source.capture_source? && active_tab?(tab: "tracking_code") %>
     <%= render "shared/tracking_code", data_source: @data_source %>
   <% end %>
 
+  <% if @data_source.external_database? && active_tab?(tab: "connection_details", default_selected: true) %>
+    <div class="data-source-management">
+      <h3><%= I18n.t('app.workspaces.data_sources.management.connection_title') %></h3>
+      <dl class="data-source-management__list">
+        <div>
+          <dt><%= I18n.t('app.workspaces.data_sources.management.fields.type') %></dt>
+          <dd><%= data_source_index_type_label(@data_source) %></dd>
+        </div>
+        <div>
+          <dt><%= I18n.t('app.workspaces.data_sources.management.fields.host') %></dt>
+          <dd><%= @data_source.host %></dd>
+        </div>
+        <div>
+          <dt><%= I18n.t('app.workspaces.data_sources.management.fields.port') %></dt>
+          <dd><%= @data_source.port %></dd>
+        </div>
+        <div>
+          <dt><%= I18n.t('app.workspaces.data_sources.management.fields.server_database_name') %></dt>
+          <dd><%= @data_source.database_name %></dd>
+        </div>
+        <div>
+          <dt><%= I18n.t('app.workspaces.data_sources.management.fields.username') %></dt>
+          <dd><%= @data_source.username %></dd>
+        </div>
+        <div>
+          <dt><%= I18n.t('app.workspaces.data_sources.management.fields.ssl_mode') %></dt>
+          <dd><%= @data_source.ssl_mode %></dd>
+        </div>
+      </dl>
+    </div>
+  <% end %>
+
+  <% if @data_source.external_database? && active_tab?(tab: "selected_tables") %>
+    <div class="data-source-management">
+      <h3><%= I18n.t('app.workspaces.data_sources.management.selected_tables_title') %></h3>
+      <% if @data_source.selected_tables.any? %>
+        <ul class="gray-250">
+          <% @data_source.selected_tables.each do |table_name| %>
+            <li><%= table_name %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="gray-250">-</p>
+      <% end %>
+    </div>
+  <% end %>
+
   <% if active_tab?(tab: "source_deletion") %>
-    <p class="cream-250"><b>You can delete your site at any time:</b></p>
+    <p class="cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_intro') %></b></p>
     <ul class="gray-250">
-      <li>The data source will be deleted immediately for all users in your workspace.</li>
-      <li>Deleting your data source will not delete your sqlbook workspace or user account.</li>
-      <li>All data captured from <%= @data_source.url %> will be permanently deleted. To restore your data source you would need to re-add it to sqlbook.</li>
+      <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.one') %></li>
+      <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.two') %></li>
+      <li>
+        <%= @data_source.capture_source? ?
+              I18n.t('app.workspaces.data_sources.management.deletion_points.three_capture', name: @data_source.display_name) :
+              I18n.t('app.workspaces.data_sources.management.deletion_points.three_external') %>
+      </li>
     </ul>
 
     <% if params[:confirm_delete] %>
       <div class="message">
         <i class="ri-error-warning-line ri-lg red-500"></i>
         <div class="body">
-          <p class="title cream-250"><b>Are you sure you wish to delete your data source</b></p>
-          <p>If so, all data will be deleted permanently.</p>
+          <p class="title cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_confirm_title') %></b></p>
+          <p><%= I18n.t('app.workspaces.data_sources.management.deletion_confirm_body') %></p>
           <div class="actions">
-            <%= link_to "[Delete Data Source]", app_workspace_data_source_path(@workspace, @data_source), class: "link primary", data: { turbo_method: :delete }, "aria-label": "Confirm deletion of datasource" %>
-            <%= link_to I18n.t('common.actions.cancel'), add_params(confirm_delete: nil), class: "link secondary", "aria-label": "Cancel deleting the datasource" %>
+            <%= link_to I18n.t('app.workspaces.data_sources.management.actions.delete'), app_workspace_data_source_path(@workspace, @data_source), class: "link primary", data: { turbo_method: :delete }, "aria-label": I18n.t('app.workspaces.data_sources.management.aria.confirm_delete') %>
+            <%= link_to I18n.t('common.actions.cancel'), add_params(confirm_delete: nil), class: "link secondary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.cancel_delete') %>
           </div>
         </div>
       </div>
     <% else %>
-      <%= link_to "[Delete Data Source]", add_params(confirm_delete: 1), class: "link primary", "aria-label": "Delete datasource" %>
+      <%= link_to I18n.t('app.workspaces.data_sources.management.actions.delete'), add_params(confirm_delete: 1), class: "link primary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.delete') %>
     <% end %>
   <% end %>
 

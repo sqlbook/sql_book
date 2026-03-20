@@ -11,38 +11,68 @@ class DataSourcesStatsService
   end
 
   def total_events_for(data_source:)
+    return 0 unless data_source.capture_source?
+
     total_events[data_source.external_uuid].to_i
   end
 
   def monthly_events_for(data_source:)
+    return 0 unless data_source.capture_source?
+
     monthly_events[data_source.external_uuid].to_i
   end
 
   def monthly_events_limit_for(data_source:)
+    return nil unless data_source.capture_source?
+
     workspace = data_source.workspace
-    workspace.event_limit / workspace.data_sources.count
+    capture_sources_count = workspace.data_sources.select(&:capture_source?).count
+    return workspace.event_limit if capture_sources_count.zero?
+
+    workspace.event_limit / capture_sources_count
   end
 
   def queries_for(data_source:)
     queries[data_source.id].to_i
   end
 
+  def tables_for(data_source:)
+    data_source.tables_count
+  end
+
+  def status_for(data_source:)
+    return 'action_required' if data_source.capture_source? && !data_source.verified?
+    return 'error' if data_source.last_error.present? || data_source.error?
+
+    data_source.status
+  end
+
+  def last_checked_at_for(data_source:)
+    data_source.last_checked_at
+  end
+
   private
 
   attr_reader :data_sources
+
+  def capture_data_sources
+    @capture_data_sources ||= data_sources.select(&:capture_source?)
+  end
 
   def data_source_id
     @data_source_id ||= data_sources.map(&:id)
   end
 
   def data_source_uuid
-    @data_source_uuid ||= data_sources.map(&:external_uuid)
+    @data_source_uuid ||= capture_data_sources.map(&:external_uuid)
   end
 
   # For each of the tables, fetch a tally of events and group
   # by the data_source_id. Merge all of the results to get
   # a single sum by data_source_id
   def tally_events_for(method)
+    return {} if capture_data_sources.empty?
+
     EventRecord.all_event_types.each_with_object({}) do |model, result|
       data = send(:"#{method}_data_for", model)
       result.merge!(data) { |_, a, b| a + b }

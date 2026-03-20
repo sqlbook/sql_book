@@ -1,0 +1,30 @@
+<%
+  total_steps, current_step = normalize_step_indicator(total_steps:, current_step:)
+  wrapper_classes = ['step-indicator']
+  wrapper_classes << class_name if local_assigns[:class_name].present?
+%>
+
+<nav class="<%= wrapper_classes.join(' ') %>" aria-label="<%= t('shared.step_indicator.aria_label') %>">
+  <ol class="step-indicator__list">
+    <% total_steps.times do |index| %>
+      <% step_number = index + 1 %>
+      <% step_state = step_indicator_step_state(step_number:, current_step:) %>
+      <% connector_state = step_indicator_connector_state(step_number:, current_step:) %>
+      <li class="<%= class_names('step-indicator__item', 'step-indicator__item--last': step_number == total_steps) %>">
+        <span
+          class="<%= class_names('step-indicator__dot', "step-indicator__dot--#{step_state}") %>"
+          aria-hidden="true"></span>
+
+        <span class="step-indicator__sr-only">
+          <%= step_indicator_status_label(step_number:, total_steps:, current_step:) %>
+        </span>
+
+        <% if step_number < total_steps %>
+          <span
+            class="<%= class_names('step-indicator__connector', "step-indicator__connector--#{connector_state}") %>"
+            aria-hidden="true"></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+</nav>

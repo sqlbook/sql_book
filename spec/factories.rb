@@ -38,6 +38,27 @@ FactoryBot.define do
   factory :data_source do
     url { "https://#{SecureRandom.base36}.com" }
     workspace { create(:workspace) }
+
+    trait :postgres do
+      source_type { :postgres }
+      status { :active }
+      name { 'Warehouse DB' }
+      url { nil }
+      config do
+        {
+          'host' => 'db.internal',
+          'port' => 5432,
+          'database_name' => 'warehouse',
+          'username' => 'readonly',
+          'ssl_mode' => 'prefer',
+          'extract_category_values' => false,
+          'selected_tables' => ['public.orders', 'public.customers']
+        }
+      end
+      after(:build) do |data_source|
+        data_source.connection_password ||= 'super-secret'
+      end
+    end
   end
 
   factory :dashboard do

@@ -7,9 +7,12 @@ module Chat
     def initialize(workspace:, actor:, registry: nil)
       @workspace = workspace
       @actor = actor
-      @handlers = Tooling::WorkspaceTeamHandlers.new(workspace:, actor:)
+      @handlers = {
+        team: Tooling::WorkspaceTeamHandlers.new(workspace:, actor:),
+        data_sources: Tooling::WorkspaceDataSourceHandlers.new(workspace:, actor:)
+      }
       @registry = registry || Tooling::Registry.new(
-        definitions: Tooling::WorkspaceTeamRegistry.definitions(handlers: @handlers)
+        definitions: Tooling::WorkspaceRegistry.definitions(handlers: @handlers)
       )
     end
 

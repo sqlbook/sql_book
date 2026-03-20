@@ -110,5 +110,43 @@ RSpec.describe Chat::Policy, type: :service do
       expect(decision.allowed).to be(false)
       expect(decision.reason_code).to eq('forbidden_role')
     end
+
+    it 'allows admins to manage data sources' do
+      admin = create(:user)
+      create(:member, workspace:, user: admin, role: Member::Roles::ADMIN)
+      policy = described_class.new(workspace:, actor: admin)
+
+      list_decision = policy.authorize(action_type: 'datasource.list', payload: {})
+      validate_decision = policy.authorize(
+        action_type: 'datasource.validate_connection',
+        payload: { 'host' => 'db.example.com', 'database_name' => 'sales', 'username' => 'sqlbook', 'password' => 'secret' }
+      )
+      create_decision = policy.authorize(
+        action_type: 'datasource.create',
+        payload: {
+          'name' => 'Sales DB',
+          'host' => 'db.example.com',
+          'database_name' => 'sales',
+          'username' => 'sqlbook',
+          'password' => 'secret',
+          'selected_tables' => ['public.orders']
+        }
+      )
+
+      expect(list_decision.allowed).to be(true)
+      expect(validate_decision.allowed).to be(true)
+      expect(create_decision.allowed).to be(true)
+    end
+
+    it 'blocks regular members from managing data sources' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(action_type: 'datasource.create', payload: {})
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
+    end
   end
 end

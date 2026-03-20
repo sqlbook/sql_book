@@ -1,6 +1,6 @@
 # Staging Core Functionality Checklist
 
-Last updated: 2026-03-09
+Last updated: 2026-03-20
 
 ## Purpose
 Define the minimum stable functionality that must pass before any production cutover work proceeds.
@@ -29,8 +29,11 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] User/Read-only members do not see workspace card settings link/icon.
 - [ ] Direct unauthorized workspace URL redirects to `/app/workspaces` with `Workspace not available` toast.
 - [ ] Team tab member status/actions auto-refresh when invite state changes (no manual page refresh).
-- [ ] Create data source succeeds with valid site URL.
-- [ ] Data source verification flow reaches success state.
+- [ ] Data sources home page renders grouped sections for external databases and first-party capture.
+- [ ] PostgreSQL datasource wizard validates connection details and advances to table selection.
+- [ ] PostgreSQL datasource creation succeeds and returns to the datasource home page.
+- [ ] Chat datasource actions work without server errors (`datasource.list`, `datasource.validate_connection`, `datasource.create`) for owner/admin roles.
+- [ ] Data source API routes respond correctly for owner/admin and reject user/read-only roles.
 - [ ] Chat write actions work without server errors (rename/invite flows).
 - [ ] Migration `20260309102000_add_idempotency_key_to_chat_action_requests` is applied in staging.
 

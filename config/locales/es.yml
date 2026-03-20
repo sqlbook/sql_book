@@ -1,13 +1,26 @@
 es:
+  shared:
+    step_indicator:
+      aria_label: Progreso por los pasos del formulario
+      step_label: Paso %{step_number} de %{total_steps}, %{status}
+      statuses:
+        complete: completado
+        current: actual
+        upcoming: próximo
+
   common:
     actions:
       apply_filters: Aplicar filtros
+      back: Volver
       cancel: Cancelar
+      close: Cerrar
       confirm: "[Confirmar]"
       create_new: Crear nuevo
       delete: Eliminar
       delete_workspace_label: Eliminar espacio de trabajo
       delete_workspace: "[Eliminar espacio de trabajo]"
+      done: "[Hecho]"
+      next: "[Siguiente]"
       open: Abrir
       rename: Renombrar
       save: "[Guardar]"
@@ -82,8 +95,19 @@ es:
             member_resend_invite: Reenviar una invitación pendiente
             member_update_role: Cambiar el rol de un miembro del equipo
             member_remove: Eliminar a un miembro del equipo
+            data_sources: "Gestionar fuentes de datos: listar fuentes conectadas, validar conexiones PostgreSQL y crear fuentes PostgreSQL."
             workspace_update_name: Cambiar el nombre del espacio
             workspace_delete: Eliminar el espacio
+        datasource:
+          data_sources_none: Aún no hay fuentes de datos conectadas.
+          data_sources_found: "Se encontraron %{count} fuente(s) de datos."
+          connection_validated: Conexión validada correctamente. Se encontraron %{table_count} tabla(s).
+          data_source_created: Se creó la fuente de datos PostgreSQL %{name}.
+          selected_tables_required: Selecciona al menos una tabla antes de crear la fuente de datos.
+          selected_tables_limit: Puedes seleccionar hasta %{count} tablas.
+          invalid_selected_tables: Una o más tablas seleccionadas no están disponibles en la base de datos conectada.
+          connection_failed: No se pudo validar la conexión PostgreSQL.
+          validation_error: La configuración de la fuente de datos no es válida.
         responses:
           confirmation:
             variants:
@@ -201,6 +225,9 @@ es:
             member_resend_invite: reenviar invitaciones del equipo
             member_update_role: cambiar los roles de los miembros del equipo
             member_remove: eliminar a miembros del equipo
+            datasource_list: gestionar las fuentes de datos del espacio
+            datasource_validate_connection: validar conexiones de fuentes de datos
+            datasource_create: crear fuentes de datos
           allowed_roles:
             owner: un propietario del espacio
             admin_or_owner: un administrador o un propietario del espacio
@@ -233,6 +260,139 @@ es:
           member_remove_success: "%{name} ha sido eliminado del espacio."
           inferred_first_name: Equipo
           inferred_last_name: Miembro
+      data_sources:
+        title: Fuentes de datos
+        add_title: Añadir fuente de datos
+        create_new_aria: Crear una nueva fuente de datos
+        index:
+          eyebrow: Fuentes de datos del espacio
+          title: Fuentes de datos
+          create_aria_label: Crear nueva fuente de datos
+          sections:
+            external_database:
+              title: Bases de datos externas
+              description: Conexiones en vivo a bases de datos que ya posees.
+            first_party_capture:
+              title: Captura de datos propia
+              description: El seguimiento propio heredado sigue disponible mientras llega el modelo ampliado de conectores.
+            third_party_data_library:
+              title: Biblioteca de datos de terceros
+              description: Conecta servicios SaaS y APIs cuando la biblioteca esté disponible.
+          columns:
+            name: Nombre
+            type: Tipo
+            tables: Tablas
+            related_queries: Consultas relacionadas
+            total_events: Eventos totales
+            events_this_month: Eventos este mes
+          empty:
+            external_database:
+              title: Aún no hay bases de datos externas
+              body: Usa Crear nuevo para conectar una base de datos y empezar a consultarla en vivo.
+            first_party_capture:
+              title: Aún no hay capturas propias
+              body: Puedes dejar esta sección lista para datos de seguimiento existentes o crear una fuente de captura más adelante.
+          coming_soon:
+            title: Próximamente
+            body: Este catálogo incluirá fuentes como analítica, facturación y otros servicios externos.
+          types:
+            postgres: PostgreSQL
+            first_party_capture: Captura propia
+          statuses:
+            action_required: Acción requerida
+            error: Problema de conexión
+            pending_setup: Configuración pendiente
+        new:
+          eyebrow: Añadir fuente de datos
+          title: Añadir fuente de datos
+          coming_soon: Próximamente
+          source_types:
+            external_database:
+              title: Conectar una base de datos externa
+              description: Consulta tu propia base de datos en vivo sin ingerir los datos aquí.
+            first_party_capture:
+              title: Capturar datos con sqlbook
+              description: Próximamente
+            third_party_data_library:
+              title: Usar una biblioteca de datos de terceros
+              description: Próximamente
+          steps:
+            source_type:
+              description: Elige el tipo de fuente que quieres añadir. En esta primera versión solo están habilitadas las bases de datos externas.
+            connection:
+              description: Dale un nombre a la base de datos y confirma los detalles de conexión. La validaremos antes de continuar.
+            tables:
+              description: Selecciona las tablas que quieres poner a disposición. Por ahora limita esto a 20 tablas.
+              empty: La conexión todavía no devolvió ninguna tabla.
+          actions:
+            next: "[Siguiente]"
+            done: "[Hecho]"
+          fields:
+            name: Nombre de la base de datos
+            name_placeholder: "p. ej. Base de datos de usuarios"
+            database_type: Tipo de base de datos
+            database_type_hint: PostgreSQL es el único tipo de base de datos externa compatible en esta primera versión.
+            host: Host
+            host_placeholder: "p. ej. 123.456.789.0"
+            port: Puerto
+            port_placeholder: "5432"
+            database_name: Nombre de la base de datos en el servidor
+            database_name_placeholder: analytics
+            username: Usuario
+            username_placeholder: readonly_user
+            password: Contraseña
+            extract_category_values: Extraer valores de categoría
+          connection_box:
+            title: Detalles de la conexión
+        validation:
+          connection_failed: No pudimos conectarnos a esa base de datos. Revisa los detalles de conexión e inténtalo de nuevo.
+          selected_tables_required: Selecciona al menos una tabla para continuar.
+          selected_tables_limit: Puedes seleccionar hasta %{count} tablas por ahora.
+          invalid_selected_tables: Una o más tablas seleccionadas ya no están disponibles para esta fuente de datos.
+        management:
+          connection_title: Detalles de la conexión
+          selected_tables_title: Tablas seleccionadas
+          deletion_title: Eliminación de la fuente
+          tracking_code_title: Código de seguimiento
+          deletion_intro: Puedes eliminar esta fuente de datos en cualquier momento.
+          deletion_points:
+            one: La fuente de datos se eliminará inmediatamente para todos los usuarios de tu espacio.
+            two: Eliminar la fuente de datos no eliminará tu espacio de trabajo ni tu cuenta de sqlbook.
+            three_external: sqlbook no elimina ni modifica la base de datos externa subyacente.
+            three_capture: Todos los datos capturados de %{name} se eliminarán de forma permanente. Para restaurar la fuente de datos tendrás que volver a añadirla a sqlbook.
+          deletion_confirm_title: "¿Seguro que quieres eliminar esta fuente de datos?"
+          deletion_confirm_body: Si lo haces, todo el acceso y los metadatos relacionados se eliminarán permanentemente.
+          actions:
+            delete: "[Eliminar fuente de datos]"
+          aria:
+            create_new: Crear nueva fuente de datos
+            delete: Eliminar fuente de datos
+            confirm_delete: Confirmar la eliminación de la fuente de datos
+            cancel_delete: Cancelar la eliminación de la fuente de datos
+            open_queries: Abrir consultas para esta fuente de datos
+          fields:
+            type: Tipo
+            host: Host
+            port: Puerto
+            server_database_name: Nombre de la base de datos en el servidor
+            username: Usuario
+            ssl_mode: Modo SSL
+            selected_tables: Tablas seleccionadas
+            tracking_url: URL de origen
+        query_guard:
+          blank_query: Introduce una consulta antes de ejecutarla.
+          multiple_statements: Solo se puede ejecutar una única sentencia SQL cada vez.
+          read_only_only: Solo se admiten consultas SELECT de solo lectura para esta fuente de datos.
+          blocked_keyword: Esa consulta contiene una palabra clave SQL bloqueada.
+          query_failed: No pudimos ejecutar esa consulta contra esta fuente de datos. Revisa las tablas seleccionadas e inténtalo de nuevo.
+          unexpected_error: Se produjo un error inesperado al ejecutar esta consulta. Inténtalo de nuevo.
+        toasts:
+          created:
+            title: Fuente de datos añadida
+            body: "%{name} ya está disponible en este espacio."
+        card:
+          created_at: "Creada el %{date}"
+          last_checked: "Última comprobación %{date}"
       settings:
         title: Configuración del espacio de trabajo
         tabs:
@@ -289,6 +449,9 @@ es:
   toasts:
 
   models:
+    data_source:
+      is_not_valid: no es válida
+      selected_tables_limit: Puedes seleccionar hasta %{count} tablas por ahora
     member:
       roles:
         owner: Propietario

@@ -28,15 +28,28 @@
 #       enabled: "ON"
 
 en:
+  shared:
+    step_indicator:
+      aria_label: Progress through form steps
+      step_label: Step %{step_number} of %{total_steps}, %{status}
+      statuses:
+        complete: completed
+        current: current
+        upcoming: upcoming
+
   common:
     actions:
       apply_filters: Apply filters
+      back: Back
       cancel: Cancel
+      close: Close
       confirm: "[Confirm]"
       create_new: Create New
       delete: Delete
       delete_workspace_label: Delete Workspace
       delete_workspace: "[Delete Workspace]"
+      done: "[Done]"
+      next: "[Next]"
       open: Open
       rename: Rename
       save: "[Save]"
@@ -113,8 +126,19 @@ en:
             member_resend_invite: Resend a pending invite
             member_update_role: Change a team member's role
             member_remove: Remove a team member
+            data_sources: "Manage data sources: list connected sources, validate PostgreSQL connections, and create PostgreSQL sources."
             workspace_update_name: Rename the workspace
             workspace_delete: Delete the workspace
+        datasource:
+          data_sources_none: No data sources are connected yet.
+          data_sources_found: "%{count} data source(s) found."
+          connection_validated: Connection validated successfully. %{table_count} table(s) found.
+          data_source_created: Created PostgreSQL data source %{name}.
+          selected_tables_required: Select at least one table before creating the data source.
+          selected_tables_limit: You can select up to %{count} tables.
+          invalid_selected_tables: One or more selected tables are not available on the connected database.
+          connection_failed: Could not validate the PostgreSQL connection.
+          validation_error: The data source configuration is invalid.
         responses:
           confirmation:
             variants:
@@ -232,6 +256,9 @@ en:
             member_resend_invite: resend team invitations
             member_update_role: change team member roles
             member_remove: remove team members
+            datasource_list: manage workspace data sources
+            datasource_validate_connection: validate data source connections
+            datasource_create: create data sources
           allowed_roles:
             owner: a Workspace owner
             admin_or_owner: an Admin or Workspace owner
@@ -264,6 +291,204 @@ en:
           member_remove_success: "%{name} has been removed from the workspace."
           inferred_first_name: Team
           inferred_last_name: Member
+      data_sources:
+        title: Data sources
+        add_title: Add data source
+        create_new_aria: Create a new data source
+        index:
+          eyebrow: Workspace data sources
+          title: Data sources
+          create_aria_label: Create new data source
+          sections:
+            external_database:
+              title: External databases
+              description: Live connections to databases you already own.
+            first_party_capture:
+              title: First-party data capture
+              description: Legacy first-party tracking remains available while the wider connector model lands.
+            third_party_data_library:
+              title: Third-party data library
+              description: Bring in SaaS and API connectors once the library opens up.
+          columns:
+            name: Name
+            type: Type
+            tables: Tables
+            related_queries: Related queries
+            total_events: Total events
+            events_this_month: Events this month
+          empty:
+            external_database:
+              title: No external databases yet
+              body: Use Create New to connect a database and start querying it live.
+            first_party_capture:
+              title: No first-party captures yet
+              body: You can keep this section ready for existing tracking data or create a new capture source later.
+          coming_soon:
+            title: Coming soon
+            body: This catalog will eventually include sources such as analytics, billing, and other external services.
+          types:
+            postgres: PostgreSQL
+            first_party_capture: First-party capture
+          statuses:
+            action_required: Action required
+            error: Connection issue
+            pending_setup: Pending setup
+        empty:
+          title: No data sources yet
+          body: Add your first data source to start querying workspace data.
+        categories:
+          external_databases: External databases
+          first_party_capture: First-party data capture
+          third_party_libraries: Third-party data libraries
+        table:
+          external:
+            name: Name
+            type: Type
+            tables: Tables
+            related_queries: Related queries
+          capture:
+            name: Name
+            total_events: Total events
+            monthly_events: Events this month
+            related_queries: Related queries
+          third_party:
+            name: Name
+            type: Type
+            related_queries: Related queries
+          actions: Actions
+          action_required: Action required
+        statuses:
+          action_required: Action required
+          active: Active
+          error: Error
+          pending_setup: Pending setup
+        source_types:
+          external_database: Connect an external database
+          first_party_capture: Capture data with sqlbook
+          third_party_library: Use a third-party data library
+          coming_soon: Coming soon
+        database_types:
+          postgres: PostgreSQL
+        new:
+          eyebrow: Add data source
+          title: Add data source
+          coming_soon: Coming soon
+          source_types:
+            external_database:
+              title: Connect an external database
+              description: Live query your own database without ingesting the data here.
+            first_party_capture:
+              title: Capture data with sqlbook
+              description: Coming soon
+            third_party_data_library:
+              title: Use a third-party data library
+              description: Coming soon
+          steps:
+            source_type:
+              description: Choose the kind of source you want to add. For this first pass, only external databases are enabled.
+            connection:
+              description: Give the database a name and confirm the connection details. We will validate it before moving on.
+            tables:
+              description: Select the tables you want to make available. Limit this to 20 tables for now.
+              empty: No tables were returned from the connection yet.
+          actions:
+            next: "[Next]"
+            done: "[Done]"
+          fields:
+            name: Database name
+            name_placeholder: "e.g. User Database"
+            database_type: Database type
+            database_type_hint: PostgreSQL is the only supported external database type in this first pass.
+            host: Host
+            host_placeholder: "e.g. 123.456.789.0"
+            port: Port
+            port_placeholder: "5432"
+            database_name: Database name on server
+            database_name_placeholder: analytics
+            username: Username
+            username_placeholder: readonly_user
+            password: Password
+            extract_category_values: Extract category values
+          connection_box:
+            title: Connection details
+        wizard:
+          type_heading: Type
+          step_one_title: Add data source
+          step_two_title: Add data source
+          step_three_title: Add data source
+          fields:
+            data_source_name: Database name
+            database_type: Database type
+            host: Host
+            port: Port
+            server_database_name: Database name on server
+            username: Username
+            password: Password
+            ssl_mode: SSL mode
+            extract_category_values: Extract category values
+          placeholders:
+            data_source_name: "e.g. User Database"
+            database_type: Please select
+            host: "e.g. 123.456.789.0"
+            server_database_name: analytics
+            username: readonly_user
+            port: "5432"
+          connection:
+            title: Connection details
+          table_selection:
+            title: Select tables
+            body: Only select the tables you need. You can always add or remove tables later from the database management screen.
+            limit_hint: Select up to %{count} tables for now.
+            empty: No tables were returned for this database.
+        management:
+          connection_title: Connection details
+          selected_tables_title: Selected tables
+          deletion_title: Source deletion
+          tracking_code_title: Tracking Code
+          deletion_intro: You can delete this data source at any time.
+          deletion_points:
+            one: The data source will be deleted immediately for all users in your workspace.
+            two: Deleting your data source will not delete your sqlbook workspace or user account.
+            three_external: sqlbook does not delete or modify the underlying external database.
+            three_capture: All data captured from %{name} will be permanently deleted. To restore your data source you would need to add it to sqlbook again.
+          deletion_confirm_title: Are you sure you wish to delete your data source?
+          deletion_confirm_body: If so, all related access and metadata will be removed permanently.
+          actions:
+            delete: "[Delete Data Source]"
+          aria:
+            create_new: Create new data source
+            delete: Delete data source
+            confirm_delete: Confirm deletion of data source
+            cancel_delete: Cancel deleting the data source
+            open_queries: Open queries for this data source
+          fields:
+            type: Type
+            host: Host
+            port: Port
+            server_database_name: Database name on server
+            username: Username
+            ssl_mode: SSL mode
+            selected_tables: Selected tables
+            tracking_url: Source URL
+        validation:
+          connection_failed: We couldn't connect to that database. Please check the connection details and try again.
+          selected_tables_required: Select at least one table to continue.
+          selected_tables_limit: You can select up to %{count} tables for now.
+          invalid_selected_tables: One or more selected tables are no longer available for this data source.
+        query_guard:
+          blank_query: Enter a query before you run it.
+          multiple_statements: Only a single SQL statement can be run at a time.
+          read_only_only: Only read-only SELECT queries are supported for this data source.
+          blocked_keyword: That query contains a blocked SQL keyword.
+          query_failed: We couldn't run that query against this data source. Check the selected tables and try again.
+          unexpected_error: There was an unexpected error while running this query. Please try again.
+        toasts:
+          created:
+            title: Data source added
+            body: "%{name} is now available in this workspace."
+        card:
+          created_at: "Created %{date}"
+          last_checked: "Last checked %{date}"
       settings:
         title: Workspace settings
         tabs:
@@ -368,6 +593,7 @@ en:
   models:
     data_source:
       is_not_valid: is not valid
+      selected_tables_limit: You can select up to %{count} tables for now
     member:
       roles:
         owner: Owner

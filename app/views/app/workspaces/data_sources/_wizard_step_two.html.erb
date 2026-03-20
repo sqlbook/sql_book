@@ -1,0 +1,69 @@
+<section class="data-source-wizard__step">
+  <p class="data-source-wizard__description">
+    <%= t('app.workspaces.data_sources.new.steps.connection.description') %>
+  </p>
+
+  <%= form_with url: validate_connection_app_workspace_data_sources_path(workspace), method: :post, class: "data-source-wizard__form" do %>
+    <div class="data-source-wizard__fields">
+      <div class="field">
+        <%= label_tag :name, t('app.workspaces.data_sources.new.fields.name'), class: "label block" %>
+        <%= text_field_tag :name, (wizard_state || {})['name'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.name_placeholder') %>
+      </div>
+
+      <div class="field">
+        <%= label_tag :database_type, t('app.workspaces.data_sources.new.fields.database_type'), class: "label block" %>
+        <div class="select">
+          <%= select_tag :database_type,
+                         options_for_select(wizard_database_type_options.map { |option| [option[:label], option[:value]] }, (wizard_state || {})['database_type'] || 'postgres'),
+                         class: "block fluid" %>
+          <i class="ri-arrow-drop-down-line"></i>
+        </div>
+        <p class="data-source-wizard__hint"><%= t('app.workspaces.data_sources.new.fields.database_type_hint') %></p>
+      </div>
+    </div>
+
+    <div class="data-source-wizard__connection-box">
+      <h2><%= t('app.workspaces.data_sources.new.connection_box.title') %></h2>
+
+      <div class="data-source-wizard__grid">
+        <div class="field">
+          <%= label_tag :host, t('app.workspaces.data_sources.new.fields.host'), class: "label block" %>
+          <%= text_field_tag :host, (wizard_state || {})['host'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.host_placeholder') %>
+        </div>
+
+        <div class="field field--narrow">
+          <%= label_tag :port, t('app.workspaces.data_sources.new.fields.port'), class: "label block" %>
+          <%= text_field_tag :port, (wizard_state || {})['port'] || DataSource::POSTGRES_DEFAULT_PORT, class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.port_placeholder') %>
+        </div>
+
+        <div class="field field--full">
+          <%= label_tag :database_name, t('app.workspaces.data_sources.new.fields.database_name'), class: "label block" %>
+          <%= text_field_tag :database_name, (wizard_state || {})['database_name'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.database_name_placeholder') %>
+        </div>
+
+        <div class="field field--full">
+          <%= label_tag :username, t('app.workspaces.data_sources.new.fields.username'), class: "label block" %>
+          <%= text_field_tag :username, (wizard_state || {})['username'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.username_placeholder') %>
+        </div>
+
+        <div class="field field--full">
+          <%= label_tag :password, t('app.workspaces.data_sources.new.fields.password'), class: "label block" %>
+          <%= password_field_tag :password, nil, class: "input block fluid" %>
+        </div>
+
+        <div class="field field--full">
+          <label class="checkbox">
+            <%= hidden_field_tag :extract_category_values, '0' %>
+            <%= check_box_tag :extract_category_values, '1', ActiveModel::Type::Boolean.new.cast((wizard_state || {})['extract_category_values']) %>
+            <span class="checkbox-text"><%= t('app.workspaces.data_sources.new.fields.extract_category_values') %></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="data-source-wizard__actions">
+      <%= link_to t('common.actions.back'), new_app_workspace_data_source_path(workspace, step: 1), class: "link secondary" %>
+      <%= submit_tag t('app.workspaces.data_sources.new.actions.next'), class: "link primary data-source-wizard__submit" %>
+    </div>
+  <% end %>
+</section>

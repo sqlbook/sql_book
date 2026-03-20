@@ -46,6 +46,16 @@ RSpec.describe DataSource, type: :model do
     end
   end
 
+  describe 'capture source uniqueness' do
+    it 'allows the same url in different workspaces' do
+      url = 'https://sqlbook.com'
+      create(:data_source, url:, workspace: create(:workspace))
+      duplicate = build(:data_source, url:, workspace: create(:workspace))
+
+      expect(duplicate).to be_valid
+    end
+  end
+
   describe '#verified?' do
     context 'when the data source is not verified' do
       let(:instance) { create(:data_source) }
@@ -61,6 +71,34 @@ RSpec.describe DataSource, type: :model do
       it 'returns true' do
         expect(instance.verified?).to eq(true)
       end
+    end
+  end
+
+  describe 'postgres connectors' do
+    let(:workspace) { create(:workspace) }
+
+    it 'is valid with postgres connection details' do
+      data_source = build(:data_source, :postgres, workspace:)
+
+      expect(data_source).to be_valid
+      expect(data_source.connection_password).to eq('super-secret')
+      expect(data_source.selected_tables).to eq(%w[public.orders public.customers])
+    end
+
+    it 'requires a password for postgres sources' do
+      data_source = build(:data_source, :postgres, workspace:)
+      data_source.connection_password = nil
+
+      expect(data_source).not_to be_valid
+      expect(data_source.errors[:connection_password]).to include("can't be blank")
+    end
+
+    it 'enforces the selected tables limit' do
+      data_source = build(:data_source, :postgres, workspace:)
+      data_source.selected_tables = Array.new(DataSource::MAX_SELECTED_TABLES + 1) { |index| "public.table_#{index}" }
+
+      expect(data_source).not_to be_valid
+      expect(data_source.errors[:selected_tables]).to include(I18n.t('models.data_source.selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES))
     end
   end
 end

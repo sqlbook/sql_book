@@ -278,12 +278,19 @@ ALTER SEQUENCE public.dashboards_id_seq OWNED BY public.dashboards.id;
 
 CREATE TABLE public.data_sources (
     id bigint NOT NULL,
-    url character varying NOT NULL,
+    url character varying,
     external_uuid uuid DEFAULT gen_random_uuid() NOT NULL,
     verified_at timestamp(6) without time zone,
     workspace_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    name character varying NOT NULL,
+    source_type integer DEFAULT 0 NOT NULL,
+    status integer DEFAULT 0 NOT NULL,
+    last_checked_at timestamp(6) without time zone,
+    last_error text,
+    config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    encrypted_connection_password text
 );
 
 
@@ -977,17 +984,24 @@ CREATE UNIQUE INDEX index_data_sources_on_external_uuid ON public.data_sources U
 
 
 --
--- Name: index_data_sources_on_url; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_data_sources_on_url ON public.data_sources USING btree (url);
-
-
---
 -- Name: index_data_sources_on_workspace_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX index_data_sources_on_workspace_id ON public.data_sources USING btree (workspace_id);
+
+
+--
+-- Name: index_data_sources_on_workspace_id_and_source_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_data_sources_on_workspace_id_and_source_type ON public.data_sources USING btree (workspace_id, source_type);
+
+
+--
+-- Name: index_data_sources_on_workspace_id_and_url; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_data_sources_on_workspace_id_and_url ON public.data_sources USING btree (workspace_id, url) WHERE (url IS NOT NULL);
 
 
 --
@@ -1221,6 +1235,7 @@ ALTER TABLE ONLY public.chat_action_requests
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260320110000'),
 ('20260316143000'),
 ('20260309102000'),
 ('20260307150100'),

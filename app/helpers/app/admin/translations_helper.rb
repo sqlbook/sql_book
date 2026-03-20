@@ -40,12 +40,13 @@ module App
       private
 
       def current_used_in_workspace_id
-        return @current_used_in_workspace_id if defined?(@current_used_in_workspace_id)
-
+        cache_key = 'app.admin.translations.current_used_in_workspace_id'
         user = controller.send(:current_user) if controller.respond_to?(:current_user, true)
-        @current_used_in_workspace_id = if user
-                                          user.workspaces.order(:id).limit(1).pick(:id)
-                                        end
+
+        request.env.fetch(cache_key) do
+          workspace_id = user.workspaces.order(:id).limit(1).pick(:id) if user
+          request.env[cache_key] = workspace_id
+        end
       end
     end
   end

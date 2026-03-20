@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-16
+Last updated: 2026-03-20
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -35,6 +35,14 @@ Related references:
   - `POST /app/workspaces/:workspace_id/chat/messages` -> submit chat message and receive runtime decision/execution response
   - `POST /app/workspaces/:workspace_id/chat/actions/:id/confirm` -> confirm pending high-risk action
   - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel` -> cancel pending high-risk action
+- Data sources:
+  - `GET /app/workspaces/:workspace_id/data_sources` -> grouped datasource home page
+  - `GET /app/workspaces/:workspace_id/data_sources/new` -> datasource creation wizard
+  - `POST /app/workspaces/:workspace_id/data_sources/validate_connection` -> validate PostgreSQL connection and discover tables
+  - `POST /app/workspaces/:workspace_id/data_sources` -> create datasource
+  - `GET /app/workspaces/:workspace_id/data_sources/:id` -> datasource settings/management
+  - `PATCH /app/workspaces/:workspace_id/data_sources/:id` -> update capture datasource URL
+  - `DELETE /app/workspaces/:workspace_id/data_sources/:id` -> destroy datasource
 - Workspace/team API v1 (auth-protected, documented via `/dev/api`):
   - `PATCH /api/v1/workspaces/:workspace_id`
   - `DELETE /api/v1/workspaces/:workspace_id`
@@ -43,6 +51,9 @@ Related references:
   - `POST /api/v1/workspaces/:workspace_id/members/resend-invite`
   - `PATCH /api/v1/workspaces/:workspace_id/members/:id/role`
   - `DELETE /api/v1/workspaces/:workspace_id/members/:id`
+  - `GET /api/v1/workspaces/:workspace_id/data-sources`
+  - `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
+  - `POST /api/v1/workspaces/:workspace_id/data-sources`
 - OpenAPI/Scalar governance for these routes lives in `docs/API_MASTER_REF.md`.
 
 ## Roles and authorization
@@ -112,13 +123,19 @@ Related references:
   - `member.resend_invite`
   - `member.update_role`
   - `member.remove`
+  - `datasource.list`
+  - `datasource.validate_connection`
+  - `datasource.create`
 - v1 blocked namespaces include:
   - `workspace.list/get/create`
-  - `datasource.*`
   - `query.*`
   - `dashboard.*`
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
+- datasource note:
+  - only `datasource.list`, `datasource.validate_connection`, and `datasource.create` are in scope
+  - other datasource actions remain blocked until explicitly implemented
 - Auto-run chat writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`.
+- Auto-run datasource chat writes include `datasource.validate_connection` and `datasource.create`.
 - Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`).
 - Chat permission visibility should mirror workspace UI permissions:
   - `OWNER` / `ADMIN` can view workspace settings and the team member list
@@ -261,6 +278,29 @@ Related references:
   - `>=1024px`: detail column + stat tiles share row (desktop split favors details while reserving 3/5 width for stat region).
   - `<1024px`: details on first row, all stat tiles on the next row.
   - `<720px`: stat tiles stack vertically in a single column.
+
+## Data source home and phase-1 create flow
+- Datasource home groups sources by connector family:
+  - `External databases`
+  - `First-party data capture`
+  - `Third-party data library`
+- External database rows currently surface:
+  - name
+  - connector type
+  - selected table count
+  - related query count
+- First-party capture rows currently surface:
+  - name
+  - total events
+  - events this month
+  - related query count
+- Phase-1 datasource creation is a three-step flow:
+  1. choose connector family
+  2. enter datasource name + PostgreSQL connection details and validate
+  3. choose allowed tables and finish creation
+- Current phase-1 create support is PostgreSQL only.
+- First-party capture and third-party library options are intentionally shown as coming soon in the new wizard/catalog UI.
+- Phase-1 datasource wizard uses cached table discovery as an optimization, but keeps essential connection state recoverable across requests so the flow does not depend solely on cache availability.
 
 ## Page header CTA spacing
 - On workspace and data-source pages, inline `[+ Create New]` links beside `h1` use `16px` left spacing from the heading.

@@ -1,6 +1,6 @@
 # API Master Reference
 
-Last updated: 2026-03-12
+Last updated: 2026-03-20
 
 ## Purpose
 Single source of truth for sqlbook's documented API surface, OpenAPI authoring rules, Scalar setup, and the maintenance workflow that keeps the docs useful for both humans and LLM/tool consumers.
@@ -24,7 +24,7 @@ Important:
 - Auth model today is session cookie auth (`_sqlbook_session`).
 
 ## Current documented API scope
-Current OpenAPI coverage is intentionally focused on the workspace/team contracts used by chat and app surfaces:
+Current OpenAPI coverage is intentionally focused on the workspace/team and datasource contracts used by chat and app surfaces:
 - `PATCH /api/v1/workspaces/:workspace_id`
 - `DELETE /api/v1/workspaces/:workspace_id`
 - `GET /api/v1/workspaces/:workspace_id/members`
@@ -32,6 +32,15 @@ Current OpenAPI coverage is intentionally focused on the workspace/team contract
 - `POST /api/v1/workspaces/:workspace_id/members/resend-invite`
 - `PATCH /api/v1/workspaces/:workspace_id/members/:id/role`
 - `DELETE /api/v1/workspaces/:workspace_id/members/:id`
+- `GET /api/v1/workspaces/:workspace_id/data-sources`
+- `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
+- `POST /api/v1/workspaces/:workspace_id/data-sources`
+
+Current datasource API scope:
+- phase 1 is PostgreSQL-only for external database creation/validation
+- routes are workspace-scoped and session-authenticated
+- owner/admin only for datasource management actions
+- the API is intentionally phrased so both engineers and the workspace chat/runtime can consume the same contract cleanly
 
 ## Why these docs exist
 - Humans need a browsable contract reference for product and integration work.
@@ -88,11 +97,15 @@ For docs to stay human and LLM friendly:
 
 ## Consumption model
 - Product UI consumes the API through Rails controllers/services directly.
-- Chat does not call `/api/v1` over HTTP today; it uses the same underlying server-side execution contracts through the shared tool registry and action executor.
+- Chat does not call `/api/v1` over HTTP today; it uses the same underlying server-side execution contracts through the shared tool registries and action executor.
 - The API docs still matter for chat because they define the public-facing contract language we want tools and future consumers to follow.
+- Datasource list/validate/create contracts should stay semantically aligned across:
+  - standalone UI flows
+  - `/api/v1`
+  - chat tool execution
 
 ## Maintenance workflow
-When changing any documented workspace/team API behavior:
+When changing any documented workspace/team/datasource API behavior:
 1. update controller/service behavior first
 2. update `config/openapi/v1.json` in the same change
 3. update any relevant master refs if semantics changed

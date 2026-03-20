@@ -16,13 +16,13 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
   end
 
   describe 'GET /dev/api/openapi.json' do
-    it 'returns a valid openapi document with workspace/team paths' do
+    it 'returns a valid openapi document with workspace/team/data source paths' do
       get '/dev/api/openapi.json'
 
       expect(response).to have_http_status(:ok)
       payload = response.parsed_body
       expect(payload['openapi']).to start_with('3.')
-      expect(payload.fetch('tags', []).map { |tag| tag['name'] }).to include('Workspace', 'Members')
+      expect(payload.fetch('tags', []).map { |tag| tag['name'] }).to include('Workspace', 'Members', 'Data Sources')
       expect(payload['x-tagGroups']).to be_present
       expect(payload['x-scalar-environments']).to be_present
       expect(payload.fetch('paths', {}).keys).to include(
@@ -30,7 +30,9 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
         '/api/v1/workspaces/{workspace_id}/members',
         '/api/v1/workspaces/{workspace_id}/members/resend-invite',
         '/api/v1/workspaces/{workspace_id}/members/{id}/role',
-        '/api/v1/workspaces/{workspace_id}/members/{id}'
+        '/api/v1/workspaces/{workspace_id}/members/{id}',
+        '/api/v1/workspaces/{workspace_id}/data-sources',
+        '/api/v1/workspaces/{workspace_id}/data-sources/validate-connection'
       )
       expect(payload.dig('paths', '/api/v1/workspaces/{workspace_id}', 'patch', 'x-codeSamples')).to be_present
     end

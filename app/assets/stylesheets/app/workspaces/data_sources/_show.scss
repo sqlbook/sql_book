@@ -60,4 +60,31 @@
       margin-top: 2rem;
     }
   }
+
+  .data-source-management {
+    h3 {
+      margin: 0 0 1rem 0;
+    }
+
+    &__list {
+      display: grid;
+      gap: 1rem;
+      margin: 0;
+
+      div {
+        border-bottom: 1px solid var(--gray-700);
+        padding-bottom: .75rem;
+      }
+
+      dt {
+        color: var(--gray-300);
+        margin-bottom: .25rem;
+      }
+
+      dd {
+        color: var(--cream-250);
+        margin: 0;
+      }
+    }
+  }
 }

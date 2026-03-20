@@ -1,0 +1,18 @@
+<div class="data-source-wizard container md">
+  <%= render "shared/step_indicator", total_steps: 3, current_step: wizard_step, class_name: "data-source-wizard__step-indicator" %>
+
+  <div class="data-source-wizard__heading">
+    <p class="eyebrow gray-300"><%= t('app.workspaces.data_sources.new.eyebrow') %></p>
+    <h1><%= t('app.workspaces.data_sources.new.title') %></h1>
+  </div>
+
+  <%= render "shared/flash" %>
+
+  <% if wizard_step == 1 %>
+    <%= render "wizard_step_one", workspace:, wizard_state: %>
+  <% elsif wizard_step == 2 %>
+    <%= render "wizard_step_two", workspace:, wizard_state: %>
+  <% else %>
+    <%= render "wizard_step_three", workspace:, wizard_state:, available_tables: %>
+  <% end %>
+</div>

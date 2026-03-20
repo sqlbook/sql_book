@@ -14,6 +14,7 @@ RSpec.describe DataSourcesStatsService do
   let!(:data_source_1) { create(:data_source, workspace:) }
   let!(:data_source_2) { create(:data_source, workspace:) }
   let!(:data_source_3) { create(:data_source, workspace:) }
+  let!(:postgres_source) { create(:data_source, :postgres, workspace:, last_checked_at: now) }
 
   before do
     create(:click, data_source_uuid: data_source_1.external_uuid, timestamp: now)
@@ -34,7 +35,7 @@ RSpec.describe DataSourcesStatsService do
     allow(Time).to receive(:current).and_return(now)
   end
 
-  let(:instance) { DataSourcesStatsService.new(data_sources: [data_source_1, data_source_2, data_source_3]) }
+  let(:instance) { DataSourcesStatsService.new(data_sources: [data_source_1, data_source_2, data_source_3, postgres_source]) }
 
   describe '#total_events_for' do
     it 'returns the correct counts' do
@@ -65,6 +66,21 @@ RSpec.describe DataSourcesStatsService do
       expect(instance.queries_for(data_source: data_source_1)).to eq(3)
       expect(instance.queries_for(data_source: data_source_2)).to eq(2)
       expect(instance.queries_for(data_source: data_source_3)).to eq(0)
+      expect(instance.queries_for(data_source: postgres_source)).to eq(0)
+    end
+  end
+
+  describe 'external database stats' do
+    it 'does not expose event counts for postgres sources' do
+      expect(instance.total_events_for(data_source: postgres_source)).to eq(0)
+      expect(instance.monthly_events_for(data_source: postgres_source)).to eq(0)
+      expect(instance.monthly_events_limit_for(data_source: postgres_source)).to eq(nil)
+    end
+
+    it 'returns connector specific metadata' do
+      expect(instance.tables_for(data_source: postgres_source)).to eq(2)
+      expect(instance.status_for(data_source: postgres_source)).to eq('active')
+      expect(instance.last_checked_at_for(data_source: postgres_source)).to eq(now)
     end
   end
 end

@@ -1,15 +1,20 @@
-<main>
-  <div class="page-header">
-    <h1>Data Sources</h1>
-    <%= link_to new_app_workspace_data_source_path(@workspace), class: "link secondary create-data-source", "data-shortcut": "N", "aria-label": "Create new datasource" do %>
+<main class="data-sources-page">
+  <div class="page-header data-sources-page__header">
+    <div class="data-sources-page__title-block">
+      <p class="eyebrow gray-300"><%= t('app.workspaces.data_sources.index.eyebrow') %></p>
+      <h1><%= t('app.workspaces.data_sources.index.title') %></h1>
+    </div>
+
+    <%= link_to new_app_workspace_data_source_path(@workspace),
+                class: "link secondary create-data-source",
+                "data-shortcut": "N",
+                "aria-label": t('app.workspaces.data_sources.index.create_aria_label') do %>
       <i class="ri-add-line red-500"></i>
       <span><%= I18n.t('common.actions.create_new') %></span>
     <% end %>
   </div>
 
-  <div class="data-sources container lg" data-controller="cards">
-    <% @data_sources.each do |data_source| %>
-      <%= render "shared/data_source_card", workspace: @workspace, data_source: %>
-    <% end %>
+  <div class="data-sources-groups">
+    <%= render partial: "index_group", collection: data_sources_index_sections(@data_sources), as: :section, locals: { workspace: @workspace, stats: @data_sources_stats } %>
   </div>
 </main>

@@ -29,7 +29,7 @@ module Chat
       @actor = actor
       @user_message = user_message
       @content = content.to_s
-      @tool_metadata = tool_metadata || Tooling::WorkspaceTeamRegistry.tool_metadata
+      @tool_metadata = tool_metadata || Tooling::WorkspaceRegistry.tool_metadata
     end
     # rubocop:enable Metrics/ParameterLists
 
@@ -412,6 +412,7 @@ module Chat
       items = []
       items.concat(view_capability_items(snapshot:))
       items.concat(member_management_capability_items(snapshot:))
+      items.concat(data_source_management_capability_items(snapshot:))
       items.concat(workspace_management_capability_items(snapshot:))
       items
     end
@@ -448,6 +449,12 @@ module Chat
       %w[workspace_update_name workspace_delete].map do |key|
         I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
       end
+    end
+
+    def data_source_management_capability_items(snapshot:)
+      return [] unless snapshot[:can_manage_data_sources]
+
+      [I18n.t('app.workspaces.chat.messages.capability_items.data_sources')]
     end
   end
 end

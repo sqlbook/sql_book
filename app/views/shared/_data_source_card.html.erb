@@ -1,16 +1,20 @@
+<% status_badge = data_source_index_status_badge(data_source, stats: @data_sources_stats) %>
+
 <div class="card data-source-card" data-action="click->cards#show">
   <div class="details">
-    <h3><%= link_to data_source.url, app_workspace_data_source_queries_path(workspace, data_source), class: "link secondary", "aria-label": "View datasource" %></h3>
-    <p class="owner gray-300">Owner: <%= workspace.owner&.full_name || "Unknown" %></p>
+    <h3>
+      <%= link_to data_source.display_name, app_workspace_data_source_queries_path(workspace, data_source), class: "link secondary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.open_queries') %>
+    </h3>
+    <p class="owner gray-300"><%= data_source_index_type_label(data_source) %></p>
 
     <div class="settings">
       <% if request.path == app_workspace_data_source_path(workspace, data_source) %>
-        <%= link_to app_workspace_data_sources_path(workspace), class: "link secondary", "aria-label": "Close and return to the datasources page" do %>
+        <%= link_to app_workspace_data_sources_path(workspace), class: "link secondary", "aria-label": I18n.t('common.actions.close') do %>
           <i class="ri-close-line red-500"></i>
-          <span>Close</span>
+          <span><%= I18n.t('common.actions.close') %></span>
         <% end %>
       <% else %>
-        <%= link_to app_workspace_data_source_path(workspace, data_source), class: "link secondary", "aria-label": "View settings for datasource" do %>
+        <%= link_to app_workspace_data_source_path(workspace, data_source), class: "link secondary", "aria-label": I18n.t('common.actions.settings') do %>
           <i class="ri-settings-3-line red-500"></i>
           <span><%= I18n.t('common.actions.settings') %></span>
         <% end %>
@@ -18,28 +22,43 @@
     </div>
   </div>
   <div class="stat total-events">
-    <p class="title gray-200">Total events</p>
+    <p class="title gray-200">
+      <%= data_source.capture_source? ? I18n.t('app.workspaces.data_sources.index.columns.total_events') : I18n.t('app.workspaces.data_sources.index.columns.type') %>
+    </p>
     <h3 class="red-500">
-      <%= number_to_delimited(@data_sources_stats.total_events_for(data_source:)) %>
-    </h3>
-    <p class="subtitle small gray-500">Since: <%= data_source.created_at.strftime('%d/%m/%y') %></p>
-  </div>
-  <div class="stat monthly-events">
-    <p class="title gray-200">Events this month</p>
-    <h3 class="red-500">
-      <%= number_to_delimited(@data_sources_stats.monthly_events_for(data_source:)) %>
+      <%= data_source.capture_source? ? number_to_delimited(@data_sources_stats.total_events_for(data_source:)) : data_source_index_type_label(data_source) %>
     </h3>
     <p class="subtitle small gray-500">
-      of <%= number_to_delimited(@data_sources_stats.monthly_events_limit_for(data_source:)) %>
+      <% if data_source.capture_source? %>
+        <%= I18n.t('app.workspaces.data_sources.card.created_at', date: data_source.created_at.strftime('%d/%m/%y')) %>
+      <% else %>
+        <%= status_badge&.fetch(:label, data_source.status.humanize) || data_source.status.humanize %>
+      <% end %>
+    </p>
+  </div>
+  <div class="stat monthly-events">
+    <p class="title gray-200">
+      <%= data_source.capture_source? ? I18n.t('app.workspaces.data_sources.index.columns.events_this_month') : I18n.t('app.workspaces.data_sources.index.columns.tables') %>
+    </p>
+    <h3 class="red-500">
+      <%= data_source.capture_source? ? number_to_delimited(@data_sources_stats.monthly_events_for(data_source:)) : number_to_delimited(@data_sources_stats.tables_for(data_source: data_source)) %>
+    </h3>
+    <p class="subtitle small gray-500">
+      <% if data_source.capture_source? %>
+        of <%= number_to_delimited(@data_sources_stats.monthly_events_limit_for(data_source:)) %>
+      <% else %>
+        <% last_checked_at = @data_sources_stats.last_checked_at_for(data_source: data_source) %>
+        <%= last_checked_at ? I18n.t('app.workspaces.data_sources.card.last_checked', date: last_checked_at.strftime('%d/%m/%y %H:%M')) : '-' %>
+      <% end %>
     </p>
   </div>
   <div class="stat queries">
-    <p class="title gray-200">Related queries</p>
+    <p class="title gray-200"><%= I18n.t('app.workspaces.data_sources.index.columns.related_queries') %></p>
     <h3 class="red-500">
       <%= @data_sources_stats.queries_for(data_source:) %>
     </h3>
     <p class="subtitle small">
-      <%= link_to I18n.t('common.actions.view'), app_workspace_queries_path(@workspace), class: "link gray-200", "aria-label": "View queries for this datasource" %>
+      <%= link_to I18n.t('common.actions.view'), app_workspace_queries_path(@workspace), class: "link gray-200", "aria-label": I18n.t('common.actions.view') %>
     </p>
   </div>
 </div>

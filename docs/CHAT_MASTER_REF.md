@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-19
+Last updated: 2026-03-20
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -22,11 +22,12 @@ Related references:
 ## Scope (v1)
 - Chat is strictly workspace-scoped and rendered on `GET /app/workspaces/:id`.
 - Chat history is isolated per user within each workspace (a member can only access threads they created).
-- Chat can execute only workspace/team-management actions that already exist elsewhere in app UX.
+- Chat can execute workspace/team-management actions and the first datasource-management actions that already exist elsewhere in app UX/API.
 - Explicitly out of scope in v1:
   - cross-workspace actions
   - workspace list/get/create via chat
-  - data source, query, dashboard, billing/subscription/admin/super-admin actions
+  - datasource update/delete/reconfigure actions beyond the phase-1 flow
+  - query, dashboard, billing/subscription/admin/super-admin actions
   - owner-role promotion via chat
 
 ## Core architecture
@@ -53,6 +54,8 @@ Related references:
   - `Tooling::Registry`
   - `Tooling::WorkspaceTeamRegistry`
   - `Tooling::WorkspaceTeamHandlers`
+  - `Tooling::WorkspaceDataSourceRegistry`
+  - `Tooling::WorkspaceDataSourceHandlers`
 - Server-authoritative policy/execution:
   - `Chat::Policy` for role/scope checks
   - `Chat::ActionExecutor` for normalized execution statuses
@@ -96,6 +99,9 @@ API v1 routes (internal-first, documented):
 - `POST /api/v1/workspaces/:workspace_id/members/resend-invite`
 - `PATCH /api/v1/workspaces/:workspace_id/members/:id/role`
 - `DELETE /api/v1/workspaces/:workspace_id/members/:id`
+- `GET /api/v1/workspaces/:workspace_id/data-sources`
+- `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
+- `POST /api/v1/workspaces/:workspace_id/data-sources`
 
 Docs surface:
 - `GET /dev/api`
@@ -134,12 +140,14 @@ Allowed action types:
 - `member.resend_invite`
 - `member.update_role`
 - `member.remove`
+- `datasource.list`
+- `datasource.validate_connection`
+- `datasource.create`
 
 Blocked prefixes:
 - `workspace.list`
 - `workspace.get`
 - `workspace.create`
-- `datasource.*`
 - `query.*`
 - `dashboard.*`
 - `billing.*`
@@ -147,15 +155,22 @@ Blocked prefixes:
 - `admin.*`
 - `super_admin.*`
 
+Datasource namespace note:
+- only `datasource.list`, `datasource.validate_connection`, and `datasource.create` are currently allowlisted
+- all other datasource actions remain out of scope until explicitly added to the tool registry and policy layer
+
 ## Risk and confirmation policy
 Read actions (`confirmation_mode: none`):
 - `member.list`
+- `datasource.list`
 
 Auto-run writes (no confirmation):
 - `workspace.update_name`
 - `member.invite`
 - `member.resend_invite`
 - `member.update_role`
+- `datasource.validate_connection`
+- `datasource.create`
 
 High-risk writes (inline confirmation required):
 - `workspace.delete`
@@ -167,6 +182,8 @@ High-risk writes (inline confirmation required):
 - `member.resend_invite`: `email` or `member_id` or `full_name`
 - `member.update_role`: (`email` or `member_id` or `full_name`) + `role`
 - `member.remove`: `email` or `member_id` or `full_name`
+- `datasource.validate_connection`: `host`, `database_name`, `username`, `password`
+- `datasource.create`: `name`, `host`, `database_name`, `username`, `password`, `selected_tables`
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -174,6 +191,11 @@ High-risk writes (inline confirmation required):
 - `workspace.delete` is owner-only.
 - `member.invite` / `member.update_role` restrict target roles to editable non-owner roles.
 - `member.list` is visible only to workspace `OWNER` and `ADMIN` roles.
+- datasource chat actions are visible/executable only to workspace `OWNER` and `ADMIN` roles.
+- datasource phase-1 chat scope is limited to:
+  - listing workspace datasources
+  - validating PostgreSQL connection details
+  - creating a PostgreSQL datasource with selected tables
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
 - Execution/preflight wording should be composed separately from the executor so chat can vary phrasing naturally and avoid repeating the same template back-to-back.
@@ -230,6 +252,7 @@ High-risk writes (inline confirmation required):
   - `Chat::PlannerService::PLAN_SCHEMA -> payload` is a JSON string encoding an object
 - Runtime/planner parse those JSON strings back into hashes server-side before execution.
 - If staging logs show `Invalid schema for response_format`, fix the schema contract first; changing prompts or models will not resolve that class of failure.
+- Datasource tool payloads should stay contract-shaped and deterministic so chat can safely hand connection metadata and selected tables to the server-authoritative handlers.
 
 ## Action lifecycle and idempotency behavior
 - `action_fingerprint` identifies the semantic action within a thread.

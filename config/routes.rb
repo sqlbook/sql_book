@@ -25,6 +25,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       post 'workspaces/:workspace_id/members/resend-invite', to: 'members#resend_invite'
       patch 'workspaces/:workspace_id/members/:id/role', to: 'members#update_role'
       delete 'workspaces/:workspace_id/members/:id', to: 'members#destroy'
+      get 'workspaces/:workspace_id/data-sources', to: 'data_sources#index'
+      post 'workspaces/:workspace_id/data-sources/validate-connection', to: 'data_sources#validate_connection'
+      post 'workspaces/:workspace_id/data-sources', to: 'data_sources#create'
     end
   end
 
@@ -94,6 +97,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       end
 
       resources :data_sources, controller: 'workspaces/data_sources' do
+        collection do
+          post 'validate_connection'
+        end
         resources :set_up, only: %i[index], controller: 'workspaces/data_sources/set_up'
         resources :queries, controller: 'workspaces/data_sources/queries' do
           member { put 'chart_config' }

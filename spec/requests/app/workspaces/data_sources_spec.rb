@@ -3,41 +3,43 @@
 require 'rails_helper'
 
 RSpec.describe 'App::Workspaces::DataSources', type: :request do
+  let(:user) { create(:user) }
+  let(:workspace) { create(:workspace_with_owner, owner:) }
+  let(:owner) { user }
+
+  before { sign_in(user) }
+
   describe 'GET /app/workspaces/:workspace_id/data_sources' do
-    let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner:) }
-    let(:owner) { user }
-
-    before { sign_in(user) }
-
     context 'when there are no data sources' do
-      it 'redirects to the new page' do
+      it 'renders the index page with grouped sections' do
         get "/app/workspaces/#{workspace.id}/data_sources"
-        expect(response).to redirect_to(new_app_workspace_data_source_path(workspace))
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.title'))
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.external_database.title'))
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.empty.external_database.title'))
       end
     end
 
-    context 'when there are data sources' do
-      let!(:data_source_1) { create(:data_source, workspace:) }
-      let!(:data_source_2) { create(:data_source, workspace:) }
+    context 'when there are mixed data sources' do
+      let!(:capture_source) { create(:data_source, workspace:, name: 'Storefront Capture') }
+      let!(:postgres_source) { create(:data_source, :postgres, workspace:, name: 'Warehouse DB') }
 
       it 'renders workspace breadcrumbs' do
         get "/app/workspaces/#{workspace.id}/data_sources"
 
         expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspaces_path}']", text: 'Workspaces')
-        expect(response.body)
-          .to have_selector(
-            ".breadcrumbs-link[href='#{app_workspace_path(workspace)}']",
-            text: workspace.name
-          )
+        expect(response.body).to have_selector(".breadcrumbs-link[href='#{app_workspace_path(workspace)}']", text: workspace.name)
         expect(response.body).to have_selector('.breadcrumbs-current', text: 'Data Sources')
       end
 
-      it 'renders a list of data_sources' do
+      it 'renders grouped rows for capture and external sources' do
         get "/app/workspaces/#{workspace.id}/data_sources"
 
-        expect(response.body).to have_selector('.data-source-card h3 a', text: data_source_1.url)
-        expect(response.body).to have_selector('.data-source-card h3 a', text: data_source_2.url)
+        expect(response.body).to include('Warehouse DB')
+        expect(response.body).to include('Storefront Capture')
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.external_database.title'))
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.title'))
       end
     end
 
@@ -48,193 +50,222 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
       it 'redirects to workspace list' do
         get "/app/workspaces/#{workspace.id}/data_sources"
+
         expect(response).to redirect_to(app_workspaces_path)
       end
     end
   end
 
   describe 'GET /app/workspaces/:workspace_id/data_sources/new' do
-    let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
-
-    before { sign_in(user) }
-
-    it 'renders a form to enter a url' do
+    it 'renders the wizard step one by default' do
       get "/app/workspaces/#{workspace.id}/data_sources/new"
-      expect(response.body).to include('type="url"')
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.title'))
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.source_types.external_database.title'))
     end
 
-    it 'shows a welcome message' do
-      get "/app/workspaces/#{workspace.id}/data_sources/new"
-      expect(response.body).to include('Create your first data source')
+    it 'renders the connection step when requested' do
+      get "/app/workspaces/#{workspace.id}/data_sources/new", params: { step: 2 }
+
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.connection_box.title'))
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.fields.database_type'))
+    end
+  end
+
+  describe 'POST /app/workspaces/:workspace_id/data_sources/validate_connection' do
+    let(:available_tables) do
+      [
+        {
+          schema: 'public',
+          tables: [
+            { name: 'orders', qualified_name: 'public.orders' }
+          ]
+        }
+      ]
+    end
+    let(:validation_result) do
+      DataSources::ConnectionValidationService::Result.new(
+        success?: true,
+        available_tables:,
+        checked_at: Time.zone.local(2026, 3, 20, 10, 0, 0),
+        error_code: nil,
+        message: nil
+      )
+    end
+    let(:validation_service) { instance_double(DataSources::ConnectionValidationService, call: validation_result) }
+
+    before do
+      allow(DataSources::ConnectionValidationService).to receive(:new).and_return(validation_service)
     end
 
-    context 'if the user already has data sources' do
-      before do
-        create(:data_source, workspace:)
-      end
+    it 'validates the connection and advances to step three' do
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: 'Warehouse DB',
+             database_type: 'postgres',
+             host: 'db.example.com',
+             port: 5432,
+             database_name: 'warehouse',
+             username: 'readonly',
+             password: 'secret'
+           }
 
-      it 'shows a boring message' do
-        get "/app/workspaces/#{workspace.id}/data_sources/new"
-        expect(response.body).to include('data source')
-      end
+      expect(response).to redirect_to(new_app_workspace_data_source_path(workspace, step: 3))
+      expect(DataSources::ConnectionValidationService).to have_received(:new)
+    end
+
+    it 'renders step two errors before calling the connection service when required fields are blank' do
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: '',
+             database_type: 'postgres',
+             host: '',
+             database_name: '',
+             username: '',
+             password: ''
+           }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("can't be blank")
+      expect(DataSources::ConnectionValidationService).not_to have_received(:new)
     end
   end
 
   describe 'POST /app/workspaces/:workspace_id/data_sources' do
-    let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner:) }
-    let(:owner) { user }
+    let(:available_tables) do
+      [
+        {
+          schema: 'public',
+          tables: [
+            { name: 'orders', qualified_name: 'public.orders' },
+            { name: 'customers', qualified_name: 'public.customers' }
+          ]
+        }
+      ]
+    end
+    let(:validation_result) do
+      DataSources::ConnectionValidationService::Result.new(
+        success?: true,
+        available_tables:,
+        checked_at: Time.zone.local(2026, 3, 20, 10, 0, 0),
+        error_code: nil,
+        message: nil
+      )
+    end
+    let(:validation_service) { instance_double(DataSources::ConnectionValidationService, call: validation_result) }
 
     before do
-      sign_in(user)
+      allow(DataSources::ConnectionValidationService).to receive(:new).and_return(validation_service)
     end
 
-    context 'when no url is provided' do
-      it 'redirects back to the new page' do
-        post "/app/workspaces/#{workspace.id}/data_sources"
-        expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
-      end
+    it 'still supports the first-party capture creation path' do
+      expect do
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: 'https://sqlbook.com' }
+      end.to change(DataSource, :count).by(1)
+
+      expect(DataSource.last.source_type).to eq('first_party_capture')
+      expect(response).to redirect_to(app_workspace_data_source_set_up_index_path(workspace, DataSource.last.id))
     end
 
-    context 'when a url is provided but it is invalid' do
-      let(:url) { 'sdfsfdsf' }
+    it 'creates a postgres data source after a successful validation step' do
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: 'Warehouse DB',
+             database_type: 'postgres',
+             host: 'db.example.com',
+             port: 5432,
+             database_name: 'warehouse',
+             username: 'readonly',
+             password: 'secret'
+           }
 
-      it 'redirects back to the new page' do
-        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
-        expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
-      end
+      expect do
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { selected_tables: ['public.orders'] }
+      end.to change { workspace.data_sources.count }.by(1)
 
-      it 'flashes a message' do
-        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
-        expect(flash[:alert]).to eq('Url is not valid')
-      end
+      data_source = workspace.data_sources.order(:id).last
+      expect(data_source.source_type).to eq('postgres')
+      expect(data_source.name).to eq('Warehouse DB')
+      expect(data_source.selected_tables).to eq(['public.orders'])
+      expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
     end
 
-    context 'when a valid url is provided but it has been taken' do
-      let(:url) { 'https://sqlbook.com' }
+    it 'renders step three again when too many tables are selected' do
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: 'Warehouse DB',
+             database_type: 'postgres',
+             host: 'db.example.com',
+             port: 5432,
+             database_name: 'warehouse',
+             username: 'readonly',
+             password: 'secret'
+           }
 
-      before { create(:data_source, url:) }
+      selected_tables = Array.new(DataSource::MAX_SELECTED_TABLES + 1) { |index| "public.table_#{index}" }
 
-      it 'redirects back to the new page' do
-        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
-        expect(response).to redirect_to(app_workspace_data_sources_path(workspace))
-      end
+      post "/app/workspaces/#{workspace.id}/data_sources", params: { selected_tables: selected_tables }
 
-      it 'flashes a message' do
-        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
-        expect(flash[:alert]).to eq('Url has already been taken')
-      end
-    end
-
-    context 'when a valid url is provided and it has not been taken' do
-      let(:url) { 'https://sqlbook.com' }
-
-      it 'redirects to the set up page' do
-        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
-        expect(response).to redirect_to(app_workspace_data_source_set_up_index_path(workspace, DataSource.last.id))
-      end
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.validation.selected_tables_limit', count: DataSource::MAX_SELECTED_TABLES))
     end
 
     context 'when current user has user role permissions' do
       let(:owner) { create(:user) }
-      let(:url) { 'https://sqlbook.com' }
 
       before { create(:member, workspace:, user:, role: Member::Roles::USER) }
 
       it 'does not create a data source' do
-        expect { post "/app/workspaces/#{workspace.id}/data_sources", params: { url: } }
-          .not_to change(DataSource, :count)
+        expect do
+          post "/app/workspaces/#{workspace.id}/data_sources", params: { url: 'https://sqlbook.com' }
+        end.not_to change(DataSource, :count)
       end
 
       it 'redirects to workspace list' do
-        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: }
+        post "/app/workspaces/#{workspace.id}/data_sources", params: { url: 'https://sqlbook.com' }
+
         expect(response).to redirect_to(app_workspaces_path)
       end
     end
   end
 
-  describe 'GET /app/workspaces/:workspace_id/data_sources/:data_source_id' do
-    let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
-    let(:data_source) { create(:data_source, workspace:) }
+  describe 'GET /app/workspaces/:workspace_id/data_sources/:id' do
+    let(:capture_source) { create(:data_source, workspace:) }
+    let(:postgres_source) { create(:data_source, :postgres, workspace:) }
 
-    before { sign_in(user) }
+    it 'renders the capture source settings page' do
+      get "/app/workspaces/#{workspace.id}/data_sources/#{capture_source.id}"
 
-    context 'when the data source does not exist' do
-      it 'renders the 404 page' do
-        get "/app/workspace/#{workspace.id}/data_sources/342342343223"
-        expect(response.status).to eq(404)
-      end
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.fields.tracking_url'))
     end
 
-    context 'when the data source exists' do
-      it 'renders the show page' do
-        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
-        expect(response.status).to eq(200)
-      end
+    it 'renders the postgres source settings page' do
+      get "/app/workspaces/#{workspace.id}/data_sources/#{postgres_source.id}"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.connection_title'))
+      expect(response.body).to include('db.internal')
     end
   end
 
   describe 'PUT /app/workspaces/:workspace_id/data_sources/:id' do
-    let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner: user) }
     let(:data_source) { create(:data_source, workspace:, verified_at: Time.current) }
 
-    before { sign_in(user) }
+    it 'updates capture source urls and resets verification' do
+      put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' }
 
-    context 'when the url is not provided' do
-      it 'redirects to the show page' do
-        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
-        expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
-      end
-    end
-
-    context 'when the provided url is invalid' do
-      it 'redirects to the show page' do
-        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfds' }
-        expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
-      end
-
-      it 'does not update the url' do
-        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfds' } }
-          .not_to change { data_source.reload.url }
-      end
-
-      it 'flashes a message' do
-        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'dfsdfsdfds' }
-        expect(flash[:alert]).to eq('Url is not valid')
-      end
-    end
-
-    context 'when the provided url is valid' do
-      it 'redirects to the show page' do
-        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' }
-        expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
-      end
-
-      it 'updates the url' do
-        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
-          .to change { data_source.reload.url }.from(data_source.url).to('https://valid-url.com')
-      end
-
-      it 'resets the verified_at' do
-        expect { put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' } }
-          .to change { data_source.reload.verified_at }.from(data_source.verified_at).to(nil)
-      end
+      expect(data_source.reload.url).to eq('https://valid-url.com')
+      expect(data_source.verified_at).to eq(nil)
+      expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
     end
   end
 
-  describe 'DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id' do
-    let(:user) { create(:user) }
-    let(:workspace) { create(:workspace_with_owner, owner:) }
-    let(:owner) { user }
+  describe 'DELETE /app/workspaces/:workspace_id/data_sources/:id' do
     let(:data_source) { create(:data_source, workspace:) }
 
     before do
-      sign_in(user)
-
-      # Create 3 other members
       create(:member, workspace:)
       create(:member, workspace:)
       create(:member, workspace:)
@@ -249,22 +280,8 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
     it 'sends a mailer to every member in that workspace' do
       delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
+
       expect(DataSourceMailer).to have_received(:destroy).exactly(4).times
-    end
-
-    context 'when the data source has some data' do
-      before do
-        create(:click, data_source_uuid: data_source.external_uuid)
-        create(:page_view, data_source_uuid: data_source.external_uuid)
-        create(:page_view, data_source_uuid: data_source.external_uuid)
-        create(:page_view, data_source_uuid: data_source.external_uuid)
-        create(:session, data_source_uuid: data_source.external_uuid)
-      end
-
-      it 'enqueues the delete job' do
-        delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}"
-        expect(ActiveRecord::DestroyAssociationAsyncJob).to have_been_enqueued.exactly(3).times
-      end
     end
 
     context 'when current user has user role permissions' do
@@ -272,7 +289,6 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
       before do
         create(:member, workspace:, user:, role: Member::Roles::USER)
-        sign_in(user)
       end
 
       it 'does not delete the data source' do

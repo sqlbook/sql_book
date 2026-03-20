@@ -6,7 +6,7 @@ module App
 
     def index
       @workspaces = workspaces
-      return redirect_to new_app_workspace_path if workspaces.empty?
+      redirect_to new_app_workspace_path if workspaces.empty?
     end
 
     def show

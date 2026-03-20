@@ -1,6 +1,6 @@
 # Translations Master Reference
 
-Last updated: 2026-03-19
+Last updated: 2026-03-20
 
 ## Service and goal
 - Service: database-backed internationalization for the signed-in and email experiences.
@@ -100,6 +100,16 @@ For every feature/change before merge:
   - client-side validation and fallback request errors in Stimulus controllers
 - LLM free-form generated responses are intentionally not key-managed.
 - For chat changes, add/update both `en.yml` and `es.yml` in the same PR.
+
+## Data source copy rule
+- All datasource UI copy must be locale-key backed under `app.workspaces.data_sources.*` or `common.*`.
+- All deterministic datasource API/chat result copy must be locale-key backed under `app.workspaces.chat.datasource.*` or `common.*`.
+- This includes:
+  - datasource index section headings and empty states
+  - wizard step headings, field labels, descriptions, validation, and button text
+  - datasource settings/management copy
+  - deterministic API/chat success and validation messages for datasource list/validate/create actions
+- New datasource copy is not considered complete unless `en.yml` and `es.yml` are updated in the same change.
 
 ## Data model
 - `translation_keys`

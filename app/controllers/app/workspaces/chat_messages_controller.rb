@@ -213,7 +213,7 @@ module App
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
       def runtime_tool_metadata
-        @runtime_tool_metadata ||= Tooling::WorkspaceTeamRegistry.tool_metadata
+        @runtime_tool_metadata ||= Tooling::WorkspaceRegistry.tool_metadata
       end
 
       def set_workspace_delete_toast(outcome:)

@@ -13,7 +13,9 @@ namespace :openapi do
       '/api/v1/workspaces/{workspace_id}/members',
       '/api/v1/workspaces/{workspace_id}/members/resend-invite',
       '/api/v1/workspaces/{workspace_id}/members/{id}/role',
-      '/api/v1/workspaces/{workspace_id}/members/{id}'
+      '/api/v1/workspaces/{workspace_id}/members/{id}',
+      '/api/v1/workspaces/{workspace_id}/data-sources',
+      '/api/v1/workspaces/{workspace_id}/data-sources/validate-connection'
     ]
 
     missing_paths = required_paths - spec.fetch('paths', {}).keys

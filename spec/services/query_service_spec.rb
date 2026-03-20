@@ -633,7 +633,7 @@ RSpec.describe QueryService do
     end
 
     it 'has an error message' do
-      expect(instance.execute.error_message).to include('PG::InsufficientPrivilege')
+      expect(instance.execute.error_message).to include('PG::ReadOnlySqlTransaction')
     end
   end
 
@@ -666,7 +666,56 @@ RSpec.describe QueryService do
     end
 
     it 'has an error message' do
-      expect(instance.execute.error_message).to include('There was an unkown error, please try again')
+      expect(instance.execute.error_message).to eq(I18n.t('app.workspaces.data_sources.query_guard.unexpected_error'))
+    end
+  end
+
+  context 'when querying an external postgres source' do
+    let(:data_source) { create(:data_source, :postgres) }
+    let(:query_string) { 'SELECT * FROM public.orders' }
+    let(:connector) { instance_double(DataSources::Connectors::PostgresConnector) }
+    let(:result) { ActiveRecord::Result.new(%w[id total], [[1, '12.00']]) }
+
+    before do
+      allow(data_source).to receive(:connector).and_return(connector)
+      allow(connector).to receive(:execute_readonly).and_return(result)
+    end
+
+    it 'routes execution through the connector with external guardrails' do
+      result = instance.execute
+
+      expect(result.rows).to eq([[1, '12.00']])
+      expect(connector).to have_received(:execute_readonly).with(
+        sql: 'SELECT * FROM public.orders',
+        statement_timeout_ms: QueryService::EXTERNAL_STATEMENT_TIMEOUT_MS,
+        max_rows: QueryService::EXTERNAL_ROW_LIMIT
+      ).at_least(:once)
+    end
+
+    it 'does not use the cache for external sources' do
+      allow(Rails.cache).to receive(:fetch).and_call_original
+
+      instance.execute
+
+      expect(Rails.cache).not_to have_received(:fetch)
+    end
+  end
+
+  context 'when an external connector raises a generic query error' do
+    let(:data_source) { create(:data_source, :postgres) }
+    let(:query_string) { 'SELECT * FROM public.orders' }
+    let(:connector) { instance_double(DataSources::Connectors::PostgresConnector) }
+
+    before do
+      allow(data_source).to receive(:connector).and_return(connector)
+      allow(connector).to receive(:execute_readonly).and_raise(
+        DataSources::Connectors::BaseConnector::QueryError.new(I18n.t('app.workspaces.data_sources.query_guard.query_failed'))
+      )
+    end
+
+    it 'surfaces the connector error message' do
+      expect(instance.execute.error).to eq(true)
+      expect(instance.execute.error_message).to eq(I18n.t('app.workspaces.data_sources.query_guard.query_failed'))
     end
   end
 

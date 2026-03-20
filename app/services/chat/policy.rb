@@ -12,15 +12,17 @@ module Chat
       member.resend_invite
       member.update_role
       member.remove
+      datasource.list
+      datasource.validate_connection
+      datasource.create
     ].freeze
 
-    WRITE_ACTIONS = ALLOWED_ACTIONS - ['member.list']
+    WRITE_ACTIONS = ALLOWED_ACTIONS - ['member.list', 'datasource.list']
 
     BLOCKED_PREFIXES = %w[
       workspace.list
       workspace.get
       workspace.create
-      datasource.
       query.
       dashboard.
       billing.
@@ -37,7 +39,10 @@ module Chat
       'member.invite' => :authorize_member_invite,
       'member.resend_invite' => :authorize_member_resend,
       'member.update_role' => :authorize_member_role_update,
-      'member.remove' => :authorize_member_remove
+      'member.remove' => :authorize_member_remove,
+      'datasource.list' => :authorize_data_source_list,
+      'datasource.validate_connection' => :authorize_data_source_validate_connection,
+      'datasource.create' => :authorize_data_source_create
     }.freeze
 
     def self.write_action?(action_type)
@@ -136,6 +141,18 @@ module Chat
       allow
     end
 
+    def authorize_data_source_list(**)
+      authorize_data_source_management
+    end
+
+    def authorize_data_source_validate_connection(**)
+      authorize_data_source_management
+    end
+
+    def authorize_data_source_create(**)
+      authorize_data_source_management
+    end
+
     def current_role
       @current_role ||= capabilities.role
     end
@@ -152,6 +169,10 @@ module Chat
       capabilities.can_view_team_members?
     end
 
+    def can_manage_data_sources?
+      capabilities.can_manage_data_sources?
+    end
+
     def can_manage_member?(member:)
       current_role < member.role
     end
@@ -162,6 +183,12 @@ module Chat
 
     def target_member(payload:)
       member_reference_resolver.resolve(payload:)
+    end
+
+    def authorize_data_source_management
+      return allow if can_manage_data_sources?
+
+      deny(reason_code: 'forbidden_role')
     end
 
     def normalized_role(role)

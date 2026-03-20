@@ -6,8 +6,14 @@
 # Use this to limit dissemination of sensitive information.
 # See the ActiveSupport::ParameterFilter documentation for supported notations and behaviors.
 Rails.application.config.filter_parameters += %i[
+  connection_password
+  database_name
+  encrypted_connection_password
+  host
   passw
+  port
   secret
+  ssl_mode
   token
   _key
   crypt
@@ -15,4 +21,5 @@ Rails.application.config.filter_parameters += %i[
   certificate
   otp
   ssn
+  username
 ]
