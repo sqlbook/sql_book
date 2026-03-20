@@ -11,13 +11,20 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
   describe 'GET /app/workspaces/:workspace_id/data_sources' do
     context 'when there are no data sources' do
-      it 'renders the index page with grouped sections' do
+      it 'renders the index page without empty datasource sections' do
         get "/app/workspaces/#{workspace.id}/data_sources"
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.title'))
-        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.external_database.title'))
-        expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.empty.external_database.title'))
+        expect(response.body).not_to include(
+          I18n.t('app.workspaces.data_sources.index.sections.external_database.title')
+        )
+        expect(response.body).not_to include(
+          I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.title')
+        )
+        expect(response.body).not_to include(
+          I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title')
+        )
       end
     end
 
@@ -41,6 +48,9 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
         expect(response.body).to include('Storefront Capture')
         expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.external_database.title'))
         expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.title'))
+        expect(response.body).not_to include(
+          I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title')
+        )
       end
     end
 

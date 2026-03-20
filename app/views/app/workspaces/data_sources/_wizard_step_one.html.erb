@@ -3,10 +3,12 @@
 
   <div class="data-source-wizard__options">
     <% wizard_source_type_options(selected_source_type: (wizard_state || {})['source_type']).each do |option| %>
-      <label class="data-source-type-option <%= 'data-source-type-option--coming-soon' if option[:coming_soon] %>">
-        <span class="data-source-type-option__radio">
+      <label class="data-source-type-option radio <%= 'data-source-type-option--coming-soon' if option[:coming_soon] %>">
+        <span class="data-source-type-option__control">
           <%= radio_button_tag :source_type, option[:value], option[:selected], disabled: option[:disabled] %>
-          <span class="data-source-type-option__radio-mark" aria-hidden="true"></span>
+          <span class="check" aria-hidden="true">
+            <span></span>
+          </span>
         </span>
 
         <span class="data-source-type-option__content">

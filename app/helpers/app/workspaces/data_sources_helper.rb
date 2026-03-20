@@ -8,9 +8,8 @@ module App
       def data_sources_index_sections(data_sources)
         [
           external_database_section(data_sources),
-          first_party_capture_section(data_sources),
-          third_party_data_library_section
-        ]
+          first_party_capture_section(data_sources)
+        ].compact
       end
 
       def data_source_index_type_label(data_source)
@@ -131,47 +130,38 @@ module App
       private
 
       def external_database_section(data_sources)
+        rows = data_sources.select(&:external_database?)
+        return if rows.empty?
+
         build_index_section(
           key: :external_database,
           section_scope: 'external_database',
           headers: %w[name type tables related_queries],
-          rows: data_sources.select(&:external_database?),
+          rows:,
           row_partial: 'external_database_row'
         )
       end
 
       def first_party_capture_section(data_sources)
+        rows = data_sources.select(&:capture_source?)
+        return if rows.empty?
+
         build_index_section(
           key: :first_party_capture,
           section_scope: 'first_party_capture',
           headers: %w[name total_events events_this_month related_queries],
-          rows: data_sources.select(&:capture_source?),
+          rows:,
           row_partial: 'capture_source_row'
         )
-      end
-
-      def third_party_data_library_section
-        {
-          key: :third_party_data_library,
-          title: I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title'),
-          description: I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.description'),
-          coming_soon: true,
-          coming_soon_title: I18n.t('app.workspaces.data_sources.index.coming_soon.title'),
-          coming_soon_body: I18n.t('app.workspaces.data_sources.index.coming_soon.body')
-        }
       end
 
       def build_index_section(key:, section_scope:, headers:, rows:, row_partial:)
         {
           key:,
           title: I18n.t("app.workspaces.data_sources.index.sections.#{section_scope}.title"),
-          description: I18n.t("app.workspaces.data_sources.index.sections.#{section_scope}.description"),
           headers: translated_headers(headers),
           rows:,
-          row_partial:,
-          empty_title: I18n.t("app.workspaces.data_sources.index.empty.#{section_scope}.title"),
-          empty_body: I18n.t("app.workspaces.data_sources.index.empty.#{section_scope}.body"),
-          empty_cta: I18n.t('common.actions.create_new')
+          row_partial:
         }
       end
 

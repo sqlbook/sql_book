@@ -1,46 +1,22 @@
 <section class="data-source-group data-source-group--<%= section[:key] %>">
-  <div class="data-source-group__header">
-    <div>
-      <h2><%= section[:title] %></h2>
-      <p><%= section[:description] %></p>
-    </div>
+  <h2><%= section[:title] %></h2>
 
-    <% if section[:coming_soon] %>
-      <span class="data-source-group__badge"><%= section[:coming_soon_title] %></span>
-    <% end %>
+  <div class="data-source-group__table-wrapper">
+    <table class="collapsible data-source-group__table">
+      <thead>
+        <tr>
+          <% section[:headers].each do |header| %>
+            <th><%= header %></th>
+          <% end %>
+          <th class="options">
+            <span class="sr-only"><%= I18n.t('common.actions.settings') %></span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <%= render partial: section[:row_partial], collection: section[:rows], as: :data_source, locals: { workspace:, stats: } %>
+      </tbody>
+    </table>
   </div>
-
-  <% if section[:coming_soon] %>
-    <div class="data-source-group__coming-soon">
-      <p><%= section[:coming_soon_body] %></p>
-    </div>
-  <% elsif section[:rows].any? %>
-    <div class="data-source-group__table-wrapper">
-      <table class="collapsible data-source-group__table">
-        <thead>
-          <tr>
-            <% section[:headers].each do |header| %>
-              <th><%= header %></th>
-            <% end %>
-            <th class="options">
-              <span class="sr-only"><%= I18n.t('common.actions.settings') %></span>
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <%= render partial: section[:row_partial], collection: section[:rows], as: :data_source, locals: { workspace:, stats: } %>
-        </tbody>
-      </table>
-    </div>
-  <% else %>
-    <div class="data-source-group__empty-state">
-      <p class="data-source-group__empty-state-title"><%= section[:empty_title] %></p>
-      <p class="data-source-group__empty-state-body"><%= section[:empty_body] %></p>
-
-      <%= link_to new_app_workspace_data_source_path(workspace), class: "link primary" do %>
-        <%= section[:empty_cta] %>
-      <% end %>
-    </div>
-  <% end %>
 </section>

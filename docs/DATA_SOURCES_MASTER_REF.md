@@ -66,10 +66,9 @@ Chat/tool actions:
 - Server-side authorization remains authoritative even if UI affordances are hidden.
 
 ## Datasource home behavior
-- Datasources home groups rows by connector family:
+- Datasources home renders only connector families that currently have datasource rows:
   - `External databases`
   - `First-party data capture`
-  - `Third-party data library`
 - External-database rows show:
   - datasource name
   - connector type
@@ -80,7 +79,6 @@ Chat/tool actions:
   - total events
   - events this month
   - related query count
-- Third-party library remains a coming-soon section in phase 1.
 
 ## Phase-1 create flow
 Step 1:
@@ -109,6 +107,11 @@ Step 3:
 Wizard-state note:
 - essential datasource connection state is preserved across requests without relying solely on cache
 - discovered tables are cached as an optimization, but the flow can repopulate them when needed
+
+UI fidelity notes:
+- datasource home uses the standard workspace `page-header` pattern with the inline create action beside `h1`
+- datasource wizard should not add eyebrow copy or extra helper text unless it appears in the approved design
+- datasource wizard labels follow the shared default label treatment unless a design explicitly overrides them
 
 ## Data model and connector semantics
 - `DataSource.source_type` is the connector discriminator.

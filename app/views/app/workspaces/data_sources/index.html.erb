@@ -1,9 +1,6 @@
 <main class="data-sources-page">
   <div class="page-header data-sources-page__header">
-    <div class="data-sources-page__title-block">
-      <p class="eyebrow gray-300"><%= t('app.workspaces.data_sources.index.eyebrow') %></p>
-      <h1><%= t('app.workspaces.data_sources.index.title') %></h1>
-    </div>
+    <h1><%= t('app.workspaces.data_sources.index.title') %></h1>
 
     <%= link_to new_app_workspace_data_source_path(@workspace),
                 class: "link secondary create-data-source",

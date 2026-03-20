@@ -17,9 +17,12 @@
 
             <div class="data-source-wizard__schema-tables">
               <% group[:tables].each do |table| %>
-                <label class="data-source-wizard__table-row">
-                  <%= check_box_tag 'selected_tables[]', table[:qualified_name], selected_tables.include?(table[:qualified_name]), class: "data-source-wizard__table-checkbox" %>
-                  <span class="data-source-wizard__table-name"><%= table[:name] %></span>
+                <label class="checkbox data-source-wizard__table-row">
+                  <%= check_box_tag 'selected_tables[]', table[:qualified_name], selected_tables.include?(table[:qualified_name]) %>
+                  <div class="check">
+                    <i class="ri-check-line"></i>
+                  </div>
+                  <span class="checkbox-text data-source-wizard__table-name"><%= table[:name] %></span>
                 </label>
               <% end %>
             </div>

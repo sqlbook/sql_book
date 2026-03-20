@@ -281,10 +281,9 @@ Related references:
   - `<720px`: stat tiles stack vertically in a single column.
 
 ## Data source home and phase-1 create flow
-- Datasource home groups sources by connector family:
+- Datasource home renders connector-family sections only when that family currently has rows:
   - `External databases`
   - `First-party data capture`
-  - `Third-party data library`
 - External database rows currently surface:
   - name
   - connector type
@@ -305,6 +304,11 @@ Related references:
 
 ## Page header CTA spacing
 - On workspace and data-source pages, inline `[+ Create New]` links beside `h1` use `16px` left spacing from the heading.
+
+## Form typography and shared controls
+- Default form labels use `cream-250`, body-size text (`14px/24px`), and bold weight unless a design explicitly overrides them.
+- Shared step indicators carry their own `24px` top and bottom margin; page-specific layouts should not stack extra spacing onto the component unless a design calls for it.
+- Datasource wizard copy should follow approved designs directly and should not introduce extra helper or hint text beyond what the design includes.
 
 ## Workspace creation flow
 1. Authenticated user creates workspace with a name.
