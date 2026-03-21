@@ -80,6 +80,9 @@ es:
             average_busiest_time: Hora media con más actividad
             average_quietest_day: Día medio con menos actividad
             average_session_duration: Duración media de la sesión
+        settings:
+          chat_source_label: Origen del chat
+          chat_source_link: Abrir chat de origen
       chat:
         title: "¿Por dónde empezamos?"
         suggestions:
@@ -171,7 +174,9 @@ es:
           query_failed: No pude ejecutar esa consulta contra la fuente de datos seleccionada.
         query_library:
           none: Todavía no hay consultas guardadas en este espacio.
-          found: "Aquí tienes %{count} consultas guardadas:"
+          found:
+            one: "Aquí tienes %{count} consulta guardada:"
+            other: "Aquí tienes %{count} consultas guardadas:"
           item: "- **%{name}** — Fuente de datos: %{data_source}"
           saved: Guardé esa consulta en la biblioteca como "%{name}".
           renamed: Renombré esa consulta guardada como "%{name}".
@@ -292,7 +297,7 @@ es:
           member_invite_needs_name_and_role: Para enviar la invitación, todavía necesito su nombre, apellido y rol (Administrador, Usuario o Solo lectura).
           member_invite_needs_email: Para enviar la invitación, ¿qué correo debo usar?
           member_invite_needs_name: Para enviar la invitación, ¿cuál es su nombre y apellido?
-          member_invite_needs_role: Para enviar la invitación, ¿qué rol quieres darle (Administrador, Usuario o Solo lectura)?
+          member_invite_needs_role: "¿Qué rol debería tener: Administrador, Usuario o Solo lectura?"
           member_invite_role_answer: Invité a %{name} como %{role}. Su invitación está actualmente en estado %{status}.
           member_recent_reference_answer: "Estamos hablando de %{name} (%{email}). Ahora mismo tiene estado %{status} y rol %{role} en este espacio."
           member_resend: Puedo reenviar esa invitación pendiente cuando lo confirmes.

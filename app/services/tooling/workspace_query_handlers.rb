@@ -119,8 +119,9 @@ module Tooling
         'chart_type' => query.chart_type,
         'data_source' => serialize_data_source(query:),
         'author' => serialize_author(query:),
+        'chat_source' => serialize_chat_source(query:),
         'updated_at' => query.updated_at&.iso8601
-      }
+      }.compact
     end
 
     def serialize_data_source(query:)
@@ -136,6 +137,10 @@ module Tooling
         'name' => query.author&.full_name.to_s.presence || query.author&.email.to_s,
         'email' => query.author&.email.to_s
       }
+    end
+
+    def serialize_chat_source(query:)
+      Queries::ChatSourceResolver.new(query:, viewer: actor, workspace:).call
     end
   end
 end

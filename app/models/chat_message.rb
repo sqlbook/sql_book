@@ -26,6 +26,16 @@ class ChatMessage < ApplicationRecord
            foreign_key: :source_message_id,
            dependent: :nullify,
            inverse_of: :source_message
+  has_many :source_query_references,
+           class_name: 'ChatQueryReference',
+           foreign_key: :source_message_id,
+           dependent: :nullify,
+           inverse_of: :source_message
+  has_many :result_query_references,
+           class_name: 'ChatQueryReference',
+           foreign_key: :result_message_id,
+           dependent: :nullify,
+           inverse_of: :result_message
   has_many_attached :images
 
   validates :role, inclusion: { in: [Roles::USER, Roles::ASSISTANT, Roles::SYSTEM] }

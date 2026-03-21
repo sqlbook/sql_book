@@ -75,6 +75,11 @@ Related references:
   - role: `user`, `assistant`, `system`
   - status: `pending`, `completed`, `failed`
   - supports image attachments via Active Storage (`has_many_attached :images`)
+- `ChatQueryReference` (`chat_query_references`)
+  - durable per-thread query reference model owned by the app, not the LLM
+  - stores query question, SQL, datasource, current name, prior aliases, lightweight result metadata, and optional `saved_query_id`
+  - thread-only queries stay in `chat_query_references` with `saved_query_id = nil`
+  - queries that were also saved to the shared query library keep their thread-local reference and attach `saved_query_id`
 - `ChatActionRequest` (`chat_action_requests`)
   - structured action proposal / execution record with payload
   - confirmation token + expiry
@@ -211,6 +216,8 @@ High-risk writes (inline confirmation required):
 - `query.delete`: `query_id`
 - When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt or a generic analytic question like "How many users do I have?".
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
+- Conversational rename follow-ups such as `rename it to DB User Count` or `Yes please` after the assistant offers a specific rename should stay in `query.rename`, not fall back to `query.run` or `query.list`.
+- Query continuity should resolve against persisted thread-local query references first, then legacy fallback state, rather than assuming only one recent query exists in the thread.
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -234,6 +241,15 @@ High-risk writes (inline confirmation required):
   - saving the most recently executed query into the query library
   - renaming saved queries in the current workspace
   - deleting saved queries from the current workspace with confirmation
+- Query reference continuity rules:
+  - `query.run` should create or refresh a thread-local query reference
+  - `query.save` should attach the saved query id to the matching thread reference instead of replacing the thread-local record
+  - `query.rename` should update the current name and preserve prior names as aliases on the same thread reference
+  - `query.delete` should remove the saved-library link but keep the thread-local reference so later follow-ups in the thread still have context
+- Saved-query provenance rules:
+  - query settings may show a `Chat source` link when the saved query originated from chat and the current viewer can still access that thread
+  - `Chat source` must never expose another member's private chat thread
+  - archived threads remain valid provenance targets; deleted threads simply remove the link
 - If multiple datasources or tables plausibly match a query question, chat must ask a clarifying follow-up before running SQL.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
@@ -247,7 +263,8 @@ High-risk writes (inline confirmation required):
    - pending confirmation state
    - staged datasource setup state
    - staged query clarification state
-   - recent query state (last successful query question/SQL/datasource/save result)
+   - recent structured query references (most relevant thread-local query records with aliases/result metadata)
+   - legacy recent query state fallback during transition
    - connected datasource inventory
    - structured recent action results persisted in assistant-message `metadata.result_data`
 3. Runtime returns structured decision:
@@ -296,6 +313,7 @@ High-risk writes (inline confirmation required):
   - "rename that query to Active users by day"
   - "delete that saved query"
   - "could you change it to User Count?" after saving or listing a recent query
+  - explicit rename requests that quote both the current saved-query name and the new name, even when the user ends the sentence with punctuation
 - Datasource setup follow-ups should support:
   - friendly staged answers like "Call it Warehouse DB"
   - freeform connection-detail replies such as "my database name is JOHNNY and the type is PostgreSQL"
@@ -360,6 +378,8 @@ High-risk writes (inline confirmation required):
 - `member.invite` always requires `first_name`, `last_name`, `email`, and `role`.
 - Invite follow-up prompts should ask for all currently missing invite fields in one message, not drip-feed one property per turn.
 - Natural role replies such as `admin`, `I think admin`, or `make them admin` should be treated as explicit role instructions.
+- Natural role replies such as `he can be an Admin` should also be treated as explicit role instructions.
+- Invite/setup replies should use neutral phrasing for people unless the user explicitly provided pronouns; chat should not assume gender.
 - Chat must not silently assume a role when the user has not provided one.
 - If the invite email belongs to an existing sqlbook user, chat invite execution must not overwrite that user’s stored first/last name; only workspace membership/invitation state should change.
 

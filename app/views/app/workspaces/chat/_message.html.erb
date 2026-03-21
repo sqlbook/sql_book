@@ -1,7 +1,9 @@
 <% thinking_label = I18n.t('app.workspaces.chat.statuses.thinking') %>
 <% render_message = !message.system? || (message.content.to_s.strip.casecmp(thinking_label.to_s.strip).zero? && message.status == ChatMessage::Statuses::PENDING) %>
 <% if render_message %>
-<article class="chat-message <%= "chat-message-#{message.role_name}" %>" data-message-id="<%= message.id %>">
+<article id="chat-message-<%= message.id %>"
+         class="chat-message <%= "chat-message-#{message.role_name}" %>"
+         data-message-id="<%= message.id %>">
   <% if message.user? %>
     <div class="chat-user-bubble">
       <% if message.content.present? %>

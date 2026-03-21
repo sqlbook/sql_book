@@ -206,6 +206,47 @@ ALTER SEQUENCE public.chat_messages_id_seq OWNED BY public.chat_messages.id;
 
 
 --
+-- Name: chat_query_references; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_query_references (
+    id bigint NOT NULL,
+    chat_thread_id bigint NOT NULL,
+    source_message_id bigint,
+    result_message_id bigint,
+    data_source_id bigint,
+    saved_query_id bigint,
+    original_question text,
+    sql text,
+    current_name character varying,
+    name_aliases jsonb DEFAULT '[]'::jsonb NOT NULL,
+    row_count integer,
+    columns jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: chat_query_references_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.chat_query_references_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: chat_query_references_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.chat_query_references_id_seq OWNED BY public.chat_query_references.id;
+
+
+--
 -- Name: chat_threads; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -645,6 +686,13 @@ ALTER TABLE ONLY public.chat_messages ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: chat_query_references id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references ALTER COLUMN id SET DEFAULT nextval('public.chat_query_references_id_seq'::regclass);
+
+
+--
 -- Name: chat_threads id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -767,6 +815,14 @@ ALTER TABLE ONLY public.chat_action_requests
 
 ALTER TABLE ONLY public.chat_messages
     ADD CONSTRAINT chat_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_query_references chat_query_references_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT chat_query_references_pkey PRIMARY KEY (id);
 
 
 --
@@ -957,6 +1013,55 @@ CREATE INDEX index_chat_messages_on_user_id ON public.chat_messages USING btree 
 
 
 --
+-- Name: index_chat_query_references_on_chat_thread_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_chat_thread_id ON public.chat_query_references USING btree (chat_thread_id);
+
+
+--
+-- Name: index_chat_query_references_on_data_source_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_data_source_id ON public.chat_query_references USING btree (data_source_id);
+
+
+--
+-- Name: index_chat_query_references_on_result_message_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_result_message_id ON public.chat_query_references USING btree (result_message_id);
+
+
+--
+-- Name: index_chat_query_references_on_saved_query_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_saved_query_id ON public.chat_query_references USING btree (saved_query_id);
+
+
+--
+-- Name: index_chat_query_references_on_source_message_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_source_message_id ON public.chat_query_references USING btree (source_message_id);
+
+
+--
+-- Name: index_chat_query_references_on_thread_and_saved_query; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_chat_query_references_on_thread_and_saved_query ON public.chat_query_references USING btree (chat_thread_id, saved_query_id) WHERE (saved_query_id IS NOT NULL);
+
+
+--
+-- Name: index_chat_query_references_on_thread_recency; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_thread_recency ON public.chat_query_references USING btree (chat_thread_id, updated_at, id);
+
+
+--
 -- Name: index_chat_threads_on_created_by_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1118,6 +1223,14 @@ CREATE INDEX index_users_on_last_active_at ON public.users USING btree (last_act
 
 
 --
+-- Name: chat_query_references fk_rails_1c34be061a; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT fk_rails_1c34be061a FOREIGN KEY (data_source_id) REFERENCES public.data_sources(id);
+
+
+--
 -- Name: chat_messages fk_rails_43b6215c4f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1150,6 +1263,14 @@ ALTER TABLE ONLY public.translation_values
 
 
 --
+-- Name: chat_query_references fk_rails_87563b0ae2; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT fk_rails_87563b0ae2 FOREIGN KEY (chat_thread_id) REFERENCES public.chat_threads(id);
+
+
+--
 -- Name: chat_action_requests fk_rails_90dd8c1a9a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1174,6 +1295,14 @@ ALTER TABLE ONLY public.chat_action_requests
 
 
 --
+-- Name: chat_query_references fk_rails_98b2326ff1; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT fk_rails_98b2326ff1 FOREIGN KEY (source_message_id) REFERENCES public.chat_messages(id);
+
+
+--
 -- Name: active_storage_variant_records fk_rails_993965df05; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1195,6 +1324,22 @@ ALTER TABLE ONLY public.translation_value_revisions
 
 ALTER TABLE ONLY public.active_storage_attachments
     ADD CONSTRAINT fk_rails_c3b3935057 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: chat_query_references fk_rails_d1d24bdc87; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT fk_rails_d1d24bdc87 FOREIGN KEY (result_message_id) REFERENCES public.chat_messages(id);
+
+
+--
+-- Name: chat_query_references fk_rails_d27cdc8ea3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT fk_rails_d27cdc8ea3 FOREIGN KEY (saved_query_id) REFERENCES public.queries(id);
 
 
 --
@@ -1236,6 +1381,7 @@ ALTER TABLE ONLY public.chat_action_requests
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260321170000'),
 ('20260321113000'),
 ('20260320110000'),
 ('20260316143000'),

@@ -12,6 +12,11 @@ class Query < ApplicationRecord
              primary_key: :id,
              optional: true
 
+  has_many :chat_query_references,
+           dependent: :nullify,
+           foreign_key: :saved_query_id,
+           inverse_of: :saved_query
+
   normalizes :chart_type, with: ->(chart_type) { chart_type.presence }
 
   before_save :normalize_boolean_fields
@@ -20,6 +25,8 @@ class Query < ApplicationRecord
   # the query results, so only clear the cache if
   # that specific field is changed
   before_update :clear_query_cache!, if: :will_save_change_to_query?
+  after_update :sync_chat_query_references!, if: :saved_query_name_changed?
+  before_destroy :unlink_chat_query_references!
 
   def query_result
     @query_result ||= query_service.execute
@@ -76,5 +83,21 @@ class Query < ApplicationRecord
       pagination_enabled: true,
       circumference: 50
     }
+  end
+
+  def saved_query_name_changed?
+    saved_change_to_name? && saved?
+  end
+
+  def sync_chat_query_references!
+    chat_query_references.find_each do |reference|
+      reference.rename_to!(new_name: name)
+    end
+  end
+
+  def unlink_chat_query_references!
+    chat_query_references.find_each do |reference|
+      reference.unlink_saved_query!(fallback_name: name)
+    end
   end
 end

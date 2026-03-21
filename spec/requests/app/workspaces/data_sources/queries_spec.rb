@@ -114,6 +114,51 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
         expect { get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}" }
           .to change { query.reload.last_run_at.nil? }.from(true).to(false)
       end
+
+      it 'shows a chat source link in settings when the current user can access the source thread' do
+        thread = create(:chat_thread, workspace:, created_by: user, title: 'User count chat')
+        result_message = create(
+          :chat_message,
+          chat_thread: thread,
+          role: ChatMessage::Roles::ASSISTANT,
+          status: ChatMessage::Statuses::COMPLETED,
+          content: 'Found 3 users.'
+        )
+        create(
+          :chat_query_reference,
+          chat_thread: thread,
+          result_message:,
+          data_source:,
+          saved_query: query,
+          sql: query.query,
+          current_name: query.name
+        )
+
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}?tab=settings"
+
+        expect(response.body).to include('Chat source')
+        expect(response.body).to include(
+          app_workspace_path(workspace, thread_id: thread.id, anchor: "chat-message-#{result_message.id}")
+        )
+      end
+
+      it 'hides the chat source link when the current user cannot access the source thread' do
+        teammate = create(:user)
+        create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN, status: Member::Status::ACCEPTED)
+        private_thread = create(:chat_thread, workspace:, created_by: teammate, title: 'Private source thread')
+        create(
+          :chat_query_reference,
+          chat_thread: private_thread,
+          data_source:,
+          saved_query: query,
+          sql: query.query,
+          current_name: query.name
+        )
+
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}?tab=settings"
+
+        expect(response.body).not_to include('Chat source')
+      end
     end
 
     context 'when they do not own the query' do

@@ -36,6 +36,41 @@ RSpec.describe 'API v1 queries', type: :request do
       expect(queries.map { |query| query['name'] }).not_to include('Draft query')
     end
 
+    it 'includes chat source provenance when the requester can access the source thread' do
+      query = create(:query, data_source:, saved: true, name: 'User count', query: 'SELECT COUNT(*) FROM public.users')
+      thread = create(:chat_thread, workspace:, created_by: owner, title: 'User count chat')
+      source_message = create(:chat_message, chat_thread: thread, user: owner, content: 'How many users do I have?')
+      result_message = create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: 'Found 3 users.'
+      )
+      create(
+        :chat_query_reference,
+        chat_thread: thread,
+        source_message:,
+        result_message:,
+        data_source:,
+        saved_query: query,
+        original_question: 'How many users do I have?',
+        sql: query.query,
+        current_name: query.name
+      )
+
+      get "/api/v1/workspaces/#{workspace.id}/queries"
+
+      expect(response).to have_http_status(:ok)
+      serialized_query = response.parsed_body.dig('data', 'queries').find { |row| row['id'] == query.id }
+      expect(serialized_query['chat_source']).to include(
+        'thread_id' => thread.id,
+        'message_id' => result_message.id
+      )
+      expect(serialized_query['chat_source']['path']).to include("thread_id=#{thread.id}")
+      expect(serialized_query['chat_source']['path']).to include("chat-message-#{result_message.id}")
+    end
+
     it 'runs a read-only workspace query' do
       query_result = ActiveRecord::Result.new(['count'], [[9]])
       schema_groups = [
@@ -169,6 +204,34 @@ RSpec.describe 'API v1 queries', type: :request do
 
       expect(response).to have_http_status(:forbidden)
       expect(response.parsed_body['status']).to eq('forbidden')
+    end
+  end
+
+  describe 'chat source privacy' do
+    let(:teammate) { create(:user) }
+
+    before do
+      sign_in(teammate)
+      create(:member, workspace:, user: teammate, role: Member::Roles::ADMIN, status: Member::Status::ACCEPTED)
+    end
+
+    it 'omits chat source when the requester cannot access the source thread' do
+      query = create(:query, data_source:, saved: true, name: 'User count', query: 'SELECT COUNT(*) FROM public.users')
+      thread = create(:chat_thread, workspace:, created_by: owner, title: 'Private source thread')
+      create(
+        :chat_query_reference,
+        chat_thread: thread,
+        data_source:,
+        saved_query: query,
+        current_name: query.name,
+        sql: query.query
+      )
+
+      get "/api/v1/workspaces/#{workspace.id}/queries"
+
+      expect(response).to have_http_status(:ok)
+      serialized_query = response.parsed_body.dig('data', 'queries').find { |row| row['id'] == query.id }
+      expect(serialized_query).not_to have_key('chat_source')
     end
   end
 end

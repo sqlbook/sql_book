@@ -155,6 +155,13 @@ Related references:
   - `query.save` for saving the most recent executed query into the query library
   - `query.rename` for renaming saved queries
   - `query.delete` for deleting saved queries
+- Query continuity inside chat should be backed by durable thread-local query references, so multiple queries discussed in the same thread remain addressable even after unrelated turns.
+- Thread-local query references and saved library queries are distinct:
+  - unsaved query runs live only in the owning chat thread
+  - saved queries live in the workspace query library and may also remain linked back to their source thread
+- Query settings may show a `Chat source` link when the saved query originated from chat and the current viewer can still access that thread.
+- If a saved query is deleted, the thread-local query reference should remain for chat continuity but lose its library link.
+- If the source chat thread is deleted, saved queries should simply stop showing the `Chat source` link.
 - Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`, `query.delete`).
 - Chat permission visibility should mirror workspace UI permissions:
   - `OWNER` / `ADMIN` can view workspace settings and the team member list

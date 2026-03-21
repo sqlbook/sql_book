@@ -47,6 +47,14 @@ module Chat
         rename|retitle
       )\b.*\bquery\b
     /ix
+    QUERY_RENAME_CONTEXT_REGEX = /
+      \b(
+        which\s+saved\s+query\s+to\s+rename|
+        rename\s+it\b|
+        what\s+would\s+you\s+like\s+to\s+rename|
+        i\s+can\s+rename\s+it\s+to\b
+      )\b
+    /ix
     QUERY_DELETE_REGEX = /
       \b(
         delete|remove
@@ -268,6 +276,10 @@ module Chat
                     'Ask for the role if it was not explicitly provided.'
                   ].join(' '),
                   [
+                    'Do not assume or invent a person\'s gender;',
+                    'use neutral phrasing like "them" unless the user provided pronouns.'
+                  ].join(' '),
+                  [
                     'If the user says "invite them back" or similar, reuse the recent member identity',
                     'if available, but still ask for role unless the user explicitly gave one.'
                   ].join(' '),
@@ -451,13 +463,14 @@ module Chat
     end
 
     def query_save_intent?(lowered_message)
-      return false if recent_query_state.blank?
+      return false if recent_query_reference.blank?
 
       lowered_message.match?(QUERY_SAVE_REGEX)
     end
 
     def query_rename_intent?(lowered_message)
       return true if lowered_message.match?(QUERY_RENAME_REGEX)
+      return true if rename_follow_up_context_active?
 
       parsed_query_name.present? && resolved_query_reference_payload['query_id'].present?
     end
@@ -683,7 +696,7 @@ module Chat
 
     def query_rename_plan
       payload = resolved_query_reference_payload
-      payload['name'] = parsed_query_name if parsed_query_name.present?
+      payload['name'] = inferred_query_rename_name if inferred_query_rename_name.present?
 
       missing_plan = query_rename_missing_plan(payload:)
       return missing_plan if missing_plan
@@ -733,6 +746,10 @@ module Chat
       QueryNameParser.parse(text: message)
     end
 
+    def inferred_query_rename_name
+      parsed_query_name || recent_requested_query_name || recent_proposed_query_rename_name
+    end
+
     def query_rename_missing_plan(payload:)
       return missing_query_and_name_plan if payload['query_id'].blank? && payload['name'].blank?
       return missing_query_plan if payload['query_id'].blank?
@@ -772,8 +789,16 @@ module Chat
       payload['query_name'].presence || I18n.t('app.workspaces.chat.query_library.this_query')
     end
 
+    def rename_follow_up_context_active?
+      inferred_query_rename_name.present? && recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX)
+    end
+
     def recent_query_state
       @recent_query_state ||= context_snapshot&.recent_query_state.to_h
+    end
+
+    def recent_query_reference
+      @recent_query_reference ||= context_snapshot&.recent_query_reference.to_h
     end
 
     def recent_invited_member_role_context_plan
@@ -832,7 +857,21 @@ module Chat
     end
 
     def resolved_query_reference_payload
-      query_reference_resolver.reference_payload(text: message)
+      explicit_reference = query_reference_resolver.reference_payload(text: message)
+      return explicit_reference if explicit_reference['query_id'].present?
+
+      recent_saved_query_reference_payload
+    end
+
+    def recent_saved_query_reference_payload
+      recent_saved_query_reference = context_snapshot&.recent_saved_query_reference.to_h.deep_stringify_keys
+      return {} if recent_saved_query_reference.blank?
+      return {} if recent_saved_query_reference['saved_query_id'].to_s.strip.blank?
+
+      {
+        'query_id' => recent_saved_query_reference['saved_query_id'],
+        'query_name' => recent_saved_query_reference['saved_query_name']
+      }
     end
 
     def invite_details
@@ -944,6 +983,19 @@ module Chat
       conversation_messages.reverse_each.filter_map do |entry|
         conversation_entry_content(entry) if conversation_entry_role(entry) == 'user'
       end
+    end
+
+    def recent_requested_query_name
+      recent_user_conversation_texts.each do |text|
+        parsed_name = QueryNameParser.parse(text:)
+        return parsed_name if parsed_name.present?
+      end
+
+      nil
+    end
+
+    def recent_proposed_query_rename_name
+      QueryNameParser.parse_proposed_rename_name(text: recent_assistant_original_content)
     end
 
     def merge_recent_invite_details!(details:, text:)
@@ -1088,6 +1140,7 @@ module Chat
     def query_reference_resolver
       @query_reference_resolver ||= Chat::QueryReferenceResolver.new(
         workspace:,
+        query_references: context_snapshot&.query_references,
         recent_query_state:,
         conversation_messages: transcript_messages
       )
@@ -1107,6 +1160,15 @@ module Chat
       return if recent_assistant_text.blank?
 
       conversation_entry_content(recent_assistant_text).downcase
+    end
+
+    def recent_assistant_original_content
+      recent_assistant_text = conversation_messages.reverse.find do |entry|
+        conversation_entry_role(entry) == 'assistant'
+      end
+      return if recent_assistant_text.blank?
+
+      conversation_entry_content(recent_assistant_text)
     end
   end
 end

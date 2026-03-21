@@ -17,6 +17,7 @@ module Queries
       deleted_query = {
         'id' => query.id,
         'name' => query.name,
+        'sql' => query.query,
         'data_source' => {
           'id' => query.data_source_id,
           'name' => query.data_source.display_name

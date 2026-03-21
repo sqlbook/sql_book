@@ -170,6 +170,7 @@ module Chat
     end
 
     def render_non_action(assistant_content)
+      assistant_content = normalized_assistant_content(assistant_content)
       assistant_message = create_assistant_message(
         content: assistant_content,
         status: ChatMessage::Statuses::COMPLETED
@@ -197,16 +198,19 @@ module Chat
       content.match?(/\A\s*(select|with)\b/i)
     end
 
+    # rubocop:disable Metrics/AbcSize
     def render_confirmation(intent:)
       action_request = action_request_lifecycle.persist_pending_confirmation!(
         source_message: user_message,
         action_type: intent.action_type,
         payload: intent.payload
       )
-      assistant_content = response_composer.confirmation_message(
-        action_type: intent.action_type,
-        proposed_message: intent.assistant_message,
-        payload: intent.payload
+      assistant_content = normalized_assistant_content(
+        response_composer.confirmation_message(
+          action_type: intent.action_type,
+          proposed_message: intent.assistant_message,
+          payload: intent.payload
+        )
       )
       assistant_message = create_assistant_message(
         content: assistant_content,
@@ -228,22 +232,29 @@ module Chat
         data: {}
       )
     end
+    # rubocop:enable Metrics/AbcSize
 
+    # rubocop:disable Metrics/AbcSize
     def execute_intent(intent:)
       action_request_lifecycle.supersede_pending_confirmations!
 
       execution = action_executor.execute(action_type: intent.action_type, payload: intent.payload)
       execution = execution_truth_reconciler.call(action_type: intent.action_type, payload: intent.payload, execution:)
-      persist_recent_query_state_for(intent:, execution:)
-      clear_transient_state_for(intent:, execution:)
-      assistant_content = compose_execution_message(intent:, execution:)
+      assistant_content = normalized_assistant_content(compose_execution_message(intent:, execution:))
       action_request = persist_executed_action_request(intent:, execution:, assistant_content:)
-
-      render_execution(intent:, execution:, assistant_content:, action_request:)
+      outcome = render_execution(intent:, execution:, assistant_content:, action_request:)
+      persist_recent_query_state_for(intent:, execution:)
+      persist_query_reference_for(intent:, execution:, assistant_message: outcome.assistant_message)
+      clear_transient_state_for(intent:, execution:)
+      outcome
     end
+    # rubocop:enable Metrics/AbcSize
 
+    # rubocop:disable Metrics/AbcSize
     def render_execution(intent:, execution:, assistant_content: nil, action_request: nil)
-      assistant_content ||= compose_execution_message(intent:, execution:)
+      assistant_content = normalized_assistant_content(
+        assistant_content || compose_execution_message(intent:, execution:)
+      )
       assistant_message = create_assistant_message(
         content: assistant_content,
         status: execution.status == 'executed' ? ChatMessage::Statuses::COMPLETED : ChatMessage::Statuses::FAILED,
@@ -268,8 +279,9 @@ module Chat
         redirect_path: execution.data[:redirect_path]
       )
     end
+    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def confirm_pending_action
       if active_pending_action.expired?
         return render_non_action(I18n.t('app.workspaces.chat.errors.confirmation_expired'))
@@ -284,13 +296,11 @@ module Chat
         payload: active_pending_action.payload,
         execution:
       )
-      persist_recent_query_state_for(
-        intent: direct_intent(action_type: active_pending_action.action_type, payload: active_pending_action.payload),
-        execution:
-      )
-      assistant_content = response_composer.compose(
-        execution:,
-        action_type: active_pending_action.action_type
+      assistant_content = normalized_assistant_content(
+        response_composer.compose(
+          execution:,
+          action_type: active_pending_action.action_type
+        )
       )
       action_request_lifecycle.mark_executed!(
         action_request: active_pending_action,
@@ -312,6 +322,9 @@ module Chat
           action_type: active_pending_action.action_type
         }
       )
+      intent = direct_intent(action_type: active_pending_action.action_type, payload: active_pending_action.payload)
+      persist_recent_query_state_for(intent:, execution:)
+      persist_query_reference_for(intent:, execution:, assistant_message:)
 
       TurnOutcome.new(
         status: execution.status,
@@ -326,12 +339,12 @@ module Chat
         redirect_path: execution.data[:redirect_path]
       )
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     def cancel_pending_action
       action_request_lifecycle.mark_canceled!(action_request: active_pending_action, canceled_by: actor)
 
-      assistant_content = I18n.t('app.workspaces.chat.messages.action_canceled')
+      assistant_content = normalized_assistant_content(I18n.t('app.workspaces.chat.messages.action_canceled'))
       assistant_message = create_assistant_message(
         content: assistant_content,
         status: ChatMessage::Statuses::COMPLETED,
@@ -375,9 +388,21 @@ module Chat
       chat_thread.chat_messages.create!(
         role: ChatMessage::Roles::ASSISTANT,
         status:,
-        content:,
+        content: normalized_assistant_content(content),
         metadata:
       )
+    end
+
+    def normalized_assistant_content(value)
+      case value
+      when Array
+        value.flatten.filter_map do |entry|
+          candidate = normalized_assistant_content(entry)
+          candidate.presence
+        end.first.to_s.strip
+      else
+        value.to_s.strip
+      end
     end
 
     def capability_question?
@@ -722,12 +747,30 @@ module Chat
       send(handler, intent:, execution:)
     end
 
+    def persist_query_reference_for(intent:, execution:, assistant_message:)
+      return unless execution.status == 'executed'
+
+      handler = query_reference_handler_for(action_type: intent.action_type)
+      return unless handler
+
+      send(handler, intent:, execution:, assistant_message:)
+    end
+
     def recent_query_state_handler_for(action_type:)
       {
         'query.run' => :persist_recent_query_run_state,
         'query.save' => :persist_recent_saved_query_state_for,
         'query.rename' => :persist_recent_renamed_query_state_for,
         'query.delete' => :clear_deleted_query_reference_for
+      }[action_type]
+    end
+
+    def query_reference_handler_for(action_type:)
+      {
+        'query.run' => :persist_query_run_reference_for,
+        'query.save' => :persist_saved_query_reference_for,
+        'query.rename' => :persist_renamed_query_reference_for,
+        'query.delete' => :persist_deleted_query_reference_for
       }[action_type]
     end
 
@@ -803,6 +846,40 @@ module Chat
       )
     end
 
+    def persist_query_run_reference_for(intent:, execution:, assistant_message:)
+      query_reference_store.record_query_run!(
+        source_message: user_message,
+        result_message: assistant_message,
+        execution:,
+        fallback_question: intent.payload['question']
+      )
+    end
+
+    def persist_saved_query_reference_for(intent:, execution:, assistant_message:)
+      query_reference_store.record_query_save!(
+        source_message: user_message,
+        result_message: assistant_message,
+        execution:,
+        fallback_question: intent.payload['question']
+      )
+    end
+
+    def persist_renamed_query_reference_for(intent:, execution:, assistant_message:)
+      _intent = intent
+      query_reference_store.record_query_rename!(
+        result_message: assistant_message,
+        execution:
+      )
+    end
+
+    def persist_deleted_query_reference_for(intent:, execution:, assistant_message:)
+      _intent = intent
+      query_reference_store.record_query_delete!(
+        result_message: assistant_message,
+        execution:
+      )
+    end
+
     def query_state_attributes_from_saved_query(data:)
       query_payload = saved_query_payload(data:)
       existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
@@ -850,6 +927,14 @@ module Chat
 
     def recent_query_state_store
       @recent_query_state_store ||= RecentQueryStateStore.new(
+        workspace:,
+        actor:,
+        chat_thread:
+      )
+    end
+
+    def query_reference_store
+      @query_reference_store ||= QueryReferenceStore.new(
         workspace:,
         actor:,
         chat_thread:

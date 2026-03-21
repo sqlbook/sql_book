@@ -13,7 +13,19 @@ module Chat
     :capability_snapshot,
     :invite_seed_details,
     :data_source_inventory,
+    :query_references,
     :recent_query_state,
     keyword_init: true
-  )
+  ) do
+    def recent_query_reference
+      Array(query_references).first.to_h.deep_stringify_keys
+    end
+
+    def recent_saved_query_reference
+      Array(query_references)
+        .find { |reference| reference.to_h.deep_stringify_keys['saved_query_id'].present? }
+        .to_h
+        .deep_stringify_keys
+    end
+  end
 end

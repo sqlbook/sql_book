@@ -60,6 +60,9 @@ Current query API scope:
 - save requests require SQL plus datasource identity; query name can be server-generated when omitted
 - rename requests require a target query id and the new saved-query name
 - delete requests require a target query id and should be treated as destructive
+- saved query responses can include an optional `chat_source` object when the query originated from chat and the current requester can still access that private source thread
+- chat continuity for queries is thread-local and server-owned via persisted query references; unsaved thread-only queries are not promoted into the shared query library unless they are explicitly saved
+- if a saved query is deleted, any linked thread reference remains as thread-only chat history; if the source chat thread is deleted, saved queries simply lose their `chat_source`
 
 Meta-level docs rule:
 - whenever new API areas are added, review the top-level OpenAPI `info.description`, tag descriptions, and this reference so the docs still describe the app's current API surface accurately
@@ -126,6 +129,9 @@ For docs to stay human and LLM friendly:
   - standalone UI flows
   - `/api/v1`
   - chat tool execution
+- Query provenance should also stay aligned across those surfaces:
+  - thread-local chat query references remain private to the thread owner
+  - saved query API responses may expose `chat_source` only when that viewer can still access the source thread
 
 ## Maintenance workflow
 When changing any documented workspace/team/datasource/query API behavior:

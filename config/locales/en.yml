@@ -111,6 +111,9 @@ en:
             average_busiest_time: Average busiest time
             average_quietest_day: Average quietest day
             average_session_duration: Average session duration
+        settings:
+          chat_source_label: Chat source
+          chat_source_link: Open source chat
       chat:
         title: Where should we begin?
         suggestions:
@@ -202,7 +205,9 @@ en:
           query_failed: I couldn't run that query against the selected data source.
         query_library:
           none: There are no saved queries in this workspace yet.
-          found: "Here are %{count} saved queries:"
+          found:
+            one: "Here is %{count} saved query:"
+            other: "Here are %{count} saved queries:"
           item: "- **%{name}** — Data source: %{data_source}"
           saved: I saved that query to the query library as "%{name}".
           renamed: I renamed that saved query to "%{name}".
@@ -323,7 +328,7 @@ en:
           member_invite_needs_name_and_role: To send the invite, I still need their first name, last name, and role (Admin, User, or Read only).
           member_invite_needs_email: To send the invite, what email address should I use?
           member_invite_needs_name: To send the invite, what are their first and last name?
-          member_invite_needs_role: To send the invite, what role should I give them (Admin, User, or Read only)?
+          member_invite_needs_role: "What role should they have: Admin, User, or Read only?"
           member_invite_role_answer: I invited %{name} as %{role}. Their invitation is currently %{status}.
           member_recent_reference_answer: "We’re talking about %{name} (%{email}). They are currently %{status} as %{role} in this workspace."
           member_resend: I can resend that pending invitation once you confirm.

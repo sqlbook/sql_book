@@ -116,4 +116,48 @@ RSpec.describe Query, type: :model do
       end
     end
   end
+
+  describe 'chat query reference syncing' do
+    let(:workspace) { create(:workspace_with_owner, owner: create(:user)) }
+    let(:data_source) { create(:data_source, :postgres, workspace:) }
+    let(:instance) do
+      create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users'
+      )
+    end
+
+    it 'updates linked reference names and preserves aliases when renamed' do
+      reference = create(
+        :chat_query_reference,
+        chat_thread: create(:chat_thread, workspace:, created_by: instance.author),
+        data_source:,
+        saved_query: instance,
+        current_name: 'User count'
+      )
+
+      instance.update!(name: 'Database user count')
+
+      expect(reference.reload.current_name).to eq('Database user count')
+      expect(reference.name_aliases).to include('User count')
+    end
+
+    it 'keeps a thread-only reference when the saved query is deleted' do
+      reference = create(
+        :chat_query_reference,
+        chat_thread: create(:chat_thread, workspace:, created_by: instance.author),
+        data_source:,
+        saved_query: instance,
+        current_name: 'User count'
+      )
+
+      instance.destroy!
+
+      expect(reference.reload.saved_query_id).to be_nil
+      expect(reference.current_name).to eq('User count')
+    end
+  end
 end

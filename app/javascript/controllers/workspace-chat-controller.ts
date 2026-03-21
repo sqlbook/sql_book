@@ -733,6 +733,7 @@ export default class extends Controller<HTMLDivElement> {
 
   private buildMessageArticle(message: ChatMessagePayload): HTMLElement | null {
     const article = document.createElement('article');
+    article.id = `chat-message-${message.id}`;
     article.className = `chat-message chat-message-${message.role}`;
     article.dataset.messageId = String(message.id);
 

@@ -34,6 +34,7 @@ module App
         )
 
         assistant_message = append_execution_message(execution:, assistant_content:)
+        persist_query_reference_for(execution:, assistant_message:)
         set_workspace_delete_toast(execution:)
 
         render json: {
@@ -176,6 +177,24 @@ module App
 
       def action_request_lifecycle
         @action_request_lifecycle ||= Chat::ActionRequestLifecycle.new(chat_thread:, actor: current_user)
+      end
+
+      def persist_query_reference_for(execution:, assistant_message:)
+        return unless execution.status == 'executed'
+        return unless action_request.action_type == 'query.delete'
+
+        query_reference_store.record_query_delete!(
+          result_message: assistant_message,
+          execution:
+        )
+      end
+
+      def query_reference_store
+        @query_reference_store ||= Chat::QueryReferenceStore.new(
+          workspace:,
+          actor: current_user,
+          chat_thread:
+        )
       end
 
       def render_action_error(status:, message:)

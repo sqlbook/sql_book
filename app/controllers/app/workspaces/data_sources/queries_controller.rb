@@ -14,6 +14,11 @@ module App
         def show
           query.update(last_run_at: Time.current)
           @query = query
+          @query_chat_source = Queries::ChatSourceResolver.new(
+            query: @query,
+            viewer: current_user,
+            workspace:
+          ).call
         end
 
         def create

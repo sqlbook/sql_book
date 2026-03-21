@@ -603,7 +603,7 @@
       "get": {
         "operationId": "queryList",
         "summary": "List saved queries",
-        "description": "Returns saved queries in the current workspace query library. Results can optionally be filtered by datasource or a case-insensitive name search.",
+        "description": "Returns saved queries in the current workspace query library. Results can optionally be filtered by datasource or a case-insensitive name search. Each saved query remains separate from any thread-local chat query history, but responses may include an optional `chat_source` object when that saved query originated from chat and the current requester can still access the source thread.",
         "tags": [
           "Queries"
         ],
@@ -657,7 +657,7 @@
       "post": {
         "operationId": "querySave",
         "summary": "Save query",
-        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one.",
+        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
         "tags": [
           "Queries"
         ],
@@ -782,7 +782,7 @@
       "patch": {
         "operationId": "queryRename",
         "summary": "Rename saved query",
-        "description": "Renames a saved query in the current workspace query library. The caller must target an existing saved query in the same workspace and provide the new name as a clean title value.",
+        "description": "Renames a saved query in the current workspace query library. The caller must target an existing saved query in the same workspace and provide the new name as a clean title value. If the saved query is linked to chat provenance, the thread-local chat query reference is updated as well so older names can still resolve in chat follow-ups.",
         "tags": [
           "Queries"
         ],
@@ -840,7 +840,7 @@
       "delete": {
         "operationId": "queryDelete",
         "summary": "Delete saved query",
-        "description": "Deletes a saved query from the current workspace query library. This is destructive; callers should treat it like a confirmed delete in product/chat flows and should not assume the query can be recovered.",
+        "description": "Deletes a saved query from the current workspace query library. This is destructive; callers should treat it like a confirmed delete in product/chat flows and should not assume the query can be recovered. Deletion removes the saved-library record, but any linked thread-local chat query reference remains as private chat history without a `saved_query_id`.",
         "tags": [
           "Queries"
         ],
@@ -1244,6 +1244,13 @@
                           "id": 7,
                           "name": "Christopher Pattison",
                           "email": "chris@example.com"
+                        },
+                        "chat_source": {
+                          "thread_id": 44,
+                          "message_id": 219,
+                          "path": "/app/workspaces/7?thread_id=44#chat-message-219",
+                          "thread_title": "User count chat",
+                          "message_preview": "How many users do I have?"
                         },
                         "updated_at": "2026-03-21T12:30:00Z"
                       }
@@ -2034,6 +2041,34 @@
           }
         }
       },
+      "QueryChatSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "thread_id",
+          "path"
+        ],
+        "properties": {
+          "thread_id": {
+            "type": "integer",
+            "description": "Private source chat thread id."
+          },
+          "message_id": {
+            "type": "integer",
+            "description": "Optional source/result message id inside that thread."
+          },
+          "path": {
+            "type": "string",
+            "description": "App path back to the source chat thread/message."
+          },
+          "thread_title": {
+            "type": "string"
+          },
+          "message_preview": {
+            "type": "string"
+          }
+        }
+      },
       "QuerySummary": {
         "type": "object",
         "additionalProperties": false,
@@ -2071,6 +2106,9 @@
           },
           "author": {
             "$ref": "#/components/schemas/QueryAuthorSummary"
+          },
+          "chat_source": {
+            "$ref": "#/components/schemas/QueryChatSource"
           },
           "updated_at": {
             "type": [

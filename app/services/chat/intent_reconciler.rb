@@ -185,13 +185,13 @@ module Chat
     end
 
     def apply_recent_query_context!(payload:)
-      recent_query_state = context_snapshot.recent_query_state.to_h
-      return if recent_query_state.blank?
+      recent_query_reference = context_snapshot.recent_query_reference
+      return if recent_query_reference.blank?
 
-      payload['sql'] ||= recent_query_state['sql']
-      payload['question'] ||= recent_query_state['question']
-      payload['data_source_id'] ||= recent_query_state['data_source_id']
-      payload['data_source_name'] ||= recent_query_state['data_source_name']
+      payload['sql'] ||= recent_query_reference['sql']
+      payload['question'] ||= recent_query_reference['original_question']
+      payload['data_source_id'] ||= recent_query_reference['data_source_id']
+      payload['data_source_name'] ||= recent_query_reference['data_source_name']
     end
 
     def apply_explicit_query_name!(payload:)
@@ -207,17 +207,18 @@ module Chat
     def apply_recent_query_reference!(payload:)
       return if payload['query_id'].present?
 
-      recent_query_state = context_snapshot.recent_query_state.to_h
-      return if recent_query_state.blank?
-      return if recent_query_state['saved_query_id'].to_s.strip.blank?
+      recent_saved_query_reference = context_snapshot.recent_saved_query_reference
+      return if recent_saved_query_reference.blank?
+      return if recent_saved_query_reference['saved_query_id'].to_s.strip.blank?
 
-      payload['query_id'] = recent_query_state['saved_query_id']
-      payload['query_name'] ||= recent_query_state['saved_query_name']
+      payload['query_id'] = recent_saved_query_reference['saved_query_id']
+      payload['query_name'] ||= recent_saved_query_reference['saved_query_name']
     end
 
     def query_reference_resolver
       @query_reference_resolver ||= QueryReferenceResolver.new(
         workspace:,
+        query_references: context_snapshot.query_references,
         recent_query_state: context_snapshot.recent_query_state,
         conversation_messages: context_snapshot.conversation_messages
       )

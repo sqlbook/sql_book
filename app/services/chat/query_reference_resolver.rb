@@ -7,13 +7,20 @@ module Chat
       \bit\b
     /ix
     OTHER_REFERENCE_REGEX = /\b(other|another)\s+query\b/i
+    ORDINAL_REFERENCE_MAP = {
+      'first' => 0,
+      'second' => 1,
+      'third' => 2,
+      'last' => -1
+    }.freeze
     RECENT_RENAME_PROMPT_REGEXES = [
       /\brename\s+(?<name>.+?)\s+to\?/i,
       /\brenombrar\s+(?<name>.+?)\??\s*\z/i
     ].freeze
 
-    def initialize(workspace:, recent_query_state: {}, conversation_messages: [])
+    def initialize(workspace:, query_references: [], recent_query_state: {}, conversation_messages: [])
       @workspace = workspace
+      @query_references = Array(query_references).map { |reference| reference.to_h.deep_stringify_keys }
       @recent_query_state = recent_query_state.to_h.deep_stringify_keys
       @conversation_messages = Array(conversation_messages).compact
     end
@@ -39,7 +46,7 @@ module Chat
 
     private
 
-    attr_reader :workspace, :recent_query_state, :conversation_messages
+    attr_reader :workspace, :query_references, :recent_query_state, :conversation_messages
 
     def resolve_from_query_id(payload)
       query_id = payload['query_id'].to_i if payload['query_id'].present?
@@ -52,7 +59,21 @@ module Chat
       query_name = normalized_name(raw_name)
       return nil if query_name.blank?
 
+      reference_match = resolve_from_reference_name(query_name)
+      return reference_match if reference_match
+
       matches = saved_queries.select { |query| normalized_name(query.name) == query_name }
+      matches.one? ? matches.first : nil
+    end
+
+    def resolve_from_reference_name(query_name)
+      matches = query_references.filter_map do |reference|
+        next unless reference_matches_name?(reference:, query_name:)
+        next if reference['saved_query_id'].to_s.strip.blank?
+
+        resolve_from_query_id('query_id' => reference['saved_query_id'])
+      end.compact.uniq
+
       matches.one? ? matches.first : nil
     end
 
@@ -61,35 +82,59 @@ module Chat
       return nil if text.blank?
 
       resolve_from_query_mentions(text) ||
+        resolve_from_ordinal_reference(text) ||
         resolve_from_direct_reference(text) ||
         resolve_from_other_reference(text)
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
     def resolve_from_query_mentions(text)
-      matches = saved_queries.select do |query|
-        normalized_query_name = normalized_name(query.name)
-        next false if normalized_query_name.blank?
+      matches = query_references.filter_map do |reference|
+        next unless reference_mentioned_in_text?(reference:, text:)
+        next if reference['saved_query_id'].to_s.strip.blank?
 
-        text.match?(query_name_regex(normalized_query_name))
+        resolve_from_query_id('query_id' => reference['saved_query_id'])
+      end.compact.uniq
+
+      if matches.empty?
+        matches = saved_queries.select do |query|
+          normalized_query_name = normalized_name(query.name)
+          next false if normalized_query_name.blank?
+
+          text.match?(query_name_regex(normalized_query_name))
+        end
       end
 
       matches.one? ? matches.first : nil
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
     def resolve_from_direct_reference(text)
       return nil unless text.match?(DIRECT_REFERENCE_REGEX)
 
-      recent_listed_query || resolve_from_query_name(recent_query_state['saved_query_name'])
+      recent_listed_query ||
+        recent_saved_query_reference_match ||
+        resolve_from_query_name(recent_query_state['saved_query_name'])
     end
 
     def resolve_from_other_reference(text)
       return nil unless text.match?(OTHER_REFERENCE_REGEX)
 
-      current_query_name = normalized_name(recent_query_state['saved_query_name'])
+      current_query_name = normalized_name(recent_saved_query_name)
       return nil if current_query_name.blank?
 
-      candidates = saved_queries.reject { |query| normalized_name(query.name) == current_query_name }
+      candidates = ordered_saved_query_candidates.reject { |query| normalized_name(query.name) == current_query_name }
       candidates.one? ? candidates.first : nil
+    end
+
+    def resolve_from_ordinal_reference(text)
+      ordinal_index = ordinal_reference_index_for(text)
+      return nil if ordinal_index.nil?
+
+      candidates = ordered_saved_query_candidates
+      return nil if candidates.empty?
+
+      candidates[ordinal_index]
     end
 
     def resolve_from_recent_rename_prompt
@@ -135,6 +180,36 @@ module Chat
       resolve_from_query_id('query_id' => queries.first['id'])
     end
 
+    def recent_saved_query_reference_match
+      reference = query_references.find { |candidate| candidate['saved_query_id'].present? }
+      return nil unless reference
+
+      resolve_from_query_id('query_id' => reference['saved_query_id'])
+    end
+
+    # rubocop:disable Metrics/AbcSize
+    def ordered_saved_query_candidates
+      listed_queries = recent_listed_queries.filter_map do |query|
+        resolve_from_query_id('query_id' => query['id'])
+      end.compact
+      return listed_queries if listed_queries.any?
+
+      referenced_queries = query_references.filter_map do |reference|
+        next if reference['saved_query_id'].to_s.strip.blank?
+
+        resolve_from_query_id('query_id' => reference['saved_query_id'])
+      end.compact
+      return referenced_queries if referenced_queries.any?
+
+      saved_queries
+    end
+    # rubocop:enable Metrics/AbcSize
+
+    def recent_saved_query_name
+      query_references.find { |reference| reference['saved_query_id'].present? }.to_h['saved_query_name'] ||
+        recent_query_state['saved_query_name']
+    end
+
     def recent_listed_queries
       conversation_messages.reverse_each do |entry|
         next unless assistant_entry?(entry)
@@ -163,6 +238,36 @@ module Chat
 
     def saved_queries
       @saved_queries ||= Queries::LibraryService.new(workspace:).call.to_a
+    end
+
+    def reference_matches_name?(reference:, query_name:)
+      reference_names(reference:).any? { |candidate| normalized_name(candidate) == query_name }
+    end
+
+    def reference_mentioned_in_text?(reference:, text:)
+      reference_names(reference:).any? do |candidate|
+        normalized_candidate = normalized_name(candidate)
+        next false if normalized_candidate.blank?
+
+        text.match?(query_name_regex(normalized_candidate))
+      end
+    end
+
+    def reference_names(reference:)
+      [
+        reference['current_name'],
+        reference['saved_query_name'],
+        reference['original_question'],
+        *Array(reference['name_aliases'])
+      ].compact_blank.uniq
+    end
+
+    def ordinal_reference_index_for(text)
+      ORDINAL_REFERENCE_MAP.each do |label, index|
+        return index if text.match?(/\b#{Regexp.escape(label)}\s+query\b/i)
+      end
+
+      nil
     end
 
     def normalized_name(value)

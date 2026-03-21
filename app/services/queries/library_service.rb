@@ -9,7 +9,7 @@ module Queries
 
     def call
       scoped_queries
-        .includes(:data_source, :author, :last_updated_by)
+        .includes(:data_source, :author, :last_updated_by, { chat_query_references: :chat_thread })
         .order(updated_at: :desc, id: :desc)
     end
 

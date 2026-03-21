@@ -121,9 +121,14 @@ module App
 
     def selected_chat_thread
       return nil if params[:new_chat].present?
-      return @chat_threads.find { |thread| thread.id == params[:thread_id].to_i } if params[:thread_id].present?
+      return explicit_selected_chat_thread if params[:thread_id].present?
 
       @chat_threads.first
+    end
+
+    def explicit_selected_chat_thread
+      @chat_threads.find { |thread| thread.id == params[:thread_id].to_i } ||
+        workspace.chat_threads.for_user(current_user).find_by(id: params[:thread_id])
     end
 
     def chat_messages_for_selected_thread

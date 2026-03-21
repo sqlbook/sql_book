@@ -41,6 +41,8 @@ sqlbook lets users:
 - Datasource setup flows are staged and should collect missing details progressively rather than asking for every field in one turn.
 - Query chat is single-source in phase 1; it can list saved queries, run read-only queries, save the most recent executed query into the query library, rename saved queries, and delete saved queries with confirmation. If multiple datasources or tables plausibly match the question, chat should ask a clarifying follow-up before execution.
 - Chat context is assembled from recent transcript + structured recent action results, not shadow LLM-maintained memory records.
+- Query continuity inside chat is now expected to use durable per-thread query references rather than a single "recent query" slot, so multiple queries discussed in one thread stay resolvable over time.
+- Saved queries can optionally expose chat provenance (`Chat source`) when they originated from chat and the current viewer can still access that private source thread.
 - Chat write lifecycle now separates semantic identity from attempt identity so old-thread retries create fresh attempts without replaying stale results.
 - Chat surface uses split sibling panels (history + conversation) on desktop and overlay history on mobile (`<=760px`).
 - Message stream keeps the latest content in view (bottom-oriented UX), hides per-message timestamps, and shows animated `Thinking...` status rows.

@@ -107,6 +107,20 @@ FactoryBot.define do
     confirmation_expires_at { 15.minutes.from_now }
   end
 
+  factory :chat_query_reference do
+    chat_thread { create(:chat_thread) }
+    source_message { nil }
+    result_message { nil }
+    data_source { create(:data_source, workspace: chat_thread.workspace) }
+    saved_query { nil }
+    original_question { 'How many users do I have?' }
+    sql { 'SELECT COUNT(*) AS user_count FROM public.users' }
+    current_name { 'User count' }
+    name_aliases { [] }
+    row_count { 1 }
+    columns { ['user_count'] }
+  end
+
   factory :click do
     data_source_uuid { SecureRandom.uuid }
     session_uuid { SecureRandom.uuid }

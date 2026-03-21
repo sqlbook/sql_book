@@ -37,7 +37,8 @@ module Chat
       \b(
         which\s+saved\s+query\s+to\s+rename|
         rename\s+it\b|
-        what\s+would\s+you\s+like\s+to\s+rename
+        what\s+would\s+you\s+like\s+to\s+rename|
+        i\s+can\s+rename\s+it\s+to\b
       )\b
     /ix
     QUERY_DELETE_MISTAKE_REGEX = /\b(wrong|mistake|different|not\s+the\s+right)\b/i
@@ -408,6 +409,10 @@ module Chat
           'Ask for the role if it was not explicitly provided.'
         ].join(' '),
         [
+          'Do not assume or invent a person\'s gender;',
+          'use neutral phrasing like "them" unless the user provided pronouns.'
+        ].join(' '),
+        [
           'If the user says "invite them back" or similar, reuse the recent member identity',
           'if available, but still ask for role unless the user explicitly gave one.'
         ].join(' '),
@@ -688,10 +693,15 @@ module Chat
       selected_tool_name = decision.tool_calls.first&.tool_name
       guarded_tool_name = guarded.tool_calls.first&.tool_name
 
-      query_list_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
+      query_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
     end
 
-    def query_list_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
+    def query_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
+      if %w[query.rename query.delete].include?(guarded_tool_name) &&
+         %w[query.list query.run].include?(selected_tool_name)
+        return true
+      end
+
       return false unless selected_tool_name == 'query.list'
       return true if %w[query.rename query.delete].include?(guarded_tool_name)
 
@@ -812,7 +822,9 @@ module Chat
     end
 
     def inferred_query_rename_name
-      QueryNameParser.parse(text: message) || recent_requested_query_name
+      QueryNameParser.parse(text: message) ||
+        recent_requested_query_name ||
+        recent_proposed_query_rename_name
     end
 
     def recent_requested_query_name
@@ -824,6 +836,10 @@ module Chat
       nil
     end
 
+    def recent_proposed_query_rename_name
+      QueryNameParser.parse_proposed_rename_name(text: recent_assistant_original_content)
+    end
+
     def resolved_query_reference_payload
       explicit_reference = query_reference_resolver.reference_payload(text: message)
       return explicit_reference if explicit_reference['query_id'].present?
@@ -832,19 +848,20 @@ module Chat
     end
 
     def recent_saved_query_reference_payload
-      recent_query_state = context_snapshot&.recent_query_state.to_h.deep_stringify_keys
-      return {} if recent_query_state.blank?
-      return {} if recent_query_state['saved_query_id'].to_s.strip.blank?
+      recent_saved_query_reference = context_snapshot&.recent_saved_query_reference.to_h.deep_stringify_keys
+      return {} if recent_saved_query_reference.blank?
+      return {} if recent_saved_query_reference['saved_query_id'].to_s.strip.blank?
 
       {
-        'query_id' => recent_query_state['saved_query_id'],
-        'query_name' => recent_query_state['saved_query_name']
+        'query_id' => recent_saved_query_reference['saved_query_id'],
+        'query_name' => recent_saved_query_reference['saved_query_name']
       }
     end
 
     def query_reference_resolver
       @query_reference_resolver ||= QueryReferenceResolver.new(
         workspace:,
+        query_references: context_snapshot&.query_references,
         recent_query_state: context_snapshot&.recent_query_state,
         conversation_messages:
       )
@@ -1161,6 +1178,15 @@ module Chat
       return if recent_assistant_text.blank?
 
       conversation_entry_content(recent_assistant_text).downcase
+    end
+
+    def recent_assistant_original_content
+      recent_assistant_text = conversation_messages.reverse.find do |entry|
+        conversation_entry_role(entry) == 'assistant'
+      end
+      return if recent_assistant_text.blank?
+
+      conversation_entry_content(recent_assistant_text)
     end
   end
 end

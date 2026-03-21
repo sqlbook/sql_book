@@ -35,10 +35,10 @@ module Chat
     # rubocop:disable Metrics/CyclomaticComplexity
     def confirmation_message(action_type:, proposed_message:, payload: {})
       candidate = normalized_message_candidate(proposed_message)
-      return candidate if candidate.present? && confirmation_prompt?(candidate)
-
       named_candidate = available_named_confirmation_candidate(action_type:, payload:)
       return named_candidate if named_candidate.present?
+
+      return candidate if candidate.present? && confirmation_prompt?(candidate)
 
       default_confirmation_candidate(action_type:) || candidate.presence || default_confirmation_fallback
     rescue I18n::MissingTranslationData

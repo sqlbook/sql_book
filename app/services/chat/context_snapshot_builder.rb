@@ -15,7 +15,12 @@ module Chat
     def call # rubocop:disable Metrics/AbcSize
       active_data_source_setup = data_source_setup_state_store.load
       active_query_clarification = query_clarification_state_store.load
-      recent_query_state = recent_query_state_store.load
+      legacy_recent_query_state = recent_query_state_store.load
+      query_references = query_reference_store.load
+      recent_query_state = derived_recent_query_state(
+        query_references:,
+        legacy_recent_query_state:
+      )
 
       ContextSnapshot.new(
         conversation_messages:,
@@ -24,6 +29,7 @@ module Chat
           data_source_context_lines(
             active_data_source_setup:,
             active_query_clarification:,
+            query_references:,
             recent_query_state:
           ) +
           action_summary_lines
@@ -37,6 +43,7 @@ module Chat
         capability_snapshot: capability_resolver.summary,
         invite_seed_details: conversation_context_resolver.invite_seed_details(text: current_message_text),
         data_source_inventory: data_source_inventory,
+        query_references:,
         recent_query_state:
       )
     end
@@ -176,7 +183,12 @@ module Chat
       end
     end
 
-    def data_source_context_lines(active_data_source_setup:, active_query_clarification:, recent_query_state:)
+    def data_source_context_lines(
+      active_data_source_setup:,
+      active_query_clarification:,
+      query_references:,
+      recent_query_state:
+    )
       lines = []
 
       lines.concat(data_source_inventory_lines)
@@ -187,6 +199,7 @@ module Chat
         lines << query_clarification_summary_line(state: active_query_clarification)
       end
 
+      lines.concat(query_reference_summary_lines(query_references:))
       lines << recent_query_summary_line(state: recent_query_state) if recent_query_state.present?
 
       lines.compact
@@ -244,6 +257,46 @@ module Chat
         ("saved_query_name=#{state['saved_query_name']}" if state['saved_query_name'].present?),
         ("sql=#{state['sql'].to_s.tr("\n", ' ').truncate(120)}" if state['sql'].present?)
       ].compact.join(' | ')
+    end
+
+    def query_reference_summary_lines(query_references:)
+      Array(query_references).first(5).map do |reference|
+        payload = reference.to_h.deep_stringify_keys
+
+        [
+          'Query reference',
+          ("name=#{payload['current_name']}" if payload['current_name'].present?),
+          ("aliases=#{Array(payload['name_aliases']).join(', ')}" if Array(payload['name_aliases']).any?),
+          ("saved_query=#{payload['saved_query_name']}" if payload['saved_query_name'].present?),
+          ("data_source=#{payload['data_source_name']}" if payload['data_source_name'].present?),
+          ("row_count=#{payload['row_count']}" if payload['row_count'].present?),
+          ("sql=#{payload['sql'].to_s.tr("\n", ' ').truncate(120)}" if payload['sql'].present?)
+        ].compact.join(' | ')
+      end
+    end
+
+    def derived_recent_query_state(query_references:, legacy_recent_query_state:)
+      recent_reference = Array(query_references).first.to_h.deep_stringify_keys
+      return legacy_recent_query_state if recent_reference.blank?
+
+      {
+        'question' => recent_reference['original_question'],
+        'sql' => recent_reference['sql'],
+        'data_source_id' => recent_reference['data_source_id'],
+        'data_source_name' => recent_reference['data_source_name'],
+        'row_count' => recent_reference['row_count'],
+        'columns' => recent_reference['columns'],
+        'saved_query_id' => recent_reference['saved_query_id'],
+        'saved_query_name' => recent_reference['saved_query_name']
+      }.compact_blank
+    end
+
+    def query_reference_store
+      @query_reference_store ||= QueryReferenceStore.new(
+        workspace:,
+        actor:,
+        chat_thread:
+      )
     end
   end
 end

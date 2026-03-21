@@ -29,24 +29,34 @@ module ChatMarkdownHelper
 
   def sanitized_markdown(rendered_html)
     fragment = Nokogiri::HTML::DocumentFragment.parse(rendered_html)
+    wrap_markdown_tables!(fragment:)
+    sanitize_markdown_links!(fragment:)
 
+    sanitize(fragment.to_html, tags: MARKDOWN_ALLOWED_TAGS, attributes: MARKDOWN_ALLOWED_ATTRIBUTES)
+  end
+
+  def wrap_markdown_tables!(fragment:)
     fragment.css('table').each do |table|
       wrapper = Nokogiri::XML::Node.new('div', fragment)
       wrapper['class'] = 'chat-markdown-table-wrap'
       table.replace(wrapper)
       wrapper.add_child(table)
     end
+  end
 
+  def sanitize_markdown_links!(fragment:)
     fragment.css('a[href]').each do |link|
       href = link['href'].to_s
-      unless href.start_with?('http://', 'https://', 'mailto:')
+      unless allowed_markdown_link?(href)
         link.replace(link.text)
         next
       end
 
       link['rel'] = 'nofollow noopener noreferrer'
     end
+  end
 
-    sanitize(fragment.to_html, tags: MARKDOWN_ALLOWED_TAGS, attributes: MARKDOWN_ALLOWED_ATTRIBUTES)
+  def allowed_markdown_link?(href)
+    href.start_with?('http://', 'https://', 'mailto:')
   end
 end

@@ -42,8 +42,18 @@
           <%= form.submit "[Save Query]", class: "link primary", "data-form-target": "submit" %>
         <% end %>
       </div>
+
     <% else %>
       <p>You have read-only access in this workspace.</p>
+    <% end %>
+
+    <% if @query_chat_source.present? %>
+      <p class="small gray-300 mt24">
+        <strong><%= I18n.t('app.workspaces.queries.settings.chat_source_label') %>:</strong>
+        <%= link_to I18n.t('app.workspaces.queries.settings.chat_source_link'),
+                    @query_chat_source['path'],
+                    class: 'link secondary' %>
+      </p>
     <% end %>
   <% end %>
 
