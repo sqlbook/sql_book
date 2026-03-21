@@ -14,6 +14,12 @@ module Chat
       run show sql tell the to total what which with cuantos cuantas dame lista
       mostrar muéstrame tengo
     ].freeze
+    SEMANTIC_HINTS = {
+      'user' => {
+        tables: %w[user users account accounts member members profile profiles customer customers person people],
+        columns: %w[email user_id member_id account_id first_name last_name full_name]
+      }
+    }.freeze
 
     def initialize(question:, data_source:, schema:, preferred_table: nil)
       @question = question.to_s.strip
@@ -109,13 +115,11 @@ module Chat
 
     def relevance_score_for(table:)
       tokens = question_tokens
-      return 0 if tokens.empty?
-
       table_name = table['name'].to_s.downcase
       qualified_name = table['qualified_name'].to_s.downcase
       column_names = Array(table['columns']).map { |column| (column[:name] || column['name']).to_s.downcase }
 
-      tokens.sum do |token|
+      token_score = tokens.sum do |token|
         if table_matches_token?(qualified_name:, table_name:, token:)
           4
         elsif column_names.any? { |column| column.include?(token) }
@@ -124,12 +128,29 @@ module Chat
           0
         end
       end
+
+      token_score + semantic_table_bonus(
+        table_name:,
+        qualified_name:,
+        column_names:
+      )
     end
 
     def question_tokens
       @question_tokens ||= question.downcase.scan(/[a-z][a-z0-9_]+/).reject do |token|
         STOPWORDS.include?(token)
       end.uniq
+    end
+
+    def semantic_table_bonus(table_name:, qualified_name:, column_names:)
+      SEMANTIC_HINTS.sum do |keyword, hints|
+        next 0 unless question.downcase.match?(/\b#{Regexp.escape(keyword)}s?\b/)
+
+        bonus = 0
+        bonus += 6 if [table_name, qualified_name].any? { |name| hints[:tables].any? { |hint| name.include?(hint) } }
+        bonus += 2 if Array(column_names).any? { |column| hints[:columns].any? { |hint| column.include?(hint) } }
+        bonus
+      end
     end
 
     def flattened_tables

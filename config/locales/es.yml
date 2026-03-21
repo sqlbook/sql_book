@@ -137,6 +137,7 @@ es:
           data_sources_none: Aún no hay fuentes de datos conectadas.
           data_sources_found: "Se encontraron %{count} fuente(s) de datos."
           data_source_item: "- **%{name}** — %{source_type} — %{status} — %{tables_count} tabla(s) seleccionada(s)"
+          data_source_tables_preview: "  Tablas seleccionadas: %{tables}"
           connection_validated: Conexión validada correctamente. Se encontraron %{table_count} tabla(s).
           data_source_created: Se creó la fuente de datos PostgreSQL %{name}.
           selected_tables_required: Selecciona al menos una tabla antes de crear la fuente de datos.
@@ -161,6 +162,7 @@ es:
           data_source_not_found: No pude encontrar esa fuente de datos en este espacio.
           ask_data_source: "Encontré más de una posible fuente de datos para eso. ¿Cuál debo usar: %{data_sources}?"
           ask_table: "Encontré más de una posible tabla para eso. ¿Cuál debo usar: %{tables}?"
+          schema_guidance: "Basándome en el esquema, la(s) tabla(s) más probable(s) para eso son %{tables}. ¿Cuál debo usar?"
           ask_for_table_or_metric: Puedo consultar una fuente de datos conectada aquí, pero todavía necesito un poco más de detalle sobre la tabla o la métrica que quieres.
           result_intro: "Esto es lo que encontré en %{data_source} (%{row_count} fila(s)):"
           no_rows: La consulta se ejecutó correctamente, pero no devolvió filas.

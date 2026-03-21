@@ -379,7 +379,10 @@ module Chat
           'If the user asks a data question, use query.run and rely on the live connected data sources and',
           'table/schema context. If multiple data sources or tables are plausible, ask a clarifying question.'
         ].join(' '),
-        'If the user says "save this query" after a successful query, use query.save and reuse the recent query context.',
+        [
+          'If the user says "save this query" after a successful query,',
+          'use query.save and reuse the recent query context.'
+        ].join(' '),
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
         'For member.invite, required fields are first_name, last_name, email, and role.',

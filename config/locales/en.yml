@@ -168,6 +168,7 @@ en:
           data_sources_none: No data sources are connected yet.
           data_sources_found: "%{count} data source(s) found."
           data_source_item: "- **%{name}** — %{source_type} — %{status} — %{tables_count} selected table(s)"
+          data_source_tables_preview: "  Selected tables: %{tables}"
           connection_validated: Connection validated successfully. %{table_count} table(s) found.
           data_source_created: Created PostgreSQL data source %{name}.
           selected_tables_required: Select at least one table before creating the data source.
@@ -192,6 +193,7 @@ en:
           data_source_not_found: I couldn't find that data source in this workspace.
           ask_data_source: "I found more than one possible data source for that. Which one should I use: %{data_sources}?"
           ask_table: "I found more than one possible table for that. Which one should I use: %{tables}?"
+          schema_guidance: "Based on the schema, the likeliest table(s) for that are %{tables}. Which one should I use?"
           ask_for_table_or_metric: I can query a connected data source here, but I still need a little more detail about the table or metric you want.
           result_intro: "Here’s what I found from %{data_source} (%{row_count} row(s)):"
           no_rows: That query ran successfully, but it returned no rows.

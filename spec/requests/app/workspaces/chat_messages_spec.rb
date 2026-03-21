@@ -380,6 +380,94 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 7 |')
     end
 
+    it 'resumes a recent database query clarification before stale datasource setup state' do
+      create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Users question')
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::USER,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: 'How many users do I have?'
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: <<~TEXT
+          I can check that, but I need to know what you mean by users:
+
+          workspace members in Orange Inc, or
+          user records in your connected database?
+        TEXT
+      )
+      Chat::DataSourceSetupStateStore.new(workspace:, actor: user, chat_thread: thread).save(
+        'next_step' => 'name'
+      )
+
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' },
+                { name: 'email', data_type: 'text' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['count'], [[12]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'Ah sorry, I mean in my connected database!' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Staging App DB')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 12 |')
+      expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('host, database name')
+    end
+
+    it 'uses schema guidance during table clarification follow-ups instead of falling back to datasource listing' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Users table clarification')
+      Chat::QueryClarificationStateStore.new(workspace:, actor: user, chat_thread: thread).save(
+        'question' => 'How many users do I have?',
+        'step' => 'table',
+        'data_source_id' => data_source.id,
+        'candidate_tables' => [
+          { 'qualified_name' => 'public.users', 'name' => 'users' },
+          { 'qualified_name' => 'public.accounts', 'name' => 'accounts' }
+        ]
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id: thread.id,
+             content: 'Okay, well surely you can tell from the schema for the various tables?'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('public.users')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('public.accounts')
+      expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('data source(s) found')
+    end
+
     it 'blocks data source setup for regular users but still allows querying' do
       owner = create(:user)
       limited_workspace = create(:workspace_with_owner, owner:)

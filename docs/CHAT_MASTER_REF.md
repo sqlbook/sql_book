@@ -254,6 +254,7 @@ High-risk writes (inline confirmation required):
 12. Clearly off-scope or general-purpose questions should be intercepted before tool planning and answered with a scope-limited help message rather than being forced through stale action context.
 13. Datasource setup should collect missing connection information in sensible stages instead of dumping every possible field request into one turn.
 14. Query follow-ups about current mutable datasource/member facts should verify live workspace state before asserting them.
+15. Active query clarification and obvious query-scope follow-ups must take precedence over stale datasource-setup state in the same thread.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
@@ -261,7 +262,7 @@ High-risk writes (inline confirmation required):
 - Preferred turn context ingredients:
   - recent raw transcript
   - structured recent tool/action results
-  - connected datasource inventory
+  - connected datasource inventory, including selected-table previews
   - staged datasource setup state
   - staged query clarification state
   - refreshed current workspace state for the most recently referenced member when a follow-up asks who/status/confirmation
@@ -283,6 +284,8 @@ High-risk writes (inline confirmation required):
 - Query clarification follow-ups should support:
   - datasource disambiguation such as "Use Warehouse DB"
   - table disambiguation when multiple candidate tables match the question
+  - scope clarification replies such as "I mean in my connected database"
+  - schema-guidance follow-ups such as "Can you tell from the schema?" without falling back to generic datasource listing
 - Referential member follow-ups such as "what are their names and details?" should stay in scope when a recent member/team result is present, even if the message does not repeat words like `member` or `team`.
 - Structured result data is persisted on assistant messages for both:
   - auto-executed actions

@@ -29,6 +29,15 @@ module Chat
       )\b
     /ix
     QUERY_CLARIFICATION_HINT_REGEX = /\b(first|second|third|last|that one|this one|those)\b/i
+    QUERY_SCOPE_ASSISTANT_REGEX = /
+      \bworkspace\ members?\b.*\b(connected\ database|data\s+source|database\ records?)\b|
+      \b(connected\ database|data\s+source|database\ records?)\b.*\bworkspace\ members?\b
+    /ixm
+    QUERY_CLARIFICATION_FOLLOW_UP_REGEX = /
+      \b(
+        connected|database|data\s+source|datasource|schema|table|tables|column|columns|record|records
+      )\b
+    /ix
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
@@ -49,12 +58,16 @@ module Chat
         return pending_action_command == :confirm ? confirm_pending_action : cancel_pending_action
       end
 
-      if (setup_resolution = data_source_setup_resolution)
-        return handle_data_source_setup_resolution(setup_resolution)
-      end
-
       if should_resume_query_clarification?
         return execute_direct_tool(action_type: 'query.run', payload: { 'question' => content })
+      end
+
+      if should_resume_recent_query_scope_clarification?
+        return execute_direct_tool(action_type: 'query.run', payload: { 'question' => recent_query_scope_question })
+      end
+
+      if (setup_resolution = data_source_setup_resolution)
+        return handle_data_source_setup_resolution(setup_resolution)
       end
 
       return render_non_action(capability_summary_message) if capability_question?
@@ -208,7 +221,6 @@ module Chat
       )
     end
 
-    # rubocop:disable Metrics/AbcSize
     def execute_intent(intent:)
       action_request_lifecycle.supersede_pending_confirmations!
 
@@ -217,26 +229,10 @@ module Chat
       persist_recent_query_state_for(intent:, execution:)
       clear_transient_state_for(intent:, execution:)
       assistant_content = compose_execution_message(intent:, execution:)
-      action_request = nil
-
-      if intent.write?
-        action_request = action_request_lifecycle.persist_auto_executed_request!(
-          source_message: user_message,
-          action_type: intent.action_type,
-          payload: intent.payload,
-          execution_snapshot: {
-            result_payload: {
-              'user_message' => assistant_content,
-              'data' => execution.data
-            },
-            status: execution.status
-          }
-        )
-      end
+      action_request = persist_executed_action_request(intent:, execution:, assistant_content:)
 
       render_execution(intent:, execution:, assistant_content:, action_request:)
     end
-    # rubocop:enable Metrics/AbcSize
 
     def render_execution(intent:, execution:, assistant_content: nil, action_request: nil)
       assistant_content ||= compose_execution_message(intent:, execution:)
@@ -545,9 +541,69 @@ module Chat
       return true if query_like_request?
       return true if content.match?(QUERY_CLARIFICATION_HINT_REGEX)
       return true if query_candidate_name_match?
-      return true if content.present? && !question_like?
+      return true if query_clarification_follow_up?
 
       false
+    end
+
+    def should_resume_recent_query_scope_clarification?
+      recent_query_scope_question.present? && query_scope_follow_up?
+    end
+
+    def recent_query_scope_question
+      return @recent_query_scope_question if defined?(@recent_query_scope_question)
+
+      assistant_index = recent_query_scope_clarification_index
+      @recent_query_scope_question =
+        assistant_index.nil? ? nil : prior_query_user_message(before_index: assistant_index)
+    end
+
+    def recent_query_scope_clarification_index
+      context_snapshot.conversation_messages.rindex do |entry|
+        assistant_entry?(entry) && conversation_entry_content(entry).match?(QUERY_SCOPE_ASSISTANT_REGEX)
+      end
+    end
+
+    def prior_query_user_message(before_index:)
+      context_snapshot.conversation_messages[0...before_index].reverse_each do |entry|
+        next unless user_entry?(entry)
+
+        text = conversation_entry_content(entry)
+        return text if query_like_text?(text)
+      end
+
+      nil
+    end
+
+    def query_like_text?(text)
+      return false unless text.to_s.match?(QUERY_LIKE_REGEX)
+      return false if text.to_s.match?(/\b(team|teammates?|member|members|invite|invitation|workspace|role|roles)\b/i)
+
+      text.to_s.match?(query_data_hint_regex) || context_snapshot.data_source_inventory.present?
+    end
+
+    def query_clarification_follow_up?
+      content.match?(QUERY_CLARIFICATION_FOLLOW_UP_REGEX)
+    end
+
+    def query_scope_follow_up?
+      content.match?(QUERY_CLARIFICATION_FOLLOW_UP_REGEX) || content.match?(QUERY_CLARIFICATION_HINT_REGEX)
+    end
+
+    def user_entry?(entry)
+      conversation_entry_role(entry) == 'user'
+    end
+
+    def assistant_entry?(entry)
+      conversation_entry_role(entry) == 'assistant'
+    end
+
+    def conversation_entry_role(entry)
+      entry[:role].presence || entry['role'].presence
+    end
+
+    def conversation_entry_content(entry)
+      entry[:content].presence || entry['content'].presence || ''
     end
 
     def query_candidate_name_match? # rubocop:disable Metrics/AbcSize
@@ -614,35 +670,72 @@ module Chat
 
       case intent.action_type
       when 'query.run'
-        data = execution.data.to_h.deep_stringify_keys
-        return if ActiveModel::Type::Boolean.new.cast(data['clarification_required'])
-
-        recent_query_state_store.save(
-          'question' => data['question'] || intent.payload['question'],
-          'sql' => data['sql'],
-          'data_source_id' => data.dig('data_source', 'id'),
-          'data_source_name' => data.dig('data_source', 'name'),
-          'row_count' => data['row_count'],
-          'columns' => data['columns'],
-          'saved_query_id' => nil,
-          'saved_query_name' => nil
-        )
+        persist_recent_query_run_state(intent:, execution:)
       when 'query.save'
-        data = execution.data.to_h.deep_stringify_keys
-        query_payload = data['query'].to_h.deep_stringify_keys
-        existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
-
-        recent_query_state_store.save(
-          existing_state.merge(
-            'question' => query_payload['question'] || existing_state['question'],
-            'sql' => query_payload['sql'] || existing_state['sql'],
-            'data_source_id' => query_payload.dig('data_source', 'id') || existing_state['data_source_id'],
-            'data_source_name' => query_payload.dig('data_source', 'name') || existing_state['data_source_name'],
-            'saved_query_id' => query_payload['id'],
-            'saved_query_name' => query_payload['name']
-          )
-        )
+        persist_recent_saved_query_state(execution:)
       end
+    end
+
+    def persist_recent_query_run_state(intent:, execution:)
+      data = execution.data.to_h.deep_stringify_keys
+      return if ActiveModel::Type::Boolean.new.cast(data['clarification_required'])
+
+      recent_query_state_store.save(
+        'question' => data['question'] || intent.payload['question'],
+        'sql' => data['sql'],
+        'data_source_id' => data.dig('data_source', 'id'),
+        'data_source_name' => data.dig('data_source', 'name'),
+        'row_count' => data['row_count'],
+        'columns' => data['columns'],
+        'saved_query_id' => nil,
+        'saved_query_name' => nil
+      )
+    end
+
+    def persist_recent_saved_query_state(execution:)
+      data = execution.data.to_h.deep_stringify_keys
+      existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
+
+      recent_query_state_store.save(
+        existing_state.merge(
+          query_state_attributes_from_saved_query(data:),
+          'saved_query_id' => saved_query_payload(data:)['id'],
+          'saved_query_name' => saved_query_payload(data:)['name']
+        )
+      )
+    end
+
+    def query_state_attributes_from_saved_query(data:)
+      query_payload = saved_query_payload(data:)
+      existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
+
+      {
+        'question' => query_payload['question'] || existing_state['question'],
+        'sql' => query_payload['sql'] || existing_state['sql'],
+        'data_source_id' => query_payload.dig('data_source', 'id') || existing_state['data_source_id'],
+        'data_source_name' => query_payload.dig('data_source', 'name') || existing_state['data_source_name']
+      }
+    end
+
+    def saved_query_payload(data:)
+      data['query'].to_h.deep_stringify_keys
+    end
+
+    def persist_executed_action_request(intent:, execution:, assistant_content:)
+      return nil unless intent.write?
+
+      action_request_lifecycle.persist_auto_executed_request!(
+        source_message: user_message,
+        action_type: intent.action_type,
+        payload: intent.payload,
+        execution_snapshot: {
+          result_payload: {
+            'user_message' => assistant_content,
+            'data' => execution.data
+          },
+          status: execution.status
+        }
+      )
     end
 
     def query_data_hint_regex

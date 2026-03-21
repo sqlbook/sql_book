@@ -187,9 +187,7 @@ module Chat
         lines << query_clarification_summary_line(state: active_query_clarification)
       end
 
-      if recent_query_state.present?
-        lines << recent_query_summary_line(state: recent_query_state)
-      end
+      lines << recent_query_summary_line(state: recent_query_state) if recent_query_state.present?
 
       lines.compact
     end
@@ -228,7 +226,7 @@ module Chat
     end
 
     def formatted_inventory_line(data_source:)
-      selected_tables = Array(data_source['selected_tables']).first(4)
+      selected_tables = Array(data_source['selected_tables']).first(8)
       selected_tables_text = selected_tables.any? ? " | selected tables: #{selected_tables.join(', ')}" : ''
 
       [

@@ -26,13 +26,23 @@ module Tooling
                   [
                     default_message('data_sources_found', count: payload.size),
                     payload.map do |data_source|
-                      I18n.t(
+                      item = I18n.t(
                         'app.workspaces.chat.datasource.data_source_item',
                         name: data_source['name'],
                         source_type: data_source['source_type'].to_s.humanize,
                         status: data_source['status'].to_s.humanize,
                         tables_count: data_source['tables_count']
                       )
+                      selected_tables_preview = Array(data_source['selected_tables']).first(6)
+                      next item if selected_tables_preview.empty?
+
+                      [
+                        item,
+                        I18n.t(
+                          'app.workspaces.chat.datasource.data_source_tables_preview',
+                          tables: selected_tables_preview.join(', ')
+                        )
+                      ].join("\n")
                     end.join("\n")
                   ].join("\n\n")
                 end

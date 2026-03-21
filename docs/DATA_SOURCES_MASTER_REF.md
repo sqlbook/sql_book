@@ -165,6 +165,8 @@ UI fidelity notes:
 - Chat query execution is also single-source in phase 1:
   - one datasource is selected at a time
   - if multiple datasources or tables plausibly match the question, chat must ask a clarifying follow-up before generating SQL
+  - datasource inventory exposed to chat should include selected-table previews so the assistant can reason about likely sources before asking a follow-up
+  - when a user asks the assistant to infer the likely table from schema, chat should stay grounded in live connector metadata instead of falling back to a generic datasource list
   - successful chat execution uses the same connector-backed read-only path as the query editor
   - successful chat execution can be followed by `query.save`, which persists that SQL into the query library
 - External SQL guardrails include:

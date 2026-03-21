@@ -93,15 +93,30 @@ module Chat
       payload = raw_payload.to_h.deep_stringify_keys
 
       apply_workspace_context!(payload:)
-      apply_explicit_role!(payload:) if explicit_role_action?(action_type)
-      apply_explicit_member_reference!(payload:) if explicit_member_reference_action?(action_type)
-      apply_context_member_reference!(payload:) if contextual_member_reference_action?(action_type)
-      apply_invite_seed_details!(payload:) if action_type == 'member.invite'
-      apply_query_question!(payload:) if action_type == 'query.run'
-      apply_recent_query_context!(payload:) if action_type == 'query.save'
-      apply_explicit_query_name!(payload:) if action_type == 'query.save'
+      canonical_payload_steps_for(action_type:).each do |step|
+        send(step, payload:)
+      end
 
       payload.compact_blank
+    end
+
+    def canonical_payload_steps_for(action_type:)
+      member_steps = []
+      member_steps << :apply_explicit_role! if explicit_role_action?(action_type)
+      member_steps << :apply_explicit_member_reference! if explicit_member_reference_action?(action_type)
+      member_steps << :apply_context_member_reference! if contextual_member_reference_action?(action_type)
+
+      invite_steps = action_type == 'member.invite' ? [:apply_invite_seed_details!] : []
+      query_steps = query_payload_steps_for(action_type:)
+
+      member_steps + invite_steps + query_steps
+    end
+
+    def query_payload_steps_for(action_type:)
+      return [:apply_query_question!] if action_type == 'query.run'
+      return %i[apply_recent_query_context! apply_explicit_query_name!] if action_type == 'query.save'
+
+      []
     end
 
     def apply_workspace_context!(payload:)
@@ -162,7 +177,7 @@ module Chat
     end
 
     def apply_query_question!(payload:)
-      payload['question'] = message_text.strip.presence || payload['question']
+      payload['question'] = payload['question'].to_s.strip.presence || message_text.strip.presence
     end
 
     def apply_recent_query_context!(payload:)
@@ -208,8 +223,10 @@ module Chat
         return I18n.t('app.workspaces.chat.planner.member_remove_needs_member') if member_reference_missing?(payload)
       when 'query.save'
         return I18n.t('app.workspaces.chat.planner.query_save_needs_query') if payload['sql'].to_s.strip.blank?
-        return I18n.t('app.workspaces.chat.query.data_source_not_found') if payload['data_source_id'].to_s.strip.blank? &&
-          payload['data_source_name'].to_s.strip.blank?
+        if payload['data_source_id'].to_s.strip.blank? &&
+           payload['data_source_name'].to_s.strip.blank?
+          return I18n.t('app.workspaces.chat.query.data_source_not_found')
+        end
       end
 
       nil

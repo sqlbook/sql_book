@@ -16,6 +16,18 @@ module Chat
         how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with
       )\b
     /ix
+    SCHEMA_INFERENCE_REGEX = /
+      \b(
+        tell\ from\ the\ schema|from\ the\ schema|which\ of\ those|
+        which\ table|what\ table|contains\ the\ user\ data|contains\ user\ data
+      )\b
+    /ix
+    SEMANTIC_HINTS = {
+      'user' => {
+        tables: %w[user users account accounts member members profile profiles customer customers person people],
+        columns: %w[email user_id member_id account_id first_name last_name full_name]
+      }
+    }.freeze
     ORDINAL_HINTS = {
       /\bfirst\b/i => 0,
       /\bsecond\b/i => 1,
@@ -115,6 +127,12 @@ module Chat
 
         table = resolve_table_candidate_from_state(state:)
         if table.blank?
+          if schema_inference_request? && Array(state['candidate_tables']).any?
+            return clarification_result(
+              question: schema_guidance_message(candidates: state['candidate_tables'])
+            )
+          end
+
           return clarification_result(
             question: table_clarification_message(candidates: state['candidate_tables'])
           )
@@ -252,13 +270,13 @@ module Chat
 
     def table_score(table:, question:)
       tokens = question_tokens(question)
-      return 0 if tokens.empty?
+      return semantic_table_bonus(table:, question:) if tokens.empty?
 
       table_name = table['name'].to_s.downcase
       qualified_name = table['qualified_name'].to_s.downcase
       column_names = Array(table['columns']).map { |column| (column[:name] || column['name']).to_s.downcase }
 
-      tokens.sum do |token|
+      token_score = tokens.sum do |token|
         if table_matches_token?(qualified_name:, table_name:, token:)
           4
         elsif column_names.any? { |column| column.include?(token) }
@@ -267,6 +285,8 @@ module Chat
           0
         end
       end
+
+      token_score + semantic_table_bonus(table:, question:)
     end
 
     def resolve_data_source_candidate_from_state(state:)
@@ -336,6 +356,11 @@ module Chat
       I18n.t('app.workspaces.chat.query.ask_table', tables: names.to_sentence)
     end
 
+    def schema_guidance_message(candidates:)
+      names = Array(candidates).map { |candidate| candidate['qualified_name'] || candidate[:qualified_name] }
+      I18n.t('app.workspaces.chat.query.schema_guidance', tables: names.to_sentence)
+    end
+
     def formatted_query_result_message(data_source:, sql:, query_result:)
       row_count = query_result.rows.length
       lines = [
@@ -376,6 +401,28 @@ module Chat
 
     def question_tokens(question)
       question.to_s.downcase.scan(/[a-z][a-z0-9_]+/).reject { |token| STOPWORDS.include?(token) }.uniq
+    end
+
+    def schema_inference_request?
+      current_question.match?(SCHEMA_INFERENCE_REGEX)
+    end
+
+    def semantic_table_bonus(table:, question:)
+      lowered_question = question.to_s.downcase
+      table_tokens = [
+        table['name'].to_s.downcase,
+        table['qualified_name'].to_s.downcase
+      ]
+      column_names = Array(table['columns']).map { |column| (column[:name] || column['name']).to_s.downcase }
+
+      SEMANTIC_HINTS.sum do |keyword, hints|
+        next 0 unless lowered_question.match?(/\b#{Regexp.escape(keyword)}s?\b/)
+
+        bonus = 0
+        bonus += 6 if table_tokens.any? { |name| hints[:tables].any? { |hint| name.include?(hint) } }
+        bonus += 2 if column_names.any? { |column| hints[:columns].any? { |hint| column.include?(hint) } }
+        bonus
+      end
     end
 
     def new_query_request?

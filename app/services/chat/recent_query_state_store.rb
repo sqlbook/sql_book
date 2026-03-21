@@ -48,12 +48,20 @@ module Chat
 
     def normalize(state)
       raw = state.to_h.deep_stringify_keys.slice(*STATE_KEYS)
-      raw['data_source_id'] = raw['data_source_id'].to_i if raw['data_source_id'].to_s.match?(/\A\d+\z/)
-      raw['saved_query_id'] = raw['saved_query_id'].to_i if raw['saved_query_id'].to_s.match?(/\A\d+\z/)
-      raw['row_count'] = raw['row_count'].to_i if raw['row_count'].to_s.match?(/\A\d+\z/)
-      raw['columns'] = Array(raw['columns']).map(&:to_s).compact_blank
+      normalize_integer_fields!(raw, keys: %w[data_source_id saved_query_id row_count])
+      normalize_columns!(raw)
       raw.compact_blank!
       raw
+    end
+
+    def normalize_integer_fields!(raw, keys:)
+      Array(keys).each do |key|
+        raw[key] = raw[key].to_i if raw[key].to_s.match?(/\A\d+\z/)
+      end
+    end
+
+    def normalize_columns!(raw)
+      raw['columns'] = Array(raw['columns']).map(&:to_s).compact_blank
     end
 
     def read_raw_state
