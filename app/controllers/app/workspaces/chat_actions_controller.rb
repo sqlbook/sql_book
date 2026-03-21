@@ -33,11 +33,13 @@ module App
           }
         )
 
-        append_execution_message(execution:, assistant_content:)
+        assistant_message = append_execution_message(execution:, assistant_content:)
         set_workspace_delete_toast(execution:)
 
         render json: {
           status: execution.status,
+          thread_id: chat_thread.id,
+          messages: [serialize_message(message: assistant_message)],
           redirect_path: execution.data[:redirect_path],
           action_request_id: action_request.id
         }
@@ -110,6 +112,30 @@ module App
             action_type: action_request.action_type
           }
         )
+      end
+
+      def serialize_message(message:)
+        {
+          id: message.id,
+          thread_id: message.chat_thread_id,
+          role: message.role_name,
+          status: message.status_name,
+          content: message.content.to_s,
+          content_html: serialized_message_content_html(message:),
+          metadata: message.metadata,
+          created_at: message.created_at.iso8601,
+          author: {
+            id: message.user_id,
+            name: message.user&.full_name.to_s
+          },
+          images: []
+        }
+      end
+
+      def serialized_message_content_html(message:)
+        return unless message.assistant?
+
+        helpers.render_chat_markdown(message.content.to_s)
       end
 
       def chat_response_composer

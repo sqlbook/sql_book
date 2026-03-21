@@ -131,6 +131,8 @@ es:
             query_list: Mostrar las consultas guardadas
             query_run: Consultar una fuente de datos conectada
             query_save: Guardar una consulta en la biblioteca
+            query_rename: Renombrar una consulta guardada
+            query_delete: Eliminar una consulta guardada
             workspace_update_name: Cambiar el nombre del espacio
             workspace_delete: Eliminar el espacio
         datasource:
@@ -171,8 +173,15 @@ es:
           none: Todavía no hay consultas guardadas en este espacio.
           found: "Aquí tienes %{count} consultas guardadas:"
           item: "- **%{name}** — Fuente de datos: %{data_source}"
-          saved: Guardé esa consulta en la biblioteca como %{name}.
+          saved: Guardé esa consulta en la biblioteca como "%{name}".
+          renamed: Renombré esa consulta guardada como "%{name}".
+          deleted: Eliminé la consulta guardada "%{name}".
           sql_required: Primero ejecuta una consulta aquí o indícame el SQL y la fuente de datos para que pueda guardarla.
+          rename_query_required: Dime qué consulta guardada quieres renombrar.
+          rename_name_required: Dime el nuevo nombre que quieres para esa consulta guardada.
+          delete_query_required: Dime qué consulta guardada quieres eliminar.
+          query_not_found: No pude encontrar esa consulta guardada en este espacio.
+          this_query: esta consulta
         responses:
           confirmation:
             variants:
@@ -230,9 +239,19 @@ es:
                 - "Hecho. %{name} ya no forma parte de este espacio."
             query_save:
               variants:
-                - "Guardé esa consulta en la biblioteca como %{name}."
-                - "Hecho. La consulta ya está guardada como %{name}."
-                - "Listo. Ahora puedes encontrarla en la biblioteca como %{name}."
+                - "Guardé esa consulta en la biblioteca como \"%{name}\"."
+                - "Hecho. La consulta ya está guardada como \"%{name}\"."
+                - "Listo. Ahora puedes encontrarla en la biblioteca como \"%{name}\"."
+            query_rename:
+              variants:
+                - "Renombré esa consulta guardada como \"%{name}\"."
+                - "Hecho. La consulta guardada ahora se llama \"%{name}\"."
+                - "Actualizado. Ahora puedes encontrarla en la biblioteca como \"%{name}\"."
+            query_delete:
+              variants:
+                - "Eliminé la consulta guardada \"%{name}\"."
+                - "Hecho. \"%{name}\" ya no está en la biblioteca."
+                - "\"%{name}\" ha sido eliminada de la biblioteca."
         errors:
           message_or_image_required: Se requiere contenido del mensaje o al menos una imagen.
           max_images: Puedes adjuntar hasta %{count} imágenes por mensaje.
@@ -257,6 +276,8 @@ es:
           member_resend_invite: Reenviar invitación
           member_update_role: Actualizar rol de miembro
           member_remove: Eliminar miembro del equipo
+          query_rename: Renombrar consulta guardada
+          query_delete: Eliminar consulta guardada
         planner:
           default_help: Puedo ayudarte a gestionar este espacio, los miembros del equipo, las fuentes de datos conectadas y las consultas de solo lectura sobre esas fuentes.
           workspace_delete: Puedo eliminar este espacio cuando lo confirmes.
@@ -286,6 +307,12 @@ es:
           query_run: Voy a ejecutar esa consulta contra la fuente de datos conectada más probable.
           query_save: Voy a guardar esa consulta en la biblioteca ahora.
           query_save_needs_query: Primero ejecuta una consulta aquí o indícame el SQL y la fuente de datos para que pueda guardarla.
+          query_rename: Voy a renombrar ahora esa consulta guardada.
+          query_rename_needs_query: Claro. ¿Qué consulta guardada quieres que renombre?
+          query_rename_needs_name: Claro. ¿Cómo quieres renombrar %{query_name}?
+          query_rename_needs_query_and_name: Claro. ¿Qué consulta guardada quieres renombrar y cuál debería ser el nuevo nombre?
+          query_delete: Puedo eliminar esa consulta guardada cuando lo confirmes.
+          query_delete_needs_query: Claro. ¿Qué consulta guardada quieres que elimine?
           attachments_context: Puedo ver %{count} imagen(es) adjunta(s). Dime qué acción de equipo o espacio quieres ejecutar.
           fallback_with_action: Puedo ayudarte con eso. Confirma para continuar.
           fallback_without_action: Puedo ayudarte con acciones del espacio, del equipo, de fuentes de datos y de consultas.
@@ -306,6 +333,8 @@ es:
             query_list: ver las consultas guardadas
             query_run: ejecutar consultas sobre fuentes de datos
             query_save: guardar consultas en la biblioteca
+            query_rename: renombrar consultas guardadas
+            query_delete: eliminar consultas guardadas
           allowed_roles:
             owner: un propietario del espacio
             admin_or_owner: un administrador o un propietario del espacio

@@ -115,6 +115,8 @@ module Chat
     def query_payload_steps_for(action_type:)
       return [:apply_query_question!] if action_type == 'query.run'
       return %i[apply_recent_query_context! apply_explicit_query_name!] if action_type == 'query.save'
+      return %i[apply_explicit_query_reference! apply_explicit_query_name!] if action_type == 'query.rename'
+      return [:apply_explicit_query_reference!] if action_type == 'query.delete'
 
       []
     end
@@ -195,6 +197,19 @@ module Chat
       payload['name'] = explicit_name if explicit_name.present?
     end
 
+    def apply_explicit_query_reference!(payload:)
+      explicit_reference = query_reference_resolver.reference_payload(text: message_text)
+      payload.merge!(explicit_reference) if explicit_reference.present?
+    end
+
+    def query_reference_resolver
+      @query_reference_resolver ||= QueryReferenceResolver.new(
+        workspace:,
+        recent_query_state: context_snapshot.recent_query_state,
+        conversation_messages: context_snapshot.conversation_messages
+      )
+    end
+
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def missing_details_message_for(action_type:, payload:)
       case action_type
@@ -227,6 +242,21 @@ module Chat
            payload['data_source_name'].to_s.strip.blank?
           return I18n.t('app.workspaces.chat.query.data_source_not_found')
         end
+      when 'query.rename'
+        query_id_blank = payload['query_id'].to_s.strip.blank?
+        name_blank = payload['name'].to_s.strip.blank?
+
+        return I18n.t('app.workspaces.chat.planner.query_rename_needs_query_and_name') if query_id_blank && name_blank
+        return I18n.t('app.workspaces.chat.planner.query_rename_needs_query') if query_id_blank
+
+        if name_blank
+          return I18n.t(
+            'app.workspaces.chat.planner.query_rename_needs_name',
+            query_name: payload['query_name'].to_s.presence || I18n.t('app.workspaces.chat.query_library.this_query')
+          )
+        end
+      when 'query.delete'
+        return I18n.t('app.workspaces.chat.planner.query_delete_needs_query') if payload['query_id'].to_s.strip.blank?
       end
 
       nil

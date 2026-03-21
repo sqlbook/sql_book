@@ -77,8 +77,8 @@ Super-admin is separate from workspace roles:
   - read actions are available to all accepted roles
   - mutating action execution is additionally policy-gated by action type + target role constraints
   - confirmation policy is risk-based:
-    - destructive writes require confirmation (`workspace.delete`, `member.remove`)
-    - auto-run writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, `member.update_role`, `datasource.validate_connection`, `datasource.create`, and `query.save`
+    - destructive writes require confirmation (`workspace.delete`, `member.remove`, `query.delete`)
+    - auto-run writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, `member.update_role`, `datasource.validate_connection`, `datasource.create`, `query.save`, and `query.rename`
   - confirm/cancel is limited to the same requesting user and workspace/thread scope
 
 ### Workspace chat action allowlist (v1)
@@ -112,10 +112,15 @@ Super-admin is separate from workspace roles:
   - Admin: allow
   - User: allow
   - Read-only: allow
-- `query.run`, `query.save`
+ - `query.run`, `query.save`, `query.rename`
   - Owner: allow
   - Admin: allow
   - User: allow
+  - Read-only: deny
+- `query.delete`
+  - Owner: allow
+  - Admin: allow
+  - User: allow only when query author is self
   - Read-only: deny
 
 ### Shared capability surface
@@ -152,15 +157,22 @@ Super-admin is separate from workspace roles:
   - `query.list`
   - `query.run`
   - `query.save`
+  - `query.rename`
+  - `query.delete`
 - `query.list`
   - Owner: allow
   - Admin: allow
   - User: allow
   - Read-only: allow
-- `query.run`, `query.save`
+- `query.run`, `query.save`, `query.rename`
   - Owner: allow
   - Admin: allow
   - User: allow
+  - Read-only: deny
+- `query.delete`
+  - Owner: allow
+  - Admin: allow
+  - User: allow only when query author is self
   - Read-only: deny
 
 ### Query API surface
@@ -168,15 +180,23 @@ Super-admin is separate from workspace roles:
   - `GET /api/v1/workspaces/:workspace_id/queries`
   - `POST /api/v1/workspaces/:workspace_id/queries/run`
   - `POST /api/v1/workspaces/:workspace_id/queries`
+  - `PATCH /api/v1/workspaces/:workspace_id/queries/:id`
+  - `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
 - Query list API:
   - Owner: allow
   - Admin: allow
   - User: allow
   - Read-only: allow
-- Query run/save API:
+- Query run/save/rename API:
   - Owner: allow
   - Admin: allow
   - User: allow
+  - Read-only: deny
+
+- Query delete API:
+  - Owner: allow
+  - Admin: allow
+  - User: allow only when query author is self
   - Read-only: deny
 
 ### Query library/read

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tooling
-  class WorkspaceQueryHandlers
+  class WorkspaceQueryHandlers # rubocop:disable Metrics/ClassLength
     def initialize(workspace:, actor:)
       @workspace = workspace
       @actor = actor
@@ -41,6 +41,49 @@ module Tooling
         message: I18n.t('app.workspaces.chat.query_library.saved', name: query.name),
         data: {
           'query' => serialize_query(query:)
+        },
+        error_code: nil
+      )
+    end
+
+    def rename(arguments:)
+      result = Queries::RenameService.new(workspace:, actor:, attributes: arguments).call
+      unless result.success?
+        return Result.new(
+          status: 'validation_error',
+          message: result.message,
+          data: {},
+          error_code: result.error_code
+        )
+      end
+
+      query = result.query
+      Result.new(
+        status: 'executed',
+        message: I18n.t('app.workspaces.chat.query_library.renamed', name: query.name),
+        data: {
+          'query' => serialize_query(query:)
+        },
+        error_code: nil
+      )
+    end
+
+    def delete(arguments:)
+      result = Queries::DeleteService.new(workspace:, actor:, attributes: arguments).call
+      unless result.success?
+        return Result.new(
+          status: 'validation_error',
+          message: result.message,
+          data: {},
+          error_code: result.error_code
+        )
+      end
+
+      Result.new(
+        status: 'executed',
+        message: I18n.t('app.workspaces.chat.query_library.deleted', name: result.deleted_query['name']),
+        data: {
+          'deleted_query' => result.deleted_query
         },
         error_code: nil
       )

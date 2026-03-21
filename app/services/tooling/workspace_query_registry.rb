@@ -54,6 +54,37 @@ module Tooling
         risk_level: 'write',
         confirmation_mode: 'none',
         handler_method: :save
+      },
+      {
+        name: 'query.rename',
+        description: 'Rename a saved query in the current workspace query library.',
+        input_schema: {
+          'type' => 'object',
+          'required' => %w[query_id name],
+          'properties' => {
+            'query_id' => { 'type' => 'integer' },
+            'name' => { 'type' => 'string', 'min_length' => 1 }
+          }
+        },
+        output_schema: { 'type' => 'object' },
+        risk_level: 'write',
+        confirmation_mode: 'none',
+        handler_method: :rename
+      },
+      {
+        name: 'query.delete',
+        description: 'Delete a saved query from the current workspace query library.',
+        input_schema: {
+          'type' => 'object',
+          'required' => %w[query_id],
+          'properties' => {
+            'query_id' => { 'type' => 'integer' }
+          }
+        },
+        output_schema: { 'type' => 'object' },
+        risk_level: 'write',
+        confirmation_mode: 'required',
+        handler_method: :delete
       }
     ].freeze
 

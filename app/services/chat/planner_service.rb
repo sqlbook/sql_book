@@ -42,6 +42,16 @@ module Chat
         save\s+it
       )\b
     /ix
+    QUERY_RENAME_REGEX = /
+      \b(
+        rename|retitle
+      )\b.*\bquery\b
+    /ix
+    QUERY_DELETE_REGEX = /
+      \b(
+        delete|remove
+      )\b.*\bquery\b
+    /ix
     QUERY_DATA_HINT_REGEX = /
       \b(
         data\s+source|datasource|database|table|tables|schema|sql|query|queries|row|rows|column|columns
@@ -209,7 +219,8 @@ module Chat
                   [
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
                     'member.resend_invite, member.update_role, member.remove, datasource.list,',
-                    'datasource.validate_connection, datasource.create, query.list, query.run, query.save.'
+                    'datasource.validate_connection, datasource.create, query.list, query.run, query.save,',
+                    'query.rename, query.delete.'
                   ].join(' '),
                   [
                     'Disallowed namespaces: workspace.list/get/create, dashboard.*,',
@@ -232,7 +243,9 @@ module Chat
                     'datasource.validate_connection(host,database_name,username,password),',
                     'datasource.create(name,host,database_name,username,password,selected_tables),',
                     'query.run(question),',
-                    'query.save(sql,data_source_id or data_source_name).'
+                    'query.save(sql,data_source_id or data_source_name),',
+                    'query.rename(query_id,name),',
+                    'query.delete(query_id).'
                   ].join(' '),
                   [
                     'If the user wants to add a PostgreSQL data source,',
@@ -242,8 +255,13 @@ module Chat
                   [
                     'For query-library requests, prefer query.list.',
                     'For "save this query" follow-ups, prefer query.save and reuse the recent executed query context.',
+                    'For renaming or deleting saved queries, prefer query.rename or query.delete.',
                     'For data questions, prefer query.run.',
                     'If multiple connected data sources or tables could answer, ask a clarifying question.'
+                  ].join(' '),
+                  [
+                    'Never claim a query-library tool is unavailable',
+                    'if it appears in the allowed actions and tool metadata.'
                   ].join(' '),
                   [
                     'Never choose or assume an invite role on the user\'s behalf.',
@@ -379,6 +397,8 @@ module Chat
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
       return datasource_list_plan if datasource_list_intent?(lower)
       return query_list_plan if query_list_intent?(lower)
+      return query_rename_plan if query_rename_intent?(lower)
+      return query_delete_plan if query_delete_intent?(lower)
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
       return member_invite_plan if member_invite_intent?(lower)
       return member_role_update_plan if lower.match?(/\b(change|update)\b.*\brole\b/)
@@ -415,6 +435,8 @@ module Chat
     end
 
     def query_list_intent?(lowered_message)
+      return false if lowered_message.match?(QUERY_RENAME_REGEX)
+      return false if lowered_message.match?(QUERY_DELETE_REGEX)
       return true if lowered_message.match?(QUERY_LIBRARY_REGEX)
 
       lowered_message.match?(/\b(list|show|display|see|get)\b/) && lowered_message.match?(/\bqueries\b/)
@@ -424,6 +446,16 @@ module Chat
       return false if recent_query_state.blank?
 
       lowered_message.match?(QUERY_SAVE_REGEX)
+    end
+
+    def query_rename_intent?(lowered_message)
+      return true if lowered_message.match?(QUERY_RENAME_REGEX)
+
+      parsed_query_name.present? && resolved_query_reference_payload['query_id'].present?
+    end
+
+    def query_delete_intent?(lowered_message)
+      lowered_message.match?(QUERY_DELETE_REGEX)
     end
 
     def query_run_intent?(lowered_message) # rubocop:disable Metrics/CyclomaticComplexity
@@ -641,6 +673,37 @@ module Chat
       )
     end
 
+    def query_rename_plan
+      payload = resolved_query_reference_payload
+      payload['name'] = parsed_query_name if parsed_query_name.present?
+
+      missing_plan = query_rename_missing_plan(payload:)
+      return missing_plan if missing_plan
+
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_rename'),
+        action_type: 'query.rename',
+        payload:
+      )
+    end
+
+    def query_delete_plan
+      payload = resolved_query_reference_payload
+      if payload['query_id'].blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.query_delete_needs_query'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_delete'),
+        action_type: 'query.delete',
+        payload:
+      )
+    end
+
     def parsed_role
       parsed_role_from(text: message)
     end
@@ -660,6 +723,45 @@ module Chat
 
     def parsed_query_name
       QueryNameParser.parse(text: message)
+    end
+
+    def query_rename_missing_plan(payload:)
+      return missing_query_and_name_plan if payload['query_id'].blank? && payload['name'].blank?
+      return missing_query_plan if payload['query_id'].blank?
+      return missing_rename_name_plan(payload:) if payload['name'].blank?
+
+      nil
+    end
+
+    def missing_query_and_name_plan
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_rename_needs_query_and_name'),
+        action_type: nil,
+        payload: {}
+      )
+    end
+
+    def missing_query_plan
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_rename_needs_query'),
+        action_type: nil,
+        payload: {}
+      )
+    end
+
+    def missing_rename_name_plan(payload:)
+      Plan.new(
+        assistant_message: I18n.t(
+          'app.workspaces.chat.planner.query_rename_needs_name',
+          query_name: rename_prompt_query_name(payload:)
+        ),
+        action_type: nil,
+        payload: {}
+      )
+    end
+
+    def rename_prompt_query_name(payload:)
+      payload['query_name'].presence || I18n.t('app.workspaces.chat.query_library.this_query')
     end
 
     def recent_query_state
@@ -719,6 +821,10 @@ module Chat
       end
 
       parsed_email.present? ? { 'email' => parsed_email } : {}
+    end
+
+    def resolved_query_reference_payload
+      query_reference_resolver.reference_payload(text: message)
     end
 
     def invite_details
@@ -969,6 +1075,14 @@ module Chat
 
     def member_reference_resolver
       @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
+    end
+
+    def query_reference_resolver
+      @query_reference_resolver ||= Chat::QueryReferenceResolver.new(
+        workspace:,
+        recent_query_state:,
+        conversation_messages: transcript_messages
+      )
     end
 
     def conversation_context_resolver

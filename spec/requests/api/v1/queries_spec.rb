@@ -84,6 +84,31 @@ RSpec.describe 'API v1 queries', type: :request do
       expect(response.parsed_body.dig('data', 'query', 'name')).to eq('User count')
       expect(Query.order(:id).last.saved).to be(true)
     end
+
+    it 'renames a saved query' do
+      query = create(:query, data_source:, saved: true, name: 'Users', query: 'SELECT * FROM public.users')
+
+      patch "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}",
+            params: { name: 'List of users' },
+            as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('data', 'query', 'name')).to eq('List of users')
+      expect(query.reload.name).to eq('List of users')
+    end
+
+    it 'deletes a saved query' do
+      query = create(:query, data_source:, saved: true, name: 'Users', query: 'SELECT * FROM public.users')
+
+      expect do
+        delete "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}", as: :json
+      end.to change(Query, :count).by(-1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('data', 'deleted_query', 'name')).to eq('Users')
+    end
   end
 
   describe 'role enforcement' do
@@ -121,6 +146,26 @@ RSpec.describe 'API v1 queries', type: :request do
              data_source_id: data_source.id
            },
            as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.parsed_body['status']).to eq('forbidden')
+    end
+
+    it 'blocks read-only members from renaming queries' do
+      query = create(:query, data_source:, saved: true, name: 'Users')
+
+      patch "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}",
+            params: { name: 'List of users' },
+            as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.parsed_body['status']).to eq('forbidden')
+    end
+
+    it 'blocks read-only members from deleting queries' do
+      query = create(:query, data_source:, saved: true, name: 'Users')
+
+      delete "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}", as: :json
 
       expect(response).to have_http_status(:forbidden)
       expect(response.parsed_body['status']).to eq('forbidden')

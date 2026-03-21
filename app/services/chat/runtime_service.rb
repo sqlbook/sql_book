@@ -368,7 +368,8 @@ module Chat
         [
           'Owners and Admins can manage data sources in chat.',
           'Owners, Admins, and Users can view saved queries, run read-only data-source queries,',
-          'and save queries to the query library in chat.'
+          'save queries to the query library, and rename saved queries in chat.',
+          'Deleting a saved query is destructive and requires confirmation.'
         ].join(' '),
         'If the user asks about saved queries or the query library, use query.list.',
         [
@@ -383,6 +384,8 @@ module Chat
           'If the user says "save this query" after a successful query,',
           'use query.save and reuse the recent query context.'
         ].join(' '),
+        'If the user asks to rename a saved query, use query.rename.',
+        'If the user asks to delete a saved query, use query.delete.',
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
         'For member.invite, required fields are first_name, last_name, email, and role.',
@@ -412,6 +415,8 @@ module Chat
         ].join(' '),
         'For query.run, pass the user request as the question field.',
         'For query.save, include an explicit name only when the user provided one; otherwise let the app generate one.',
+        'For query.rename, include query_id and the new name.',
+        'For query.delete, include query_id and let the app render the confirmation step.',
         [
           'If the user names a workspace member directly, prefer a concrete tool call',
           'over a free-text confirmation question.'
@@ -422,6 +427,7 @@ module Chat
         ].join(' '),
         'Never execute cross-workspace actions.',
         'Never invent permissions or claim execution outside provided tools.',
+        'Do not say a tool is unavailable if it exists in the provided tool metadata.',
         'Do not wrap payload values with extra punctuation not intended by user input.',
         'Use markdown when it improves readability, especially bullet lists or tables for collections.',
         'Output strict JSON with keys: assistant_message, tool_calls, missing_information, finalize_without_tools.',

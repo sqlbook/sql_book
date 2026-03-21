@@ -493,6 +493,8 @@ module Chat
       items << I18n.t('app.workspaces.chat.messages.capability_items.query_list') if snapshot[:can_view_queries]
       items << I18n.t('app.workspaces.chat.messages.capability_items.query_run') if snapshot[:can_write_queries]
       items << I18n.t('app.workspaces.chat.messages.capability_items.query_save') if snapshot[:can_write_queries]
+      items << I18n.t('app.workspaces.chat.messages.capability_items.query_rename') if snapshot[:can_write_queries]
+      items << I18n.t('app.workspaces.chat.messages.capability_items.query_delete') if snapshot[:can_write_queries]
 
       items
     end
@@ -668,12 +670,19 @@ module Chat
     def persist_recent_query_state_for(intent:, execution:)
       return unless execution.status == 'executed'
 
-      case intent.action_type
-      when 'query.run'
-        persist_recent_query_run_state(intent:, execution:)
-      when 'query.save'
-        persist_recent_saved_query_state(execution:)
-      end
+      handler = recent_query_state_handler_for(action_type: intent.action_type)
+      return unless handler
+
+      send(handler, intent:, execution:)
+    end
+
+    def recent_query_state_handler_for(action_type:)
+      {
+        'query.run' => :persist_recent_query_run_state,
+        'query.save' => :persist_recent_saved_query_state_for,
+        'query.rename' => :persist_recent_renamed_query_state_for,
+        'query.delete' => :clear_deleted_query_reference_for
+      }[action_type]
     end
 
     def persist_recent_query_run_state(intent:, execution:)
@@ -692,6 +701,11 @@ module Chat
       )
     end
 
+    def persist_recent_saved_query_state_for(execution:, intent:)
+      _intent = intent
+      persist_recent_saved_query_state(execution:)
+    end
+
     def persist_recent_saved_query_state(execution:)
       data = execution.data.to_h.deep_stringify_keys
       existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
@@ -702,6 +716,44 @@ module Chat
           'saved_query_id' => saved_query_payload(data:)['id'],
           'saved_query_name' => saved_query_payload(data:)['name']
         )
+      )
+    end
+
+    def persist_recent_renamed_query_state_for(execution:, intent:)
+      _intent = intent
+      persist_recent_renamed_query_state(execution:)
+    end
+
+    def persist_recent_renamed_query_state(execution:) # rubocop:disable Metrics/AbcSize
+      data = execution.data.to_h.deep_stringify_keys
+      query_payload = data['query'].to_h.deep_stringify_keys
+      return if query_payload.blank?
+
+      existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
+      recent_query_state_store.save(
+        existing_state.merge(
+          query_state_attributes_from_saved_query(data:),
+          'saved_query_id' => query_payload['id'],
+          'saved_query_name' => query_payload['name']
+        )
+      )
+    end
+
+    def clear_deleted_query_reference_for(execution:, intent:)
+      _intent = intent
+      clear_deleted_query_reference(execution:)
+    end
+
+    def clear_deleted_query_reference(execution:) # rubocop:disable Metrics/AbcSize
+      data = execution.data.to_h.deep_stringify_keys
+      deleted_query = data['deleted_query'].to_h.deep_stringify_keys
+      return if deleted_query.blank?
+
+      existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
+      return unless existing_state['saved_query_id'].to_i == deleted_query['id'].to_i
+
+      recent_query_state_store.save(
+        existing_state.except('saved_query_id', 'saved_query_name')
       )
     end
 

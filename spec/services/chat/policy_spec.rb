@@ -5,6 +5,7 @@ require 'rails_helper'
 RSpec.describe Chat::Policy, type: :service do
   let(:owner) { create(:user) }
   let(:workspace) { create(:workspace_with_owner, owner:) }
+  let(:data_source) { create(:data_source, :postgres, workspace:) }
 
   describe '#authorize' do
     it 'blocks explicitly disallowed namespaces' do
@@ -72,6 +73,88 @@ RSpec.describe Chat::Policy, type: :service do
         payload: {
           'sql' => 'SELECT COUNT(*) AS count FROM public.users',
           'data_source_id' => 1
+        }
+      )
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
+    end
+
+    it 'allows regular members to rename saved queries' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      query = create(
+        :query,
+        data_source:,
+        saved: true,
+        author: member_user,
+        last_updated_by: member_user,
+        name: 'Users'
+      )
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(
+        action_type: 'query.rename',
+        payload: {
+          'query_id' => query.id,
+          'name' => 'List of users'
+        }
+      )
+
+      expect(decision.allowed).to be(true)
+    end
+
+    it 'blocks read-only members from renaming saved queries' do
+      read_only = create(:user)
+      create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)
+      query = create(:query, data_source:, saved: true, name: 'Users')
+      policy = described_class.new(workspace:, actor: read_only)
+
+      decision = policy.authorize(
+        action_type: 'query.rename',
+        payload: {
+          'query_id' => query.id,
+          'name' => 'List of users'
+        }
+      )
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
+    end
+
+    it 'allows regular members to delete their own saved queries' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      query = create(
+        :query,
+        data_source:,
+        saved: true,
+        author: member_user,
+        last_updated_by: member_user,
+        name: 'Users'
+      )
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(
+        action_type: 'query.delete',
+        payload: {
+          'query_id' => query.id
+        }
+      )
+
+      expect(decision.allowed).to be(true)
+    end
+
+    it 'blocks regular members from deleting someone else\'s saved query' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      query = create(:query, data_source:, saved: true, name: 'Users')
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(
+        action_type: 'query.delete',
+        payload: {
+          'query_id' => query.id
         }
       )
 

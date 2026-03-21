@@ -23,12 +23,12 @@ Related references:
 ## Scope (v1)
 - Chat is strictly workspace-scoped and rendered on `GET /app/workspaces/:id`.
 - Chat history is isolated per user within each workspace (a member can only access threads they created).
-- Chat can execute workspace/team-management actions, the phase-1 datasource-management actions, saved-query list/save actions, and read-only single-datasource query assistance that already exists elsewhere in app UX/API.
+- Chat can execute workspace/team-management actions, the phase-1 datasource-management actions, saved-query list/save/rename/delete actions, and read-only single-datasource query assistance that already exists elsewhere in app UX/API.
 - Explicitly out of scope in v1:
   - cross-workspace actions
   - workspace list/get/create via chat
   - datasource update/delete/reconfigure actions beyond the phase-1 flow
-  - query rename/delete/update management actions outside `query.list`, `query.run`, and `query.save`
+  - query-update management actions beyond `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete`
   - dashboard, billing/subscription/admin/super-admin actions
   - owner-role promotion via chat
 
@@ -109,6 +109,8 @@ API v1 routes (internal-first, documented):
 - `GET /api/v1/workspaces/:workspace_id/queries`
 - `POST /api/v1/workspaces/:workspace_id/queries/run`
 - `POST /api/v1/workspaces/:workspace_id/queries`
+- `PATCH /api/v1/workspaces/:workspace_id/queries/:id`
+- `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
 
 Docs surface:
 - `GET /dev/api`
@@ -153,12 +155,14 @@ Allowed action types:
 - `query.list`
 - `query.run`
 - `query.save`
+- `query.rename`
+- `query.delete`
 
 Blocked prefixes:
 - `workspace.list`
 - `workspace.get`
 - `workspace.create`
-- `query.*` except `query.list`, `query.run`, and `query.save`
+- `query.*` except `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete`
 - `dashboard.*`
 - `billing.*`
 - `subscription.*`
@@ -184,10 +188,12 @@ Auto-run writes (no confirmation):
 - `datasource.validate_connection`
 - `datasource.create`
 - `query.save`
+- `query.rename`
 
 High-risk writes (inline confirmation required):
 - `workspace.delete`
 - `member.remove`
+- `query.delete`
 
 ## Required action fields (v1)
 - `workspace.update_name`: `name`
@@ -200,6 +206,9 @@ High-risk writes (inline confirmation required):
 - `query.run`: `question`
 - `query.list`: no required fields
 - `query.save`: `sql` + (`data_source_id` or `data_source_name`); `name` optional
+- `query.rename`: `query_id`, `name`
+- `query.delete`: `query_id`
+- When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt.
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -215,15 +224,19 @@ High-risk writes (inline confirmation required):
 - `query.list` is available to all accepted workspace roles.
 - `query.run` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
 - `query.save` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
+- `query.rename` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
+- `query.delete` is available to workspace `OWNER`, `ADMIN`, and `USER` roles when that role can delete the specific saved query; it is denied for `READ_ONLY`.
 - Query chat scope is limited to read-only execution against one connected datasource at a time.
 - Query-library chat scope in v1 includes:
   - listing saved queries in the current workspace
   - saving the most recently executed query into the query library
+  - renaming saved queries in the current workspace
+  - deleting saved queries from the current workspace with confirmation
 - If multiple datasources or tables plausibly match a query question, chat must ask a clarifying follow-up before running SQL.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
 - Execution/preflight wording should be composed separately from the executor so chat can vary phrasing naturally and avoid repeating the same template back-to-back.
-- Only destructive chat writes require confirmation in v1 (`workspace.delete`, `member.remove`). `member.update_role` now auto-executes after preflight passes.
+- Only destructive chat writes require confirmation in v1 (`workspace.delete`, `member.remove`, `query.delete`). `member.update_role`, `query.save`, and `query.rename` auto-execute after preflight passes.
 
 ## Runtime decision flow
 1. User message is persisted immediately.
@@ -277,6 +290,8 @@ High-risk writes (inline confirmation required):
   - "save this query"
   - "save it as Active users by day"
   - "show my query library"
+  - "rename that query to Active users by day"
+  - "delete that saved query"
 - Datasource setup follow-ups should support:
   - friendly staged answers like "Call it Warehouse DB"
   - freeform connection-detail replies such as "my database name is JOHNNY and the type is PostgreSQL"

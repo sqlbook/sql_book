@@ -15,7 +15,9 @@ RSpec.describe Tooling::WorkspaceRegistry do
         'datasource.create',
         'query.list',
         'query.run',
-        'query.save'
+        'query.save',
+        'query.rename',
+        'query.delete'
       )
     end
   end
@@ -47,6 +49,8 @@ RSpec.describe Tooling::WorkspaceRegistry do
       allow(handlers[:queries]).to receive(:list).and_return(success_result)
       allow(handlers[:queries]).to receive(:run).and_return(success_result)
       allow(handlers[:queries]).to receive(:save).and_return(success_result)
+      allow(handlers[:queries]).to receive(:rename).and_return(success_result)
+      allow(handlers[:queries]).to receive(:delete).and_return(success_result)
 
       registry = Tooling::Registry.new(definitions: described_class.definitions(handlers:))
       expect(registry.definition('datasource.list')).to be_present
@@ -55,6 +59,8 @@ RSpec.describe Tooling::WorkspaceRegistry do
       expect(registry.definition('query.list')).to be_present
       expect(registry.definition('query.run')).to be_present
       expect(registry.definition('query.save')).to be_present
+      expect(registry.definition('query.rename')).to be_present
+      expect(registry.definition('query.delete')).to be_present
     end
   end
 end

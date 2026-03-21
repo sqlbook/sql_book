@@ -160,6 +160,7 @@ module App
           role: message.role_name,
           status: message.status_name,
           content: message.content.to_s,
+          content_html: serialized_message_content_html(message:),
           metadata: message.metadata,
           created_at: message.created_at.iso8601,
           author: {
@@ -168,6 +169,12 @@ module App
           },
           images: message.images.attachments.map { |attachment| serialize_attachment(attachment:) }
         }
+      end
+
+      def serialized_message_content_html(message:)
+        return unless message.assistant?
+
+        helpers.render_chat_markdown(message.content.to_s)
       end
 
       def serialize_attachment(attachment:)

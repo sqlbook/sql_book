@@ -31,6 +31,8 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       get 'workspaces/:workspace_id/queries', to: 'queries#index'
       post 'workspaces/:workspace_id/queries/run', to: 'queries#run'
       post 'workspaces/:workspace_id/queries', to: 'queries#create'
+      patch 'workspaces/:workspace_id/queries/:id', to: 'queries#update'
+      delete 'workspaces/:workspace_id/queries/:id', to: 'queries#destroy'
     end
   end
 

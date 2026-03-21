@@ -18,6 +18,7 @@ type ChatMessagePayload = {
   role: string;
   status: string;
   content: string;
+  content_html?: string;
   metadata?: Record<string, unknown>;
   images?: ChatAttachmentPayload[];
 };
@@ -792,7 +793,12 @@ export default class extends Controller<HTMLDivElement> {
 
     const body = document.createElement('div');
     body.className = 'chat-message-body';
-    this.appendAssistantContent(body, message.content || '');
+    const renderedContent = typeof message.content_html === 'string' ? message.content_html.trim() : '';
+    if (renderedContent.length > 0) {
+      body.innerHTML = renderedContent;
+    } else {
+      this.appendAssistantContent(body, message.content || '');
+    }
     block.appendChild(body);
 
     return block;

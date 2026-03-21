@@ -162,6 +162,8 @@ en:
             query_list: List saved queries
             query_run: Query a connected data source
             query_save: Save a query to the query library
+            query_rename: Rename a saved query
+            query_delete: Delete a saved query
             workspace_update_name: Rename the workspace
             workspace_delete: Delete the workspace
         datasource:
@@ -202,8 +204,15 @@ en:
           none: There are no saved queries in this workspace yet.
           found: "Here are %{count} saved queries:"
           item: "- **%{name}** — Data source: %{data_source}"
-          saved: I saved that query to the query library as %{name}.
+          saved: I saved that query to the query library as "%{name}".
+          renamed: I renamed that saved query to "%{name}".
+          deleted: I deleted the saved query "%{name}".
           sql_required: Run a query here first, or provide SQL and a data source so I can save it.
+          rename_query_required: Tell me which saved query you want to rename.
+          rename_name_required: Tell me the new name you want for that saved query.
+          delete_query_required: Tell me which saved query you want to delete.
+          query_not_found: I couldn't find that saved query in this workspace.
+          this_query: this query
         responses:
           confirmation:
             variants:
@@ -261,9 +270,19 @@ en:
                 - "Done. %{name} is no longer part of this workspace."
             query_save:
               variants:
-                - "I saved that query to the query library as %{name}."
-                - "Done. The query is now saved as %{name}."
-                - "Saved. You can now find it in the query library as %{name}."
+                - "I saved that query to the query library as \"%{name}\"."
+                - "Done. The query is now saved as \"%{name}\"."
+                - "Saved. You can now find it in the query library as \"%{name}\"."
+            query_rename:
+              variants:
+                - "I renamed that saved query to \"%{name}\"."
+                - "Done. The saved query is now called \"%{name}\"."
+                - "Updated. You can now find it in the query library as \"%{name}\"."
+            query_delete:
+              variants:
+                - "I deleted the saved query \"%{name}\"."
+                - "Done. \"%{name}\" has been removed from the query library."
+                - "\"%{name}\" is no longer in the query library."
         errors:
           message_or_image_required: Message content or at least one image is required.
           max_images: You can attach up to %{count} images per message.
@@ -288,6 +307,8 @@ en:
           member_resend_invite: Resend invitation
           member_update_role: Update member role
           member_remove: Remove team member
+          query_rename: Rename saved query
+          query_delete: Delete saved query
         planner:
           default_help: I can help manage this workspace, team members, connected data sources, and read-only data-source queries.
           workspace_delete: I can delete this workspace once you confirm.
@@ -317,6 +338,12 @@ en:
           query_run: I’ll run that query against the most likely connected data source now.
           query_save: I’ll save that query to the query library now.
           query_save_needs_query: Run a query here first, or provide SQL and a data source so I can save it.
+          query_rename: I’ll rename that saved query now.
+          query_rename_needs_query: Sure. Which saved query do you want me to rename?
+          query_rename_needs_name: Sure. What would you like to rename %{query_name} to?
+          query_rename_needs_query_and_name: Sure. Which saved query do you want to rename, and what should the new name be?
+          query_delete: I can delete that saved query once you confirm.
+          query_delete_needs_query: Sure. Which saved query do you want me to delete?
           attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
           fallback_with_action: I can help with that. Please confirm to proceed.
           fallback_without_action: I can help with workspace, team, data source, and query actions.
@@ -337,6 +364,8 @@ en:
             query_list: view saved queries
             query_run: run data-source queries
             query_save: save queries to the query library
+            query_rename: rename saved queries
+            query_delete: delete saved queries
           allowed_roles:
             owner: a Workspace owner
             admin_or_owner: an Admin or Workspace owner

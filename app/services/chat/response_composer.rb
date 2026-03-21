@@ -15,7 +15,9 @@ module Chat
       'member.resend_invite' => :member_resend_candidates,
       'member.update_role' => :member_role_update_candidates,
       'member.remove' => :member_remove_candidates,
-      'query.save' => :query_save_candidates
+      'query.save' => :query_save_candidates,
+      'query.rename' => :query_rename_candidates,
+      'query.delete' => :query_delete_candidates
     }.freeze
 
     def initialize(workspace:, actor:, prior_assistant_messages: [])
@@ -147,6 +149,16 @@ module Chat
     def query_save_candidates(execution:)
       query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
       translated_variants('query_save', name: query['name'] || query[:name])
+    end
+
+    def query_rename_candidates(execution:)
+      query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
+      translated_variants('query_rename', name: query['name'] || query[:name])
+    end
+
+    def query_delete_candidates(execution:)
+      query = execution.data.to_h['deleted_query'] || execution.data.to_h[:deleted_query] || {}
+      translated_variants('query_delete', name: query['name'] || query[:name])
     end
 
     def translated_variants(key, **args)

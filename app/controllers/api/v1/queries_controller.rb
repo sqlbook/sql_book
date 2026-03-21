@@ -27,6 +27,20 @@ module Api
         )
       end
 
+      def update
+        execute_tool(
+          action_type: 'query.rename',
+          payload: rename_payload
+        )
+      end
+
+      def destroy
+        execute_tool(
+          action_type: 'query.delete',
+          payload: delete_payload
+        )
+      end
+
       private
 
       def run_payload
@@ -64,6 +78,14 @@ module Api
         {
           'name' => params[:name].to_s.presence
         }
+      end
+
+      def rename_payload
+        query_name_payload.merge('query_id' => params[:id].to_i).compact
+      end
+
+      def delete_payload
+        { 'query_id' => params[:id].to_i }
       end
     end
   end

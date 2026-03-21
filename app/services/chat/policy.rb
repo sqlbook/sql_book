@@ -18,6 +18,8 @@ module Chat
       query.list
       query.run
       query.save
+      query.rename
+      query.delete
     ].freeze
 
     WRITE_ACTIONS = ALLOWED_ACTIONS - ['member.list', 'datasource.list', 'query.list', 'query.run']
@@ -47,7 +49,9 @@ module Chat
       'datasource.create' => :authorize_data_source_create,
       'query.list' => :authorize_query_list,
       'query.run' => :authorize_query_run,
-      'query.save' => :authorize_query_save
+      'query.save' => :authorize_query_save,
+      'query.rename' => :authorize_query_rename,
+      'query.delete' => :authorize_query_delete
     }.freeze
 
     def self.write_action?(action_type)
@@ -59,6 +63,8 @@ module Chat
       return 'workspace_member' if action_type == 'query.list'
       return 'user_admin_or_owner' if action_type == 'query.run'
       return 'user_admin_or_owner' if action_type == 'query.save'
+      return 'user_admin_or_owner' if action_type == 'query.rename'
+      return 'user_admin_or_owner' if action_type == 'query.delete'
 
       'admin_or_owner'
     end
@@ -181,6 +187,22 @@ module Chat
       deny(reason_code: 'forbidden_role')
     end
 
+    def authorize_query_rename(payload:)
+      query = target_query(payload:)
+      return deny(reason_code: 'validation_error') if query.nil?
+      return allow if capabilities.can_write_queries?
+
+      deny(reason_code: 'forbidden_role')
+    end
+
+    def authorize_query_delete(payload:)
+      query = target_query(payload:)
+      return deny(reason_code: 'validation_error') if query.nil?
+      return allow if capabilities.can_destroy_query?(query:)
+
+      deny(reason_code: 'forbidden_role')
+    end
+
     def current_role
       @current_role ||= capabilities.role
     end
@@ -225,6 +247,13 @@ module Chat
 
     def member_reference_resolver
       @member_reference_resolver ||= Chat::MemberReferenceResolver.new(workspace:)
+    end
+
+    def target_query(payload:)
+      query_id = payload['query_id'].to_i if payload['query_id'].present?
+      return nil unless query_id
+
+      Queries::LibraryService.new(workspace:).call.find { |query| query.id == query_id }
     end
 
     def capabilities

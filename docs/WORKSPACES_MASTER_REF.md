@@ -133,25 +133,29 @@ Related references:
   - `query.list`
   - `query.run`
   - `query.save`
+  - `query.rename`
+  - `query.delete`
 - v1 blocked namespaces include:
   - `workspace.list/get/create`
-  - `query.*` except `query.list`, `query.run`, and `query.save`
+  - `query.*` except `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete`
   - `dashboard.*`
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - datasource note:
   - only `datasource.list`, `datasource.validate_connection`, and `datasource.create` are in scope
   - other datasource actions remain blocked until explicitly implemented
 - query note:
-  - `query.list`, `query.run`, and `query.save` are in scope
-  - query rename/delete/update management remains blocked until explicitly implemented
+  - `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete` are in scope
+  - other query-management actions remain blocked until explicitly implemented
 - Auto-run chat writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`.
 - Auto-run datasource chat writes include `datasource.validate_connection` and `datasource.create`.
-- Auto-run query-library chat writes include `query.save`.
+- Auto-run query-library chat writes include `query.save` and `query.rename`.
 - Read-only chat query execution (`query.run`) should return an inline assistant answer in the same conversation flow; it does not require confirmation.
 - Query-library chat actions should support:
   - `query.list` for browsing saved queries
   - `query.save` for saving the most recent executed query into the query library
-- Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`).
+  - `query.rename` for renaming saved queries
+  - `query.delete` for deleting saved queries
+- Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`, `query.delete`).
 - Chat permission visibility should mirror workspace UI permissions:
   - `OWNER` / `ADMIN` can view workspace settings and the team member list
   - `USER` / `READ_ONLY` should not see the workspace settings nav item and should receive a permission response if they ask chat for the team member list

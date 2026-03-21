@@ -5,6 +5,7 @@ module Chat
     module_function
 
     PATTERNS = [
+      /\b(?:rename|retitle)\b.*\bto\b\s+["']?([^"']+?)["']?\s*\z/i,
       /\b(?:save|call|name)\b.*\b(?:as|called|named)\b\s+["']?([^"']+?)["']?\s*\z/i,
       /\b(?:save|call|name)\s+it\s+["']?([^"']+?)["']?\s*\z/i
     ].freeze
@@ -12,9 +13,6 @@ module Chat
     def parse(text:)
       source = text.to_s.strip
       return nil if source.blank?
-
-      quoted = source.match(/["']([^"']+)["']/)
-      return cleaned(quoted[1]) if quoted && source.match?(/\b(save|call|name)\b/i)
 
       PATTERNS.each do |pattern|
         match = source.match(pattern)

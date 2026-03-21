@@ -25,7 +25,9 @@ Important:
 - Auth model today is session cookie auth (`_sqlbook_session`).
 
 ## Current documented API scope
-Current OpenAPI coverage is intentionally focused on the workspace/team, datasource, and query contracts used by chat and app surfaces:
+The API reference should be treated as the documented surface for the app as it exists today, even though coverage is still being expanded over time.
+
+Current OpenAPI coverage includes the workspace, team-management, datasource, and query contracts that are already exposed through product and chat flows:
 - `PATCH /api/v1/workspaces/:workspace_id`
 - `DELETE /api/v1/workspaces/:workspace_id`
 - `GET /api/v1/workspaces/:workspace_id/members`
@@ -39,6 +41,8 @@ Current OpenAPI coverage is intentionally focused on the workspace/team, datasou
 - `GET /api/v1/workspaces/:workspace_id/queries`
 - `POST /api/v1/workspaces/:workspace_id/queries/run`
 - `POST /api/v1/workspaces/:workspace_id/queries`
+- `PATCH /api/v1/workspaces/:workspace_id/queries/:id`
+- `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
 
 Current datasource API scope:
 - phase 1 is PostgreSQL-only for external database creation/validation
@@ -50,8 +54,16 @@ Current query API scope:
 - query-library list is available to all accepted workspace roles
 - read-only query execution is available to `OWNER`, `ADMIN`, and `USER`
 - query save is available to `OWNER`, `ADMIN`, and `USER`
+- query rename is available to `OWNER`, `ADMIN`, and `USER`
+- query delete is available to `OWNER`, `ADMIN`, and `USER` when that role can delete the specific saved query
 - callers can send either a plain-language question or direct read-only SQL to the run endpoint
 - save requests require SQL plus datasource identity; query name can be server-generated when omitted
+- rename requests require a target query id and the new saved-query name
+- delete requests require a target query id and should be treated as destructive
+
+Meta-level docs rule:
+- whenever new API areas are added, review the top-level OpenAPI `info.description`, tag descriptions, and this reference so the docs still describe the app's current API surface accurately
+- avoid describing the whole API as if it were only the first feature area we documented
 
 ## Why these docs exist
 - Humans need a browsable contract reference for product and integration work.

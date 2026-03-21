@@ -3,7 +3,7 @@
   "info": {
     "title": "sqlbook API",
     "version": "v1",
-    "description": "Workspace and team management API used by chat runtime and app surfaces.\n\nThis API is session-authenticated, strictly workspace-scoped, and server-authoritative: every request is checked against the current user, the current workspace, and the same role/scope rules used by the product UI and chat runtime.\n\nFor LLM and tool consumers, treat each operation as an executable contract. Do not infer permissions from docs alone: always rely on response status and error_code. Mutating actions may still be blocked by role or workspace scope even when the payload is structurally valid."
+    "description": "API reference for the current sqlbook app surface.\n\nThe documented scope is still growing, but the API already covers the workspace, team-management, datasource, and query contracts that are currently exposed through the product, chat runtime, and related app flows.\n\nThis API is session-authenticated, strictly workspace-scoped, and server-authoritative: every request is checked against the current user, the current workspace, and the same role/scope rules used by the product UI and chat runtime.\n\nFor LLM and tool consumers, treat each operation as an executable contract. Do not infer permissions from docs alone: always rely on response status and error_code. Mutating actions may still be blocked by role or workspace scope even when the payload is structurally valid."
   },
   "servers": [
     {
@@ -34,26 +34,34 @@
     },
     {
       "name": "Queries",
-      "description": "Operations for browsing the saved query library, running read-only queries against connected data sources, and saving queries for later reuse.",
+      "description": "Operations for browsing, running, saving, renaming, and deleting workspace queries. Query execution is read-only against connected data sources, while query-library mutations remain workspace-scoped and session-authenticated.",
       "x-displayName": "Queries"
     }
   ],
   "x-tagGroups": [
     {
       "name": "Workspace management",
-      "tags": ["Workspace"]
+      "tags": [
+        "Workspace"
+      ]
     },
     {
       "name": "Team management",
-      "tags": ["Members"]
+      "tags": [
+        "Members"
+      ]
     },
     {
       "name": "Data connectivity",
-      "tags": ["Data Sources"]
+      "tags": [
+        "Data Sources"
+      ]
     },
     {
       "name": "Querying",
-      "tags": ["Queries"]
+      "tags": [
+        "Queries"
+      ]
     }
   ],
   "x-scalar-active-environment": "current-origin",
@@ -72,6 +80,10 @@
         "memberId": {
           "description": "Example workspace member id used in code samples.",
           "default": "27"
+        },
+        "queryId": {
+          "description": "Example saved query id used in code samples.",
+          "default": "14"
         }
       }
     }
@@ -82,7 +94,9 @@
         "operationId": "workspaceUpdateName",
         "summary": "Rename workspace",
         "description": "Renames the current workspace. This is a low-risk write in chat, but API callers should still expect server-side permission checks. The new name should be sent as a clean target value without surrounding conversational punctuation.",
-        "tags": ["Workspace"],
+        "tags": [
+          "Workspace"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -135,7 +149,9 @@
         "operationId": "workspaceDelete",
         "summary": "Delete workspace",
         "description": "Deletes the current workspace. This is a destructive operation and is owner-only. Successful responses may include a redirect path for product surfaces that should return to the workspace index.",
-        "tags": ["Workspace"],
+        "tags": [
+          "Workspace"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -172,7 +188,9 @@
         "operationId": "memberList",
         "summary": "List members",
         "description": "Returns detailed member data for the current workspace. Consumers should expect names, emails, role labels, role ids, and status labels in the response payload.",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -204,7 +222,9 @@
         "operationId": "memberInvite",
         "summary": "Invite member",
         "description": "Invites a new member into the current workspace. `first_name`, `last_name`, `email`, and `role` are all required.",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -262,7 +282,9 @@
         "operationId": "memberResendInvite",
         "summary": "Resend invite",
         "description": "Resends a pending invitation. Provide either `member_id` or `email`. Only pending invitations can be resent, and resend cooldown rules are enforced server-side.",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -317,7 +339,9 @@
         "operationId": "memberUpdateRole",
         "summary": "Update role",
         "description": "Updates the role for an existing workspace member. This is a high-risk write in chat and remains server-authorized here as well. Role values must be one of the editable non-owner roles allowed by policy.",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -375,7 +399,9 @@
         "operationId": "memberRemove",
         "summary": "Remove member",
         "description": "Removes a workspace member. Owners cannot be removed. Accepted members may trigger downstream notification side effects after removal.",
-        "tags": ["Members"],
+        "tags": [
+          "Members"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -415,7 +441,9 @@
         "operationId": "dataSourceList",
         "summary": "List data sources",
         "description": "Returns the data sources attached to the current workspace. The payload is safe to consume directly in chat or UI code because it is already scoped to the current workspace and includes connector type, lifecycle status, selected table counts, and related query counts.",
-        "tags": ["Data Sources"],
+        "tags": [
+          "Data Sources"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -447,7 +475,9 @@
         "operationId": "dataSourceCreate",
         "summary": "Create PostgreSQL data source",
         "description": "Creates a PostgreSQL data source after validating the connection details and selected tables. This endpoint is workspace-scoped, session-authenticated, and owner/admin-only.",
-        "tags": ["Data Sources"],
+        "tags": [
+          "Data Sources"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -471,7 +501,10 @@
                     "username": "sqlbook",
                     "password": "secret",
                     "ssl_mode": "prefer",
-                    "selected_tables": ["public.orders", "public.customers"]
+                    "selected_tables": [
+                      "public.orders",
+                      "public.customers"
+                    ]
                   }
                 }
               }
@@ -509,7 +542,9 @@
         "operationId": "dataSourceValidateConnection",
         "summary": "Validate PostgreSQL connection",
         "description": "Tests a PostgreSQL connection without creating the data source. The response includes the tables that are discoverable with the supplied credentials, which makes it suitable for both the create flow and a chat-assisted validation step.",
-        "tags": ["Data Sources"],
+        "tags": [
+          "Data Sources"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -569,7 +604,9 @@
         "operationId": "queryList",
         "summary": "List saved queries",
         "description": "Returns saved queries in the current workspace query library. Results can optionally be filtered by datasource or a case-insensitive name search.",
-        "tags": ["Queries"],
+        "tags": [
+          "Queries"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -621,7 +658,9 @@
         "operationId": "querySave",
         "summary": "Save query",
         "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one.",
-        "tags": ["Queries"],
+        "tags": [
+          "Queries"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -679,7 +718,9 @@
         "operationId": "queryRun",
         "summary": "Run read-only query",
         "description": "Runs a read-only query against a connected datasource in the current workspace. Callers can send either a plain-language `question` for SQL generation or direct read-only SQL via `sql`. If multiple datasources or tables plausibly match, the server may return a validation-style clarification prompt instead of guessing.",
-        "tags": ["Queries"],
+        "tags": [
+          "Queries"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/workspaceId"
@@ -736,6 +777,106 @@
           }
         ]
       }
+    },
+    "/api/v1/workspaces/{workspace_id}/queries/{id}": {
+      "patch": {
+        "operationId": "queryRename",
+        "summary": "Rename saved query",
+        "description": "Renames a saved query in the current workspace query library. The caller must target an existing saved query in the same workspace and provide the new name as a clean title value.",
+        "tags": [
+          "Queries"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/queryId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRenameRequest"
+              },
+              "examples": {
+                "renameQuery": {
+                  "summary": "Rename a saved query",
+                  "value": {
+                    "name": "List of users"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueryRenamed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"List of users\"}'"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "queryDelete",
+        "summary": "Delete saved query",
+        "description": "Deletes a saved query from the current workspace query library. This is destructive; callers should treat it like a confirmed delete in product/chat flows and should not assume the query can be recovered.",
+        "tags": [
+          "Queries"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/queryId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueryDeleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -766,6 +907,16 @@
         "schema": {
           "type": "integer",
           "example": 27
+        }
+      },
+      "queryId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The saved query id in the current workspace.",
+        "schema": {
+          "type": "integer",
+          "example": 14
         }
       }
     },
@@ -1124,8 +1275,14 @@
                       "name": "Warehouse DB"
                     },
                     "sql": "SELECT COUNT(*) AS count FROM public.users",
-                    "columns": ["count"],
-                    "rows": [[9]],
+                    "columns": [
+                      "count"
+                    ],
+                    "rows": [
+                      [
+                        9
+                      ]
+                    ],
                     "row_count": 1
                   },
                   "error_code": null
@@ -1146,7 +1303,7 @@
               "success": {
                 "value": {
                   "status": "executed",
-                  "message": "I saved that query to the query library as User count.",
+                  "message": "I saved that query to the query library as \"User count\".",
                   "data": {
                     "query": {
                       "id": 14,
@@ -1251,20 +1408,102 @@
             }
           }
         }
+      },
+      "QueryRenamed": {
+        "description": "Saved query renamed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QuerySavedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "I renamed that saved query to \"List of users\".",
+                  "data": {
+                    "query": {
+                      "id": 14,
+                      "name": "List of users",
+                      "sql": "SELECT COUNT(*) AS count FROM public.users",
+                      "saved": true,
+                      "chart_type": null,
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      },
+                      "author": {
+                        "id": 7,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com"
+                      },
+                      "updated_at": "2026-03-21T12:31:00Z"
+                    }
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "QueryDeleted": {
+        "description": "Saved query deleted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QueryDeletedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "I deleted the saved query \"List of users\".",
+                  "data": {
+                    "deleted_query": {
+                      "id": 14,
+                      "name": "List of users",
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      }
+                    }
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
       }
     },
     "schemas": {
       "RoleId": {
         "type": "integer",
         "description": "Editable workspace role id.",
-        "enum": [2, 3, 4],
-        "x-enum-varnames": ["ADMIN", "USER", "READ_ONLY"],
+        "enum": [
+          2,
+          3,
+          4
+        ],
+        "x-enum-varnames": [
+          "ADMIN",
+          "USER",
+          "READ_ONLY"
+        ],
         "example": 3
       },
       "MemberSummary": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "email", "role", "role_id", "status"],
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "role_id",
+          "status"
+        ],
         "properties": {
           "id": {
             "type": "integer"
@@ -1296,7 +1535,9 @@
       "WorkspaceRenameRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -1308,7 +1549,12 @@
       "MemberInviteRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["first_name", "last_name", "email", "role"],
+        "required": [
+          "first_name",
+          "last_name",
+          "email",
+          "role"
+        ],
         "properties": {
           "first_name": {
             "type": "string",
@@ -1343,7 +1589,9 @@
       "MemberUpdateRoleRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["role"],
+        "required": [
+          "role"
+        ],
         "properties": {
           "role": {
             "$ref": "#/components/schemas/RoleId"
@@ -1353,7 +1601,12 @@
       "DataSourceConnectionValidationRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["host", "database_name", "username", "password"],
+        "required": [
+          "host",
+          "database_name",
+          "username",
+          "password"
+        ],
         "properties": {
           "host": {
             "type": "string",
@@ -1388,7 +1641,14 @@
       "DataSourceCreateRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "host", "database_name", "username", "password", "selected_tables"],
+        "required": [
+          "name",
+          "host",
+          "database_name",
+          "username",
+          "password",
+          "selected_tables"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -1453,14 +1713,24 @@
           }
         },
         "anyOf": [
-          { "required": ["question"] },
-          { "required": ["sql"] }
+          {
+            "required": [
+              "question"
+            ]
+          },
+          {
+            "required": [
+              "sql"
+            ]
+          }
         ]
       },
       "QuerySaveRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["sql"],
+        "required": [
+          "sql"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -1485,14 +1755,24 @@
           }
         },
         "anyOf": [
-          { "required": ["data_source_id"] },
-          { "required": ["data_source_name"] }
+          {
+            "required": [
+              "data_source_id"
+            ]
+          },
+          {
+            "required": [
+              "data_source_name"
+            ]
+          }
         ]
       },
       "WorkspaceNameData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["workspace_name"],
+        "required": [
+          "workspace_name"
+        ],
         "properties": {
           "workspace_name": {
             "type": "string"
@@ -1502,7 +1782,10 @@
       "WorkspaceDeleteData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["redirect_path", "failed_notifications"],
+        "required": [
+          "redirect_path",
+          "failed_notifications"
+        ],
         "properties": {
           "redirect_path": {
             "type": "string",
@@ -1517,7 +1800,9 @@
       "MemberListData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["members"],
+        "required": [
+          "members"
+        ],
         "properties": {
           "members": {
             "type": "array",
@@ -1552,11 +1837,18 @@
           },
           "source_type": {
             "type": "string",
-            "enum": ["first_party_capture", "postgres"]
+            "enum": [
+              "first_party_capture",
+              "postgres"
+            ]
           },
           "status": {
             "type": "string",
-            "enum": ["pending_setup", "active", "error"]
+            "enum": [
+              "pending_setup",
+              "active",
+              "error"
+            ]
           },
           "tables_count": {
             "type": "integer"
@@ -1571,14 +1863,23 @@
             "type": "integer"
           },
           "last_checked_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "last_error": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "verified_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         }
@@ -1586,7 +1887,10 @@
       "DataSourceTableColumn": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "data_type"],
+        "required": [
+          "name",
+          "data_type"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -1599,7 +1903,11 @@
       "DataSourceTableSummary": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "qualified_name", "columns"],
+        "required": [
+          "name",
+          "qualified_name",
+          "columns"
+        ],
         "properties": {
           "name": {
             "type": "string"
@@ -1618,7 +1926,10 @@
       "DataSourceTableGroup": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["schema", "tables"],
+        "required": [
+          "schema",
+          "tables"
+        ],
         "properties": {
           "schema": {
             "type": "string"
@@ -1634,7 +1945,9 @@
       "DataSourceListData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["data_sources"],
+        "required": [
+          "data_sources"
+        ],
         "properties": {
           "data_sources": {
             "type": "array",
@@ -1647,10 +1960,15 @@
       "DataSourceValidationData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["available_tables"],
+        "required": [
+          "available_tables"
+        ],
         "properties": {
           "checked_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "available_tables": {
@@ -1664,7 +1982,10 @@
       "DataSourceCreateData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["data_source", "available_tables"],
+        "required": [
+          "data_source",
+          "available_tables"
+        ],
         "properties": {
           "data_source": {
             "$ref": "#/components/schemas/DataSourceSummary"
@@ -1680,7 +2001,10 @@
       "QueryDataSourceSummary": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "properties": {
           "id": {
             "type": "integer"
@@ -1693,7 +2017,11 @@
       "QueryAuthorSummary": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "email"],
+        "required": [
+          "id",
+          "name",
+          "email"
+        ],
         "properties": {
           "id": {
             "type": "integer"
@@ -1709,7 +2037,16 @@
       "QuerySummary": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "sql", "saved", "chart_type", "data_source", "author", "updated_at"],
+        "required": [
+          "id",
+          "name",
+          "sql",
+          "saved",
+          "chart_type",
+          "data_source",
+          "author",
+          "updated_at"
+        ],
         "properties": {
           "id": {
             "type": "integer"
@@ -1724,7 +2061,10 @@
             "type": "boolean"
           },
           "chart_type": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "data_source": {
             "$ref": "#/components/schemas/QueryDataSourceSummary"
@@ -1733,7 +2073,10 @@
             "$ref": "#/components/schemas/QueryAuthorSummary"
           },
           "updated_at": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         }
@@ -1741,7 +2084,9 @@
       "QueryListData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["queries"],
+        "required": [
+          "queries"
+        ],
         "properties": {
           "queries": {
             "type": "array",
@@ -1752,12 +2097,24 @@
         }
       },
       "QueryRunScalar": {
-        "type": ["string", "number", "boolean", "null"]
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
       },
       "QueryRunData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["question", "data_source", "sql", "columns", "rows", "row_count"],
+        "required": [
+          "question",
+          "data_source",
+          "sql",
+          "columns",
+          "rows",
+          "row_count"
+        ],
         "properties": {
           "question": {
             "type": "string"
@@ -1791,7 +2148,9 @@
       "QuerySaveData": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["query"],
+        "required": [
+          "query"
+        ],
         "properties": {
           "query": {
             "$ref": "#/components/schemas/QuerySummary"
@@ -1801,11 +2160,18 @@
       "WorkspaceRenamedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1821,11 +2187,18 @@
       "WorkspaceDeletedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1841,11 +2214,18 @@
       "MembersListedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1861,11 +2241,18 @@
       "DataSourcesListedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1881,11 +2268,18 @@
       "DataSourceConnectionValidatedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1901,11 +2295,18 @@
       "DataSourceCreatedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1921,11 +2322,18 @@
       "QueriesListedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1941,11 +2349,18 @@
       "QueryRunExecutedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1961,11 +2376,18 @@
       "QuerySavedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -1981,11 +2403,18 @@
       "MutationResultResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "message", "data", "error_code"],
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["executed"]
+            "enum": [
+              "executed"
+            ]
           },
           "message": {
             "type": "string"
@@ -2001,15 +2430,23 @@
       "UnauthorizedResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "error_code", "message"],
+        "required": [
+          "status",
+          "error_code",
+          "message"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["unauthorized"]
+            "enum": [
+              "unauthorized"
+            ]
           },
           "error_code": {
             "type": "string",
-            "enum": ["unauthorized"]
+            "enum": [
+              "unauthorized"
+            ]
           },
           "message": {
             "type": "string"
@@ -2019,11 +2456,17 @@
       "ForbiddenResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "error_code", "message"],
+        "required": [
+          "status",
+          "error_code",
+          "message"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["forbidden"]
+            "enum": [
+              "forbidden"
+            ]
           },
           "error_code": {
             "type": "string"
@@ -2040,11 +2483,18 @@
       "ValidationErrorResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "error_code", "message", "data"],
+        "required": [
+          "status",
+          "error_code",
+          "message",
+          "data"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["validation_error"]
+            "enum": [
+              "validation_error"
+            ]
           },
           "error_code": {
             "type": "string"
@@ -2061,11 +2511,18 @@
       "ExecutionErrorResponse": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["status", "error_code", "message", "data"],
+        "required": [
+          "status",
+          "error_code",
+          "message",
+          "data"
+        ],
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["execution_error"]
+            "enum": [
+              "execution_error"
+            ]
           },
           "error_code": {
             "type": "string"
@@ -2076,6 +2533,76 @@
           "data": {
             "type": "object",
             "additionalProperties": true
+          }
+        }
+      },
+      "QueryRenameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The new saved-query title."
+          }
+        }
+      },
+      "QueryDeleteData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deleted_query"
+        ],
+        "properties": {
+          "deleted_query": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name",
+              "data_source"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "data_source": {
+                "$ref": "#/components/schemas/QueryDataSourceSummary"
+              }
+            }
+          }
+        }
+      },
+      "QueryDeletedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QueryDeleteData"
+          },
+          "error_code": {
+            "type": "null"
           }
         }
       }

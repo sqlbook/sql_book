@@ -241,6 +241,42 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 12 |')
     end
 
+    it 'serializes assistant markdown html for inline chat rendering' do
+      create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['count'], [[12]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Show me how many users I have' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      assistant_message = response.parsed_body['messages'].last
+      expect(assistant_message['content_html']).to include('<pre><code')
+      expect(assistant_message['content_html']).to include('<table>')
+      expect(assistant_message['content_html']).to include('<td>12</td>')
+    end
+
     it 'saves the most recent chat query to the query library' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
       schema_groups = [
@@ -285,6 +321,133 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(saved_query.saved).to be(true)
       expect(saved_query.data_source_id).to eq(data_source.id)
       expect(saved_query.query).to eq('SELECT COUNT(*) AS count FROM public.users')
+      expect(saved_query.name).to eq('User count')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User count"')
+    end
+
+    it 'generates a concise saved query name from the SQL shape instead of reusing the full prompt' do
+      create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'first_name', data_type: 'text' },
+                { name: 'last_name', data_type: 'text' },
+                { name: 'email', data_type: 'text' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(
+        %w[first_name last_name email],
+        [['Bob', 'Smith', 'hello@sitelabs.ai']]
+      )
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT first_name, last_name, email FROM public.users' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Nice, can you save that query for me please?' },
+             as: :json
+      end.to change(Query, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      saved_query = Query.order(:id).last
+      expect(saved_query.name).to eq('User names and email addresses')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User names and email addresses"')
+    end
+
+    it 'renames a saved query from chat and carries the target query across the rename follow-up' do
+      thread = ChatThread.active_for(workspace:, user:)
+      data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      recent_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Admins',
+        query: 'SELECT * FROM public.admins',
+        author: user,
+        last_updated_by: user
+      )
+      target_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Users',
+        query: 'SELECT * FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      Chat::RecentQueryStateStore.new(workspace:, actor: user, chat_thread: thread).save(
+        'saved_query_id' => recent_query.id,
+        'saved_query_name' => recent_query.name
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'Can you rename my other query for me?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Users')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: "Let's call it 'List of users'" },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(target_query.reload.name).to eq('List of users')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"List of users"')
+    end
+
+    it 'requires confirmation before deleting a saved query from chat' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Users',
+        query: 'SELECT * FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Delete the saved query Users' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('requires_confirmation')
+      action_request = ChatActionRequest.order(:id).last
+      expect(action_request.action_type).to eq('query.delete')
+
+      post app_workspace_chat_action_confirm_path(workspace, action_request),
+           params: {
+             thread_id: action_request.chat_thread_id,
+             confirmation_token: action_request.confirmation_token
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(Query.exists?(query.id)).to be(false)
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Users')
     end
 
     it 'lists saved queries from chat' do
