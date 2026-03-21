@@ -113,25 +113,30 @@ es:
           confirmation_default: Puedo ejecutar esa acción cuando la confirmes.
           action_canceled: Vale, cancelé esa acción.
           runtime_retry: Tuve un problema al planificar esa solicitud. Reformúlala y lo intento de nuevo.
-          capability_summary_intro: "Puedo ayudarte con la gestión del espacio de trabajo y su equipo dentro de este espacio. Ahora mismo puedo:"
+          capability_summary_intro: "Puedo ayudarte con tareas del espacio, del equipo, de fuentes de datos y de consultas en este espacio. Ahora mismo puedo:"
           capability_summary_footer: Si quieres, pídeme directamente una de esas acciones.
-          capability_summary_restricted: En este chat estoy centrado en la gestión del espacio de trabajo y del equipo. Con tu rol actual en este espacio, no puedo hacer esos cambios por ti aquí. Pídeselo a %{allowed_roles}.
-          scope_limited_intro: Estoy aquí para ayudarte con la gestión del espacio de trabajo y del equipo en sqlbook, no como un asistente de propósito general.
+          capability_summary_restricted: En este chat estoy centrado en tareas de sqlbook relacionadas con el espacio, las fuentes de datos y las consultas. Con tu rol actual en este espacio, no puedo hacer esos cambios por ti aquí. Pídeselo a %{allowed_roles}.
+          scope_limited_intro: Estoy aquí para ayudarte con tareas de sqlbook relacionadas con el espacio, las fuentes de datos y las consultas, no como un asistente de propósito general.
           scope_limited_supported_intro: "Ahora mismo puedo ayudarte con:"
           scope_limited_footer: Si quieres, pídeme directamente una de esas acciones.
-          scope_limited_restricted: Estoy aquí para ayudarte con la gestión del espacio de trabajo y del equipo en sqlbook, no como un asistente de propósito general. Con tu rol actual en este espacio, pídeselo a %{allowed_roles} si necesitas cambios en el espacio o el equipo.
+          scope_limited_restricted: Estoy aquí para ayudarte con tareas de sqlbook relacionadas con el espacio, las fuentes de datos y las consultas, no como un asistente de propósito general. Con tu rol actual en este espacio, pídeselo a %{allowed_roles} si necesitas ayuda con esas acciones.
           capability_items:
             member_list: Mostrar los miembros del equipo
             member_invite: Invitar a un miembro del equipo
             member_resend_invite: Reenviar una invitación pendiente
             member_update_role: Cambiar el rol de un miembro del equipo
             member_remove: Eliminar a un miembro del equipo
-            data_sources: "Gestionar fuentes de datos: listar fuentes conectadas, validar conexiones PostgreSQL y crear fuentes PostgreSQL."
+            data_source_list: Mostrar las fuentes de datos conectadas
+            data_source_add: Añadir y gestionar fuentes de datos PostgreSQL
+            query_list: Mostrar las consultas guardadas
+            query_run: Consultar una fuente de datos conectada
+            query_save: Guardar una consulta en la biblioteca
             workspace_update_name: Cambiar el nombre del espacio
             workspace_delete: Eliminar el espacio
         datasource:
           data_sources_none: Aún no hay fuentes de datos conectadas.
           data_sources_found: "Se encontraron %{count} fuente(s) de datos."
+          data_source_item: "- **%{name}** — %{source_type} — %{status} — %{tables_count} tabla(s) seleccionada(s)"
           connection_validated: Conexión validada correctamente. Se encontraron %{table_count} tabla(s).
           data_source_created: Se creó la fuente de datos PostgreSQL %{name}.
           selected_tables_required: Selecciona al menos una tabla antes de crear la fuente de datos.
@@ -139,6 +144,33 @@ es:
           invalid_selected_tables: Una o más tablas seleccionadas no están disponibles en la base de datos conectada.
           connection_failed: No se pudo validar la conexión PostgreSQL.
           validation_error: La configuración de la fuente de datos no es válida.
+        datasource_setup:
+          ask_name: Claro. ¿Cómo quieres llamar a esta fuente de datos PostgreSQL?
+          only_postgres: Ahora mismo puedo ayudarte a añadir fuentes de datos PostgreSQL en el chat, pero no %{source_type}. Si quieres, puedo ayudarte a conectar una fuente PostgreSQL.
+          ask_connection_details: "Perfecto. Todavía necesito estos datos de conexión de PostgreSQL: %{missing_fields}. Si no indicas el puerto, usaré %{default_port}."
+          ask_tables: "La conexión funcionó y encontré %{table_count} tabla(s). ¿Qué tabla(s) quieres que deje disponibles aquí? Por ejemplo: %{tables_preview}."
+          ask_tables_fallback: La conexión funcionó. ¿Qué tabla o tablas quieres que deje disponibles aquí?
+          fields:
+            host: host
+            database_name: nombre de la base de datos
+            username: usuario
+            password: contraseña
+        query:
+          question_required: Dime qué te gustaría consultar.
+          no_data_sources: No hay fuentes de datos conectadas en este espacio todavía, así que no puedo ejecutar esa consulta aquí.
+          data_source_not_found: No pude encontrar esa fuente de datos en este espacio.
+          ask_data_source: "Encontré más de una posible fuente de datos para eso. ¿Cuál debo usar: %{data_sources}?"
+          ask_table: "Encontré más de una posible tabla para eso. ¿Cuál debo usar: %{tables}?"
+          ask_for_table_or_metric: Puedo consultar una fuente de datos conectada aquí, pero todavía necesito un poco más de detalle sobre la tabla o la métrica que quieres.
+          result_intro: "Esto es lo que encontré en %{data_source} (%{row_count} fila(s)):"
+          no_rows: La consulta se ejecutó correctamente, pero no devolvió filas.
+          query_failed: No pude ejecutar esa consulta contra la fuente de datos seleccionada.
+        query_library:
+          none: Todavía no hay consultas guardadas en este espacio.
+          found: "Aquí tienes %{count} consultas guardadas:"
+          item: "- **%{name}** — Fuente de datos: %{data_source}"
+          saved: Guardé esa consulta en la biblioteca como %{name}.
+          sql_required: Primero ejecuta una consulta aquí o indícame el SQL y la fuente de datos para que pueda guardarla.
         responses:
           confirmation:
             variants:
@@ -194,6 +226,11 @@ es:
                 - "%{name} ha sido eliminado de este espacio."
                 - "Eliminé a %{name} del espacio."
                 - "Hecho. %{name} ya no forma parte de este espacio."
+            query_save:
+              variants:
+                - "Guardé esa consulta en la biblioteca como %{name}."
+                - "Hecho. La consulta ya está guardada como %{name}."
+                - "Listo. Ahora puedes encontrarla en la biblioteca como %{name}."
         errors:
           message_or_image_required: Se requiere contenido del mensaje o al menos una imagen.
           max_images: Puedes adjuntar hasta %{count} imágenes por mensaje.
@@ -219,7 +256,7 @@ es:
           member_update_role: Actualizar rol de miembro
           member_remove: Eliminar miembro del equipo
         planner:
-          default_help: Puedo ayudarte a cambiar/eliminar este espacio, listar miembros del equipo y gestionar invitaciones y roles.
+          default_help: Puedo ayudarte a gestionar este espacio, los miembros del equipo, las fuentes de datos conectadas y las consultas de solo lectura sobre esas fuentes.
           workspace_delete: Puedo eliminar este espacio cuando lo confirmes.
           workspace_rename: Puedo cambiar el nombre de este espacio cuando lo confirmes.
           workspace_rename_needs_name: Claro. ¿Qué nombre nuevo quieres para el espacio?
@@ -242,9 +279,14 @@ es:
           member_role_update_needs_role: Claro. ¿Qué rol debe tener (Admin, Usuario o Solo lectura)?
           member_remove: Puedo eliminar a ese miembro del equipo cuando lo confirmes.
           member_remove_needs_member: Claro. ¿Qué miembro quieres eliminar? Comparte su nombre o correo.
+          datasource_list: Voy a mostrar ahora las fuentes de datos conectadas en este espacio.
+          query_list: Voy a mostrar ahora las consultas guardadas en este espacio.
+          query_run: Voy a ejecutar esa consulta contra la fuente de datos conectada más probable.
+          query_save: Voy a guardar esa consulta en la biblioteca ahora.
+          query_save_needs_query: Primero ejecuta una consulta aquí o indícame el SQL y la fuente de datos para que pueda guardarla.
           attachments_context: Puedo ver %{count} imagen(es) adjunta(s). Dime qué acción de equipo o espacio quieres ejecutar.
           fallback_with_action: Puedo ayudarte con eso. Confirma para continuar.
-          fallback_without_action: Puedo ayudarte con acciones de espacio y equipo.
+          fallback_without_action: Puedo ayudarte con acciones del espacio, del equipo, de fuentes de datos y de consultas.
         executor:
           forbidden: No puedo ejecutar esa acción con tus permisos actuales en este espacio.
           forbidden_with_allowed_roles: No puedes %{action} con tu rol actual en este espacio. Pídeselo a %{allowed_roles}.
@@ -259,9 +301,14 @@ es:
             datasource_list: gestionar las fuentes de datos del espacio
             datasource_validate_connection: validar conexiones de fuentes de datos
             datasource_create: crear fuentes de datos
+            query_list: ver las consultas guardadas
+            query_run: ejecutar consultas sobre fuentes de datos
+            query_save: guardar consultas en la biblioteca
           allowed_roles:
             owner: un propietario del espacio
             admin_or_owner: un administrador o un propietario del espacio
+            user_admin_or_owner: un usuario, administrador o propietario del espacio
+            workspace_member: cualquier miembro del espacio
           unexpected_error: Hubo un error inesperado al ejecutar esa acción.
           workspace_name_required: Indica un nombre para el espacio.
           workspace_name_updated: Nombre del espacio actualizado a %{name}.

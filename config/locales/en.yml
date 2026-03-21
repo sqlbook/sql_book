@@ -144,25 +144,30 @@ en:
           confirmation_default: I can run that action once you confirm.
           action_canceled: Okay, I canceled that action.
           runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
-          capability_summary_intro: "I can help with workspace and team management in this workspace. Right now I can:"
+          capability_summary_intro: "I can help with workspace, team, data source, and query tasks in this workspace. Right now I can:"
           capability_summary_footer: If you want, ask me to do one of those directly.
-          capability_summary_restricted: In this chat I'm focused on workspace and team management. With your current workspace role, I can't make those changes for you here. Please ask %{allowed_roles}.
-          scope_limited_intro: I'm here to help with sqlbook workspace and team management, not as a general-purpose assistant.
+          capability_summary_restricted: In this chat I'm focused on sqlbook workspace, data source, and query tasks. With your current workspace role, I can't make those changes for you here. Please ask %{allowed_roles}.
+          scope_limited_intro: I'm here to help with sqlbook workspace, data source, and query tasks, not as a general-purpose assistant.
           scope_limited_supported_intro: "Right now I can help with:"
           scope_limited_footer: If you want, ask me to do one of those directly.
-          scope_limited_restricted: I'm here to help with sqlbook workspace and team management, not as a general-purpose assistant. With your current workspace role, please ask %{allowed_roles} if you need workspace or team changes.
+          scope_limited_restricted: I'm here to help with sqlbook workspace, data source, and query tasks, not as a general-purpose assistant. With your current workspace role, please ask %{allowed_roles} if you need help with those actions.
           capability_items:
             member_list: List team members
             member_invite: Invite a team member
             member_resend_invite: Resend a pending invite
             member_update_role: Change a team member's role
             member_remove: Remove a team member
-            data_sources: "Manage data sources: list connected sources, validate PostgreSQL connections, and create PostgreSQL sources."
+            data_source_list: List connected data sources
+            data_source_add: Add and manage PostgreSQL data sources
+            query_list: List saved queries
+            query_run: Query a connected data source
+            query_save: Save a query to the query library
             workspace_update_name: Rename the workspace
             workspace_delete: Delete the workspace
         datasource:
           data_sources_none: No data sources are connected yet.
           data_sources_found: "%{count} data source(s) found."
+          data_source_item: "- **%{name}** — %{source_type} — %{status} — %{tables_count} selected table(s)"
           connection_validated: Connection validated successfully. %{table_count} table(s) found.
           data_source_created: Created PostgreSQL data source %{name}.
           selected_tables_required: Select at least one table before creating the data source.
@@ -170,6 +175,33 @@ en:
           invalid_selected_tables: One or more selected tables are not available on the connected database.
           connection_failed: Could not validate the PostgreSQL connection.
           validation_error: The data source configuration is invalid.
+        datasource_setup:
+          ask_name: Sure. What should I call this PostgreSQL data source?
+          only_postgres: I can help add PostgreSQL data sources in chat right now, but not %{source_type}. If you want, I can help you connect a PostgreSQL source instead.
+          ask_connection_details: "Great. I still need these PostgreSQL connection details: %{missing_fields}. If you don't specify a port, I'll use %{default_port}."
+          ask_tables: "The connection worked and I found %{table_count} table(s). Which table(s) should I make available here? For example: %{tables_preview}."
+          ask_tables_fallback: The connection worked. Which table or tables should I make available here?
+          fields:
+            host: host
+            database_name: database name
+            username: username
+            password: password
+        query:
+          question_required: Tell me what you'd like to query.
+          no_data_sources: There are no connected data sources in this workspace yet, so I can't run that query here.
+          data_source_not_found: I couldn't find that data source in this workspace.
+          ask_data_source: "I found more than one possible data source for that. Which one should I use: %{data_sources}?"
+          ask_table: "I found more than one possible table for that. Which one should I use: %{tables}?"
+          ask_for_table_or_metric: I can query a connected data source here, but I still need a little more detail about the table or metric you want.
+          result_intro: "Here’s what I found from %{data_source} (%{row_count} row(s)):"
+          no_rows: That query ran successfully, but it returned no rows.
+          query_failed: I couldn't run that query against the selected data source.
+        query_library:
+          none: There are no saved queries in this workspace yet.
+          found: "Here are %{count} saved queries:"
+          item: "- **%{name}** — Data source: %{data_source}"
+          saved: I saved that query to the query library as %{name}.
+          sql_required: Run a query here first, or provide SQL and a data source so I can save it.
         responses:
           confirmation:
             variants:
@@ -225,6 +257,11 @@ en:
                 - "%{name} has been removed from this workspace."
                 - "I removed %{name} from the workspace."
                 - "Done. %{name} is no longer part of this workspace."
+            query_save:
+              variants:
+                - "I saved that query to the query library as %{name}."
+                - "Done. The query is now saved as %{name}."
+                - "Saved. You can now find it in the query library as %{name}."
         errors:
           message_or_image_required: Message content or at least one image is required.
           max_images: You can attach up to %{count} images per message.
@@ -250,7 +287,7 @@ en:
           member_update_role: Update member role
           member_remove: Remove team member
         planner:
-          default_help: I can help rename/delete this workspace, list team members, and manage invites and roles.
+          default_help: I can help manage this workspace, team members, connected data sources, and read-only data-source queries.
           workspace_delete: I can delete this workspace once you confirm.
           workspace_rename: I can rename this workspace once you confirm.
           workspace_rename_needs_name: Sure. What should the new workspace name be?
@@ -273,9 +310,14 @@ en:
           member_role_update_needs_role: Sure. What role should they have (Admin, User, or Read only)?
           member_remove: I can remove that team member once you confirm.
           member_remove_needs_member: Sure. Which team member should I remove? Share their name or email.
+          datasource_list: I’ll show the connected data sources in this workspace now.
+          query_list: I’ll show the saved queries in this workspace now.
+          query_run: I’ll run that query against the most likely connected data source now.
+          query_save: I’ll save that query to the query library now.
+          query_save_needs_query: Run a query here first, or provide SQL and a data source so I can save it.
           attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
           fallback_with_action: I can help with that. Please confirm to proceed.
-          fallback_without_action: I can help with workspace and team actions.
+          fallback_without_action: I can help with workspace, team, data source, and query actions.
         executor:
           forbidden: I can't run that action with your current workspace permissions.
           forbidden_with_allowed_roles: You can't %{action} with your current workspace role. Please ask %{allowed_roles}.
@@ -290,9 +332,14 @@ en:
             datasource_list: manage workspace data sources
             datasource_validate_connection: validate data source connections
             datasource_create: create data sources
+            query_list: view saved queries
+            query_run: run data-source queries
+            query_save: save queries to the query library
           allowed_roles:
             owner: a Workspace owner
             admin_or_owner: an Admin or Workspace owner
+            user_admin_or_owner: a User, Admin, or Workspace owner
+            workspace_member: any workspace member
           unexpected_error: There was an unexpected error while running that action.
           workspace_name_required: Please provide a workspace name.
           workspace_name_updated: Workspace name updated to %{name}.

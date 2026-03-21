@@ -28,6 +28,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       get 'workspaces/:workspace_id/data-sources', to: 'data_sources#index'
       post 'workspaces/:workspace_id/data-sources/validate-connection', to: 'data_sources#validate_connection'
       post 'workspaces/:workspace_id/data-sources', to: 'data_sources#create'
+      get 'workspaces/:workspace_id/queries', to: 'queries#index'
+      post 'workspaces/:workspace_id/queries/run', to: 'queries#run'
+      post 'workspaces/:workspace_id/queries', to: 'queries#create'
     end
   end
 

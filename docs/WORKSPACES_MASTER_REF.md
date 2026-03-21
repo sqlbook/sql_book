@@ -55,6 +55,9 @@ Related references:
   - `GET /api/v1/workspaces/:workspace_id/data-sources`
   - `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
   - `POST /api/v1/workspaces/:workspace_id/data-sources`
+  - `GET /api/v1/workspaces/:workspace_id/queries`
+  - `POST /api/v1/workspaces/:workspace_id/queries/run`
+  - `POST /api/v1/workspaces/:workspace_id/queries`
 - OpenAPI/Scalar governance for these routes lives in `docs/API_MASTER_REF.md`.
 
 ## Roles and authorization
@@ -127,16 +130,27 @@ Related references:
   - `datasource.list`
   - `datasource.validate_connection`
   - `datasource.create`
+  - `query.list`
+  - `query.run`
+  - `query.save`
 - v1 blocked namespaces include:
   - `workspace.list/get/create`
-  - `query.*`
+  - `query.*` except `query.list`, `query.run`, and `query.save`
   - `dashboard.*`
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - datasource note:
   - only `datasource.list`, `datasource.validate_connection`, and `datasource.create` are in scope
   - other datasource actions remain blocked until explicitly implemented
+- query note:
+  - `query.list`, `query.run`, and `query.save` are in scope
+  - query rename/delete/update management remains blocked until explicitly implemented
 - Auto-run chat writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`.
 - Auto-run datasource chat writes include `datasource.validate_connection` and `datasource.create`.
+- Auto-run query-library chat writes include `query.save`.
+- Read-only chat query execution (`query.run`) should return an inline assistant answer in the same conversation flow; it does not require confirmation.
+- Query-library chat actions should support:
+  - `query.list` for browsing saved queries
+  - `query.save` for saving the most recent executed query into the query library
 - Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`).
 - Chat permission visibility should mirror workspace UI permissions:
   - `OWNER` / `ADMIN` can view workspace settings and the team member list
@@ -145,6 +159,12 @@ Related references:
 - Chat invite execution requires `first_name`, `last_name`, `email`, and `role`; runtime/planner follow-ups collect missing fields before execution.
 - Invite follow-ups should ask for all currently missing invite fields together (for example `name + role` when only email is known).
 - Natural role replies such as `I think admin` should still resolve to the intended role.
+- Datasource setup follow-ups should collect required information in sensible stages:
+  - datasource name first
+  - then missing connection details
+  - then selected tables
+- Datasource setup should accept freeform replies that contain only part of the required metadata and preserve already-captured fields across turns.
+- Query chat should look across connected datasources/schema metadata and ask clarifying follow-ups when multiple datasources or tables plausibly match the user's question.
 - Action payloads carry and enforce `workspace_id`, `thread_id`, and `message_id` scope.
 - Thread/message route access is constrained to `created_by == current_user` within the current workspace.
 - Image attachments are limited to `png/jpeg/webp/gif`, max 6 files, max 25MB each.

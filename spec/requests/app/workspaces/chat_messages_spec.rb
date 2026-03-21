@@ -122,6 +122,309 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(created_thread.title).not_to end_with('?')
     end
 
+    it 'starts a staged data source setup flow instead of falling back to a capability summary' do
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Can you help me add a data source?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to eq(
+        I18n.t('app.workspaces.chat.datasource_setup.ask_name')
+      )
+    end
+
+    it 'collects PostgreSQL data source setup details in sensible stages and creates the source' do
+      available_tables = [
+        {
+          schema: 'public',
+          tables: [
+            { name: 'users', qualified_name: 'public.users' },
+            { name: 'accounts', qualified_name: 'public.accounts' }
+          ]
+        }
+      ]
+      validation_result = DataSources::ConnectionValidationService::Result.new(
+        success?: true,
+        available_tables:,
+        checked_at: Time.zone.local(2026, 3, 21, 12, 0, 0),
+        error_code: nil,
+        message: nil
+      )
+
+      allow(DataSources::ConnectionValidationService).to receive(:new).and_return(
+        instance_double(DataSources::ConnectionValidationService, call: validation_result)
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Can you help me add a data source?' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Call it Warehouse DB' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('host')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('database name')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('username')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('password')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: [
+               'Host is db.example.com, database name is warehouse,',
+               'username is readonly, and password is super-secret'
+             ].join(' ')
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('public.users')
+
+      last_user_message = ChatThread.find(thread_id).chat_messages.where(role: ChatMessage::Roles::USER).order(:id).last
+      expect(last_user_message.content).to include('[REDACTED]')
+      expect(last_user_message.content).not_to include('super-secret')
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Use public.users' },
+             as: :json
+      end.to change { workspace.data_sources.count }.by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
+
+      created_source = workspace.data_sources.order(:id).last
+      expect(created_source.source_type).to eq('postgres')
+      expect(created_source.name).to eq('Warehouse DB')
+      expect(created_source.selected_tables).to eq(['public.users'])
+    end
+
+    it 'lets owners query a connected data source from chat' do
+      create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['count'], [[12]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Show me how many users I have' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| count |')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 12 |')
+    end
+
+    it 'saves the most recent chat query to the query library' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['count'], [[12]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Show me how many users I have' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Great, please save this query' },
+             as: :json
+      end.to change(Query, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('query library')
+
+      saved_query = Query.order(:id).last
+      expect(saved_query.saved).to be(true)
+      expect(saved_query.data_source_id).to eq(data_source.id)
+      expect(saved_query.query).to eq('SELECT COUNT(*) AS count FROM public.users')
+    end
+
+    it 'lists saved queries from chat' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS count FROM public.users'
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Show my query library' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('User count')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
+    end
+
+    it 'asks a clarifying question when more than one data source could answer a query' do
+      create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      create(:data_source, :postgres, workspace:, name: 'CRM DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Show me how many users I have' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('CRM DB')
+    end
+
+    it 'resumes a query clarification when the user answers with the chosen data source' do
+      create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      create(:data_source, :postgres, workspace:, name: 'CRM DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['count'], [[7]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Show me how many users I have' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Use Warehouse DB' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 7 |')
+    end
+
+    it 'blocks data source setup for regular users but still allows querying' do
+      owner = create(:user)
+      limited_workspace = create(:workspace_with_owner, owner:)
+      create(:member, workspace: limited_workspace, user:, role: Member::Roles::USER, status: Member::Status::ACCEPTED)
+      create(:data_source, :postgres, workspace: limited_workspace, name: 'Warehouse DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['count'], [[5]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(limited_workspace),
+           params: { content: 'Can you help me add a data source?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('forbidden')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Admin')
+
+      post app_workspace_chat_messages_path(limited_workspace),
+           params: { content: 'Show me how many users I have' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 5 |')
+    end
+
     it 'auto-executes low-risk write actions' do
       expect do
         post app_workspace_chat_messages_path(workspace), params: { content: 'rename workspace to New Name' }, as: :json
@@ -735,9 +1038,10 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('ok')
 
       assistant_content = response.parsed_body.dig('messages', -1, 'content')
-      expect(assistant_content).to include('workspace and team management')
+      expect(assistant_content).to include('data source')
       expect(assistant_content).to include('List team members')
       expect(assistant_content).to include('Invite a team member')
+      expect(assistant_content).to include('Add and manage PostgreSQL data sources')
     end
 
     it 'does not leak stale invite follow-up prompts into unrelated off-scope questions' do
@@ -759,7 +1063,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       assistant_content = response.parsed_body.dig('messages', -1, 'content')
       expect(assistant_content).to include('not as a general-purpose assistant')
-      expect(assistant_content).to include('workspace and team management')
+      expect(assistant_content).to include('data source')
       expect(assistant_content).not_to include('first name')
       expect(assistant_content).not_to include('email address')
     end
@@ -774,7 +1078,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       assistant_content = response.parsed_body.dig('messages', -1, 'content')
       expect(assistant_content).to include('not as a general-purpose assistant')
-      expect(assistant_content).to include('workspace and team management')
+      expect(assistant_content).to include('data source')
       expect(assistant_content).not_to include('first name')
       expect(assistant_content).not_to include('email address')
     end

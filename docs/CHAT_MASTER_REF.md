@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -23,12 +23,13 @@ Related references:
 ## Scope (v1)
 - Chat is strictly workspace-scoped and rendered on `GET /app/workspaces/:id`.
 - Chat history is isolated per user within each workspace (a member can only access threads they created).
-- Chat can execute workspace/team-management actions and the first datasource-management actions that already exist elsewhere in app UX/API.
+- Chat can execute workspace/team-management actions, the phase-1 datasource-management actions, saved-query list/save actions, and read-only single-datasource query assistance that already exists elsewhere in app UX/API.
 - Explicitly out of scope in v1:
   - cross-workspace actions
   - workspace list/get/create via chat
   - datasource update/delete/reconfigure actions beyond the phase-1 flow
-  - query, dashboard, billing/subscription/admin/super-admin actions
+  - query rename/delete/update management actions outside `query.list`, `query.run`, and `query.save`
+  - dashboard, billing/subscription/admin/super-admin actions
   - owner-role promotion via chat
 
 ## Core architecture
@@ -57,6 +58,8 @@ Related references:
   - `Tooling::WorkspaceTeamHandlers`
   - `Tooling::WorkspaceDataSourceRegistry`
   - `Tooling::WorkspaceDataSourceHandlers`
+  - `Tooling::WorkspaceQueryRegistry`
+  - `Tooling::WorkspaceQueryHandlers`
 - Server-authoritative policy/execution:
   - `Chat::Policy` for role/scope checks
   - `Chat::ActionExecutor` for normalized execution statuses
@@ -103,6 +106,9 @@ API v1 routes (internal-first, documented):
 - `GET /api/v1/workspaces/:workspace_id/data-sources`
 - `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
 - `POST /api/v1/workspaces/:workspace_id/data-sources`
+- `GET /api/v1/workspaces/:workspace_id/queries`
+- `POST /api/v1/workspaces/:workspace_id/queries/run`
+- `POST /api/v1/workspaces/:workspace_id/queries`
 
 Docs surface:
 - `GET /dev/api`
@@ -144,12 +150,15 @@ Allowed action types:
 - `datasource.list`
 - `datasource.validate_connection`
 - `datasource.create`
+- `query.list`
+- `query.run`
+- `query.save`
 
 Blocked prefixes:
 - `workspace.list`
 - `workspace.get`
 - `workspace.create`
-- `query.*`
+- `query.*` except `query.list`, `query.run`, and `query.save`
 - `dashboard.*`
 - `billing.*`
 - `subscription.*`
@@ -164,6 +173,8 @@ Datasource namespace note:
 Read actions (`confirmation_mode: none`):
 - `member.list`
 - `datasource.list`
+- `query.list`
+- `query.run`
 
 Auto-run writes (no confirmation):
 - `workspace.update_name`
@@ -172,6 +183,7 @@ Auto-run writes (no confirmation):
 - `member.update_role`
 - `datasource.validate_connection`
 - `datasource.create`
+- `query.save`
 
 High-risk writes (inline confirmation required):
 - `workspace.delete`
@@ -185,6 +197,9 @@ High-risk writes (inline confirmation required):
 - `member.remove`: `email` or `member_id` or `full_name`
 - `datasource.validate_connection`: `host`, `database_name`, `username`, `password`
 - `datasource.create`: `name`, `host`, `database_name`, `username`, `password`, `selected_tables`
+- `query.run`: `question`
+- `query.list`: no required fields
+- `query.save`: `sql` + (`data_source_id` or `data_source_name`); `name` optional
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -197,6 +212,14 @@ High-risk writes (inline confirmation required):
   - listing workspace datasources
   - validating PostgreSQL connection details
   - creating a PostgreSQL datasource with selected tables
+- `query.list` is available to all accepted workspace roles.
+- `query.run` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
+- `query.save` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
+- Query chat scope is limited to read-only execution against one connected datasource at a time.
+- Query-library chat scope in v1 includes:
+  - listing saved queries in the current workspace
+  - saving the most recently executed query into the query library
+- If multiple datasources or tables plausibly match a query question, chat must ask a clarifying follow-up before running SQL.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
 - Execution/preflight wording should be composed separately from the executor so chat can vary phrasing naturally and avoid repeating the same template back-to-back.
@@ -207,6 +230,10 @@ High-risk writes (inline confirmation required):
 2. Runtime rebuilds turn context from:
    - recent transcript (`user` + `assistant` turns, oldest -> newest)
    - pending confirmation state
+   - staged datasource setup state
+   - staged query clarification state
+   - recent query state (last successful query question/SQL/datasource/save result)
+   - connected datasource inventory
    - structured recent action results persisted in assistant-message `metadata.result_data`
 3. Runtime returns structured decision:
    - `assistant_message`
@@ -225,6 +252,8 @@ High-risk writes (inline confirmation required):
 10. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
 11. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
 12. Clearly off-scope or general-purpose questions should be intercepted before tool planning and answered with a scope-limited help message rather than being forced through stale action context.
+13. Datasource setup should collect missing connection information in sensible stages instead of dumping every possible field request into one turn.
+14. Query follow-ups about current mutable datasource/member facts should verify live workspace state before asserting them.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
@@ -232,6 +261,9 @@ High-risk writes (inline confirmation required):
 - Preferred turn context ingredients:
   - recent raw transcript
   - structured recent tool/action results
+  - connected datasource inventory
+  - staged datasource setup state
+  - staged query clarification state
   - refreshed current workspace state for the most recently referenced member when a follow-up asks who/status/confirmation
   - current pending confirmation / unresolved required fields
   - compact summaries only if threads become too long for direct transcript slices
@@ -240,6 +272,17 @@ High-risk writes (inline confirmation required):
   - "invite him back" after a remove action
   - "what role did you add him as?" after an invite action
   - "have they accepted?" or "which user are we talking about?" after an invite is later accepted in another session
+- Recent query context should support follow-ups such as:
+  - "save this query"
+  - "save it as Active users by day"
+  - "show my query library"
+- Datasource setup follow-ups should support:
+  - friendly staged answers like "Call it Warehouse DB"
+  - freeform connection-detail replies such as "my database name is JOHNNY and the type is PostgreSQL"
+  - table-selection follow-ups such as "Use public.users"
+- Query clarification follow-ups should support:
+  - datasource disambiguation such as "Use Warehouse DB"
+  - table disambiguation when multiple candidate tables match the question
 - Referential member follow-ups such as "what are their names and details?" should stay in scope when a recent member/team result is present, even if the message does not repeat words like `member` or `team`.
 - Structured result data is persisted on assistant messages for both:
   - auto-executed actions

@@ -31,6 +31,11 @@
       "name": "Data Sources",
       "description": "Operations for listing, validating, and creating workspace data sources. In this phase the documented connector flow is PostgreSQL-only and remains workspace-scoped and session-authenticated.",
       "x-displayName": "Data Sources"
+    },
+    {
+      "name": "Queries",
+      "description": "Operations for browsing the saved query library, running read-only queries against connected data sources, and saving queries for later reuse.",
+      "x-displayName": "Queries"
     }
   ],
   "x-tagGroups": [
@@ -45,6 +50,10 @@
     {
       "name": "Data connectivity",
       "tags": ["Data Sources"]
+    },
+    {
+      "name": "Querying",
+      "tags": ["Queries"]
     }
   ],
   "x-scalar-active-environment": "current-origin",
@@ -554,6 +563,179 @@
           }
         ]
       }
+    },
+    "/api/v1/workspaces/{workspace_id}/queries": {
+      "get": {
+        "operationId": "queryList",
+        "summary": "List saved queries",
+        "description": "Returns saved queries in the current workspace query library. Results can optionally be filtered by datasource or a case-insensitive name search.",
+        "tags": ["Queries"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Optional case-insensitive query-name search.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "data_source_id",
+            "in": "query",
+            "required": false,
+            "description": "Optional datasource filter.",
+            "schema": {
+              "type": "integer",
+              "example": 31
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueriesListed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries?search=user&data_source_id=31' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      },
+      "post": {
+        "operationId": "querySave",
+        "summary": "Save query",
+        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one.",
+        "tags": ["Queries"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuerySaveRequest"
+              },
+              "examples": {
+                "saveQuery": {
+                  "summary": "Save a query to the library",
+                  "value": {
+                    "name": "User count",
+                    "sql": "SELECT COUNT(*) AS count FROM public.users",
+                    "question": "How many users do I have?",
+                    "data_source_id": 31
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QuerySaved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"User count\",\"sql\":\"SELECT COUNT(*) AS count FROM public.users\",\"question\":\"How many users do I have?\",\"data_source_id\":31}'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/queries/run": {
+      "post": {
+        "operationId": "queryRun",
+        "summary": "Run read-only query",
+        "description": "Runs a read-only query against a connected datasource in the current workspace. Callers can send either a plain-language `question` for SQL generation or direct read-only SQL via `sql`. If multiple datasources or tables plausibly match, the server may return a validation-style clarification prompt instead of guessing.",
+        "tags": ["Queries"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRunRequest"
+              },
+              "examples": {
+                "plainLanguage": {
+                  "summary": "Run a plain-language question",
+                  "value": {
+                    "question": "How many users do I have?",
+                    "data_source_id": 31
+                  }
+                },
+                "directSql": {
+                  "summary": "Run direct SQL",
+                  "value": {
+                    "sql": "SELECT COUNT(*) AS count FROM public.users",
+                    "data_source_name": "Warehouse DB"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/QueryRunExecuted"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/run' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"question\":\"How many users do I have?\",\"data_source_id\":31}'"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -883,6 +1065,114 @@
           }
         }
       },
+      "QueriesListed": {
+        "description": "Saved workspace queries returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QueriesListedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Here are 1 saved queries:\n\n- **User count** — Data source: Warehouse DB",
+                  "data": {
+                    "queries": [
+                      {
+                        "id": 14,
+                        "name": "User count",
+                        "sql": "SELECT COUNT(*) AS count FROM public.users",
+                        "saved": true,
+                        "chart_type": null,
+                        "data_source": {
+                          "id": 31,
+                          "name": "Warehouse DB"
+                        },
+                        "author": {
+                          "id": 7,
+                          "name": "Christopher Pattison",
+                          "email": "chris@example.com"
+                        },
+                        "updated_at": "2026-03-21T12:30:00Z"
+                      }
+                    ]
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "QueryRunExecuted": {
+        "description": "Read-only query executed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QueryRunExecutedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "Here’s what I found from Warehouse DB (1 row(s)):\n\n```sql\nSELECT COUNT(*) AS count FROM public.users\n```\n\n| count |\n| --- |\n| 9 |",
+                  "data": {
+                    "question": "How many users do I have?",
+                    "data_source": {
+                      "id": 31,
+                      "name": "Warehouse DB"
+                    },
+                    "sql": "SELECT COUNT(*) AS count FROM public.users",
+                    "columns": ["count"],
+                    "rows": [[9]],
+                    "row_count": 1
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "QuerySaved": {
+        "description": "Query saved to the workspace library",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/QuerySavedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "I saved that query to the query library as User count.",
+                  "data": {
+                    "query": {
+                      "id": 14,
+                      "name": "User count",
+                      "sql": "SELECT COUNT(*) AS count FROM public.users",
+                      "saved": true,
+                      "chart_type": null,
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      },
+                      "author": {
+                        "id": 7,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com"
+                      },
+                      "updated_at": "2026-03-21T12:30:00Z"
+                    }
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
       "ToolUnauthorized": {
         "description": "Authentication required",
         "content": {
@@ -1140,6 +1430,65 @@
           }
         }
       },
+      "QueryRunRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Plain-language question for the server to translate into read-only SQL."
+          },
+          "sql": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Direct read-only SQL. Must be a safe SELECT/WITH query."
+          },
+          "data_source_id": {
+            "type": "integer"
+          },
+          "data_source_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "anyOf": [
+          { "required": ["question"] },
+          { "required": ["sql"] }
+        ]
+      },
+      "QuerySaveRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sql"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional saved-query title. If omitted, the server generates one."
+          },
+          "sql": {
+            "type": "string",
+            "minLength": 1
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional original plain-language question used to help generate a default title."
+          },
+          "data_source_id": {
+            "type": "integer"
+          },
+          "data_source_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "anyOf": [
+          { "required": ["data_source_id"] },
+          { "required": ["data_source_name"] }
+        ]
+      },
       "WorkspaceNameData": {
         "type": "object",
         "additionalProperties": false,
@@ -1328,6 +1677,127 @@
           }
         }
       },
+      "QueryDataSourceSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "QueryAuthorSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "email"],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "QuerySummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "sql", "saved", "chart_type", "data_source", "author", "updated_at"],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sql": {
+            "type": "string"
+          },
+          "saved": {
+            "type": "boolean"
+          },
+          "chart_type": {
+            "type": ["string", "null"]
+          },
+          "data_source": {
+            "$ref": "#/components/schemas/QueryDataSourceSummary"
+          },
+          "author": {
+            "$ref": "#/components/schemas/QueryAuthorSummary"
+          },
+          "updated_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      },
+      "QueryListData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["queries"],
+        "properties": {
+          "queries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuerySummary"
+            }
+          }
+        }
+      },
+      "QueryRunScalar": {
+        "type": ["string", "number", "boolean", "null"]
+      },
+      "QueryRunData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "data_source", "sql", "columns", "rows", "row_count"],
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "data_source": {
+            "$ref": "#/components/schemas/QueryDataSourceSummary"
+          },
+          "sql": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QueryRunScalar"
+              }
+            }
+          },
+          "row_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "QuerySaveData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "$ref": "#/components/schemas/QuerySummary"
+          }
+        }
+      },
       "WorkspaceRenamedResponse": {
         "type": "object",
         "additionalProperties": false,
@@ -1442,6 +1912,66 @@
           },
           "data": {
             "$ref": "#/components/schemas/DataSourceCreateData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "QueriesListedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QueryListData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "QueryRunExecutedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QueryRunData"
+          },
+          "error_code": {
+            "type": "null"
+          }
+        }
+      },
+      "QuerySavedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data", "error_code"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["executed"]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QuerySaveData"
           },
           "error_code": {
             "type": "null"

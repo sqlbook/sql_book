@@ -17,10 +17,18 @@ module Chat
       \b(
         workspace|team|teammate|member|members|user|users|
         invite|invitation|role|roles|admin|owner|read\s*only|readonly|
-        rename|delete|remove|resend|promote|demote
+        rename|delete|remove|resend|promote|demote|
+        data\s+source|data\s+sources|datasource|datasources|database|databases|
+        query|queries|sql|schema|table|tables|row|rows|column|columns
       )\b
     /ix
     PRODUCT_TOPIC_REGEX = /\b(analytics|analysis|data\s+sources?|queries?|dashboards?|charts?|reports?|sql)\b/i
+    QUERY_LIKE_REGEX = /
+      \b(
+        how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with|rows?
+      )\b
+    /ix
+    QUERY_CLARIFICATION_HINT_REGEX = /\b(first|second|third|last|that one|this one|those)\b/i
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
@@ -39,6 +47,14 @@ module Chat
 
       if active_pending_action.present? && pending_action_command.present?
         return pending_action_command == :confirm ? confirm_pending_action : cancel_pending_action
+      end
+
+      if (setup_resolution = data_source_setup_resolution)
+        return handle_data_source_setup_resolution(setup_resolution)
+      end
+
+      if should_resume_query_clarification?
+        return execute_direct_tool(action_type: 'query.run', payload: { 'question' => content })
       end
 
       return render_non_action(capability_summary_message) if capability_question?
@@ -153,6 +169,14 @@ module Chat
       )
     end
 
+    def execute_direct_tool(action_type:, payload:)
+      intent = direct_intent(action_type:, payload:)
+      preflight_result = action_executor.preflight(action_type:, payload: intent.payload)
+      return render_execution(intent:, execution: preflight_result) if preflight_result
+
+      execute_intent(intent:)
+    end
+
     def render_confirmation(intent:)
       action_request = action_request_lifecycle.persist_pending_confirmation!(
         source_message: user_message,
@@ -190,6 +214,8 @@ module Chat
 
       execution = action_executor.execute(action_type: intent.action_type, payload: intent.payload)
       execution = execution_truth_reconciler.call(action_type: intent.action_type, payload: intent.payload, execution:)
+      persist_recent_query_state_for(intent:, execution:)
+      clear_transient_state_for(intent:, execution:)
       assistant_content = compose_execution_message(intent:, execution:)
       action_request = nil
 
@@ -252,6 +278,10 @@ module Chat
       execution = execution_truth_reconciler.call(
         action_type: active_pending_action.action_type,
         payload: active_pending_action.payload,
+        execution:
+      )
+      persist_recent_query_state_for(
+        intent: direct_intent(action_type: active_pending_action.action_type, payload: active_pending_action.payload),
         execution:
       )
       assistant_content = response_composer.compose(
@@ -321,7 +351,8 @@ module Chat
     end
 
     def compose_execution_message(intent:, execution:)
-      if execution.status == 'executed' && intent.read? && intent.action_type == 'member.list'
+      rich_read_actions = %w[member.list datasource.list query.list query.run]
+      if execution.status == 'executed' && intent.read? && intent.action_type.in?(rich_read_actions)
         return execution.user_message
       end
 
@@ -353,6 +384,7 @@ module Chat
       return false if capability_question?
       return false unless question_like? || product_topic_question?
       return false if content.match?(IN_SCOPE_TOPIC_REGEX)
+      return false if query_like_request?
       return false if recent_member_context_question?
 
       true
@@ -396,14 +428,14 @@ module Chat
     def restricted_capability_message
       I18n.t(
         'app.workspaces.chat.messages.capability_summary_restricted',
-        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner')
+        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
       )
     end
 
     def restricted_scope_message
       I18n.t(
         'app.workspaces.chat.messages.scope_limited_restricted',
-        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner')
+        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
       )
     end
 
@@ -413,6 +445,7 @@ module Chat
       items.concat(view_capability_items(snapshot:))
       items.concat(member_management_capability_items(snapshot:))
       items.concat(data_source_management_capability_items(snapshot:))
+      items.concat(query_capability_items(snapshot:))
       items.concat(workspace_management_capability_items(snapshot:))
       items
     end
@@ -454,7 +487,182 @@ module Chat
     def data_source_management_capability_items(snapshot:)
       return [] unless snapshot[:can_manage_data_sources]
 
-      [I18n.t('app.workspaces.chat.messages.capability_items.data_sources')]
+      %w[data_source_list data_source_add].map do |key|
+        I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
+      end
+    end
+
+    def query_capability_items(snapshot:)
+      items = []
+      items << I18n.t('app.workspaces.chat.messages.capability_items.query_list') if snapshot[:can_view_queries]
+      items << I18n.t('app.workspaces.chat.messages.capability_items.query_run') if snapshot[:can_write_queries]
+      items << I18n.t('app.workspaces.chat.messages.capability_items.query_save') if snapshot[:can_write_queries]
+
+      items
+    end
+
+    def data_source_setup_resolution
+      @data_source_setup_resolution ||= data_source_setup_coordinator.call
+    end
+
+    def handle_data_source_setup_resolution(resolution) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      persist_sanitized_user_content!(sanitized_user_content: resolution.sanitized_user_content)
+
+      unless context_snapshot.capability_snapshot.to_h[:can_manage_data_sources]
+        data_source_setup_coordinator.clear!
+        return execute_direct_forbidden(action_type: 'datasource.create')
+      end
+
+      return render_non_action(resolution.assistant_message) if resolution.status == 'ask'
+
+      intent = direct_intent(action_type: resolution.action_type, payload: resolution.payload)
+      preflight_result = action_executor.preflight(action_type: intent.action_type, payload: intent.payload)
+      return render_execution(intent:, execution: preflight_result) if preflight_result
+
+      execution = action_executor.execute(action_type: intent.action_type, payload: intent.payload)
+
+      if resolution.action_type == 'datasource.validate_connection' && execution.status == 'executed'
+        follow_up = data_source_setup_coordinator.apply_validation_success(execution:)
+        return render_non_action(follow_up.assistant_message)
+      end
+
+      if resolution.action_type == 'datasource.create' && execution.status == 'executed'
+        data_source_setup_coordinator.clear!
+      end
+
+      render_execution(intent:, execution:)
+    end
+
+    def persist_sanitized_user_content!(sanitized_user_content:)
+      return if sanitized_user_content.blank?
+      return if user_message.content.to_s == sanitized_user_content
+
+      user_message.update!(content: sanitized_user_content)
+    end
+
+    def should_resume_query_clarification?
+      return false if context_snapshot.active_query_clarification.blank?
+      return true if query_like_request?
+      return true if content.match?(QUERY_CLARIFICATION_HINT_REGEX)
+      return true if query_candidate_name_match?
+      return true if content.present? && !question_like?
+
+      false
+    end
+
+    def query_candidate_name_match? # rubocop:disable Metrics/AbcSize
+      state = context_snapshot.active_query_clarification.to_h
+      candidate_data_sources = Array(state['candidate_data_sources']).map { |candidate| candidate['name'].to_s }
+      candidate_tables = Array(state['candidate_tables']).map do |candidate|
+        candidate['qualified_name'].to_s.presence || candidate['name'].to_s
+      end
+
+      (candidate_data_sources + candidate_tables).compact.any? do |candidate|
+        content.match?(/\b#{Regexp.escape(candidate)}\b/i)
+      end
+    end
+
+    def query_like_request?
+      return false unless content.match?(QUERY_LIKE_REGEX)
+      return false if content.match?(/\b(team|teammates?|member|members|invite|invitation|workspace|role|roles)\b/i)
+
+      content.match?(query_data_hint_regex) || context_snapshot.data_source_inventory.present?
+    end
+
+    def direct_intent(action_type:, payload:)
+      ActionIntent.new(
+        assistant_message: '',
+        action_type:,
+        payload: intent_reconciler.send(:canonical_payload, action_type:, raw_payload: payload),
+        missing_information: [],
+        finalize_without_tools: false,
+        tool_definition: tool_definition_for(action_type:),
+        source: 'deterministic',
+        confidence: 1.0
+      )
+    end
+
+    def execute_direct_forbidden(action_type:)
+      intent = direct_intent(action_type:, payload: {})
+      execution = action_executor.preflight(action_type:, payload: intent.payload)
+      render_execution(intent:, execution:)
+    end
+
+    def tool_definition_for(action_type:)
+      tool_metadata.find { |tool| tool[:name] == action_type }
+    end
+
+    def data_source_setup_coordinator
+      @data_source_setup_coordinator ||= DataSourceSetupCoordinator.new(
+        workspace:,
+        actor:,
+        chat_thread:,
+        message_text: content
+      )
+    end
+
+    def clear_transient_state_for(intent:, execution:)
+      return unless execution.status == 'executed'
+      return unless intent.action_type == 'query.run'
+      return if execution.data.to_h['clarification_required'] || execution.data.to_h[:clarification_required]
+
+      query_clarification_state_store.clear!
+    end
+
+    def persist_recent_query_state_for(intent:, execution:)
+      return unless execution.status == 'executed'
+
+      case intent.action_type
+      when 'query.run'
+        data = execution.data.to_h.deep_stringify_keys
+        return if ActiveModel::Type::Boolean.new.cast(data['clarification_required'])
+
+        recent_query_state_store.save(
+          'question' => data['question'] || intent.payload['question'],
+          'sql' => data['sql'],
+          'data_source_id' => data.dig('data_source', 'id'),
+          'data_source_name' => data.dig('data_source', 'name'),
+          'row_count' => data['row_count'],
+          'columns' => data['columns'],
+          'saved_query_id' => nil,
+          'saved_query_name' => nil
+        )
+      when 'query.save'
+        data = execution.data.to_h.deep_stringify_keys
+        query_payload = data['query'].to_h.deep_stringify_keys
+        existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
+
+        recent_query_state_store.save(
+          existing_state.merge(
+            'question' => query_payload['question'] || existing_state['question'],
+            'sql' => query_payload['sql'] || existing_state['sql'],
+            'data_source_id' => query_payload.dig('data_source', 'id') || existing_state['data_source_id'],
+            'data_source_name' => query_payload.dig('data_source', 'name') || existing_state['data_source_name'],
+            'saved_query_id' => query_payload['id'],
+            'saved_query_name' => query_payload['name']
+          )
+        )
+      end
+    end
+
+    def query_data_hint_regex
+      /\b(data\s+source|datasource|database|table|tables|schema|sql|query|queries|row|rows|column|columns)\b/i
+    end
+
+    def query_clarification_state_store
+      @query_clarification_state_store ||= QueryClarificationStateStore.new(
+        workspace:,
+        actor:,
+        chat_thread:
+      )
+    end
+
+    def recent_query_state_store
+      @recent_query_state_store ||= RecentQueryStateStore.new(
+        workspace:,
+        actor:,
+        chat_thread:
+      )
     end
   end
 end

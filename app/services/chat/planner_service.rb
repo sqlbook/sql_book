@@ -19,6 +19,34 @@ module Chat
     /ix
     MEMBER_ENTITY_REGEX = /\b(team|teammates?|team mates?|member|members|equipo|miembro|miembros)\b/
     MEMBER_LIST_VERB_REGEX = /\b(list|show|display|get|see|who|listar|lista|muestra|mostrar|ver|quien|quienes)\b/
+    DATA_SOURCE_ENTITY_REGEX = /
+      \b(
+        data\s+source|data\s+sources|datasource|datasources|database|databases|postgres(?:ql)?
+      )\b
+    /ix
+    DATA_SOURCE_LIST_VERB_REGEX = /
+      \b(
+        list|show|display|get|see|which|what|listar|lista|muestra|mostrar|ver|cu[aá]les
+      )\b
+    /ix
+    QUERY_REQUEST_REGEX = /
+      \b(
+        how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with|rows?
+      )\b
+    /ix
+    QUERY_LIBRARY_REGEX = /\b(query\s+library|saved\s+queries|saved\s+query)\b/i
+    QUERY_SAVE_REGEX = /
+      \b(
+        save\s+(?:this|that|the)?\s*query|
+        add\s+(?:this|that|the)?\s*query\s+to\s+(?:the\s+)?query\s+library|
+        save\s+it
+      )\b
+    /ix
+    QUERY_DATA_HINT_REGEX = /
+      \b(
+        data\s+source|datasource|database|table|tables|schema|sql|query|queries|row|rows|column|columns
+      )\b
+    /ix
     INVITE_CONTEXT_REGEX = /
       \b(
         invitation|invite|invitar|invitacion|correo|email
@@ -143,16 +171,14 @@ module Chat
                     'team members, data sources, queries, and dashboards.'
                   ].join(' '),
                   [
-                    'Your current executable scope in this environment is workspace/team management only,',
-                    'using the action contract below.'
+                    'Your current executable scope in this environment includes workspace management, team management,',
+                    'data source management, and read-only data-source querying, using the action contract below.'
                   ].join(' '),
-                  [
-                    'Future capabilities may include datasource/query/dashboard actions, but those are not',
-                    'available to execute right now. If asked, explain this clearly and offer supported actions.'
-                  ].join(' '),
-                  'Never claim to have executed actions that are out of scope.',
                   'Never propose cross-workspace actions; stay in the current workspace only.',
-                  'In this workspace context, user/member/team member refer to workspace members.',
+                  [
+                    'In this workspace context, explicit team/member language refers to workspace members,',
+                    'but plain "users" may also refer to records inside a data source.'
+                  ].join(' '),
                   'Use the recent conversation context to resolve follow-up references like "their names/details".',
                   [
                     'When the user asks for team members, `member.list` means detailed member output',
@@ -174,16 +200,24 @@ module Chat
                     'Only provide a capability summary when the user explicitly asks a meta question like',
                     '"what can you do?".'
                   ].join(' '),
-                  'Use structured recent action context as authoritative when it is provided.',
+                  [
+                    'Use structured recent action context for continuity,',
+                    'but verify mutable workspace or data-source facts through the live state and tools available.'
+                  ].join(' '),
                   'Track the most recent invited, removed, or role-updated member across the thread.',
                   'Classify user intent into an action contract when possible.',
                   [
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
-                    'member.resend_invite, member.update_role, member.remove.'
+                    'member.resend_invite, member.update_role, member.remove, datasource.list,',
+                    'datasource.validate_connection, datasource.create, query.list, query.run, query.save.'
                   ].join(' '),
                   [
-                    'Disallowed namespaces: workspace.list/get/create, datasource.*, query.*, dashboard.*,',
+                    'Disallowed namespaces: workspace.list/get/create, dashboard.*,',
                     'billing.*, subscription.*, admin.*, super_admin.*.'
+                  ].join(' '),
+                  [
+                    'Owners and Admins can manage data sources.',
+                    'Owners, Admins, and Users can run read-only data queries.'
                   ].join(' '),
                   [
                     'Before proposing write actions, collect required fields first.',
@@ -194,7 +228,22 @@ module Chat
                     'Required fields: workspace.update_name(name), member.invite(first_name,last_name,email,role),',
                     'member.resend_invite(email or member_id or full_name),',
                     'member.update_role(email or member_id or full_name, role),',
-                    'member.remove(email or member_id or full_name).'
+                    'member.remove(email or member_id or full_name),',
+                    'datasource.validate_connection(host,database_name,username,password),',
+                    'datasource.create(name,host,database_name,username,password,selected_tables),',
+                    'query.run(question),',
+                    'query.save(sql,data_source_id or data_source_name).'
+                  ].join(' '),
+                  [
+                    'If the user wants to add a PostgreSQL data source,',
+                    'ask for missing setup information in sensible chunks',
+                    'instead of dumping one giant checklist.'
+                  ].join(' '),
+                  [
+                    'For query-library requests, prefer query.list.',
+                    'For "save this query" follow-ups, prefer query.save and reuse the recent executed query context.',
+                    'For data questions, prefer query.run.',
+                    'If multiple connected data sources or tables could answer, ask a clarifying question.'
                   ].join(' '),
                   [
                     'Never choose or assume an invite role on the user\'s behalf.',
@@ -328,12 +377,16 @@ module Chat
 
       return workspace_delete_plan if lower.match?(/\b(delete|remove)\b.*\bworkspace\b/)
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
+      return datasource_list_plan if datasource_list_intent?(lower)
+      return query_list_plan if query_list_intent?(lower)
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
       return member_invite_plan if member_invite_intent?(lower)
       return member_role_update_plan if lower.match?(/\b(change|update)\b.*\brole\b/)
       return member_role_update_plan if lower.match?(/\b(promote|demote)\b/)
       return member_remove_plan if lower.match?(/\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/)
       return member_list_plan if member_list_intent?(lower)
+      return query_save_plan if query_save_intent?(lower)
+      return query_run_plan if query_run_intent?(lower)
 
       if attachment_count.positive?
         return Plan.new(
@@ -355,6 +408,39 @@ module Chat
 
     def member_listing_request?(lowered_message)
       lowered_message.match?(MEMBER_ENTITY_REGEX) && lowered_message.match?(MEMBER_LIST_VERB_REGEX)
+    end
+
+    def datasource_list_intent?(lowered_message)
+      lowered_message.match?(DATA_SOURCE_ENTITY_REGEX) && lowered_message.match?(DATA_SOURCE_LIST_VERB_REGEX)
+    end
+
+    def query_list_intent?(lowered_message)
+      return true if lowered_message.match?(QUERY_LIBRARY_REGEX)
+
+      lowered_message.match?(/\b(list|show|display|see|get)\b/) && lowered_message.match?(/\bqueries\b/)
+    end
+
+    def query_save_intent?(lowered_message)
+      return false if recent_query_state.blank?
+
+      lowered_message.match?(QUERY_SAVE_REGEX)
+    end
+
+    def query_run_intent?(lowered_message) # rubocop:disable Metrics/CyclomaticComplexity
+      return false if member_list_intent?(lowered_message)
+      return false if member_invite_intent?(lowered_message)
+      return false if lowered_message.match?(/\b(resend|invite|rename|delete|remove|promote|demote)\b/)
+      return true if lowered_message.match?(/\A\s*(select|with)\b/)
+      return true if lowered_message.match?(/\b(how many|count|total|average|avg|sum|max|min|rows?)\b/)
+      return false unless lowered_message.match?(QUERY_REQUEST_REGEX)
+
+      lowered_message.match?(QUERY_DATA_HINT_REGEX) || referenced_data_source_name?(lowered_message)
+    end
+
+    def referenced_data_source_name?(lowered_message)
+      workspace.data_sources.active.any? do |data_source|
+        lowered_message.include?(data_source.display_name.to_s.downcase)
+      end
     end
 
     def member_invite_intent?(lowered_message)
@@ -424,6 +510,14 @@ module Chat
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.member_list'),
         action_type: 'member.list',
+        payload: {}
+      )
+    end
+
+    def datasource_list_plan
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.datasource_list'),
+        action_type: 'datasource.list',
         payload: {}
       )
     end
@@ -520,6 +614,33 @@ module Chat
       )
     end
 
+    def query_run_plan
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_run'),
+        action_type: 'query.run',
+        payload: { 'question' => message }
+      )
+    end
+
+    def query_list_plan
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_list'),
+        action_type: 'query.list',
+        payload: {}
+      )
+    end
+
+    def query_save_plan
+      payload = {}
+      payload['name'] = parsed_query_name if parsed_query_name.present?
+
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_save'),
+        action_type: 'query.save',
+        payload:
+      )
+    end
+
     def parsed_role
       parsed_role_from(text: message)
     end
@@ -535,6 +656,14 @@ module Chat
 
       quoted_match = message.match(/["']([^"']+)["']/)
       cleaned_name(quoted_match&.captures&.first)
+    end
+
+    def parsed_query_name
+      QueryNameParser.parse(text: message)
+    end
+
+    def recent_query_state
+      @recent_query_state ||= context_snapshot&.recent_query_state.to_h
     end
 
     def recent_invited_member_role_context_plan

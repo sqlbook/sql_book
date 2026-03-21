@@ -97,6 +97,9 @@ module Chat
       apply_explicit_member_reference!(payload:) if explicit_member_reference_action?(action_type)
       apply_context_member_reference!(payload:) if contextual_member_reference_action?(action_type)
       apply_invite_seed_details!(payload:) if action_type == 'member.invite'
+      apply_query_question!(payload:) if action_type == 'query.run'
+      apply_recent_query_context!(payload:) if action_type == 'query.save'
+      apply_explicit_query_name!(payload:) if action_type == 'query.save'
 
       payload.compact_blank
     end
@@ -158,6 +161,25 @@ module Chat
       @member_reference_resolver ||= MemberReferenceResolver.new(workspace:)
     end
 
+    def apply_query_question!(payload:)
+      payload['question'] = message_text.strip.presence || payload['question']
+    end
+
+    def apply_recent_query_context!(payload:)
+      recent_query_state = context_snapshot.recent_query_state.to_h
+      return if recent_query_state.blank?
+
+      payload['sql'] ||= recent_query_state['sql']
+      payload['question'] ||= recent_query_state['question']
+      payload['data_source_id'] ||= recent_query_state['data_source_id']
+      payload['data_source_name'] ||= recent_query_state['data_source_name']
+    end
+
+    def apply_explicit_query_name!(payload:)
+      explicit_name = QueryNameParser.parse(text: message_text)
+      payload['name'] = explicit_name if explicit_name.present?
+    end
+
     # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def missing_details_message_for(action_type:, payload:)
       case action_type
@@ -184,6 +206,10 @@ module Chat
         return I18n.t('app.workspaces.chat.planner.member_role_update_needs_role') if payload['role'].to_s.strip.blank?
       when 'member.remove'
         return I18n.t('app.workspaces.chat.planner.member_remove_needs_member') if member_reference_missing?(payload)
+      when 'query.save'
+        return I18n.t('app.workspaces.chat.planner.query_save_needs_query') if payload['sql'].to_s.strip.blank?
+        return I18n.t('app.workspaces.chat.query.data_source_not_found') if payload['data_source_id'].to_s.strip.blank? &&
+          payload['data_source_name'].to_s.strip.blank?
       end
 
       nil

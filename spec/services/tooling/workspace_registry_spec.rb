@@ -12,7 +12,10 @@ RSpec.describe Tooling::WorkspaceRegistry do
         'member.list',
         'datasource.list',
         'datasource.validate_connection',
-        'datasource.create'
+        'datasource.create',
+        'query.list',
+        'query.run',
+        'query.save'
       )
     end
   end
@@ -21,7 +24,8 @@ RSpec.describe Tooling::WorkspaceRegistry do
     it 'combines workspace team and data source tool definitions' do
       handlers = {
         team: instance_double(Tooling::WorkspaceTeamHandlers),
-        data_sources: instance_double(Tooling::WorkspaceDataSourceHandlers)
+        data_sources: instance_double(Tooling::WorkspaceDataSourceHandlers),
+        queries: instance_double(Tooling::WorkspaceQueryHandlers)
       }
       success_result = Tooling::Result.new(
         status: 'executed',
@@ -40,11 +44,17 @@ RSpec.describe Tooling::WorkspaceRegistry do
       allow(handlers[:data_sources]).to receive(:list).and_return(success_result)
       allow(handlers[:data_sources]).to receive(:validate_connection).and_return(success_result)
       allow(handlers[:data_sources]).to receive(:create).and_return(success_result)
+      allow(handlers[:queries]).to receive(:list).and_return(success_result)
+      allow(handlers[:queries]).to receive(:run).and_return(success_result)
+      allow(handlers[:queries]).to receive(:save).and_return(success_result)
 
       registry = Tooling::Registry.new(definitions: described_class.definitions(handlers:))
       expect(registry.definition('datasource.list')).to be_present
       expect(registry.definition('datasource.validate_connection')).to be_present
       expect(registry.definition('datasource.create')).to be_present
+      expect(registry.definition('query.list')).to be_present
+      expect(registry.definition('query.run')).to be_present
+      expect(registry.definition('query.save')).to be_present
     end
   end
 end

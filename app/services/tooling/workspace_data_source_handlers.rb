@@ -14,7 +14,7 @@ module Tooling
       @actor = actor
     end
 
-    def list(arguments:) # rubocop:disable Lint/UnusedMethodArgument
+    def list(arguments:) # rubocop:disable Lint/UnusedMethodArgument, Metrics/AbcSize
       data_sources = workspace.data_sources
         .includes(:queries)
         .order(Arel.sql(ordering_sql), :name, :id)
@@ -23,7 +23,18 @@ module Tooling
       message = if payload.empty?
                   default_message('data_sources_none')
                 else
-                  default_message('data_sources_found', count: payload.size)
+                  [
+                    default_message('data_sources_found', count: payload.size),
+                    payload.map do |data_source|
+                      I18n.t(
+                        'app.workspaces.chat.datasource.data_source_item',
+                        name: data_source['name'],
+                        source_type: data_source['source_type'].to_s.humanize,
+                        status: data_source['status'].to_s.humanize,
+                        tables_count: data_source['tables_count']
+                      )
+                    end.join("\n")
+                  ].join("\n\n")
                 end
 
       executed(message:, data: { 'data_sources' => payload })
@@ -91,7 +102,7 @@ module Tooling
     def connection_attributes(arguments:)
       {
         host: arguments['host'],
-        port: arguments['port'],
+        port: arguments['port'].presence || DataSource::POSTGRES_DEFAULT_PORT,
         database_name: arguments['database_name'],
         username: arguments['username'],
         password: arguments['password'],

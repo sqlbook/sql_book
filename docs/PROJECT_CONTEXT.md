@@ -28,16 +28,18 @@ sqlbook lets users:
 8. Dashboard MVP on top of the new connector model.
 
 ## Current Chat Runtime Snapshot
-- Chat execution scope now includes workspace/team actions plus the phase-1 datasource actions (`datasource.list`, `datasource.validate_connection`, `datasource.create`).
+- Chat execution scope now includes workspace/team actions plus the phase-1 datasource/query actions (`datasource.list`, `datasource.validate_connection`, `datasource.create`, `query.list`, `query.run`, `query.save`).
 - Shared tool registry is now the canonical server execution interface for chat actions.
 - Chat turn orchestration is now server-authoritative:
   - `Chat::TurnOrchestrator` owns turn flow
   - `Chat::RuntimeService` proposes intent
   - reconciliation, preflight, confirmation, idempotency, and truth refresh are app-owned
-- Public API docs for workspace/team/datasource contracts are available at `/dev/api` (API routes remain auth-protected).
+- Public API docs for workspace/team/datasource/query contracts are available at `/dev/api` (API routes remain auth-protected).
 - `docs/API_MASTER_REF.md` is the canonical reference for OpenAPI/Scalar setup and API-doc maintenance rules.
 - Destructive writes (`workspace.delete`, `member.remove`) require confirmation; other allowed writes, including `member.update_role`, auto-run after preflight.
 - Invite flows require full identity (`first_name`, `last_name`, `email`) plus an explicit `role` before `member.invite` executes.
+- Datasource setup flows are staged and should collect missing details progressively rather than asking for every field in one turn.
+- Query chat is single-source in phase 1; it can list saved queries, run read-only queries, and save the most recent executed query into the query library. If multiple datasources or tables plausibly match the question, chat should ask a clarifying follow-up before execution.
 - Chat context is assembled from recent transcript + structured recent action results, not shadow LLM-maintained memory records.
 - Chat write lifecycle now separates semantic identity from attempt identity so old-thread retries create fresh attempts without replaying stale results.
 - Chat surface uses split sibling panels (history + conversation) on desktop and overlay history on mobile (`<=760px`).

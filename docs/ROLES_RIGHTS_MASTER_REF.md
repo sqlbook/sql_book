@@ -1,6 +1,6 @@
 # Roles and Rights Master Reference
 
-Last updated: 2026-03-16
+Last updated: 2026-03-21
 
 ## Purpose
 Single source of truth for workspace role capabilities, route-level enforcement, and UI affordance expectations.
@@ -78,7 +78,7 @@ Super-admin is separate from workspace roles:
   - mutating action execution is additionally policy-gated by action type + target role constraints
   - confirmation policy is risk-based:
     - destructive writes require confirmation (`workspace.delete`, `member.remove`)
-    - auto-run writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`
+    - auto-run writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, `member.update_role`, `datasource.validate_connection`, `datasource.create`, and `query.save`
   - confirm/cancel is limited to the same requesting user and workspace/thread scope
 
 ### Workspace chat action allowlist (v1)
@@ -101,6 +101,21 @@ Super-admin is separate from workspace roles:
   - Owner: allow (except owner-removal/promotion constraints)
   - Admin: allow only for lower roles and non-owner targets
   - User: deny
+  - Read-only: deny
+- `datasource.list`, `datasource.validate_connection`, `datasource.create`
+  - Owner: allow
+  - Admin: allow
+  - User: deny
+  - Read-only: deny
+- `query.list`
+  - Owner: allow
+  - Admin: allow
+  - User: allow
+  - Read-only: allow
+- `query.run`, `query.save`
+  - Owner: allow
+  - Admin: allow
+  - User: allow
   - Read-only: deny
 
 ### Shared capability surface
@@ -131,6 +146,38 @@ Super-admin is separate from workspace roles:
 - Admin: allow
 - User: deny
 - Read-only: deny
+
+### Query chat action
+- Tool scope:
+  - `query.list`
+  - `query.run`
+  - `query.save`
+- `query.list`
+  - Owner: allow
+  - Admin: allow
+  - User: allow
+  - Read-only: allow
+- `query.run`, `query.save`
+  - Owner: allow
+  - Admin: allow
+  - User: allow
+  - Read-only: deny
+
+### Query API surface
+- Route scope:
+  - `GET /api/v1/workspaces/:workspace_id/queries`
+  - `POST /api/v1/workspaces/:workspace_id/queries/run`
+  - `POST /api/v1/workspaces/:workspace_id/queries`
+- Query list API:
+  - Owner: allow
+  - Admin: allow
+  - User: allow
+  - Read-only: allow
+- Query run/save API:
+  - Owner: allow
+  - Admin: allow
+  - User: allow
+  - Read-only: deny
 
 ### Query library/read
 - Route scope:

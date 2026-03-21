@@ -51,11 +51,17 @@ API routes:
 - `GET /api/v1/workspaces/:workspace_id/data-sources`
 - `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
 - `POST /api/v1/workspaces/:workspace_id/data-sources`
+- `GET /api/v1/workspaces/:workspace_id/queries`
+- `POST /api/v1/workspaces/:workspace_id/queries/run`
+- `POST /api/v1/workspaces/:workspace_id/queries`
 
 Chat/tool actions:
 - `datasource.list`
 - `datasource.validate_connection`
 - `datasource.create`
+- `query.list`
+- `query.run`
+- `query.save`
 
 ## Permissions
 - Datasource management is owner/admin only across:
@@ -63,6 +69,9 @@ Chat/tool actions:
   - `/api/v1`
   - chat/tool execution
 - User/read-only members must not be able to create, validate, update, or delete datasources.
+- Saved-query library read is allowed for all accepted roles.
+- Read-only query execution against connected datasources is allowed for `OWNER`, `ADMIN`, and `USER`, and denied for `READ_ONLY`.
+- Query save is allowed for `OWNER`, `ADMIN`, and `USER`, and denied for `READ_ONLY`.
 - Server-side authorization remains authoritative even if UI affordances are hidden.
 
 ## Datasource home behavior
@@ -118,11 +127,16 @@ Step 2:
   - password
   - optional flags carried in config (for example `extract_category_values`)
 - clicking next validates the connection server-side
+- chat-assisted setup should collect the same required information in stages rather than demanding every field in one message
 
 Step 3:
 - select tables to allow for the datasource
 - selected-table limit: `20`
 - successful completion returns user to datasource home
+- chat-assisted setup should accept freeform replies such as:
+  - `Call it Warehouse DB`
+  - `Host is db.example.com, database name is warehouse, username is readonly, and password is super-secret`
+  - `Use public.users`
 
 Wizard-state note:
 - essential datasource connection state is preserved across requests without relying solely on cache
@@ -148,6 +162,11 @@ UI fidelity notes:
   - one datasource is selected at a time
   - SQL runs only against that datasource
   - schema browser shows connector metadata for the currently selected datasource and its allowed tables
+- Chat query execution is also single-source in phase 1:
+  - one datasource is selected at a time
+  - if multiple datasources or tables plausibly match the question, chat must ask a clarifying follow-up before generating SQL
+  - successful chat execution uses the same connector-backed read-only path as the query editor
+  - successful chat execution can be followed by `query.save`, which persists that SQL into the query library
 - External SQL guardrails include:
   - read-only execution path
   - safety validation before execution
@@ -171,6 +190,10 @@ UI fidelity notes:
 ## API and chat parity
 - Datasource list/validate/create must remain aligned across:
   - standalone UI
+  - OpenAPI-documented `/api/v1`
+  - chat tool execution
+- Query list/run/save must remain aligned across:
+  - standalone query library semantics
   - OpenAPI-documented `/api/v1`
   - chat tool execution
 - Chat/tool execution uses the same server-authoritative handlers and policy layer as the API-facing surface.

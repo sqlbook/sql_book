@@ -9,7 +9,8 @@ module Chat
       @actor = actor
       @handlers = {
         team: Tooling::WorkspaceTeamHandlers.new(workspace:, actor:),
-        data_sources: Tooling::WorkspaceDataSourceHandlers.new(workspace:, actor:)
+        data_sources: Tooling::WorkspaceDataSourceHandlers.new(workspace:, actor:),
+        queries: Tooling::WorkspaceQueryHandlers.new(workspace:, actor:)
       }
       @registry = registry || Tooling::Registry.new(
         definitions: Tooling::WorkspaceRegistry.definitions(handlers: @handlers)

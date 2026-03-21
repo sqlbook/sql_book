@@ -1,6 +1,6 @@
 # API Master Reference
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Purpose
 Single source of truth for sqlbook's documented API surface, OpenAPI authoring rules, Scalar setup, and the maintenance workflow that keeps the docs useful for both humans and LLM/tool consumers.
@@ -25,7 +25,7 @@ Important:
 - Auth model today is session cookie auth (`_sqlbook_session`).
 
 ## Current documented API scope
-Current OpenAPI coverage is intentionally focused on the workspace/team and datasource contracts used by chat and app surfaces:
+Current OpenAPI coverage is intentionally focused on the workspace/team, datasource, and query contracts used by chat and app surfaces:
 - `PATCH /api/v1/workspaces/:workspace_id`
 - `DELETE /api/v1/workspaces/:workspace_id`
 - `GET /api/v1/workspaces/:workspace_id/members`
@@ -36,12 +36,22 @@ Current OpenAPI coverage is intentionally focused on the workspace/team and data
 - `GET /api/v1/workspaces/:workspace_id/data-sources`
 - `POST /api/v1/workspaces/:workspace_id/data-sources/validate-connection`
 - `POST /api/v1/workspaces/:workspace_id/data-sources`
+- `GET /api/v1/workspaces/:workspace_id/queries`
+- `POST /api/v1/workspaces/:workspace_id/queries/run`
+- `POST /api/v1/workspaces/:workspace_id/queries`
 
 Current datasource API scope:
 - phase 1 is PostgreSQL-only for external database creation/validation
 - routes are workspace-scoped and session-authenticated
 - owner/admin only for datasource management actions
 - the API is intentionally phrased so both engineers and the workspace chat/runtime can consume the same contract cleanly
+
+Current query API scope:
+- query-library list is available to all accepted workspace roles
+- read-only query execution is available to `OWNER`, `ADMIN`, and `USER`
+- query save is available to `OWNER`, `ADMIN`, and `USER`
+- callers can send either a plain-language question or direct read-only SQL to the run endpoint
+- save requests require SQL plus datasource identity; query name can be server-generated when omitted
 
 ## Why these docs exist
 - Humans need a browsable contract reference for product and integration work.
@@ -100,13 +110,13 @@ For docs to stay human and LLM friendly:
 - Product UI consumes the API through Rails controllers/services directly.
 - Chat does not call `/api/v1` over HTTP today; it uses the same underlying server-side execution contracts through the shared tool registries and action executor.
 - The API docs still matter for chat because they define the public-facing contract language we want tools and future consumers to follow.
-- Datasource list/validate/create contracts should stay semantically aligned across:
+- Datasource and query contracts should stay semantically aligned across:
   - standalone UI flows
   - `/api/v1`
   - chat tool execution
 
 ## Maintenance workflow
-When changing any documented workspace/team/datasource API behavior:
+When changing any documented workspace/team/datasource/query API behavior:
 1. update controller/service behavior first
 2. update `config/openapi/v1.json` in the same change
 3. update any relevant master refs if semantics changed

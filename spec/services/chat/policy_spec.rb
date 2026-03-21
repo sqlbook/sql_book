@@ -9,10 +9,74 @@ RSpec.describe Chat::Policy, type: :service do
   describe '#authorize' do
     it 'blocks explicitly disallowed namespaces' do
       policy = described_class.new(workspace:, actor: owner)
-      decision = policy.authorize(action_type: 'query.run', payload: {})
+      decision = policy.authorize(action_type: 'billing.manage', payload: {})
 
       expect(decision.allowed).to be(false)
       expect(decision.reason_code).to eq('forbidden_action')
+    end
+
+    it 'allows regular members to run data-source queries' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(action_type: 'query.run', payload: { 'question' => 'how many users do I have?' })
+
+      expect(decision.allowed).to be(true)
+    end
+
+    it 'allows read-only members to list saved queries' do
+      read_only = create(:user)
+      create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)
+      policy = described_class.new(workspace:, actor: read_only)
+
+      decision = policy.authorize(action_type: 'query.list', payload: {})
+
+      expect(decision.allowed).to be(true)
+    end
+
+    it 'blocks read-only members from running data-source queries' do
+      read_only = create(:user)
+      create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)
+      policy = described_class.new(workspace:, actor: read_only)
+
+      decision = policy.authorize(action_type: 'query.run', payload: { 'question' => 'how many users do I have?' })
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
+    end
+
+    it 'allows regular members to save queries' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(
+        action_type: 'query.save',
+        payload: {
+          'sql' => 'SELECT COUNT(*) AS count FROM public.users',
+          'data_source_id' => 1
+        }
+      )
+
+      expect(decision.allowed).to be(true)
+    end
+
+    it 'blocks read-only members from saving queries' do
+      read_only = create(:user)
+      create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)
+      policy = described_class.new(workspace:, actor: read_only)
+
+      decision = policy.authorize(
+        action_type: 'query.save',
+        payload: {
+          'sql' => 'SELECT COUNT(*) AS count FROM public.users',
+          'data_source_id' => 1
+        }
+      )
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
     end
 
     it 'allows an owner to delete a workspace' do

@@ -216,7 +216,8 @@ CREATE TABLE public.chat_threads (
     title character varying,
     archived_at timestamp(6) without time zone,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -1235,6 +1236,7 @@ ALTER TABLE ONLY public.chat_action_requests
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260321113000'),
 ('20260320110000'),
 ('20260316143000'),
 ('20260309102000'),

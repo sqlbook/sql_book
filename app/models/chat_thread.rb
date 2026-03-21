@@ -24,6 +24,8 @@ class ChatThread < ApplicationRecord
 
   validates :title, length: { maximum: 255 }, allow_blank: true
 
+  attribute :metadata, :json, default: -> { {} }
+
   def self.active_for(workspace:, user:)
     active
       .for_user(user)

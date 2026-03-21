@@ -15,15 +15,17 @@ module Chat
       datasource.list
       datasource.validate_connection
       datasource.create
+      query.list
+      query.run
+      query.save
     ].freeze
 
-    WRITE_ACTIONS = ALLOWED_ACTIONS - ['member.list', 'datasource.list']
+    WRITE_ACTIONS = ALLOWED_ACTIONS - ['member.list', 'datasource.list', 'query.list', 'query.run']
 
     BLOCKED_PREFIXES = %w[
       workspace.list
       workspace.get
       workspace.create
-      query.
       dashboard.
       billing.
       subscription.
@@ -42,7 +44,10 @@ module Chat
       'member.remove' => :authorize_member_remove,
       'datasource.list' => :authorize_data_source_list,
       'datasource.validate_connection' => :authorize_data_source_validate_connection,
-      'datasource.create' => :authorize_data_source_create
+      'datasource.create' => :authorize_data_source_create,
+      'query.list' => :authorize_query_list,
+      'query.run' => :authorize_query_run,
+      'query.save' => :authorize_query_save
     }.freeze
 
     def self.write_action?(action_type)
@@ -50,7 +55,12 @@ module Chat
     end
 
     def self.allowed_roles_key_for(action_type)
-      action_type == 'workspace.delete' ? 'owner' : 'admin_or_owner'
+      return 'owner' if action_type == 'workspace.delete'
+      return 'workspace_member' if action_type == 'query.list'
+      return 'user_admin_or_owner' if action_type == 'query.run'
+      return 'user_admin_or_owner' if action_type == 'query.save'
+
+      'admin_or_owner'
     end
 
     def initialize(workspace:, actor:)
@@ -151,6 +161,24 @@ module Chat
 
     def authorize_data_source_create(**)
       authorize_data_source_management
+    end
+
+    def authorize_query_run(**)
+      return allow if capabilities.can_write_queries?
+
+      deny(reason_code: 'forbidden_role')
+    end
+
+    def authorize_query_list(**)
+      return allow if capabilities.can_view_queries?
+
+      deny(reason_code: 'forbidden_role')
+    end
+
+    def authorize_query_save(**)
+      return allow if capabilities.can_write_queries?
+
+      deny(reason_code: 'forbidden_role')
     end
 
     def current_role

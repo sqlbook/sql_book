@@ -28,6 +28,10 @@ class WorkspaceCapabilityResolver
     can_manage_workspace_settings?
   end
 
+  def can_view_queries?
+    role.present?
+  end
+
   def can_write_queries?
     !role.in?([nil, Member::Roles::READ_ONLY])
   end
@@ -55,6 +59,7 @@ class WorkspaceCapabilityResolver
       can_manage_workspace_members: can_manage_workspace_members?,
       can_view_team_members: can_view_team_members?,
       can_manage_data_sources: can_manage_data_sources?,
+      can_view_queries: can_view_queries?,
       can_write_queries: can_write_queries?,
       can_write_dashboards: can_write_dashboards?,
       can_destroy_dashboards: can_destroy_dashboards?

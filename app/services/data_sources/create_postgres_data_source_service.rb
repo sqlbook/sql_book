@@ -128,7 +128,7 @@ module DataSources
     def data_source_config(selected_tables)
       {
         'host' => connection_attributes[:host],
-        'port' => connection_attributes[:port].to_i,
+        'port' => connection_attributes[:port].presence || DataSource::POSTGRES_DEFAULT_PORT,
         'database_name' => connection_attributes[:database_name],
         'username' => connection_attributes[:username],
         'ssl_mode' => connection_attributes[:ssl_mode].presence || DataSource::POSTGRES_DEFAULT_SSL_MODE,

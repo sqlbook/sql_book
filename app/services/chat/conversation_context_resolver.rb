@@ -156,7 +156,11 @@ module Chat
     end
 
     def result_payload(entry:)
-      result_data(entry).values.find { |value| value.is_a?(Hash) }&.stringify_keys
+      result_data(entry)
+        .slice('invited_member', 'removed_member', 'member')
+        .values
+        .find { |value| value.is_a?(Hash) }
+        &.stringify_keys
     end
 
     def explicit_reference_match(text:)
