@@ -204,11 +204,13 @@ High-risk writes (inline confirmation required):
 - `datasource.validate_connection`: `host`, `database_name`, `username`, `password`
 - `datasource.create`: `name`, `host`, `database_name`, `username`, `password`, `selected_tables`
 - `query.run`: `question`
+- Raw SQL messages beginning with `SELECT` or `WITH` should be treated as `query.run` immediately, even in threads that already contain saved-query or query-library context.
 - `query.list`: no required fields
 - `query.save`: `sql` + (`data_source_id` or `data_source_name`); `name` optional
 - `query.rename`: `query_id`, `name`
 - `query.delete`: `query_id`
-- When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt.
+- When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt or a generic analytic question like "How many users do I have?".
+- SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -268,6 +270,7 @@ High-risk writes (inline confirmation required):
 13. Datasource setup should collect missing connection information in sensible stages instead of dumping every possible field request into one turn.
 14. Query follow-ups about current mutable datasource/member facts should verify live workspace state before asserting them.
 15. Active query clarification and obvious query-scope follow-ups must take precedence over stale datasource-setup state in the same thread.
+16. Successful in-scope replies may end with one short natural next step (for example saving a query, refining a result, or asking one relevant follow-up), but chat should do this sparingly and avoid repetitive stock sign-offs.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
@@ -292,6 +295,7 @@ High-risk writes (inline confirmation required):
   - "show my query library"
   - "rename that query to Active users by day"
   - "delete that saved query"
+  - "could you change it to User Count?" after saving or listing a recent query
 - Datasource setup follow-ups should support:
   - friendly staged answers like "Call it Warehouse DB"
   - freeform connection-detail replies such as "my database name is JOHNNY and the type is PostgreSQL"
@@ -300,7 +304,10 @@ High-risk writes (inline confirmation required):
   - datasource disambiguation such as "Use Warehouse DB"
   - table disambiguation when multiple candidate tables match the question
   - scope clarification replies such as "I mean in my connected database"
+  - branch-preserving follow-ups such as "And my users?" after the user first answered the workspace-members branch
   - schema-guidance follow-ups such as "Can you tell from the schema?" without falling back to generic datasource listing
+- Questions such as "Who are my users?" should be treated as query-like when workspace datasource context indicates the user may mean database records.
+- If exactly one active datasource exists and the likely table is clear from schema/name/column hints, chat should resolve that datasource automatically instead of asking for a datasource id or name again.
 - Referential member follow-ups such as "what are their names and details?" should stay in scope when a recent member/team result is present, even if the message does not repeat words like `member` or `team`.
 - Structured result data is persisted on assistant messages for both:
   - auto-executed actions

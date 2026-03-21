@@ -10,10 +10,10 @@ module Chat
       def clear! = {}
     end
 
-    QUERY_INTENT_REGEX = /\b(how many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|rows?)\b/i
+    QUERY_INTENT_REGEX = /\b(how many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|who|rows?)\b/i
     NEW_QUERY_SIGNAL_REGEX = /
       \b(
-        how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with
+        how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with|who
       )\b
     /ix
     SCHEMA_INFERENCE_REGEX = /

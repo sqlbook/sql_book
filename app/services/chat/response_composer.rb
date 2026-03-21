@@ -33,17 +33,16 @@ module Chat
     end
 
     # rubocop:disable Metrics/CyclomaticComplexity
-    def confirmation_message(action_type:, proposed_message:)
-      candidate = proposed_message.to_s.strip
+    def confirmation_message(action_type:, proposed_message:, payload: {})
+      candidate = normalized_message_candidate(proposed_message)
       return candidate if candidate.present? && confirmation_prompt?(candidate)
 
-      action = translated_action(action_type:)
-      fallback = I18n.t('app.workspaces.chat.messages.confirmation_default')
-      message = confirmation_candidates(action:).find { |value| !prior_message_match?(value) }
+      named_candidate = available_named_confirmation_candidate(action_type:, payload:)
+      return named_candidate if named_candidate.present?
 
-      message.presence || candidate.presence || fallback
+      default_confirmation_candidate(action_type:) || candidate.presence || default_confirmation_fallback
     rescue I18n::MissingTranslationData
-      candidate.presence || fallback
+      candidate.presence || default_confirmation_fallback
     end
     # rubocop:enable Metrics/CyclomaticComplexity
 
@@ -185,6 +184,35 @@ module Chat
       end
     end
 
+    def named_confirmation_candidate(action_type:, payload:)
+      case action_type
+      when 'query.delete'
+        query_name = payload.to_h['query_name'] || payload.to_h[:query_name]
+        return nil if query_name.to_s.strip.blank?
+
+        I18n.t('app.workspaces.chat.responses.confirmation.query_delete_named', name: query_name)
+      end
+    rescue I18n::MissingTranslationData
+      nil
+    end
+
+    def available_named_confirmation_candidate(action_type:, payload:)
+      candidate = named_confirmation_candidate(action_type:, payload:)
+      return nil if candidate.blank?
+      return nil if prior_message_match?(candidate)
+
+      candidate
+    end
+
+    def default_confirmation_candidate(action_type:)
+      action = translated_action(action_type:)
+      confirmation_candidates(action:).find { |value| !prior_message_match?(value) }
+    end
+
+    def default_confirmation_fallback
+      I18n.t('app.workspaces.chat.messages.confirmation_default')
+    end
+
     def translation_action_key(action_type)
       action_type.to_s.tr('.', '_')
     end
@@ -215,6 +243,17 @@ module Chat
 
     def confirmation_prompt?(content)
       content.to_s.downcase.match?(/\b(confirm|confirmed|confirmation|confirma|confirmar)\b/)
+    end
+
+    def normalized_message_candidate(value)
+      case value
+      when Array
+        value.flatten.filter_map do |entry|
+          normalized_message_candidate(entry)
+        end.first.to_s.strip
+      else
+        value.to_s.strip
+      end
     end
   end
 end

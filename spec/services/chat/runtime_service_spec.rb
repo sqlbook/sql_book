@@ -186,6 +186,157 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(false)
     end
 
+    it 'overrides a query.list misclassification for explicit saved-query rename requests' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'how many users do I have',
+        query: 'SELECT COUNT(*) AS row_count FROM public.users',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'Here are 1 saved queries.',
+        tool_calls: [{ tool_name: 'query.list', arguments: {} }],
+        missing_information: [],
+        finalize_without_tools: false
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: "Rename the query 'how many users do I have' to 'User Count'",
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          context_snapshot: instance_double(
+            Chat::ContextSnapshot,
+            recent_query_state: {
+              'saved_query_id' => saved_query.id,
+              'saved_query_name' => saved_query.name
+            },
+            conversation_messages: [],
+            structured_context_lines: []
+          ),
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.rename')
+      expect(decision.tool_calls.first.arguments).to include(
+        'query_id' => saved_query.id,
+        'query_name' => saved_query.name,
+        'name' => 'User Count'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'overrides a query.list misclassification for explicit saved-query delete requests' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User names and email addresses',
+        query: 'SELECT first_name, last_name, email FROM public.users',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'Here are 1 saved queries.',
+        tool_calls: [{ tool_name: 'query.list', arguments: {} }],
+        missing_information: [],
+        finalize_without_tools: false
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: "Could you delete the query '#{saved_query.name}'?",
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          context_snapshot: instance_double(
+            Chat::ContextSnapshot,
+            recent_query_state: {
+              'saved_query_id' => saved_query.id,
+              'saved_query_name' => saved_query.name
+            },
+            conversation_messages: [],
+            structured_context_lines: []
+          ),
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.delete')
+      expect(decision.tool_calls.first.arguments).to include(
+        'query_id' => saved_query.id,
+        'query_name' => saved_query.name
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'acknowledges a recent wrong-query deletion instead of falling back to query.list' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'Here are 2 saved queries.',
+        tool_calls: [{ tool_name: 'query.list', arguments: {} }],
+        missing_information: [],
+        finalize_without_tools: false
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: "Well, you've gone and deleted the wrong one!",
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          conversation_messages: [
+            {
+              role: 'assistant',
+              content: 'I deleted the saved query "Users".',
+              metadata: {
+                result_data: {
+                  deleted_query: {
+                    id: 1,
+                    name: 'Users'
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls).to be_empty
+      expect(decision.assistant_message).to include('Users')
+      expect(decision.assistant_message).to include('not the query you meant')
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
     it 'asks for missing names when invite email follow-up is present but model returns no tool' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {

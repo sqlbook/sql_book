@@ -115,8 +115,10 @@ module Chat
     def query_payload_steps_for(action_type:)
       return [:apply_query_question!] if action_type == 'query.run'
       return %i[apply_recent_query_context! apply_explicit_query_name!] if action_type == 'query.save'
-      return %i[apply_explicit_query_reference! apply_explicit_query_name!] if action_type == 'query.rename'
-      return [:apply_explicit_query_reference!] if action_type == 'query.delete'
+      if action_type == 'query.rename'
+        return %i[apply_explicit_query_reference! apply_recent_query_reference! apply_explicit_query_name!]
+      end
+      return %i[apply_explicit_query_reference! apply_recent_query_reference!] if action_type == 'query.delete'
 
       []
     end
@@ -200,6 +202,17 @@ module Chat
     def apply_explicit_query_reference!(payload:)
       explicit_reference = query_reference_resolver.reference_payload(text: message_text)
       payload.merge!(explicit_reference) if explicit_reference.present?
+    end
+
+    def apply_recent_query_reference!(payload:)
+      return if payload['query_id'].present?
+
+      recent_query_state = context_snapshot.recent_query_state.to_h
+      return if recent_query_state.blank?
+      return if recent_query_state['saved_query_id'].to_s.strip.blank?
+
+      payload['query_id'] = recent_query_state['saved_query_id']
+      payload['query_name'] ||= recent_query_state['saved_query_name']
     end
 
     def query_reference_resolver

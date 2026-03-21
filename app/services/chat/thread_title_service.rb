@@ -3,7 +3,7 @@
 require 'net/http'
 
 module Chat
-  class ThreadTitleService
+  class ThreadTitleService # rubocop:disable Metrics/ClassLength
     MAX_TITLE_LENGTH = 80
 
     def initialize(message:, workspace:, actor:)
@@ -51,11 +51,20 @@ module Chat
     def heuristic_title
       return nil if message.blank?
 
+      sql_title = sql_heuristic_title
+      return sql_title if sql_title.present?
+
       candidate = message
         .sub(/\A(?:can you|could you|please)\s+/i, '')
         .sub(/[.!?]+\z/, '')
 
       candidate.truncate(MAX_TITLE_LENGTH, separator: ' ', omission: '...')
+    end
+
+    def sql_heuristic_title
+      return nil unless message.match?(/\A\s*(select|with)\b/i)
+
+      Queries::NameGenerator.descriptive_name_from_sql(sql: message)
     end
 
     def sanitize_title(value)
@@ -87,6 +96,10 @@ module Chat
                 text: [
                   'Generate a short chat title from the user message.',
                   'Return only the title text.',
+                  [
+                    'If the message is raw SQL, infer the user intent and return',
+                    'a human title instead of repeating the SQL.'
+                  ].join(' '),
                   'Use the same language as the user.',
                   'Keep it between 2 and 7 words.',
                   'Do not use quotes.',

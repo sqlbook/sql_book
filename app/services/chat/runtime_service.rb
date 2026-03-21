@@ -31,6 +31,16 @@ module Chat
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
+    QUERY_RENAME_INTENT_REGEX = /\b(rename|retitle|change)\b/i
+    QUERY_DELETE_INTENT_REGEX = /\b(delete|remove)\b.*\bquery\b/i
+    QUERY_RENAME_CONTEXT_REGEX = /
+      \b(
+        which\s+saved\s+query\s+to\s+rename|
+        rename\s+it\b|
+        what\s+would\s+you\s+like\s+to\s+rename
+      )\b
+    /ix
+    QUERY_DELETE_MISTAKE_REGEX = /\b(wrong|mistake|different|not\s+the\s+right)\b/i
     PLACEHOLDER_NAME_PARTS = %w[
       someone somebody anyone anybody person people team teammate teammates mate mates
       member members user users my our else another one this that
@@ -430,6 +440,18 @@ module Chat
         'Do not say a tool is unavailable if it exists in the provided tool metadata.',
         'Do not wrap payload values with extra punctuation not intended by user input.',
         'Use markdown when it improves readability, especially bullet lists or tables for collections.',
+        [
+          'When it helps the conversation flow, end a successful in-scope reply with one light next step,',
+          'for example a brief offer, a relevant follow-up question, or a concrete suggestion.'
+        ].join(' '),
+        [
+          'Do this naturally and sparingly.',
+          'Do not add a sign-off on every turn, and avoid generic filler like repeating "let me know" every time.'
+        ].join(' '),
+        [
+          'Do not tack on a conversational sign-off for destructive confirmations, permission denials,',
+          'validation failures, or when the user is clearly stopping.'
+        ].join(' '),
         'Output strict JSON with keys: assistant_message, tool_calls, missing_information, finalize_without_tools.',
         'tool_calls must be an array of objects: { tool_name, arguments }.',
         'arguments must be a JSON string encoding an object, for example "{}" or "{\"email\":\"sam@example.com\"}".',
@@ -448,6 +470,14 @@ module Chat
         'Use markdown when it improves readability.',
         'Preserve meaningful paragraph breaks.',
         'When presenting collections, use real markdown bullet lists or tables instead of inline dash-separated text.',
+        [
+          'When the result is successful and it helps, end with one short natural next step',
+          'such as offering to save, rename, filter, or extend the result.'
+        ].join(' '),
+        [
+          'Keep that forward-looking line brief and relevant.',
+          'Do not add it to every answer, and do not use repetitive stock closers.'
+        ].join(' '),
         'For member list results, put each member on its own bullet or row.',
         'If an action is forbidden, say who can perform it in natural language instead of repeating a flat refusal.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
@@ -635,16 +665,93 @@ module Chat
     end
 
     def apply_deterministic_guards(decision)
-      return decision if decision.nil? || !no_tool_selected?(decision)
+      guarded = deterministic_follow_up_decision
+      return decision unless should_apply_guard?(decision:, guarded:)
 
-      deterministic_follow_up_decision || decision
+      guarded
     end
 
     def deterministic_follow_up_decision
-      recent_invited_member_role_answer_decision ||
+      recent_query_delete_mistake_decision ||
+        query_delete_follow_up_decision ||
+        query_rename_follow_up_decision ||
+        recent_invited_member_role_answer_decision ||
         recent_member_context_answer_decision ||
         member_remove_follow_up_decision ||
         invite_follow_up_guard_decision
+    end
+
+    def should_apply_guard?(decision:, guarded:)
+      return false if guarded.nil?
+      return true if decision.nil? || no_tool_selected?(decision)
+
+      selected_tool_name = decision.tool_calls.first&.tool_name
+      guarded_tool_name = guarded.tool_calls.first&.tool_name
+
+      query_list_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
+    end
+
+    def query_list_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
+      return false unless selected_tool_name == 'query.list'
+      return true if %w[query.rename query.delete].include?(guarded_tool_name)
+
+      guarded.finalize_without_tools
+    end
+
+    def recent_query_delete_mistake_decision
+      deleted_query = recent_deleted_query
+      return nil if deleted_query.blank?
+      return nil unless message.match?(QUERY_DELETE_MISTAKE_REGEX)
+      return nil unless message.match?(/\b(delete|deleted|query)\b/i)
+
+      Decision.new(
+        assistant_message: I18n.t(
+          'app.workspaces.chat.planner.query_delete_mistake_follow_up',
+          name: deleted_query['name']
+        ),
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      )
+    end
+
+    def query_delete_follow_up_decision
+      return nil unless query_delete_follow_up?
+
+      query_reference = resolved_query_reference_payload
+      return nil if query_reference['query_id'].blank?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_delete'),
+        tool_calls: [
+          ToolCall.new(
+            tool_name: 'query.delete',
+            arguments: query_reference
+          )
+        ],
+        missing_information: [],
+        finalize_without_tools: false
+      )
+    end
+
+    def query_rename_follow_up_decision
+      return nil unless query_rename_follow_up?
+
+      query_name = inferred_query_rename_name
+      query_reference = resolved_query_reference_payload
+      return nil if query_name.blank? || query_reference['query_id'].blank?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_rename'),
+        tool_calls: [
+          ToolCall.new(
+            tool_name: 'query.rename',
+            arguments: query_reference.merge('name' => query_name)
+          )
+        ],
+        missing_information: [],
+        finalize_without_tools: false
+      )
     end
 
     def invite_follow_up_guard_decision
@@ -673,6 +780,90 @@ module Chat
 
     def no_tool_selected?(decision)
       decision.tool_calls.empty?
+    end
+
+    def query_rename_follow_up?
+      explicit_query_rename_request? || rename_follow_up_context_active?
+    end
+
+    def query_delete_follow_up?
+      explicit_query_delete_request? || delete_follow_up_context_active?
+    end
+
+    def explicit_query_delete_request?
+      message.match?(QUERY_DELETE_INTENT_REGEX)
+    end
+
+    def delete_follow_up_context_active?
+      return false unless message.match?(/\b(delete|remove)\b/i)
+
+      message.match?(/\b(it|that|that one|same query|same one)\b/i) &&
+        recent_assistant_content.to_s.match?(/\b(saved\s+queries?|query\s+library)\b/i)
+    end
+
+    def explicit_query_rename_request?
+      return false unless message.match?(QUERY_RENAME_INTENT_REGEX)
+
+      message.match?(/\bquery\b/i) || inferred_query_rename_name.present?
+    end
+
+    def rename_follow_up_context_active?
+      inferred_query_rename_name.present? && recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX)
+    end
+
+    def inferred_query_rename_name
+      QueryNameParser.parse(text: message) || recent_requested_query_name
+    end
+
+    def recent_requested_query_name
+      recent_user_conversation_texts.each do |text|
+        parsed_name = QueryNameParser.parse(text:)
+        return parsed_name if parsed_name.present?
+      end
+
+      nil
+    end
+
+    def resolved_query_reference_payload
+      explicit_reference = query_reference_resolver.reference_payload(text: message)
+      return explicit_reference if explicit_reference['query_id'].present?
+
+      recent_saved_query_reference_payload
+    end
+
+    def recent_saved_query_reference_payload
+      recent_query_state = context_snapshot&.recent_query_state.to_h.deep_stringify_keys
+      return {} if recent_query_state.blank?
+      return {} if recent_query_state['saved_query_id'].to_s.strip.blank?
+
+      {
+        'query_id' => recent_query_state['saved_query_id'],
+        'query_name' => recent_query_state['saved_query_name']
+      }
+    end
+
+    def query_reference_resolver
+      @query_reference_resolver ||= QueryReferenceResolver.new(
+        workspace:,
+        recent_query_state: context_snapshot&.recent_query_state,
+        conversation_messages:
+      )
+    end
+
+    def recent_deleted_query
+      conversation_messages.reverse_each do |entry|
+        next unless conversation_entry_role(entry) == 'assistant'
+
+        deleted_query = result_data(entry)['deleted_query'] || result_data(entry)[:deleted_query]
+        return deleted_query.to_h.deep_stringify_keys if deleted_query.present?
+      end
+
+      {}
+    end
+
+    def result_data(entry)
+      metadata = entry[:metadata].presence || entry['metadata'].presence || {}
+      metadata['result_data'] || metadata[:result_data] || {}
     end
 
     def invite_context_active?

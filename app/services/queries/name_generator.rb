@@ -5,11 +5,11 @@ module Queries
     module_function
 
     def generate(question:, sql:, data_source:)
-      cleaned_question = normalized_question(question)
-      return cleaned_question if cleaned_question.present?
-
       sql_name = descriptive_name_from_sql(sql:)
       return sql_name if sql_name.present?
+
+      cleaned_question = normalized_question(question)
+      return cleaned_question if cleaned_question.present?
 
       "#{data_source.display_name} query"
     end
@@ -18,9 +18,14 @@ module Queries
       value = question.to_s.strip
       return nil if value.blank?
       return nil if value.match?(/\A\s*(select|with)\b/i)
+      return nil if generic_analytic_question?(value)
       return nil if conversational_request?(value)
 
       value.gsub(/\s+/, ' ').sub(/[.!?]+\z/, '').truncate(80)
+    end
+
+    def generic_analytic_question?(value)
+      value.match?(/\A\s*(how many|count|total|show me how many|show me|list|find|get)\b/i)
     end
 
     def conversational_request?(value)

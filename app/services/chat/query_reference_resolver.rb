@@ -2,7 +2,10 @@
 
 module Chat
   class QueryReferenceResolver # rubocop:disable Metrics/ClassLength
-    DIRECT_REFERENCE_REGEX = /\b(this|that|same)\s+query\b/i
+    DIRECT_REFERENCE_REGEX = /
+      \b(this|that|same)\s+(?:query|one)\b|
+      \bit\b
+    /ix
     OTHER_REFERENCE_REGEX = /\b(other|another)\s+query\b/i
     RECENT_RENAME_PROMPT_REGEXES = [
       /\brename\s+(?<name>.+?)\s+to\?/i,
@@ -76,7 +79,7 @@ module Chat
     def resolve_from_direct_reference(text)
       return nil unless text.match?(DIRECT_REFERENCE_REGEX)
 
-      resolve_from_query_name(recent_query_state['saved_query_name'])
+      recent_listed_query || resolve_from_query_name(recent_query_state['saved_query_name'])
     end
 
     def resolve_from_other_reference(text)
@@ -123,6 +126,39 @@ module Chat
 
     def query_name_regex(query_name)
       /\b#{Regexp.escape(query_name)}\b/i
+    end
+
+    def recent_listed_query
+      queries = recent_listed_queries
+      return nil unless queries.one?
+
+      resolve_from_query_id('query_id' => queries.first['id'])
+    end
+
+    def recent_listed_queries
+      conversation_messages.reverse_each do |entry|
+        next unless assistant_entry?(entry)
+
+        queries = listed_queries_from(entry:)
+        return queries if queries.any?
+      end
+
+      []
+    end
+
+    def assistant_entry?(entry)
+      (entry[:role].presence || entry['role'].presence) == 'assistant'
+    end
+
+    def listed_queries_from(entry:)
+      Array(result_data(entry)['queries'] || result_data(entry)[:queries]).map do |query|
+        query.to_h.deep_stringify_keys
+      end
+    end
+
+    def result_data(entry)
+      metadata = entry[:metadata].presence || entry['metadata'].presence || {}
+      metadata['result_data'] || metadata[:result_data] || {}
     end
 
     def saved_queries

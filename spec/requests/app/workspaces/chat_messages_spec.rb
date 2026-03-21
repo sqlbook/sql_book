@@ -122,6 +122,39 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(created_thread.title).not_to end_with('?')
     end
 
+    it 'generates a human thread title for a SQL-first message' do
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return([
+          {
+            schema: 'public',
+            tables: [
+              {
+                name: 'users',
+                qualified_name: 'public.users',
+                columns: [
+                  { name: 'id', data_type: 'bigint' }
+                ]
+              }
+            ]
+          }
+        ])
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(ActiveRecord::Result.new(['user_count'], [[3]]))
+      create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT COUNT(*) AS user_count FROM public.users;' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      created_thread = ChatThread.order(:id).last
+      expect(created_thread.title).to be_present
+      expect(created_thread.title).not_to match(/\ASELECT\b/i)
+      expect(created_thread.title.downcase).to include('user')
+    end
+
     it 'starts a staged data source setup flow instead of falling back to a capability summary' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'Can you help me add a data source?' },
@@ -231,7 +264,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         .and_return(query_result)
 
       post app_workspace_chat_messages_path(workspace),
-           params: { content: 'Show me how many users I have' },
+           params: { content: 'How many users do I have?' },
            as: :json
 
       expect(response).to have_http_status(:ok)
@@ -239,6 +272,71 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('| count |')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 12 |')
+    end
+
+    it 'treats direct SQL as query.run even in a thread with recent query-library context' do
+      create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['user_count'], [[3]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Query library')
+      create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::USER,
+        content: 'show me my query library'
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::ASSISTANT,
+        content: 'Here are 2 saved queries',
+        metadata: {
+          result_data: {
+            queries: [
+              { id: 1, name: 'Users' },
+              { id: 2, name: 'User count' }
+            ]
+          }
+        }
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id: thread.id,
+             content: 'SELECT COUNT(*) AS user_count FROM public.users;'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include('Staging App DB')
+      expect(assistant_content).to include('SELECT COUNT(*) AS user_count FROM public.users;')
+      expect(assistant_content).to include('| user_count |')
+      expect(assistant_content).not_to include('I can save this SQL as a query')
     end
 
     it 'serializes assistant markdown html for inline chat rendering' do
@@ -416,6 +514,39 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('"List of users"')
     end
 
+    it 'renames the most recently saved query when the user says to change it to a better name' do
+      thread = ChatThread.active_for(workspace:, user:)
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'how many users do I have',
+        query: 'SELECT COUNT(*) AS row_count FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      Chat::RecentQueryStateStore.new(workspace:, actor: user, chat_thread: thread).save(
+        'saved_query_id' => saved_query.id,
+        'saved_query_name' => saved_query.name,
+        'sql' => saved_query.query,
+        'data_source_id' => data_source.id,
+        'data_source_name' => data_source.name
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id: thread.id,
+             content: 'Thanks, that name is okay, but could you change it to User Count?'
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(saved_query.reload.name).to eq('User Count')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User Count"')
+    end
+
     it 'requires confirmation before deleting a saved query from chat' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
       query = create(
@@ -448,6 +579,78 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('executed')
       expect(Query.exists?(query.id)).to be(false)
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('Users')
+    end
+
+    it 'deletes the query that was just listed when the user says delete that one' do
+      thread = ChatThread.active_for(workspace:, user:)
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      wrong_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Users',
+        query: 'SELECT * FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      target_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Can you query in a way that also pulls their names and email addresses',
+        query: 'SELECT first_name, last_name, email FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      Chat::RecentQueryStateStore.new(workspace:, actor: user, chat_thread: thread).save(
+        'saved_query_id' => wrong_query.id,
+        'saved_query_name' => wrong_query.name
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: "Here are 1 saved queries:\n\n- #{target_query.name}",
+        metadata: {
+          result_data: {
+            queries: [
+              {
+                id: target_query.id,
+                name: target_query.name,
+                data_source: { id: data_source.id, name: data_source.name }
+              }
+            ]
+          }
+        }
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'Yes, delete that one' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('requires_confirmation')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include(target_query.name)
+
+      action_request = ChatActionRequest.order(:id).last
+      expect(action_request.action_type).to eq('query.delete')
+      expect(action_request.payload['query_id']).to eq(target_query.id)
+      expect(action_request.payload['query_name']).to eq(target_query.name)
+
+      post app_workspace_chat_action_confirm_path(workspace, action_request),
+           params: {
+             thread_id: action_request.chat_thread_id,
+             confirmation_token: action_request.confirmation_token
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(Query.exists?(target_query.id)).to be(false)
+      expect(Query.exists?(wrong_query.id)).to be(true)
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include(target_query.name)
+      expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('Users')
     end
 
     it 'lists saved queries from chat' do
@@ -629,6 +832,89 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('public.users')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('public.accounts')
       expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('data source(s) found')
+    end
+
+    it 'continues the database branch after a team answer with one connected data source' do
+      create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Users follow-up')
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::USER,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: 'Who are my users?'
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: <<~TEXT
+          Do you mean workspace members or user records in your connected database?
+
+          If you mean your team/workspace members, I can list them.
+          If you mean users in the data source, I can query the public.users table.
+        TEXT
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::USER,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: 'My team please'
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: <<~TEXT
+          Found 2 team members.
+
+          Christopher Pattison (chris.pattison@protonmail.com) - Admin, Accepted
+          Bob Smith (hello@sitelabs.ai) - Owner, Accepted
+        TEXT
+      )
+
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'first_name', data_type: 'text' },
+                { name: 'last_name', data_type: 'text' },
+                { name: 'email', data_type: 'text' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(
+        %w[first_name last_name email],
+        [['Bob', 'Smith', 'hello@sitelabs.ai']]
+      )
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'And my users?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include('Staging App DB')
+      expect(assistant_content).to include('SELECT first_name, last_name, email FROM public.users')
+      expect(assistant_content).to include('hello@sitelabs.ai')
+      expect(assistant_content).not_to include('Which data source should I use')
     end
 
     it 'blocks data source setup for regular users but still allows querying' do

@@ -25,7 +25,7 @@ module Chat
     PRODUCT_TOPIC_REGEX = /\b(analytics|analysis|data\s+sources?|queries?|dashboards?|charts?|reports?|sql)\b/i
     QUERY_LIKE_REGEX = /
       \b(
-        how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with|rows?
+        how\ many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|select|with|who|rows?
       )\b
     /ix
     QUERY_CLARIFICATION_HINT_REGEX = /\b(first|second|third|last|that one|this one|those)\b/i
@@ -38,6 +38,7 @@ module Chat
         connected|database|data\s+source|datasource|schema|table|tables|column|columns|record|records
       )\b
     /ix
+    QUERY_DATABASE_ENTITY_FOLLOW_UP_REGEX = /\b(users?|records?)\b/i
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
@@ -63,8 +64,10 @@ module Chat
       end
 
       if should_resume_recent_query_scope_clarification?
-        return execute_direct_tool(action_type: 'query.run', payload: { 'question' => recent_query_scope_question })
+        return execute_direct_tool(action_type: 'query.run', payload: { 'question' => resumed_query_scope_question })
       end
+
+      return execute_direct_tool(action_type: 'query.run', payload: { 'question' => content }) if direct_sql_request?
 
       if (setup_resolution = data_source_setup_resolution)
         return handle_data_source_setup_resolution(setup_resolution)
@@ -190,6 +193,10 @@ module Chat
       execute_intent(intent:)
     end
 
+    def direct_sql_request?
+      content.match?(/\A\s*(select|with)\b/i)
+    end
+
     def render_confirmation(intent:)
       action_request = action_request_lifecycle.persist_pending_confirmation!(
         source_message: user_message,
@@ -198,7 +205,8 @@ module Chat
       )
       assistant_content = response_composer.confirmation_message(
         action_type: intent.action_type,
-        proposed_message: intent.assistant_message
+        proposed_message: intent.assistant_message,
+        payload: intent.payload
       )
       assistant_message = create_assistant_message(
         content: assistant_content,
@@ -549,7 +557,7 @@ module Chat
     end
 
     def should_resume_recent_query_scope_clarification?
-      recent_query_scope_question.present? && query_scope_follow_up?
+      recent_query_scope_question.present? && resumed_query_scope_question.present?
     end
 
     def recent_query_scope_question
@@ -558,6 +566,17 @@ module Chat
       assistant_index = recent_query_scope_clarification_index
       @recent_query_scope_question =
         assistant_index.nil? ? nil : prior_query_user_message(before_index: assistant_index)
+    end
+
+    def resumed_query_scope_question
+      return @resumed_query_scope_question if defined?(@resumed_query_scope_question)
+
+      base_question = recent_query_scope_question.to_s.strip
+      @resumed_query_scope_question = if base_question.blank? || !database_scope_selected?
+                                        nil
+                                      else
+                                        merge_database_scope_into(question: base_question)
+                                      end
     end
 
     def recent_query_scope_clarification_index
@@ -589,7 +608,34 @@ module Chat
     end
 
     def query_scope_follow_up?
-      content.match?(QUERY_CLARIFICATION_FOLLOW_UP_REGEX) || content.match?(QUERY_CLARIFICATION_HINT_REGEX)
+      database_scope_selected? || content.match?(QUERY_CLARIFICATION_HINT_REGEX)
+    end
+
+    def database_scope_selected?
+      explicit_database_scope_follow_up? || implicit_database_entity_follow_up?
+    end
+
+    def explicit_database_scope_follow_up?
+      content.match?(QUERY_CLARIFICATION_FOLLOW_UP_REGEX)
+    end
+
+    def implicit_database_entity_follow_up?
+      return false unless content.match?(QUERY_DATABASE_ENTITY_FOLLOW_UP_REGEX)
+      return false if content.match?(/\b(team|workspace\s+members?|member|members)\b/i)
+
+      context_snapshot.data_source_inventory.present?
+    end
+
+    def merge_database_scope_into(question:)
+      normalized_question = question.to_s.strip.sub(/[!?]+\z/, '')
+      return normalized_question if normalized_question.blank?
+      return normalized_question if query_scope_already_present?(normalized_question)
+
+      "#{normalized_question} in my connected database"
+    end
+
+    def query_scope_already_present?(question)
+      question.match?(/\b(connected\s+database|connected\s+data\s+source|database|data\s+source)\b/i)
     end
 
     def user_entry?(entry)

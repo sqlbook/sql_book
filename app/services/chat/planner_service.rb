@@ -278,6 +278,14 @@ module Chat
                   'Treat natural role replies like "I think admin" or "make them admin" as explicit role instructions.',
                   'Avoid repeating the same filler opening like "Sure." in consecutive replies.',
                   [
+                    'When you are answering without a tool, or asking for one small clarification,',
+                    'you may end with one natural next step that keeps the conversation moving.'
+                  ].join(' '),
+                  [
+                    'Do this sparingly and keep it relevant.',
+                    'Avoid repetitive stock sign-offs or tacking on an extra question when the user is clearly done.'
+                  ].join(' '),
+                  [
                     'For workspace.update_name, payload.name must be a clean target name only,',
                     'without wrapping quotes and without trailing conversational punctuation.'
                   ].join(' '),

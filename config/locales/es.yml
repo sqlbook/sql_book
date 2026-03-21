@@ -188,6 +188,7 @@ es:
               - "Puedo %{action} en cuanto lo confirmes."
               - "Confirma si quieres que %{action}."
               - "Si quieres que %{action}, confírmalo y me encargo."
+            query_delete_named: 'Confirma si quieres que elimine la consulta guardada "%{name}".'
           forbidden:
             variants:
               - "No puedes %{action} con tu rol actual en este espacio. Pídeselo a %{allowed_roles}."
@@ -313,6 +314,7 @@ es:
           query_rename_needs_query_and_name: Claro. ¿Qué consulta guardada quieres renombrar y cuál debería ser el nuevo nombre?
           query_delete: Puedo eliminar esa consulta guardada cuando lo confirmes.
           query_delete_needs_query: Claro. ¿Qué consulta guardada quieres que elimine?
+          query_delete_mistake_follow_up: 'Tienes razón: eliminé "%{name}", y no era la consulta que querías borrar. Dime exactamente qué consulta guardada quieres eliminar y me encargo de esa.'
           attachments_context: Puedo ver %{count} imagen(es) adjunta(s). Dime qué acción de equipo o espacio quieres ejecutar.
           fallback_with_action: Puedo ayudarte con eso. Confirma para continuar.
           fallback_without_action: Puedo ayudarte con acciones del espacio, del equipo, de fuentes de datos y de consultas.

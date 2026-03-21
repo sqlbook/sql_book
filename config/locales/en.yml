@@ -219,6 +219,7 @@ en:
               - "I can %{action} once you confirm."
               - "Please confirm if you want me to %{action}."
               - "If you'd like me to %{action}, confirm and I'll take it from there."
+            query_delete_named: 'Please confirm if you want me to delete the saved query "%{name}".'
           forbidden:
             variants:
               - "You can't %{action} with your current workspace role. Please ask %{allowed_roles}."
@@ -344,6 +345,7 @@ en:
           query_rename_needs_query_and_name: Sure. Which saved query do you want to rename, and what should the new name be?
           query_delete: I can delete that saved query once you confirm.
           query_delete_needs_query: Sure. Which saved query do you want me to delete?
+          query_delete_mistake_follow_up: 'You’re right — I deleted "%{name}", which was not the query you meant. Tell me the exact saved query you want removed, and I’ll target that one.'
           attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
           fallback_with_action: I can help with that. Please confirm to proceed.
           fallback_without_action: I can help with workspace, team, data source, and query actions.

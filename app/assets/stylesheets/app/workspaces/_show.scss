@@ -286,9 +286,8 @@
 
   .chat-history-thread-menu {
     background: var(--gray-800);
-    border: 1px solid var(--gray-700);
+    border: 1px solid var(--gray-900);
     border-radius: var(--border-radius-sm);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
     display: none;
     flex-direction: column;
     min-width: 8rem;
@@ -558,13 +557,24 @@
   .chat-assistant-block .chat-message-body table {
     border-collapse: collapse;
     font-size: 0.875rem;
+    margin-top: 0;
+    min-width: 100%;
+    width: max-content;
+  }
+
+  .chat-assistant-block .chat-message-body .chat-markdown-table-wrap {
     margin-top: 0.75rem;
-    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   .chat-assistant-block .chat-message-body th,
   .chat-assistant-block .chat-message-body td {
-    border-bottom: 1px solid var(--gray-700);
+    border-color: var(--gray-900);
+    border-style: solid;
+    border-width: 1px 0 1px 1px;
     padding: 0.5rem 0.625rem;
     text-align: left;
     vertical-align: top;
@@ -650,10 +660,10 @@
     &::before {
       background: var(--gray-800);
       content: "";
-      left: calc(-1 * var(--chat-panel-padding));
+      left: -100vw;
       pointer-events: none;
       position: absolute;
-      right: calc(-1 * var(--chat-panel-padding));
+      right: -100vw;
       top: -1rem;
       bottom: calc(-1 * (var(--chat-panel-padding) + env(safe-area-inset-bottom)));
       z-index: -1;

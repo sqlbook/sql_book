@@ -20,6 +20,11 @@ module Chat
         columns: %w[email user_id member_id account_id first_name last_name full_name]
       }
     }.freeze
+    IDENTITY_REQUEST_REGEX = /
+      \b(
+        who\s+are|who\s+they\s+are|just\s+who\s+they\s+are|list\s+users|show\s+users|all\s+users
+      )\b
+    /ix
 
     def initialize(question:, data_source:, schema:, preferred_table: nil)
       @question = question.to_s.strip
@@ -80,6 +85,8 @@ module Chat
       normalized = question.downcase
       sql = if normalized.match?(/\b(how many|count|number of|total)\b/)
               "SELECT COUNT(*) AS count FROM #{table}"
+            elsif identity_request?(normalized)
+              identity_select_sql_for(table:) || "SELECT * FROM #{table} ORDER BY 1 LIMIT 25"
             elsif normalized.match?(/\b(show|list|find|get)\b/)
               "SELECT * FROM #{table} ORDER BY 1 LIMIT 25"
             end
@@ -96,6 +103,51 @@ module Chat
         sql: nil,
         clarification_question: I18n.t('app.workspaces.chat.query.ask_for_table_or_metric')
       )
+    end
+
+    def identity_request?(normalized_question)
+      normalized_question.match?(IDENTITY_REQUEST_REGEX)
+    end
+
+    def identity_select_sql_for(table:)
+      columns = identity_projection_for(table:)
+      return nil if columns.empty?
+
+      "SELECT #{columns.join(', ')} FROM #{table} ORDER BY 1 LIMIT 25"
+    end
+
+    def identity_projection_for(table:)
+      table_entry = flattened_tables.find { |candidate| candidate['qualified_name'] == table }
+      return [] unless table_entry
+
+      available_columns = Array(table_entry['columns']).map do |column|
+        (column[:name] || column['name']).to_s
+      end
+      return [] if available_columns.empty?
+
+      preferred_columns_for(available_columns:)
+    end
+
+    def preferred_columns_for(available_columns:)
+      available_lookup = available_columns.index_by(&:downcase)
+      projection = []
+
+      if available_lookup.key?('full_name')
+        projection << available_lookup['full_name']
+      elsif available_lookup.key?('name')
+        projection << available_lookup['name']
+      else
+        %w[first_name last_name].each do |column_name|
+          projection << available_lookup[column_name] if available_lookup.key?(column_name)
+        end
+      end
+
+      projection << available_lookup['username'] if projection.empty? && available_lookup.key?('username')
+      if available_lookup.key?('email') && projection.exclude?(available_lookup['email'])
+        projection << available_lookup['email']
+      end
+      projection = available_columns.first(3) if projection.empty?
+      projection.first(3)
     end
 
     def heuristic_table_match

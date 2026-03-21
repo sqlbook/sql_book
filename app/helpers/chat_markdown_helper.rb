@@ -2,9 +2,9 @@
 
 module ChatMarkdownHelper
   MARKDOWN_ALLOWED_TAGS = %w[
-    p br ul ol li strong em a code pre blockquote table thead tbody tr th td
+    p br ul ol li strong em a code pre blockquote div table thead tbody tr th td
   ].freeze
-  MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel].freeze
+  MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel class].freeze
   MARKDOWN_EXTENSIONS = {
     autolink: true,
     strikethrough: true,
@@ -29,6 +29,13 @@ module ChatMarkdownHelper
 
   def sanitized_markdown(rendered_html)
     fragment = Nokogiri::HTML::DocumentFragment.parse(rendered_html)
+
+    fragment.css('table').each do |table|
+      wrapper = Nokogiri::XML::Node.new('div', fragment)
+      wrapper['class'] = 'chat-markdown-table-wrap'
+      table.replace(wrapper)
+      wrapper.add_child(table)
+    end
 
     fragment.css('a[href]').each do |link|
       href = link['href'].to_s

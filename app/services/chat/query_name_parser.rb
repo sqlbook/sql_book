@@ -5,7 +5,7 @@ module Chat
     module_function
 
     PATTERNS = [
-      /\b(?:rename|retitle)\b.*\bto\b\s+["']?([^"']+?)["']?\s*\z/i,
+      /\b(?:rename|retitle|change)\b.*\bto\b\s+["']?([^"']+?)["']?\s*\z/i,
       /\b(?:save|call|name)\b.*\b(?:as|called|named)\b\s+["']?([^"']+?)["']?\s*\z/i,
       /\b(?:save|call|name)\s+it\s+["']?([^"']+?)["']?\s*\z/i
     ].freeze
