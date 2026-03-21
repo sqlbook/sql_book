@@ -3,36 +3,40 @@
     <%= t('app.workspaces.data_sources.new.steps.tables.description') %>
   </p>
 
-  <%= form_with url: app_workspace_data_sources_path(workspace), method: :post, class: "data-source-wizard__form" do %>
+  <%= form_with url: app_workspace_data_sources_path(workspace),
+                method: :post,
+                class: "data-source-wizard__form data-source-wizard__form--tables" do %>
     <div class="data-source-wizard__table-box">
-      <% groups = wizard_available_table_groups(available_tables) %>
-      <% selected_tables = Array((wizard_state || {})['selected_tables']).map(&:to_s) %>
-      <% if groups.any? %>
-        <% groups.each do |group| %>
-          <details class="data-source-wizard__schema-group" open>
-            <summary class="data-source-wizard__schema-summary">
-              <span class="data-source-wizard__schema-name"><%= group[:schema] %></span>
-              <span class="data-source-wizard__schema-count"><%= group[:tables].size %></span>
-            </summary>
+      <div class="data-source-wizard__table-list">
+        <% groups = wizard_available_table_groups(available_tables) %>
+        <% selected_tables = Array((wizard_state || {})['selected_tables']).map(&:to_s) %>
+        <% if groups.any? %>
+          <% groups.each do |group| %>
+            <details class="data-source-wizard__schema-group" open>
+              <summary class="data-source-wizard__schema-summary">
+                <span class="data-source-wizard__schema-name"><%= group[:schema] %></span>
+                <span class="data-source-wizard__schema-count"><%= group[:tables].size %></span>
+              </summary>
 
-            <div class="data-source-wizard__schema-tables">
-              <% group[:tables].each do |table| %>
-                <label class="checkbox data-source-wizard__table-row">
-                  <%= check_box_tag 'selected_tables[]', table[:qualified_name], selected_tables.include?(table[:qualified_name]) %>
-                  <div class="check">
-                    <i class="ri-check-line"></i>
-                  </div>
-                  <span class="checkbox-text data-source-wizard__table-name"><%= table[:name] %></span>
-                </label>
-              <% end %>
-            </div>
-          </details>
+              <div class="data-source-wizard__schema-tables">
+                <% group[:tables].each do |table| %>
+                  <label class="checkbox data-source-wizard__table-row">
+                    <%= check_box_tag 'selected_tables[]', table[:qualified_name], selected_tables.include?(table[:qualified_name]) %>
+                    <div class="check">
+                      <i class="ri-check-line"></i>
+                    </div>
+                    <span class="checkbox-text data-source-wizard__table-name"><%= table[:name] %></span>
+                  </label>
+                <% end %>
+              </div>
+            </details>
+          <% end %>
+        <% else %>
+          <div class="data-source-wizard__empty-tables">
+            <p><%= t('app.workspaces.data_sources.new.steps.tables.empty') %></p>
+          </div>
         <% end %>
-      <% else %>
-        <div class="data-source-wizard__empty-tables">
-          <p><%= t('app.workspaces.data_sources.new.steps.tables.empty') %></p>
-        </div>
-      <% end %>
+      </div>
     </div>
 
     <div class="data-source-wizard__actions">

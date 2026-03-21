@@ -25,12 +25,16 @@ module App
         @workspace = workspace
         @data_sources = data_sources.order(source_type: :asc, created_at: :asc)
         @data_sources_stats = DataSourcesStatsService.new(data_sources: @data_sources)
+        @selected_data_source = selected_data_source
       end
 
       def show
-        @workspace = workspace
-        @data_source = data_source
-        @data_sources_stats = DataSourcesStatsService.new(data_sources: [@data_source])
+        redirect_to app_workspace_data_sources_path(
+          workspace,
+          data_source_id: data_source.id,
+          tab: params[:tab],
+          confirm_delete: params[:confirm_delete]
+        )
       end
 
       def new
@@ -87,6 +91,12 @@ module App
         @data_source ||= workspace.data_sources.find(params[:id])
       end
 
+      def selected_data_source
+        return if params[:data_source_id].blank?
+
+        data_sources.find(params[:data_source_id])
+      end
+
       def requested_step
         step = params[:step].to_i
         step.positive? ? step : 1
@@ -98,6 +108,7 @@ module App
         @wizard_step = step
         @wizard_state = wizard_state
         @wizard_step_two_errors ||= {}
+        @wizard_step_two_connection_error ||= nil
         @available_tables = Array(@wizard_state['available_tables'])
         return unless @wizard_step == 3 && @available_tables.empty?
 
@@ -355,7 +366,7 @@ module App
       end
 
       def render_connection_validation_failure(validation)
-        flash.now[:alert] = validation.message
+        @wizard_step_two_connection_error = validation.message
         persist_wizard_state!(wizard_state_without_validation_metadata(@wizard_state))
         prepare_new_view(step: 2)
         render :new, status: :unprocessable_entity
@@ -382,7 +393,8 @@ module App
       end
 
       def handle_postgres_create_failure(result)
-        flash.now[:alert] = result.message
+        @wizard_step_two_connection_error = result.message if result.error_code == 'connection_failed'
+        flash.now[:alert] = result.message unless result.error_code == 'connection_failed'
         persist_wizard_state!(wizard_state_for_failed_create(result))
         prepare_new_view(step: result.error_code == 'connection_failed' ? 2 : 3)
         render :new, status: :unprocessable_entity

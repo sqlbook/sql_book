@@ -52,6 +52,16 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
           'Third-party data library'
         )
       end
+
+      it 'renders the selected data source panel when a row is opened' do
+        get "/app/workspaces/#{workspace.id}/data_sources", params: { data_source_id: postgres_source.id }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to have_selector('.app-content-layout.split')
+        expect(response.body).to include(I18n.t('common.actions.settings'))
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.deletion_title'))
+        expect(response.body).to include('Warehouse DB')
+      end
     end
 
     context 'when current user has user role permissions' do
@@ -185,6 +195,37 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       expect(response.body).not_to have_selector('.flash.alert')
       expect(DataSources::ConnectionValidationService).not_to have_received(:new)
     end
+
+    it 'renders connection failures in the shared error dialogue instead of the flash banner' do
+      failed_validation = DataSources::ConnectionValidationService::Result.new(
+        success?: false,
+        available_tables: [],
+        checked_at: nil,
+        error_code: 'connection_failed',
+        message: I18n.t('app.workspaces.data_sources.validation.connection_failed')
+      )
+      allow(DataSources::ConnectionValidationService).to receive(:new).and_return(
+        instance_double(DataSources::ConnectionValidationService, call: failed_validation)
+      )
+
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: 'Warehouse DB',
+             database_type: 'postgres',
+             host: 'db.example.com',
+             port: 5432,
+             database_name: 'warehouse',
+             username: 'readonly',
+             password: 'secret'
+           }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to have_selector(
+        '.message',
+        text: I18n.t('app.workspaces.data_sources.validation.connection_failed')
+      )
+      expect(response.body).not_to have_selector('.flash.alert')
+    end
   end
 
   describe 'POST /app/workspaces/:workspace_id/data_sources' do
@@ -290,19 +331,20 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
     let(:capture_source) { create(:data_source, workspace:) }
     let(:postgres_source) { create(:data_source, :postgres, workspace:) }
 
-    it 'renders the capture source settings page' do
+    it 'redirects capture source requests back to the index panel' do
       get "/app/workspaces/#{workspace.id}/data_sources/#{capture_source.id}"
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.fields.tracking_url'))
+      expect(response).to redirect_to(
+        app_workspace_data_sources_path(workspace, data_source_id: capture_source.id, tab: nil, confirm_delete: nil)
+      )
     end
 
-    it 'renders the postgres source settings page' do
+    it 'redirects postgres source requests back to the index panel' do
       get "/app/workspaces/#{workspace.id}/data_sources/#{postgres_source.id}"
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.connection_title'))
-      expect(response.body).to include('db.internal')
+      expect(response).to redirect_to(
+        app_workspace_data_sources_path(workspace, data_source_id: postgres_source.id, tab: nil, confirm_delete: nil)
+      )
     end
   end
 

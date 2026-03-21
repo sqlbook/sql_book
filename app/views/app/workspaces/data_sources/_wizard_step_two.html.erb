@@ -1,11 +1,21 @@
 <section class="data-source-wizard__step">
   <% selected_database_type = (wizard_state || {})['database_type'].presence %>
   <% errors = wizard_step_two_errors || {} %>
+  <% connection_error = wizard_step_two_connection_error.presence %>
 
   <%= form_with url: validate_connection_app_workspace_data_sources_path(workspace),
                 method: :post,
                 class: "data-source-wizard__form",
                 data: { controller: "data-source-wizard" } do %>
+    <% if connection_error %>
+      <div class="message data-source-wizard__error-dialogue">
+        <i class="ri-error-warning-line ri-lg red-500"></i>
+        <div class="body">
+          <p><%= connection_error %></p>
+        </div>
+      </div>
+    <% end %>
+
     <div class="data-source-wizard__fields">
       <div class="field">
         <%= label_tag :name, t('app.workspaces.data_sources.new.fields.name'), class: "label block" %>

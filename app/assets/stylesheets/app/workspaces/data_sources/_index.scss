@@ -1,4 +1,15 @@
 .app-workspaces-data_sources-index {
+  .data-source-panel__header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 1.5rem 0;
+
+    h3 {
+      margin: 0;
+    }
+  }
+
   .sr-only {
     border: 0;
     clip: rect(0 0 0 0);
@@ -77,6 +88,12 @@
       min-width: 0;
     }
 
+    &__name-link {
+      color: var(--cream-250);
+      text-decoration: underline;
+      text-underline-offset: .1em;
+    }
+
     &__status {
       align-items: center;
       display: inline-flex;
@@ -101,6 +118,51 @@
       gap: .35rem;
       justify-content: flex-end;
       white-space: nowrap;
+    }
+  }
+
+  .tracking-code {
+    color: var(--cream-250);
+  }
+
+  .update-data-source-form {
+    .flash {
+      margin: .5rem 0 0 0;
+    }
+
+    .link {
+      margin-top: 2rem;
+    }
+  }
+
+  .data-source-management {
+    h3 {
+      margin: 2rem 0 1rem 0;
+    }
+
+    h3:first-of-type {
+      margin-top: 0;
+    }
+
+    &__list {
+      display: grid;
+      gap: 1rem;
+      margin: 0;
+
+      div {
+        border-bottom: 1px solid var(--gray-700);
+        padding-bottom: .75rem;
+      }
+
+      dt {
+        color: var(--gray-300);
+        margin-bottom: .25rem;
+      }
+
+      dd {
+        color: var(--cream-250);
+        margin: 0;
+      }
     }
   }
 }

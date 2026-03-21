@@ -1,3 +1,5 @@
+<% content_for :app_content_layout_class, ('split' if @selected_data_source.present?) %>
+
 <main class="data-sources-page">
   <div class="page-header data-sources-page__header">
     <h1><%= t('app.workspaces.data_sources.index.title') %></h1>
@@ -15,3 +17,7 @@
     <%= render partial: "index_group", collection: data_sources_index_sections(@data_sources), as: :section, locals: { workspace: @workspace, stats: @data_sources_stats } %>
   </div>
 </main>
+
+<% if @selected_data_source %>
+  <%= render "side_panel", workspace: @workspace, data_source: @selected_data_source %>
+<% end %>
