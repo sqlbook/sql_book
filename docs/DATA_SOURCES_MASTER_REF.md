@@ -144,12 +144,20 @@ UI fidelity notes:
 - Query execution now routes through the datasource connector.
 - Capture sources continue to use the existing first-party events path.
 - External PostgreSQL sources use connector-driven read-only execution.
+- Query editor datasource selection is still single-source in phase 1:
+  - one datasource is selected at a time
+  - SQL runs only against that datasource
+  - schema browser shows connector metadata for the currently selected datasource and its allowed tables
 - External SQL guardrails include:
   - read-only execution path
   - safety validation before execution
   - statement timeout
   - row limit
 - Cross-source joins are out of scope in phase 1.
+- Query editor structure should stay future-ready for:
+  - selecting multiple datasources in one query flow
+  - namespaced table references across sources
+  - later federation/execution work without rewriting the datasource metadata contract
 
 ## Security and tenancy model
 - Workspace is the tenancy boundary for datasource records and permissions.
@@ -181,6 +189,7 @@ UI fidelity notes:
 
 ## Phase-1 non-goals
 - Cross-source query federation
+- Multi-datasource query execution from one editor session
 - Non-PostgreSQL external SQL engines
 - Third-party SaaS/API connector execution
 - Visualization redesign
@@ -193,5 +202,8 @@ UI fidelity notes:
 - staging smoke checks for:
   - datasource home page
   - PostgreSQL wizard validation/create
+  - datasource settings side panel
+  - query editor datasource selector showing external sources by datasource name
+  - query editor schema browser showing selected-table metadata for the selected datasource
   - datasource API routes
   - datasource chat actions

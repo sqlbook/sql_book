@@ -4,12 +4,17 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  @media (max-width: 759px) {
+  @media (max-width: 1023px) {
     .app-content-layout.split {
       grid-template-columns: minmax(0, 1fr);
 
       > main {
         display: none;
+      }
+
+      > aside {
+        grid-column: 1 / -1;
+        width: 100%;
       }
     }
   }
@@ -321,8 +326,8 @@
 
     .input[disabled] {
       background: var(--gray-850);
-      border-color: var(--gray-700);
-      color: var(--gray-250);
+      border-color: transparent;
+      color: var(--gray-300);
       cursor: not-allowed;
     }
   }

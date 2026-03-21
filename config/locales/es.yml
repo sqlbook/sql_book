@@ -49,6 +49,37 @@ es:
         dashboards: Ver paneles del espacio de trabajo %{workspace_name}
         settings: Ver configuración del espacio de trabajo %{workspace_name}
     workspaces:
+      queries:
+        index:
+          title: Biblioteca de consultas
+          empty: Aquí estarán disponibles las consultas que hayas guardado.
+          create_new: "[Crear nueva consulta]"
+          create_aria_label: Crear nueva consulta
+          search_placeholder: Buscar...
+          columns:
+            name: Nombre
+            data_source: Fuente de datos
+            original_author: Autor original
+            date_created: Fecha de creación
+            last_updated: Última actualización
+            last_updated_by: Última actualización por
+            last_run: Última ejecución
+        editor:
+          data_source_label: Fuente de datos
+          view_data_source_aria: Ver fuente de datos
+          schema_label: Esquema de tabla
+          schema_columns:
+            name: Nombre
+            type: Tipo
+            default: Valor por defecto
+            empty: "-"
+          query_placeholder: Empieza a escribir tu consulta o escribe '/' para explorar la biblioteca de consultas...
+          submit_hint: Presiona CMD+Enter para ejecutar...
+          suggestions:
+            average_busiest_day: Día medio con más actividad
+            average_busiest_time: Hora media con más actividad
+            average_quietest_day: Día medio con menos actividad
+            average_session_duration: Duración media de la sesión
       chat:
         title: "¿Por dónde empezamos?"
         suggestions:

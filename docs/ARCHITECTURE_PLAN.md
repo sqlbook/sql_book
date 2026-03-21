@@ -26,9 +26,10 @@ Build a reliable multi-source analytics/query SaaS that stays simple to operate 
   - documented workspace/team API contracts at `/dev/api` (OpenAPI + Scalar), auth-protected at execution layer
   - API-doc maintenance governed by `docs/API_MASTER_REF.md`
   - SQL query editor
-  - connector-aware schema explorer
+  - connector-aware schema explorer for the selected datasource
   - saved queries
   - basic visualizations
+  - keep query-editor datasource/schema contracts extensible so later multi-source selection and federation can land without replacing the editor surface again
 
 Exit criteria:
 - predictable deploy flow
@@ -42,6 +43,7 @@ Exit criteria:
   - SQL databases: default to live read-only querying
   - API/SaaS connectors: use selective sync/materialization where live joins are impractical or rate-limited
   - avoid introducing blanket ingestion requirements for all connectors
+- Expand query selection model from single-datasource to multi-datasource where federation/runtime design is ready.
 - Add dashboard builder (Gridstack.js is fine for layout).
 - Add query/result caching for repeated dashboard loads.
 - Add observability:

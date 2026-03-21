@@ -1,6 +1,6 @@
 # Staging Core Functionality Checklist
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Purpose
 Define the minimum stable functionality that must pass before any production cutover work proceeds.
@@ -32,6 +32,7 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] Data sources home page renders grouped sections for external databases and first-party capture.
 - [ ] PostgreSQL datasource wizard validates connection details and advances to table selection.
 - [ ] PostgreSQL datasource creation succeeds and returns to the datasource home page.
+- [ ] Datasource settings side panel opens from the datasource name cell and behaves as 50/50 desktop split or full takeover below `1024px`.
 - [ ] Chat datasource actions work without server errors (`datasource.list`, `datasource.validate_connection`, `datasource.create`) for owner/admin roles.
 - [ ] Data source API routes respond correctly for owner/admin and reject user/read-only roles.
 - [ ] Chat write actions work without server errors (rename/invite flows).
@@ -45,6 +46,9 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] Event save job runs without repeated retries/failures.
 
 ## 5) Query path
+- [ ] Query editor datasource dropdown shows external datasource names correctly.
+- [ ] Query editor schema browser shows the selected datasource's allowed table metadata.
+- [ ] Query execution still runs against one selected datasource at a time.
 - [ ] SQL query execution works for allowed read-only queries.
 - [ ] Blocked/unsafe queries are rejected as designed.
 - [ ] Query results render in UI without server errors.

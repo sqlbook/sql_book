@@ -80,6 +80,37 @@ en:
         dashboards: View dashboards for the %{workspace_name} workspace
         settings: View workspace settings for the %{workspace_name} workspace
     workspaces:
+      queries:
+        index:
+          title: Query Library
+          empty: Any queries you've saved will be available here.
+          create_new: "[Create New Query]"
+          create_aria_label: Create new query
+          search_placeholder: Search...
+          columns:
+            name: Name
+            data_source: Data source
+            original_author: Original author
+            date_created: Date created
+            last_updated: Last updated
+            last_updated_by: Last updated by
+            last_run: Last run
+        editor:
+          data_source_label: Data source
+          view_data_source_aria: View datasource
+          schema_label: Table schema
+          schema_columns:
+            name: Name
+            type: Type
+            default: Default
+            empty: "-"
+          query_placeholder: Start typing your query, or type '/' to browse the query library...
+          submit_hint: Press CMD+Enter to run...
+          suggestions:
+            average_busiest_day: Average busiest day
+            average_busiest_time: Average busiest time
+            average_quietest_day: Average quietest day
+            average_session_duration: Average session duration
       chat:
         title: Where should we begin?
         suggestions:

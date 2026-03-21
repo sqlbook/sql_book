@@ -1,6 +1,6 @@
 # Staging Feature Surface Checklist
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Purpose
 Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook is pre-production only.
@@ -39,6 +39,9 @@ Maintain a lightweight staging smoke gate for high-risk behavior while sqlbook i
 - [ ] Datasource home renders grouped sections for external databases and first-party capture.
 - [ ] PostgreSQL datasource wizard validates connection details and advances to table selection.
 - [ ] PostgreSQL datasource create flow succeeds and returns to datasource home.
+- [ ] Datasource settings side panel opens from the datasource name cell and behaves as 50/50 desktop split or full takeover below `1024px`.
+- [ ] Query editor datasource dropdown shows external datasource names correctly.
+- [ ] Query editor schema browser shows the selected datasource's allowed table metadata.
 - [ ] Datasource API routes (`list`, `validate-connection`, `create`) behave correctly for owner/admin roles.
 - [ ] External datasource rows/cards do not display first-party event-limit messaging.
 

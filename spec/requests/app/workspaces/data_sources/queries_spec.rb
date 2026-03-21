@@ -40,6 +40,48 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       end
     end
 
+    context 'when the data source is an external postgres source' do
+      let(:data_source) { create(:data_source, :postgres, workspace:, name: 'Warehouse DB') }
+      let(:schema_groups) do
+        [
+          {
+            schema: 'public',
+            tables: [
+              {
+                name: 'orders',
+                qualified_name: 'public.orders',
+                columns: [
+                  { name: 'id', data_type: 'bigint' },
+                  { name: 'total', data_type: 'numeric' }
+                ]
+              }
+            ]
+          }
+        ]
+      end
+
+      before do
+        allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+          .to receive(:list_tables)
+          .and_return(schema_groups)
+      end
+
+      it 'renders the datasource display name in the selector' do
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries"
+
+        expect(response.body).to include('Warehouse DB')
+      end
+
+      it 'renders the connector-aware schema browser' do
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries"
+
+        expect(response.body).to include(I18n.t('app.workspaces.queries.editor.schema_label'))
+        expect(response.body).to include('public.orders')
+        expect(response.body).to include('bigint')
+        expect(response.body).to include('numeric')
+      end
+    end
+
     context 'when they do not own the data source' do
       let(:data_source) { create(:data_source) }
 

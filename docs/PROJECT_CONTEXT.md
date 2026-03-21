@@ -24,7 +24,7 @@ sqlbook lets users:
 4. Generalize data sources from first-party-only to multi-type connectors.
 5. Implement connector adapter architecture and strict query safety guardrails.
 6. Ship first external connector (PostgreSQL, live query mode).
-7. Update data source/query UX for connector catalog + connector-aware schema explorer.
+7. Update data source/query UX for connector catalog + connector-aware schema explorer, while keeping the query model structurally ready for later multi-source selection.
 8. Dashboard MVP on top of the new connector model.
 
 ## Current Chat Runtime Snapshot
@@ -50,4 +50,5 @@ sqlbook lets users:
 - Keep first-party captured events centralized with strict per-tenant access controls.
 - Default external connectors to least-privilege, read-only, live-query access.
 - Avoid cross-source join/federation complexity in phase 1; design it explicitly before implementation.
+- Keep query-editor metadata contracts generic enough that multiple datasources can be selected later without another first-party-only rewrite.
 - Introduce new infrastructure only when measurable bottlenecks justify it.

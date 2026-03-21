@@ -7,12 +7,9 @@ module App
         before_action :require_authentication!
         before_action :authorize_query_write_access!, only: %i[create update chart_config]
         before_action :authorize_query_destroy_access!, only: %i[destroy]
+        before_action :prepare_query_editor, only: %i[index show]
 
-        def index
-          @workspace = workspace
-          @data_sources = data_sources
-          @data_source = data_source
-        end
+        def index; end
 
         def show
           query.update(last_run_at: Time.current)
@@ -57,6 +54,60 @@ module App
 
         def data_source
           @data_source ||= data_sources.find(params[:data_source_id])
+        end
+
+        def prepare_query_editor
+          @workspace = workspace
+          @data_sources = data_sources
+          @data_source = data_source
+          @query_schema_groups = query_schema_groups_for(@data_source)
+          @query_schema_options = query_schema_options(@query_schema_groups)
+          @default_query_schema = @query_schema_options.first&.last
+        end
+
+        def query_schema_groups_for(selected_data_source)
+          tables = selected_data_source.connector.list_tables(
+            include_columns: true,
+            selected_only: selected_data_source.external_database?
+          )
+
+          Array(tables).map { |group| normalized_query_schema_group(group) }
+        rescue ::DataSources::Connectors::BaseConnector::ConnectionError
+          []
+        end
+
+        def query_schema_options(groups)
+          groups.flat_map do |group|
+            group[:tables].map do |table|
+              ["#{group[:schema]}.#{table[:name]}", table[:schema_key]]
+            end
+          end
+        end
+
+        def normalized_query_schema_group(group)
+          normalized_group = group.deep_symbolize_keys
+
+          {
+            schema: normalized_group[:schema],
+            tables: Array(normalized_group[:tables]).map do |table|
+              normalized_query_schema_table(group: normalized_group, table:)
+            end
+          }
+        end
+
+        def normalized_query_schema_table(group:, table:)
+          normalized_table = table.deep_symbolize_keys
+          qualified_name = normalized_table[:qualified_name] || [
+            group[:schema],
+            normalized_table[:name]
+          ].join('.')
+
+          {
+            name: normalized_table[:name],
+            qualified_name:,
+            schema_key: qualified_name.parameterize(separator: '_'),
+            columns: Array(normalized_table[:columns]).map(&:deep_symbolize_keys)
+          }
         end
 
         def query

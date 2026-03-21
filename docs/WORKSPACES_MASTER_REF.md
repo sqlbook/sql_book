@@ -261,6 +261,11 @@ Related references:
   - on desktop the datasource table and settings panel each take 50% of the available width
   - on narrow screens the settings panel takes over the full content area until closed
   - datasource settings panel is fixed-width for this surface and is not user-resizable
+- Query editor specifics:
+  - datasource dropdown shows datasource display names, not only first-party URLs
+  - schema browser is connector-aware for the currently selected datasource
+  - current query execution is still single-source per editor session
+  - future multi-source selection and joining are planned separately and are not active yet
 - Workspace chat split surface (`/app/workspaces/:id`):
   - history and conversation render as sibling surfaces (not nested).
   - desktop open state uses `260px + 1fr` columns with a 24px inter-surface gap.

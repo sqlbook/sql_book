@@ -1,6 +1,6 @@
 # GitHub Working Agreement
 
-Last updated: 2026-02-23
+Last updated: 2026-03-21
 
 ## Purpose
 Define how we use GitHub Issues/Project for planning and execution so ticket state always reflects real status.
@@ -48,6 +48,13 @@ git push origin main
 git push origin main
 git push origin --delete staging
 ```
+
+## Commit and deploy description accuracy
+- Commit messages, deploy notes, and release summaries must describe the actual functional surface changed.
+- Use the narrowest accurate label available (for example `data source creation and settings UI`, not broader labels like `onboarding` unless onboarding flows were actually changed).
+- If a change touches multiple distinct surfaces, name the real surfaces rather than collapsing them into a vague umbrella term.
+- Do not imply work on unrelated areas in commit/deploy descriptions.
+- If wording is later found to be imprecise, correct it in the relevant docs, issue comments, or deployment notes at the next opportunity.
 
 ## Completion gates (required before `Done`)
 - Codex has completed a self-review of the implementation.

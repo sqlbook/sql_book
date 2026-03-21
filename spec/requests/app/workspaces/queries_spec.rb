@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
+require 'cgi'
 
 RSpec.describe 'App::Workspaces::Queries', type: :request do
   describe 'GET /app/workspaces/:workspace_id/queries' do
@@ -33,7 +34,7 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
         get "/app/workspaces/#{workspace.id}/queries"
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include('Any queries you&apos;ve saved will be available here')
+        expect(response.body).to include(CGI.escapeHTML(I18n.t('app.workspaces.queries.index.empty')))
       end
     end
 
@@ -53,7 +54,7 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
         get "/app/workspaces/#{workspace.id}/queries"
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include('Any queries you&apos;ve saved will be available here')
+        expect(response.body).to include(CGI.escapeHTML(I18n.t('app.workspaces.queries.index.empty')))
       end
     end
 
@@ -70,7 +71,7 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
 
         it 'returns an empty state' do
           get "/app/workspaces/#{workspace.id}/queries"
-          expect(response.body).to include('Any queries you&apos;ve saved will be available here')
+          expect(response.body).to include(CGI.escapeHTML(I18n.t('app.workspaces.queries.index.empty')))
         end
       end
 
