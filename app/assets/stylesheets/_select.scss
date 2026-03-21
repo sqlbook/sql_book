@@ -38,6 +38,13 @@
     }
   }
 
+  &--placeholder {
+    select {
+      color: var(--gray-300);
+      font-style: italic;
+    }
+  }
+
   i {
     pointer-events: none;
     position: absolute;

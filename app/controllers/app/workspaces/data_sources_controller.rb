@@ -97,6 +97,7 @@ module App
         repopulate_available_tables! if step == 3
         @wizard_step = step
         @wizard_state = wizard_state
+        @wizard_step_two_errors ||= {}
         @available_tables = Array(@wizard_state['available_tables'])
         return unless @wizard_step == 3 && @available_tables.empty?
 
@@ -142,10 +143,7 @@ module App
       def merged_wizard_state(overrides = {})
         normalized_overrides = normalize_wizard_overrides(overrides)
 
-        wizard_state.merge(normalized_overrides).merge(
-          'source_type' => 'postgres',
-          'database_type' => 'postgres'
-        )
+        wizard_state.merge(normalized_overrides).merge('source_type' => 'postgres')
       end
 
       def wizard_state
@@ -157,7 +155,7 @@ module App
       def base_state
         {
           'source_type' => 'postgres',
-          'database_type' => 'postgres',
+          'database_type' => nil,
           'port' => DataSource::POSTGRES_DEFAULT_PORT,
           'ssl_mode' => DataSource::POSTGRES_DEFAULT_SSL_MODE,
           'extract_category_values' => false,
@@ -254,12 +252,14 @@ module App
       end
 
       def wizard_step_two_valid?(state)
+        return false unless supported_database_type_selected?(state)
+
         preview = build_postgres_preview_data_source(state)
         preview.connection_password = decrypted_wizard_password(state)
 
         return true if preview.valid?
 
-        flash.now[:alert] = preview.errors.full_messages.to_sentence
+        @wizard_step_two_errors = wizard_step_two_error_messages(preview)
         false
       end
 
@@ -305,11 +305,30 @@ module App
       end
 
       def wizard_step_two_valid_for_recovery?(state)
-        state['name'].present? &&
+        state['database_type'] == 'postgres' &&
+          state['name'].present? &&
           state['host'].present? &&
           state['database_name'].present? &&
           state['username'].present? &&
           decrypted_wizard_password(state).present?
+      end
+
+      def supported_database_type_selected?(state)
+        database_type = state['database_type'].to_s
+
+        if database_type.blank?
+          @wizard_step_two_errors = {
+            'database_type' => [I18n.t('app.workspaces.data_sources.validation.database_type_required')]
+          }
+          return false
+        end
+
+        return true if database_type == 'postgres'
+
+        @wizard_step_two_errors = {
+          'database_type' => [I18n.t('app.workspaces.data_sources.validation.unsupported_database_type')]
+        }
+        false
       end
 
       def validate_postgres_connection(state)
@@ -403,6 +422,13 @@ module App
 
       def encrypted_password_value(password)
         DataSource.connection_password_encryptor.encrypt_and_sign(password)
+      end
+
+      def wizard_step_two_error_messages(preview)
+        preview.errors.to_hash(true).each_with_object({}) do |(attribute, messages), errors|
+          key = attribute.to_s == 'connection_password' ? 'password' : attribute.to_s
+          errors[key] = Array(messages)
+        end
       end
     end
   end

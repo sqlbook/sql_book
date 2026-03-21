@@ -261,23 +261,14 @@ es:
           inferred_first_name: Equipo
           inferred_last_name: Miembro
       data_sources:
-        title: Fuentes de datos
-        add_title: Añadir fuente de datos
-        create_new_aria: Crear una nueva fuente de datos
         index:
-          eyebrow: Fuentes de datos del espacio
           title: Fuentes de datos
           create_aria_label: Crear nueva fuente de datos
           sections:
             external_database:
               title: Bases de datos externas
-              description: Conexiones en vivo a bases de datos que ya posees.
             first_party_capture:
               title: Captura de datos propia
-              description: El seguimiento propio heredado sigue disponible mientras llega el modelo ampliado de conectores.
-            third_party_data_library:
-              title: Biblioteca de datos de terceros
-              description: Conecta servicios SaaS y APIs cuando la biblioteca esté disponible.
           columns:
             name: Nombre
             type: Tipo
@@ -285,16 +276,6 @@ es:
             related_queries: Consultas relacionadas
             total_events: Eventos totales
             events_this_month: Eventos este mes
-          empty:
-            external_database:
-              title: Aún no hay bases de datos externas
-              body: Usa Crear nuevo para conectar una base de datos y empezar a consultarla en vivo.
-            first_party_capture:
-              title: Aún no hay capturas propias
-              body: Puedes dejar esta sección lista para datos de seguimiento existentes o crear una fuente de captura más adelante.
-          coming_soon:
-            title: Próximamente
-            body: Este catálogo incluirá fuentes como analítica, facturación y otros servicios externos.
           types:
             postgres: PostgreSQL
             first_party_capture: Captura propia
@@ -303,9 +284,21 @@ es:
             error: Problema de conexión
             pending_setup: Configuración pendiente
         new:
-          eyebrow: Añadir fuente de datos
           title: Añadir fuente de datos
           coming_soon: Próximamente
+          database_types:
+            postgres: PostgreSQL
+            mysql: MySQL
+            sql_server: SQL Server
+            mariadb: MariaDB
+            oracle: Oracle
+            snowflake: Snowflake
+            redshift: Redshift
+            bigquery: BigQuery
+            clickhouse: Clickhouse
+            databricks: Databricks
+            sql_anywhere: SQL Anywhere
+            athena: Athena
           source_types:
             external_database:
               title: Conectar una base de datos externa
@@ -319,9 +312,6 @@ es:
           steps:
             source_type:
               label: Tipo
-              description: Elige el tipo de fuente que quieres añadir. En esta primera versión solo están habilitadas las bases de datos externas.
-            connection:
-              description: Dale un nombre a la base de datos y confirma los detalles de conexión. La validaremos antes de continuar.
             tables:
               description: Selecciona las tablas que quieres poner a disposición. Por ahora limita esto a 20 tablas.
               empty: La conexión todavía no devolvió ninguna tabla.
@@ -332,7 +322,7 @@ es:
             name: Nombre de la base de datos
             name_placeholder: "p. ej. Base de datos de usuarios"
             database_type: Tipo de base de datos
-            database_type_hint: PostgreSQL es el único tipo de base de datos externa compatible en esta primera versión.
+            database_type_placeholder: Por favor seleccione
             host: Host
             host_placeholder: "p. ej. 123.456.789.0"
             port: Puerto
@@ -347,9 +337,11 @@ es:
             title: Detalles de la conexión
         validation:
           connection_failed: No pudimos conectarnos a esa base de datos. Revisa los detalles de conexión e inténtalo de nuevo.
+          database_type_required: Por favor seleccione un tipo de base de datos.
           selected_tables_required: Selecciona al menos una tabla para continuar.
           selected_tables_limit: Puedes seleccionar hasta %{count} tablas por ahora.
           invalid_selected_tables: Una o más tablas seleccionadas ya no están disponibles para esta fuente de datos.
+          unsupported_database_type: Por ahora solo se admiten conexiones PostgreSQL.
         management:
           connection_title: Detalles de la conexión
           selected_tables_title: Tablas seleccionadas

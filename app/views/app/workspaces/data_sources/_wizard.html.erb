@@ -10,7 +10,7 @@
   <% if wizard_step == 1 %>
     <%= render "wizard_step_one", workspace:, wizard_state: %>
   <% elsif wizard_step == 2 %>
-    <%= render "wizard_step_two", workspace:, wizard_state: %>
+    <%= render "wizard_step_two", workspace:, wizard_state:, wizard_step_two_errors: @wizard_step_two_errors %>
   <% else %>
     <%= render "wizard_step_three", workspace:, wizard_state:, available_tables: %>
   <% end %>

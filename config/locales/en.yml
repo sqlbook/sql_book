@@ -292,23 +292,14 @@ en:
           inferred_first_name: Team
           inferred_last_name: Member
       data_sources:
-        title: Data sources
-        add_title: Add data source
-        create_new_aria: Create a new data source
         index:
-          eyebrow: Workspace data sources
           title: Data sources
           create_aria_label: Create new data source
           sections:
             external_database:
               title: External databases
-              description: Live connections to databases you already own.
             first_party_capture:
               title: First-party data capture
-              description: Legacy first-party tracking remains available while the wider connector model lands.
-            third_party_data_library:
-              title: Third-party data library
-              description: Bring in SaaS and API connectors once the library opens up.
           columns:
             name: Name
             type: Type
@@ -316,16 +307,6 @@ en:
             related_queries: Related queries
             total_events: Total events
             events_this_month: Events this month
-          empty:
-            external_database:
-              title: No external databases yet
-              body: Use Create New to connect a database and start querying it live.
-            first_party_capture:
-              title: No first-party captures yet
-              body: You can keep this section ready for existing tracking data or create a new capture source later.
-          coming_soon:
-            title: Coming soon
-            body: This catalog will eventually include sources such as analytics, billing, and other external services.
           types:
             postgres: PostgreSQL
             first_party_capture: First-party capture
@@ -333,46 +314,22 @@ en:
             action_required: Action required
             error: Connection issue
             pending_setup: Pending setup
-        empty:
-          title: No data sources yet
-          body: Add your first data source to start querying workspace data.
-        categories:
-          external_databases: External databases
-          first_party_capture: First-party data capture
-          third_party_libraries: Third-party data libraries
-        table:
-          external:
-            name: Name
-            type: Type
-            tables: Tables
-            related_queries: Related queries
-          capture:
-            name: Name
-            total_events: Total events
-            monthly_events: Events this month
-            related_queries: Related queries
-          third_party:
-            name: Name
-            type: Type
-            related_queries: Related queries
-          actions: Actions
-          action_required: Action required
-        statuses:
-          action_required: Action required
-          active: Active
-          error: Error
-          pending_setup: Pending setup
-        source_types:
-          external_database: Connect an external database
-          first_party_capture: Capture data with sqlbook
-          third_party_library: Use a third-party data library
-          coming_soon: Coming soon
-        database_types:
-          postgres: PostgreSQL
         new:
-          eyebrow: Add data source
           title: Add data source
           coming_soon: Coming soon
+          database_types:
+            postgres: PostgreSQL
+            mysql: MySQL
+            sql_server: SQL Server
+            mariadb: MariaDB
+            oracle: Oracle
+            snowflake: Snowflake
+            redshift: Redshift
+            bigquery: BigQuery
+            clickhouse: Clickhouse
+            databricks: Databricks
+            sql_anywhere: SQL Anywhere
+            athena: Athena
           source_types:
             external_database:
               title: Connect an external database
@@ -386,9 +343,6 @@ en:
           steps:
             source_type:
               label: Type
-              description: Choose the kind of source you want to add. For this first pass, only external databases are enabled.
-            connection:
-              description: Give the database a name and confirm the connection details. We will validate it before moving on.
             tables:
               description: Select the tables you want to make available. Limit this to 20 tables for now.
               empty: No tables were returned from the connection yet.
@@ -399,7 +353,7 @@ en:
             name: Database name
             name_placeholder: "e.g. User Database"
             database_type: Database type
-            database_type_hint: PostgreSQL is the only supported external database type in this first pass.
+            database_type_placeholder: Please select
             host: Host
             host_placeholder: "e.g. 123.456.789.0"
             port: Port
@@ -412,35 +366,6 @@ en:
             extract_category_values: Extract category values
           connection_box:
             title: Connection details
-        wizard:
-          type_heading: Type
-          step_one_title: Add data source
-          step_two_title: Add data source
-          step_three_title: Add data source
-          fields:
-            data_source_name: Database name
-            database_type: Database type
-            host: Host
-            port: Port
-            server_database_name: Database name on server
-            username: Username
-            password: Password
-            ssl_mode: SSL mode
-            extract_category_values: Extract category values
-          placeholders:
-            data_source_name: "e.g. User Database"
-            database_type: Please select
-            host: "e.g. 123.456.789.0"
-            server_database_name: analytics
-            username: readonly_user
-            port: "5432"
-          connection:
-            title: Connection details
-          table_selection:
-            title: Select tables
-            body: Only select the tables you need. You can always add or remove tables later from the database management screen.
-            limit_hint: Select up to %{count} tables for now.
-            empty: No tables were returned for this database.
         management:
           connection_title: Connection details
           selected_tables_title: Selected tables
@@ -473,9 +398,11 @@ en:
             tracking_url: Source URL
         validation:
           connection_failed: We couldn't connect to that database. Please check the connection details and try again.
+          database_type_required: Please select a database type.
           selected_tables_required: Select at least one table to continue.
           selected_tables_limit: You can select up to %{count} tables for now.
           invalid_selected_tables: One or more selected tables are no longer available for this data source.
+          unsupported_database_type: Only PostgreSQL connections are supported right now.
         query_guard:
           blank_query: Enter a query before you run it.
           multiple_statements: Only a single SQL statement can be run at a time.

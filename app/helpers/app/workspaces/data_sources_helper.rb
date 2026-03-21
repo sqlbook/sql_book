@@ -70,14 +70,26 @@ module App
         ]
       end
 
-      def wizard_database_type_options(selected_database_type: 'postgres')
-        [
+      def wizard_database_type_options
+        %w[
+          postgres
+          mysql
+          sql_server
+          mariadb
+          oracle
+          snowflake
+          redshift
+          bigquery
+          clickhouse
+          databricks
+          sql_anywhere
+          athena
+        ].map do |database_type|
           {
-            value: 'postgres',
-            label: I18n.t('app.workspaces.data_sources.new.database_types.postgres'),
-            selected: selected_database_type.to_s == 'postgres'
+            value: database_type,
+            label: I18n.t("app.workspaces.data_sources.new.database_types.#{database_type}")
           }
-        ]
+        end
       end
 
       def wizard_available_table_groups(available_tables)

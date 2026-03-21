@@ -23,7 +23,7 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
           I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.title')
         )
         expect(response.body).not_to include(
-          I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title')
+          'Third-party data library'
         )
       end
     end
@@ -49,7 +49,7 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
         expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.external_database.title'))
         expect(response.body).to include(I18n.t('app.workspaces.data_sources.index.sections.first_party_capture.title'))
         expect(response.body).not_to include(
-          I18n.t('app.workspaces.data_sources.index.sections.third_party_data_library.title')
+          'Third-party data library'
         )
       end
     end
@@ -79,8 +79,13 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
     it 'renders the connection step when requested' do
       get "/app/workspaces/#{workspace.id}/data_sources/new", params: { step: 2 }
 
-      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.connection_box.title'))
       expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.fields.database_type'))
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.fields.database_type_placeholder'))
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.new.database_types.postgres'))
+      expect(response.body).to have_selector(
+        "[data-data-source-wizard-target='connectionBox'][hidden]",
+        visible: false
+      )
     end
   end
 
@@ -126,6 +131,40 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       expect(DataSources::ConnectionValidationService).to have_received(:new)
     end
 
+    it 'requires a database type before validating the connection' do
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: 'Warehouse DB',
+             database_type: '',
+             host: 'db.example.com',
+             port: 5432,
+             database_name: 'warehouse',
+             username: 'readonly',
+             password: 'secret'
+           }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.validation.database_type_required'))
+      expect(DataSources::ConnectionValidationService).not_to have_received(:new)
+    end
+
+    it 'rejects unsupported database types for now' do
+      post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
+           params: {
+             name: 'Warehouse DB',
+             database_type: 'mysql',
+             host: 'db.example.com',
+             port: 5432,
+             database_name: 'warehouse',
+             username: 'readonly',
+             password: 'secret'
+           }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(I18n.t('app.workspaces.data_sources.validation.unsupported_database_type'))
+      expect(DataSources::ConnectionValidationService).not_to have_received(:new)
+    end
+
     it 'renders step two errors before calling the connection service when required fields are blank' do
       post "/app/workspaces/#{workspace.id}/data_sources/validate_connection",
            params: {
@@ -138,7 +177,12 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
            }
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.body).to include("can't be blank")
+      expect(response.body).to have_selector('.field-error', text: "Name can't be blank")
+      expect(response.body).to have_selector('.field-error', text: "Host can't be blank")
+      expect(response.body).to have_selector('.field-error', text: "Database name can't be blank")
+      expect(response.body).to have_selector('.field-error', text: "Username can't be blank")
+      expect(response.body).to have_selector('.field-error', text: "Connection password can't be blank")
+      expect(response.body).not_to have_selector('.flash.alert')
       expect(DataSources::ConnectionValidationService).not_to have_received(:new)
     end
   end

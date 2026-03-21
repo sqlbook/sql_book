@@ -1,49 +1,99 @@
 <section class="data-source-wizard__step">
-  <%= form_with url: validate_connection_app_workspace_data_sources_path(workspace), method: :post, class: "data-source-wizard__form" do %>
+  <% selected_database_type = (wizard_state || {})['database_type'].presence %>
+  <% errors = wizard_step_two_errors || {} %>
+
+  <%= form_with url: validate_connection_app_workspace_data_sources_path(workspace),
+                method: :post,
+                class: "data-source-wizard__form",
+                data: { controller: "data-source-wizard" } do %>
     <div class="data-source-wizard__fields">
       <div class="field">
         <%= label_tag :name, t('app.workspaces.data_sources.new.fields.name'), class: "label block" %>
-        <%= text_field_tag :name, (wizard_state || {})['name'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.name_placeholder') %>
+        <%= text_field_tag :name,
+                           (wizard_state || {})['name'],
+                           class: class_names("input block fluid", invalid: errors['name'].present?),
+                           placeholder: t('app.workspaces.data_sources.new.fields.name_placeholder') %>
+        <% if errors['name'].present? %>
+          <p class="field-error"><%= errors['name'].first %></p>
+        <% end %>
       </div>
 
       <div class="field">
         <%= label_tag :database_type, t('app.workspaces.data_sources.new.fields.database_type'), class: "label block" %>
-        <div class="select">
+        <div class="<%= class_names('select', 'select--placeholder': selected_database_type.blank?, invalid: errors['database_type'].present?) %>">
           <%= select_tag :database_type,
-                         options_for_select(wizard_database_type_options.map { |option| [option[:label], option[:value]] }, (wizard_state || {})['database_type'] || 'postgres'),
-                         class: "block fluid" %>
+                         options_for_select(
+                           [[t('app.workspaces.data_sources.new.fields.database_type_placeholder'), '']] +
+                           wizard_database_type_options.map { |option| [option[:label], option[:value]] },
+                           selected_database_type
+                         ),
+                         class: "block fluid",
+                         data: {
+                           action: "change->data-source-wizard#toggleConnectionBox",
+                           data_source_wizard_target: "databaseType"
+                         } %>
           <i class="ri-arrow-drop-down-line"></i>
         </div>
+        <% if errors['database_type'].present? %>
+          <p class="field-error"><%= errors['database_type'].first %></p>
+        <% end %>
       </div>
     </div>
 
-    <div class="data-source-wizard__connection-box">
+    <div class="data-source-wizard__connection-box" data-data-source-wizard-target="connectionBox" <%= 'hidden' if selected_database_type.blank? %>>
       <h2><%= t('app.workspaces.data_sources.new.connection_box.title') %></h2>
 
       <div class="data-source-wizard__grid">
         <div class="field">
           <%= label_tag :host, t('app.workspaces.data_sources.new.fields.host'), class: "label block" %>
-          <%= text_field_tag :host, (wizard_state || {})['host'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.host_placeholder') %>
+          <%= text_field_tag :host,
+                             (wizard_state || {})['host'],
+                             class: class_names("input block fluid", invalid: errors['host'].present?),
+                             placeholder: t('app.workspaces.data_sources.new.fields.host_placeholder') %>
+          <% if errors['host'].present? %>
+            <p class="field-error"><%= errors['host'].first %></p>
+          <% end %>
         </div>
 
         <div class="field field--narrow">
           <%= label_tag :port, t('app.workspaces.data_sources.new.fields.port'), class: "label block" %>
-          <%= text_field_tag :port, (wizard_state || {})['port'] || DataSource::POSTGRES_DEFAULT_PORT, class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.port_placeholder') %>
+          <%= text_field_tag :port,
+                             (wizard_state || {})['port'] || DataSource::POSTGRES_DEFAULT_PORT,
+                             class: class_names("input block fluid", invalid: errors['port'].present?),
+                             placeholder: t('app.workspaces.data_sources.new.fields.port_placeholder') %>
+          <% if errors['port'].present? %>
+            <p class="field-error"><%= errors['port'].first %></p>
+          <% end %>
         </div>
 
         <div class="field field--full">
           <%= label_tag :database_name, t('app.workspaces.data_sources.new.fields.database_name'), class: "label block" %>
-          <%= text_field_tag :database_name, (wizard_state || {})['database_name'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.database_name_placeholder') %>
+          <%= text_field_tag :database_name,
+                             (wizard_state || {})['database_name'],
+                             class: class_names("input block fluid", invalid: errors['database_name'].present?),
+                             placeholder: t('app.workspaces.data_sources.new.fields.database_name_placeholder') %>
+          <% if errors['database_name'].present? %>
+            <p class="field-error"><%= errors['database_name'].first %></p>
+          <% end %>
         </div>
 
         <div class="field field--full">
           <%= label_tag :username, t('app.workspaces.data_sources.new.fields.username'), class: "label block" %>
-          <%= text_field_tag :username, (wizard_state || {})['username'], class: "input block fluid", placeholder: t('app.workspaces.data_sources.new.fields.username_placeholder') %>
+          <%= text_field_tag :username,
+                             (wizard_state || {})['username'],
+                             class: class_names("input block fluid", invalid: errors['username'].present?),
+                             placeholder: t('app.workspaces.data_sources.new.fields.username_placeholder') %>
+          <% if errors['username'].present? %>
+            <p class="field-error"><%= errors['username'].first %></p>
+          <% end %>
         </div>
 
         <div class="field field--full">
           <%= label_tag :password, t('app.workspaces.data_sources.new.fields.password'), class: "label block" %>
-          <%= password_field_tag :password, nil, class: "input block fluid" %>
+          <%= password_field_tag :password, nil, class: class_names("input block fluid", invalid: errors['password'].present?) %>
+          <% if errors['password'].present? %>
+            <p class="field-error"><%= errors['password'].first %></p>
+          <% end %>
         </div>
 
         <div class="field field--full">
