@@ -1,25 +1,20 @@
 <tr class="data-source-group__row">
   <td class="data-source-group__name-cell">
-    <div class="data-source-group__name">
-      <%= link_to data_source.display_name,
-                  add_params(data_source_id: data_source.id, tab: nil, confirm_delete: nil),
-                  class: "link secondary data-source-group__name-link" %>
-      <% if (badge = data_source_index_status_badge(data_source, stats:)) %>
-        <span class="data-source-group__status data-source-group__status--<%= badge[:modifier] %>" title="<%= badge[:label] %>">
-          <i class="<%= badge[:icon_class] %>"></i>
-        </span>
-      <% end %>
-    </div>
+    <%= link_to add_params(data_source_id: data_source.id, tab: nil, confirm_delete: nil),
+                class: "link secondary data-source-group__name-link" do %>
+      <span class="data-source-group__name">
+        <span><%= data_source.display_name %></span>
+        <% if (badge = data_source_index_status_badge(data_source, stats:)) %>
+          <span class="data-source-group__status data-source-group__status--<%= badge[:modifier] %>" title="<%= badge[:label] %>">
+            <i class="<%= badge[:icon_class] %>"></i>
+          </span>
+        <% end %>
+      </span>
+    <% end %>
   </td>
   <td><%= number_to_delimited(stats.total_events_for(data_source: data_source)) %></td>
   <td><%= number_to_delimited(stats.monthly_events_for(data_source: data_source)) %></td>
   <td>
     <%= link_to number_to_delimited(stats.queries_for(data_source: data_source)), app_workspace_data_source_queries_path(workspace, data_source), class: "link secondary" %>
-  </td>
-  <td class="options">
-    <%= link_to add_params(data_source_id: data_source.id, tab: nil, confirm_delete: nil), class: "link secondary data-source-group__settings-link", "aria-label": I18n.t('common.actions.settings') do %>
-      <i class="ri-settings-3-line red-500"></i>
-      <span><%= I18n.t('common.actions.settings') %></span>
-    <% end %>
   </td>
 </tr>

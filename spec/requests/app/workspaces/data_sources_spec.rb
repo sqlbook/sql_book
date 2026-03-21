@@ -358,6 +358,84 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
       expect(data_source.verified_at).to eq(nil)
       expect(response).to redirect_to(app_workspace_data_source_path(workspace, data_source))
     end
+
+    context 'when the source is a postgres connection' do
+      let(:data_source) { create(:data_source, :postgres, workspace:, name: 'Warehouse DB') }
+      let(:available_tables) do
+        [
+          {
+            schema: 'public',
+            tables: [
+              { name: 'orders', qualified_name: 'public.orders' },
+              { name: 'customers', qualified_name: 'public.customers' }
+            ]
+          }
+        ]
+      end
+      let(:validation_result) do
+        DataSources::ConnectionValidationService::Result.new(
+          success?: true,
+          available_tables:,
+          checked_at: Time.zone.local(2026, 3, 21, 10, 0, 0),
+          error_code: nil,
+          message: nil
+        )
+      end
+      let(:validation_service) { instance_double(DataSources::ConnectionValidationService, call: validation_result) }
+
+      before do
+        allow(DataSources::ConnectionValidationService).to receive(:new).and_return(validation_service)
+      end
+
+      it 'updates the connection details and selected tables' do
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}",
+            params: {
+              host: 'new-db.internal',
+              port: 5433,
+              database_name: 'warehouse_reporting',
+              username: 'readonly_reporting',
+              password: '',
+              selected_tables: ['public.customers']
+            }
+
+        expect(response).to redirect_to(
+          app_workspace_data_sources_path(workspace, data_source_id: data_source.id)
+        )
+        expect(data_source.reload.host).to eq('new-db.internal')
+        expect(data_source.port).to eq(5433)
+        expect(data_source.database_name).to eq('warehouse_reporting')
+        expect(data_source.username).to eq('readonly_reporting')
+        expect(data_source.selected_tables).to eq(['public.customers'])
+      end
+
+      it 're-renders the index with the panel open when validation fails' do
+        failed_validation = DataSources::ConnectionValidationService::Result.new(
+          success?: false,
+          available_tables: [],
+          checked_at: nil,
+          error_code: 'connection_failed',
+          message: I18n.t('app.workspaces.data_sources.validation.connection_failed')
+        )
+        allow(DataSources::ConnectionValidationService).to receive(:new).and_return(
+          instance_double(DataSources::ConnectionValidationService, call: failed_validation)
+        )
+
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}",
+            params: {
+              host: 'bad-db.internal',
+              port: 5432,
+              database_name: 'warehouse',
+              username: 'readonly',
+              password: 'secret',
+              selected_tables: ['public.orders']
+            }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to have_selector('.message',
+                                               text: I18n.t('app.workspaces.data_sources.validation.connection_failed'))
+        expect(response.body).to include('bad-db.internal')
+      end
+    end
   end
 
   describe 'DELETE /app/workspaces/:workspace_id/data_sources/:id' do

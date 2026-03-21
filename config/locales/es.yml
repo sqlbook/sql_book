@@ -369,9 +369,11 @@ es:
             port: Puerto
             server_database_name: Nombre de la base de datos en el servidor
             username: Usuario
+            password_placeholder: Déjalo en blanco para conservar la contraseña actual
             ssl_mode: Modo SSL
             selected_tables: Tablas seleccionadas
             tracking_url: URL de origen
+          selected_tables_hint: Cambiar las tablas disponibles aquí puede romper consultas guardadas que dependan de tablas eliminadas.
         query_guard:
           blank_query: Introduce una consulta antes de ejecutarla.
           multiple_statements: Solo se puede ejecutar una única sentencia SQL cada vez.
@@ -383,6 +385,9 @@ es:
           created:
             title: Fuente de datos añadida
             body: "%{name} ya está disponible en este espacio."
+          updated:
+            title: Fuente de datos actualizada
+            body: "%{name} se ha actualizado."
         card:
           created_at: "Creada el %{date}"
           last_checked: "Última comprobación %{date}"

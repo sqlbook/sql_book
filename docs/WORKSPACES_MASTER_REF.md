@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -42,7 +42,7 @@ Related references:
   - `POST /app/workspaces/:workspace_id/data_sources/validate_connection` -> validate PostgreSQL connection and discover tables
   - `POST /app/workspaces/:workspace_id/data_sources` -> create datasource
   - `GET /app/workspaces/:workspace_id/data_sources/:id` -> datasource settings/management
-  - `PATCH /app/workspaces/:workspace_id/data_sources/:id` -> update capture datasource URL
+  - `PATCH /app/workspaces/:workspace_id/data_sources/:id` -> update datasource settings
   - `DELETE /app/workspaces/:workspace_id/data_sources/:id` -> destroy datasource
 - Workspace/team API v1 (auth-protected, documented via `/dev/api`):
   - `PATCH /api/v1/workspaces/:workspace_id`
@@ -256,6 +256,11 @@ Related references:
   - `main` + `aside` render in a two-column split below header.
   - split layout fills available viewport height under header.
   - `aside` no longer participates in header layout; it sits entirely below header.
+- Datasource home/settings split specifics:
+  - datasource names in the `Name` column open the settings side panel
+  - on desktop the datasource table and settings panel each take 50% of the available width
+  - on narrow screens the settings panel takes over the full content area until closed
+  - datasource settings panel is fixed-width for this surface and is not user-resizable
 - Workspace chat split surface (`/app/workspaces/:id`):
   - history and conversation render as sibling surfaces (not nested).
   - desktop open state uses `260px + 1fr` columns with a 24px inter-surface gap.

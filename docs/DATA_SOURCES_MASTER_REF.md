@@ -1,6 +1,6 @@
 # Data Sources Master Reference
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ## Service and goal
 - Service: workspace-scoped datasource management across first-party capture and external connectors.
@@ -41,7 +41,7 @@ App routes:
 - `GET /app/workspaces/:workspace_id/data_sources/:id`
   - datasource settings/management
 - `PATCH /app/workspaces/:workspace_id/data_sources/:id`
-  - current update path is capture-source URL management
+  - update datasource settings
 - `DELETE /app/workspaces/:workspace_id/data_sources/:id`
   - delete datasource
 - `GET /app/workspaces/:workspace_id/data_sources/:data_source_id/set_up`
@@ -69,6 +69,8 @@ Chat/tool actions:
 - Datasources home renders only connector families that currently have datasource rows:
   - `External databases`
   - `First-party data capture`
+- Datasource names in the `Name` column are the settings affordance:
+  - clicking a datasource name opens the settings side panel on the datasource home page
 - External-database rows show:
   - datasource name
   - connector type
@@ -79,6 +81,24 @@ Chat/tool actions:
   - total events
   - events this month
   - related query count
+
+## Datasource settings panel
+- Datasource settings open as a side panel from the datasource home page.
+- Desktop layout:
+  - datasource table remains on the left
+  - settings panel takes 50% of the viewport on the right
+  - panel is not manually resizable for this surface
+- Narrow viewport layout:
+  - settings panel takes over the full app content area until closed
+- External PostgreSQL panel tabs:
+  - `Settings`
+  - `Delete Data Source`
+- External PostgreSQL `Settings` tab behavior:
+  - datasource name and database type are visible but not editable
+  - connection details can be updated and revalidated on save
+  - selected tables can be changed and saved
+  - UI must warn that removing tables can break saved queries that depend on them
+- First-party capture management continues to use the existing legacy setup/settings surface until it is redesigned
 
 ## Phase-1 create flow
 Step 1:

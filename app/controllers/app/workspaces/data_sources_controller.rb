@@ -17,6 +17,16 @@ module App
         ssl_mode
         extract_category_values
       ].freeze
+      DATA_SOURCE_PARAM_KEYS = %i[
+        url
+        host
+        port
+        database_name
+        username
+        password
+        ssl_mode
+        extract_category_values
+      ].freeze
 
       before_action :require_authentication!
       before_action :authorize_data_source_access!
@@ -26,6 +36,7 @@ module App
         @data_sources = data_sources.order(source_type: :asc, created_at: :asc)
         @data_sources_stats = DataSourcesStatsService.new(data_sources: @data_sources)
         @selected_data_source = selected_data_source
+        prepare_selected_data_source_panel if @selected_data_source
       end
 
       def show
@@ -65,10 +76,14 @@ module App
       end
 
       def update
+        @workspace = workspace
+        @selected_data_source = data_source
+
+        return handle_postgres_update if @selected_data_source.external_database?
         return redirect_to_data_source unless capture_update_requested?
         return redirect_to_data_source if update_capture_source
 
-        handle_invalid_data_source_update(data_source)
+        handle_invalid_data_source_update(@selected_data_source)
       end
 
       def destroy
@@ -116,7 +131,7 @@ module App
       end
 
       def data_source_params
-        params.permit(:url)
+        params.permit(*DATA_SOURCE_PARAM_KEYS, selected_tables: [])
       end
 
       def wizard_form_params
@@ -260,6 +275,143 @@ module App
       def handle_invalid_data_source_update(data_source)
         flash[:alert] = data_source.errors.full_messages.first
         redirect_to app_workspace_data_source_path(workspace, data_source)
+      end
+
+      def handle_postgres_update
+        result = update_postgres_data_source
+        return handle_postgres_update_success(result) if result.success?
+
+        handle_postgres_update_failure(result)
+      end
+
+      def update_postgres_data_source
+        ::DataSources::UpdatePostgresDataSourceService.new(
+          data_source: @selected_data_source,
+          attributes: postgres_update_attributes
+        ).call
+      end
+
+      def postgres_update_attributes
+        {
+          host: data_source_params[:host],
+          port: data_source_params[:port],
+          database_name: data_source_params[:database_name],
+          username: data_source_params[:username],
+          password: data_source_params[:password],
+          ssl_mode: data_source_params[:ssl_mode],
+          extract_category_values: data_source_params[:extract_category_values],
+          selected_tables: Array(data_source_params[:selected_tables])
+        }
+      end
+
+      def handle_postgres_update_success(_result)
+        flash[:toast] = {
+          type: 'success',
+          title: I18n.t('app.workspaces.data_sources.toasts.updated.title'),
+          body: I18n.t(
+            'app.workspaces.data_sources.toasts.updated.body',
+            name: @selected_data_source.display_name
+          )
+        }
+        redirect_to app_workspace_data_sources_path(workspace, data_source_id: @selected_data_source.id)
+      end
+
+      def handle_postgres_update_failure(result)
+        @data_sources = data_sources.order(source_type: :asc, created_at: :asc)
+        @data_sources_stats = DataSourcesStatsService.new(data_sources: @data_sources)
+        @selected_data_source_errors = {}
+        @selected_data_source_connection_error = nil
+        populate_selected_data_source_form_state
+        @selected_data_source_available_tables = normalize_table_groups(result.available_tables)
+        apply_postgres_update_errors(result)
+
+        render :index, status: :unprocessable_entity
+      end
+
+      def prepare_selected_data_source_panel
+        @selected_data_source_errors ||= {}
+        @selected_data_source_connection_error ||= nil
+        populate_selected_data_source_form_state
+        return if instance_variable_defined?(:@selected_data_source_available_tables)
+
+        @selected_data_source_available_tables = selected_data_source_available_tables(@selected_data_source)
+      end
+
+      def populate_selected_data_source_form_state
+        @selected_data_source_form_state = {
+          'host' => selected_data_source_form_value(:host, @selected_data_source.host),
+          'port' => selected_data_source_form_value(:port, @selected_data_source.port),
+          'database_name' => selected_data_source_form_value(:database_name, @selected_data_source.database_name),
+          'username' => selected_data_source_form_value(:username, @selected_data_source.username),
+          'ssl_mode' => selected_data_source_form_value(:ssl_mode, @selected_data_source.ssl_mode),
+          'extract_category_values' => extract_category_values_param,
+          'selected_tables' => selected_tables_param
+        }
+      end
+
+      def selected_data_source_available_tables(selected_source)
+        normalize_table_groups(
+          selected_source.connector.list_tables(include_columns: false)
+        )
+      rescue ::DataSources::Connectors::BaseConnector::ConnectionError
+        @selected_data_source_connection_error = I18n.t('app.workspaces.data_sources.validation.connection_failed')
+        fallback_available_tables_for(selected_source)
+      end
+
+      def normalize_table_groups(groups)
+        Array(groups).map(&:deep_symbolize_keys)
+      end
+
+      def fallback_available_tables_for(selected_source)
+        selected_source.selected_tables
+          .group_by { |table_name| table_name.split('.', 2).first }
+          .map do |schema, table_names|
+          {
+            schema:,
+            tables: table_names.map do |table_name|
+              {
+                name: table_name.split('.', 2).last,
+                qualified_name: table_name
+              }
+            end
+          }
+        end
+      end
+
+      def selected_tables_param
+        return Array(data_source_params[:selected_tables]).map(&:to_s) if params.key?(:selected_tables)
+
+        @selected_data_source.selected_tables
+      end
+
+      def extract_category_values_param
+        if params.key?(:extract_category_values)
+          ActiveModel::Type::Boolean.new.cast(data_source_params[:extract_category_values])
+        else
+          @selected_data_source.extract_category_values?
+        end
+      end
+
+      def apply_postgres_update_errors(result)
+        return apply_postgres_connection_error(result) if result.error_code == 'connection_failed'
+        return apply_postgres_validation_errors if result.error_code == 'validation_error'
+
+        @selected_data_source_errors = { 'selected_tables' => [result.message] }
+      end
+
+      def apply_postgres_connection_error(result)
+        @selected_data_source_connection_error = result.message
+        return unless @selected_data_source_available_tables.empty?
+
+        @selected_data_source_available_tables = fallback_available_tables_for(@selected_data_source)
+      end
+
+      def apply_postgres_validation_errors
+        @selected_data_source_errors = @selected_data_source.errors.to_hash(true)
+      end
+
+      def selected_data_source_form_value(param_key, current_value)
+        data_source_params[param_key].presence || current_value
       end
 
       def wizard_step_two_valid?(state)

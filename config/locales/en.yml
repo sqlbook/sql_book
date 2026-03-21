@@ -393,9 +393,11 @@ en:
             port: Port
             server_database_name: Database name on server
             username: Username
+            password_placeholder: Leave blank to keep the current password
             ssl_mode: SSL mode
             selected_tables: Selected tables
             tracking_url: Source URL
+          selected_tables_hint: Changing the tables available here can break saved queries that depend on removed tables.
         validation:
           connection_failed: We couldn't connect to that database. Please check the connection details and try again.
           database_type_required: Please select a database type.
@@ -414,6 +416,9 @@ en:
           created:
             title: Data source added
             body: "%{name} is now available in this workspace."
+          updated:
+            title: Data source updated
+            body: "%{name} has been updated."
         card:
           created_at: "Created %{date}"
           last_checked: "Last checked %{date}"
