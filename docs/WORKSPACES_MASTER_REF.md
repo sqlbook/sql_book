@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-21
+Last updated: 2026-03-22
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -136,11 +136,12 @@ Related references:
   - `query.list`
   - `query.run`
   - `query.save`
+  - `query.update`
   - `query.rename`
   - `query.delete`
 - v1 blocked namespaces include:
   - `workspace.list/get/create`
-  - `query.*` except `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete`
+  - `query.*` except `query.list`, `query.run`, `query.save`, `query.update`, `query.rename`, and `query.delete`
   - `dashboard.*`
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - datasource note:
@@ -149,11 +150,11 @@ Related references:
   - `datasource.validate_connection` and `datasource.create` remain owner/admin only
   - other datasource actions remain blocked until explicitly implemented
 - query note:
-  - `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete` are in scope
+  - `query.list`, `query.run`, `query.save`, `query.update`, `query.rename`, and `query.delete` are in scope
   - other query-management actions remain blocked until explicitly implemented
 - Auto-run chat writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`.
 - Auto-run datasource chat writes include `datasource.validate_connection` and `datasource.create`.
-- Auto-run query-library chat writes include `query.save` and `query.rename`.
+- Auto-run query-library chat writes include `query.save`, `query.update`, and `query.rename`.
 - Read-only chat query execution (`query.run`) should return an inline assistant answer in the same conversation flow; it does not require confirmation.
 - Query-library chat actions should support:
   - `query.list` for browsing saved queries
@@ -164,6 +165,9 @@ Related references:
 - Thread-local query references and saved library queries are distinct:
   - unsaved query runs live only in the owning chat thread
   - saved queries live in the workspace query library and may also remain linked back to their source thread
+- Exact duplicate saved queries in the same datasource should be blocked by a server-owned fingerprint on normalized SQL, rather than relying on the LLM to notice duplicates.
+- If the latest thread draft is a minor refinement of the currently discussed saved query, `save that` should update the existing saved query in place.
+- If the latest thread draft has materially drifted into a different query, chat should ask whether to update+rename the existing saved query or save the draft as a new query.
 - Saved-query names rendered inside chat should open the saved query in a new tab rather than replacing the active chat view.
 - Query settings may show a `Chat source` link when the saved query originated from chat and the current viewer can still access that thread.
 - If a saved query is deleted, the thread-local query reference should remain for chat continuity but lose its library link.

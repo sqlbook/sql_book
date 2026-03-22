@@ -19,13 +19,14 @@ class Query < ApplicationRecord
 
   normalizes :chart_type, with: ->(chart_type) { chart_type.presence }
 
+  before_validation :assign_query_fingerprint
   before_save :normalize_boolean_fields
 
   # Changing any of the chart config will not impact
   # the query results, so only clear the cache if
   # that specific field is changed
   before_update :clear_query_cache!, if: :will_save_change_to_query?
-  after_update :sync_chat_query_references!, if: :saved_query_name_changed?
+  after_update :sync_chat_query_references!, if: :saved_query_reference_state_changed?
   before_destroy :unlink_chat_query_references!
 
   def query_result
@@ -89,9 +90,13 @@ class Query < ApplicationRecord
     saved_change_to_name? && saved?
   end
 
+  def saved_query_reference_state_changed?
+    saved? && (saved_change_to_name? || saved_change_to_query? || saved_change_to_data_source_id?)
+  end
+
   def sync_chat_query_references!
     chat_query_references.find_each do |reference|
-      reference.rename_to!(new_name: name)
+      reference.sync_with_saved_query!(query: self)
     end
   end
 
@@ -99,5 +104,9 @@ class Query < ApplicationRecord
     chat_query_references.find_each do |reference|
       reference.unlink_saved_query!(fallback_name: name)
     end
+  end
+
+  def assign_query_fingerprint
+    self.query_fingerprint = Queries::Fingerprint.build(data_source_id:, sql: query)
   end
 end

@@ -17,6 +17,7 @@ module Chat
       'member.remove' => :member_remove_candidates,
       'query.save' => :query_save_candidates,
       'query.rename' => :query_rename_candidates,
+      'query.update' => :query_update_candidates,
       'query.delete' => :query_delete_candidates
     }.freeze
 
@@ -28,7 +29,7 @@ module Chat
 
     def compose(execution:, action_type:)
       candidates = response_candidates(execution:, action_type:)
-      fallback = execution.user_message.to_s.strip
+      fallback = normalized_message_candidate(execution.user_message)
       select_candidate(candidates:, fallback:)
     end
 
@@ -147,12 +148,22 @@ module Chat
 
     def query_save_candidates(execution:)
       query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
+      if save_outcome(execution:) == 'already_saved'
+        return translated_variants('query_already_saved', name: query_link(query:))
+      end
+
       translated_variants('query_save', name: query_link(query:))
     end
 
     def query_rename_candidates(execution:)
       query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
       translated_variants('query_rename', name: query_link(query:))
+    end
+
+    def query_update_candidates(execution:)
+      query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
+      key = update_outcome(execution:) == 'unchanged' ? 'query_update_unchanged' : 'query_update'
+      translated_variants(key, name: query_link(query:))
     end
 
     def query_delete_candidates(execution:)
@@ -162,6 +173,14 @@ module Chat
 
     def query_link(query:)
       Queries::ChatLinkFormatter.new(workspace:).markdown_link(query:)
+    end
+
+    def save_outcome(execution:)
+      execution.data.to_h['save_outcome'] || execution.data.to_h[:save_outcome]
+    end
+
+    def update_outcome(execution:)
+      execution.data.to_h['update_outcome'] || execution.data.to_h[:update_outcome]
     end
 
     def translated_variants(key, **args)
@@ -226,7 +245,7 @@ module Chat
     end
 
     def select_candidate(candidates:, fallback:)
-      viable_candidates = Array(candidates).map { |value| value.to_s.strip }.compact_blank
+      viable_candidates = normalized_message_candidates(candidates)
       viable_candidates.each do |candidate|
         return candidate unless prior_message_match?(candidate)
       end
@@ -258,6 +277,16 @@ module Chat
       else
         value.to_s.strip
       end
+    end
+
+    def normalized_message_candidates(values)
+      Array(values).flat_map do |value|
+        if value.is_a?(Array)
+          normalized_message_candidates(value)
+        else
+          normalized_message_candidate(value).presence
+        end
+      end.compact
     end
   end
 end

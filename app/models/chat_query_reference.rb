@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ChatQueryReference < ApplicationRecord
+class ChatQueryReference < ApplicationRecord # rubocop:disable Metrics/ClassLength
   belongs_to :chat_thread,
              inverse_of: :chat_query_references
 
@@ -21,6 +21,10 @@ class ChatQueryReference < ApplicationRecord
              class_name: 'Query',
              optional: true,
              inverse_of: :chat_query_references
+
+  belongs_to :refined_from_reference,
+             class_name: 'ChatQueryReference',
+             optional: true
 
   validates :current_name, length: { maximum: 255 }, allow_blank: true
 
@@ -43,6 +47,18 @@ class ChatQueryReference < ApplicationRecord
     save!
   end
   # rubocop:enable Metrics/AbcSize
+
+  def sync_with_saved_query!(query:)
+    previous_name = current_name.presence
+
+    self.saved_query = query
+    self.data_source = query.data_source
+    self.sql = query.query
+    self.current_name = query.name
+    append_alias(previous_name)
+    append_alias(query.name_before_last_save || query.name_in_database || query.name)
+    save!
+  end
 
   # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def rename_to!(new_name:, result_message: nil)
@@ -85,6 +101,9 @@ class ChatQueryReference < ApplicationRecord
       'columns' => Array(columns),
       'saved_query_id' => saved_query_id,
       'saved_query_name' => current_name.to_s.presence || saved_query&.name.to_s.presence,
+      'refined_from_reference_id' => refined_from_reference_id,
+      'refined_saved_query_id' => refined_saved_query&.id,
+      'refined_saved_query_name' => refined_saved_query&.name.to_s.presence,
       'updated_at' => updated_at&.iso8601
     }.compact
   end
@@ -109,5 +128,9 @@ class ChatQueryReference < ApplicationRecord
 
   def normalized_name(value)
     value.to_s.strip.gsub(/\s+/, ' ').downcase
+  end
+
+  def refined_saved_query
+    refined_from_reference&.saved_query
   end
 end

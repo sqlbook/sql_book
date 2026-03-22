@@ -118,6 +118,16 @@ module Chat
       if action_type == 'query.rename'
         return %i[apply_explicit_query_reference! apply_recent_query_reference! apply_explicit_query_name!]
       end
+
+      if action_type == 'query.update'
+        return %i[
+          apply_explicit_query_reference!
+          apply_recent_query_reference!
+          apply_recent_draft_query_context!
+          apply_explicit_query_name!
+        ]
+      end
+
       return %i[apply_explicit_query_reference! apply_recent_query_reference!] if action_type == 'query.delete'
 
       []
@@ -204,6 +214,15 @@ module Chat
       payload.merge!(explicit_reference) if explicit_reference.present?
     end
 
+    def apply_recent_draft_query_context!(payload:)
+      recent_draft_reference = context_snapshot.recent_draft_query_reference
+      return if recent_draft_reference.blank?
+
+      payload['sql'] ||= recent_draft_reference['sql']
+      payload['data_source_id'] ||= recent_draft_reference['data_source_id']
+      payload['data_source_name'] ||= recent_draft_reference['data_source_name']
+    end
+
     def apply_recent_query_reference!(payload:)
       return if payload['query_id'].present?
 
@@ -269,6 +288,13 @@ module Chat
             query_name: payload['query_name'].to_s.presence || I18n.t('app.workspaces.chat.query_library.this_query')
           )
         end
+      when 'query.update'
+        query_id_blank = payload['query_id'].to_s.strip.blank?
+        sql_blank = payload['sql'].to_s.strip.blank?
+
+        return I18n.t('app.workspaces.chat.planner.query_update_needs_query_and_sql') if query_id_blank && sql_blank
+        return I18n.t('app.workspaces.chat.planner.query_update_needs_query') if query_id_blank
+        return I18n.t('app.workspaces.chat.planner.query_update_needs_sql') if sql_blank
       when 'query.delete'
         return I18n.t('app.workspaces.chat.planner.query_delete_needs_query') if payload['query_id'].to_s.strip.blank?
       end

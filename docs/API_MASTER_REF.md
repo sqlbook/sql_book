@@ -1,6 +1,6 @@
 # API Master Reference
 
-Last updated: 2026-03-21
+Last updated: 2026-03-22
 
 ## Purpose
 Single source of truth for sqlbook's documented API surface, OpenAPI authoring rules, Scalar setup, and the maintenance workflow that keeps the docs useful for both humans and LLM/tool consumers.
@@ -55,14 +55,18 @@ Current query API scope:
 - query-library list is available to all accepted workspace roles
 - read-only query execution is available to `OWNER`, `ADMIN`, and `USER`
 - query save is available to `OWNER`, `ADMIN`, and `USER`
-- query rename is available to `OWNER`, `ADMIN`, and `USER`
+- query update/rename is available to `OWNER`, `ADMIN`, and `USER`
 - query delete is available to `OWNER`, `ADMIN`, and `USER` when that role can delete the specific saved query
 - callers can send either a plain-language question or direct read-only SQL to the run endpoint
 - save requests require SQL plus datasource identity; query name can be server-generated when omitted
-- rename requests require a target query id and the new saved-query name
+- exact duplicate saves are prevented by a server-owned query fingerprint (`data_source_id + normalized_sql`)
+- `POST /queries` returns `save_outcome: "created"` for a new saved query or `save_outcome: "already_saved"` when the exact same saved query already exists
+- `PATCH /queries/:id` can update `name`, `sql`, or both atomically and returns `update_outcome: "updated"` or `update_outcome: "unchanged"`
+- update requests that would collide with a different saved query fingerprint in the same datasource must fail validation instead of overwriting or duplicating the other saved query
 - delete requests require a target query id and should be treated as destructive
 - saved query responses can include an optional `chat_source` object when the query originated from chat and the current requester can still access that private source thread
 - chat continuity for queries is thread-local and server-owned via persisted query references; unsaved thread-only queries are not promoted into the shared query library unless they are explicitly saved
+- saved query identity is authoritative at the app layer, not the LLM layer; the model may suggest names or conversational next steps, but duplicate prevention and in-place updates are server-owned behaviors
 - if a saved query is deleted, any linked thread reference remains as thread-only chat history; if the source chat thread is deleted, saved queries simply lose their `chat_source`
 
 Meta-level docs rule:
@@ -133,6 +137,9 @@ For docs to stay human and LLM friendly:
 - Query provenance should also stay aligned across those surfaces:
   - thread-local chat query references remain private to the thread owner
   - saved query API responses may expose `chat_source` only when that viewer can still access the source thread
+- Query mutation semantics should also stay aligned across those surfaces:
+  - exact duplicate saves should no-op to the existing saved query
+  - in-place saved-query edits should use the same update contract whether they originate from product UI or chat
 
 ## Maintenance workflow
 When changing any documented workspace/team/datasource/query API behavior:

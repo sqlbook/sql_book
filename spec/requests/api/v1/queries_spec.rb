@@ -120,6 +120,34 @@ RSpec.describe 'API v1 queries', type: :request do
       expect(Query.order(:id).last.saved).to be(true)
     end
 
+    it 'returns the existing saved query instead of creating an exact duplicate' do
+      existing_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS count FROM public.users',
+        author: owner,
+        last_updated_by: owner
+      )
+
+      expect do
+        post "/api/v1/workspaces/#{workspace.id}/queries",
+             params: {
+               name: 'User count copy',
+               sql: ' SELECT   COUNT(*) AS count FROM public.users; ',
+               data_source_id: data_source.id
+             },
+             as: :json
+      end.not_to change(Query, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('data', 'save_outcome')).to eq('already_saved')
+      expect(response.parsed_body.dig('data', 'query', 'id')).to eq(existing_query.id)
+      expect(existing_query.reload.name).to eq('User count')
+    end
+
     it 'renames a saved query' do
       query = create(:query, data_source:, saved: true, name: 'Users', query: 'SELECT * FROM public.users')
 
@@ -131,6 +159,70 @@ RSpec.describe 'API v1 queries', type: :request do
       expect(response.parsed_body['status']).to eq('executed')
       expect(response.parsed_body.dig('data', 'query', 'name')).to eq('List of users')
       expect(query.reload.name).to eq('List of users')
+    end
+
+    it 'updates a saved query SQL and name atomically' do
+      query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: owner,
+        last_updated_by: owner
+      )
+
+      patch "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}",
+            params: {
+              sql: <<~SQL.squish,
+                SELECT super_admin, COUNT(*) AS user_count
+                FROM public.users
+                GROUP BY super_admin
+                ORDER BY super_admin
+              SQL
+              name: 'User count by super admin status'
+            },
+            as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('data', 'update_outcome')).to eq('updated')
+      expect(query.reload.name).to eq('User count by super admin status')
+      expect(query.query).to include('GROUP BY super_admin')
+      expect(query.query_fingerprint).to be_present
+    end
+
+    it 'returns a validation error when an update would collide with another saved query fingerprint' do
+      existing_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: owner,
+        last_updated_by: owner
+      )
+      query_to_update = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User names',
+        query: 'SELECT first_name, last_name FROM public.users',
+        author: owner,
+        last_updated_by: owner
+      )
+
+      patch "/api/v1/workspaces/#{workspace.id}/queries/#{query_to_update.id}",
+            params: {
+              sql: 'SELECT COUNT(*) AS user_count FROM public.users'
+            },
+            as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['status']).to eq('validation_error')
+      expect(response.parsed_body['error_code']).to eq('duplicate_saved_query')
+      expect(response.parsed_body.dig('data', 'conflicting_query', 'id')).to eq(existing_query.id)
+      expect(query_to_update.reload.name).to eq('User names')
     end
 
     it 'deletes a saved query' do

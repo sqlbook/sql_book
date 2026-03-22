@@ -48,6 +48,11 @@ module Chat
         rename|retitle
       )\b.*\bquery\b
     /ix
+    QUERY_UPDATE_REGEX = /
+      \b(
+        update|replace|overwrite|edit|modify
+      )\b
+    /ix
     QUERY_RENAME_CONTEXT_REGEX = /
       \b(
         which\s+saved\s+query\s+to\s+rename|
@@ -229,7 +234,7 @@ module Chat
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
                     'member.resend_invite, member.update_role, member.remove, datasource.list,',
                     'datasource.validate_connection, datasource.create, query.list, query.run, query.save,',
-                    'query.rename, query.delete.'
+                    'query.rename, query.update, query.delete.'
                   ].join(' '),
                   [
                     'Disallowed namespaces: workspace.list/get/create, dashboard.*,',
@@ -254,6 +259,7 @@ module Chat
                     'query.run(question),',
                     'query.save(sql,data_source_id or data_source_name),',
                     'query.rename(query_id,name),',
+                    'query.update(query_id,sql,name?),',
                     'query.delete(query_id).'
                   ].join(' '),
                   [
@@ -264,6 +270,7 @@ module Chat
                   [
                     'For query-library requests, prefer query.list.',
                     'For "save this query" follow-ups, prefer query.save and reuse the recent executed query context.',
+                    'For updating a saved query to match a refined SQL draft, prefer query.update.',
                     'For renaming or deleting saved queries, prefer query.rename or query.delete.',
                     'For data questions, prefer query.run.',
                     'If multiple connected data sources or tables could answer, ask a clarifying question.'
@@ -418,6 +425,7 @@ module Chat
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
       return datasource_list_plan if datasource_list_intent?(lower)
       return query_list_plan if query_list_intent?(lower)
+      return query_update_plan if query_update_intent?(lower)
       return query_rename_plan if query_rename_intent?(lower)
       return query_delete_plan if query_delete_intent?(lower)
       return member_resend_plan if lower.match?(/\bresend\b.*\b(invite|invitation)\b/)
@@ -474,6 +482,13 @@ module Chat
       return true if rename_follow_up_context_active?
 
       parsed_query_name.present? && resolved_query_reference_payload['query_id'].present?
+    end
+
+    def query_update_intent?(lowered_message)
+      return false if recent_draft_query_reference.blank?
+      return false unless lowered_message.match?(QUERY_UPDATE_REGEX)
+
+      lowered_message.match?(/\b(query|sql|saved query|existing|current|old|it|that|this)\b/)
     end
 
     def query_delete_intent?(lowered_message)
@@ -684,13 +699,54 @@ module Chat
       )
     end
 
-    def query_save_plan
+    def query_save_plan # rubocop:disable Metrics/AbcSize
+      refinement = query_refinement_resolver.resolve
+      if refinement.material_drift?
+        return Plan.new(
+          assistant_message: I18n.t(
+            'app.workspaces.chat.planner.query_save_update_or_new',
+            current_name: refinement.target_query.name,
+            suggested_name: refinement.generated_name.presence || refinement.target_query.name
+          ),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
+      if refinement.minor_refinement?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.query_update'),
+          action_type: 'query.update',
+          payload: {
+            'query_id' => refinement.target_query.id,
+            'query_name' => refinement.target_query.name,
+            'sql' => refinement.draft_reference['sql'],
+            'name' => parsed_query_name
+          }.compact
+        )
+      end
+
       payload = {}
       payload['name'] = parsed_query_name if parsed_query_name.present?
 
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.query_save'),
         action_type: 'query.save',
+        payload:
+      )
+    end
+
+    def query_update_plan
+      payload = resolved_query_reference_payload
+      payload['sql'] = recent_draft_query_reference['sql']
+      payload['name'] = inferred_query_rename_name if inferred_query_rename_name.present?
+
+      missing_plan = query_update_missing_plan(payload:)
+      return missing_plan if missing_plan
+
+      Plan.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_update'),
+        action_type: 'query.update',
         payload:
       )
     end
@@ -759,6 +815,34 @@ module Chat
       nil
     end
 
+    def query_update_missing_plan(payload:) # rubocop:disable Metrics/AbcSize
+      if payload['query_id'].blank? && payload['sql'].to_s.strip.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.query_update_needs_query_and_sql'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
+      if payload['query_id'].blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.query_update_needs_query'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
+      if payload['sql'].to_s.strip.blank?
+        return Plan.new(
+          assistant_message: I18n.t('app.workspaces.chat.planner.query_update_needs_sql'),
+          action_type: nil,
+          payload: {}
+        )
+      end
+
+      nil
+    end
+
     def missing_query_and_name_plan
       Plan.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.query_rename_needs_query_and_name'),
@@ -802,6 +886,17 @@ module Chat
 
     def recent_query_reference
       @recent_query_reference ||= context_snapshot&.recent_query_reference.to_h
+    end
+
+    def recent_draft_query_reference
+      @recent_draft_query_reference ||= context_snapshot&.recent_draft_query_reference.to_h
+    end
+
+    def query_refinement_resolver
+      @query_refinement_resolver ||= QueryRefinementResolver.new(
+        workspace:,
+        context_snapshot:
+      )
     end
 
     def recent_invited_member_role_context_plan

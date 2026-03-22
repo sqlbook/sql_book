@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tooling
-  module WorkspaceQueryRegistry
+  module WorkspaceQueryRegistry # rubocop:disable Metrics/ModuleLength
     module_function
 
     TOOL_CATALOG = [
@@ -70,6 +70,23 @@ module Tooling
         risk_level: 'write',
         confirmation_mode: 'none',
         handler_method: :rename
+      },
+      {
+        name: 'query.update',
+        description: 'Update the SQL and optional name of a saved query in the current workspace query library.',
+        input_schema: {
+          'type' => 'object',
+          'required' => %w[query_id sql],
+          'properties' => {
+            'query_id' => { 'type' => 'integer' },
+            'sql' => { 'type' => 'string', 'min_length' => 1 },
+            'name' => { 'type' => 'string', 'min_length' => 1 }
+          }
+        },
+        output_schema: { 'type' => 'object' },
+        risk_level: 'write',
+        confirmation_mode: 'none',
+        handler_method: :update
       },
       {
         name: 'query.delete',

@@ -223,7 +223,8 @@ CREATE TABLE public.chat_query_references (
     row_count integer,
     columns jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    refined_from_reference_id bigint
 );
 
 
@@ -439,7 +440,8 @@ CREATE TABLE public.queries (
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
     chart_type character varying,
-    chart_config jsonb DEFAULT '{}'::jsonb NOT NULL
+    chart_config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    query_fingerprint character varying
 );
 
 
@@ -1027,6 +1029,13 @@ CREATE INDEX index_chat_query_references_on_data_source_id ON public.chat_query_
 
 
 --
+-- Name: index_chat_query_references_on_refined_from_reference_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_query_references_on_refined_from_reference_id ON public.chat_query_references USING btree (refined_from_reference_id);
+
+
+--
 -- Name: index_chat_query_references_on_result_message_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1136,6 +1145,13 @@ CREATE INDEX index_members_on_workspace_id ON public.members USING btree (worksp
 --
 
 CREATE UNIQUE INDEX index_one_time_passwords_on_email ON public.one_time_passwords USING btree (email);
+
+
+--
+-- Name: index_queries_on_data_source_and_query_fingerprint_saved; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_queries_on_data_source_and_query_fingerprint_saved ON public.queries USING btree (data_source_id, query_fingerprint) WHERE ((saved = true) AND (query_fingerprint IS NOT NULL));
 
 
 --
@@ -1263,6 +1279,14 @@ ALTER TABLE ONLY public.translation_values
 
 
 --
+-- Name: chat_query_references fk_rails_85c07b9570; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_query_references
+    ADD CONSTRAINT fk_rails_85c07b9570 FOREIGN KEY (refined_from_reference_id) REFERENCES public.chat_query_references(id);
+
+
+--
 -- Name: chat_query_references fk_rails_87563b0ae2; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1381,6 +1405,7 @@ ALTER TABLE ONLY public.chat_action_requests
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260322110000'),
 ('20260321170000'),
 ('20260321113000'),
 ('20260320110000'),

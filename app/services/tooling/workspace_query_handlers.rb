@@ -38,9 +38,10 @@ module Tooling
       query = result.query
       Result.new(
         status: 'executed',
-        message: I18n.t('app.workspaces.chat.query_library.saved', name: query.name),
+        message: query_save_message(result:),
         data: {
-          'query' => serialize_query(query:)
+          'query' => serialize_query(query:),
+          'save_outcome' => result.save_outcome
         },
         error_code: nil
       )
@@ -63,6 +64,29 @@ module Tooling
         message: I18n.t('app.workspaces.chat.query_library.renamed', name: query.name),
         data: {
           'query' => serialize_query(query:)
+        },
+        error_code: nil
+      )
+    end
+
+    def update(arguments:)
+      result = Queries::UpdateService.new(workspace:, actor:, attributes: arguments).call
+      unless result.success?
+        return Result.new(
+          status: 'validation_error',
+          message: result.message,
+          data: update_failure_data(result:),
+          error_code: result.error_code
+        )
+      end
+
+      query = result.query
+      Result.new(
+        status: 'executed',
+        message: query_update_message(result:),
+        data: {
+          'query' => serialize_query(query:),
+          'update_outcome' => result.update_outcome
         },
         error_code: nil
       )
@@ -145,6 +169,30 @@ module Tooling
 
     def query_link(query:)
       Queries::ChatLinkFormatter.new(workspace:).markdown_link(query:)
+    end
+
+    def query_save_message(result:)
+      name = result.query.name
+      return I18n.t('app.workspaces.chat.query_library.already_saved', name:) if result.save_outcome == 'already_saved'
+
+      I18n.t('app.workspaces.chat.query_library.saved', name:)
+    end
+
+    def query_update_message(result:)
+      query = result.query
+      if result.update_outcome == 'unchanged'
+        return I18n.t('app.workspaces.chat.query_library.updated_unchanged', name: query.name)
+      end
+
+      I18n.t('app.workspaces.chat.query_library.updated', name: query.name)
+    end
+
+    def update_failure_data(result:)
+      return {} unless result.error_code == 'duplicate_saved_query' && result.conflicting_query.present?
+
+      {
+        'conflicting_query' => serialize_query(query: result.conflicting_query)
+      }
     end
   end
 end

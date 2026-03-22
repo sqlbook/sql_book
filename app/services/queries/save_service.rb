@@ -2,7 +2,7 @@
 
 module Queries
   class SaveService
-    Result = Struct.new(:success?, :query, :message, :error_code, keyword_init: true)
+    Result = Struct.new(:success?, :query, :message, :error_code, :save_outcome, keyword_init: true)
 
     def initialize(workspace:, actor:, attributes:)
       @workspace = workspace
@@ -17,7 +17,11 @@ module Queries
       return data_source if data_source.is_a?(Result)
 
       DataSources::QuerySafetyGuard.validate!(sql:)
-      Result.new(success?: true, query: create_query!(data_source:), message: nil, error_code: nil)
+
+      existing_query = existing_saved_query_for(data_source:)
+      return success(query: existing_query, save_outcome: 'already_saved') if existing_query
+
+      success(query: create_query!(data_source:), save_outcome: 'created')
     rescue DataSources::Connectors::BaseConnector::QueryError => e
       failure(message: e.message, code: e.code || 'validation_error')
     end
@@ -64,12 +68,28 @@ module Queries
         last_updated_by: actor,
         name: query_name_for(data_source:),
         query: sql,
+        query_fingerprint: Queries::Fingerprint.build(data_source_id: data_source.id, sql:),
         saved: true
       )
     end
 
+    def existing_saved_query_for(data_source:)
+      fingerprint = Queries::Fingerprint.build(data_source_id: data_source.id, sql:)
+      return nil if fingerprint.blank?
+
+      Query.find_by(
+        data_source_id: data_source.id,
+        saved: true,
+        query_fingerprint: fingerprint
+      )
+    end
+
+    def success(query:, save_outcome:)
+      Result.new(success?: true, query:, message: nil, error_code: nil, save_outcome:)
+    end
+
     def failure(message:, code: 'validation_error')
-      Result.new(success?: false, query: nil, message:, error_code: code)
+      Result.new(success?: false, query: nil, message:, error_code: code, save_outcome: nil)
     end
   end
 end

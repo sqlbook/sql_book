@@ -33,7 +33,19 @@ module Chat
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
     QUERY_SAVE_INTENT_REGEX = /\bsave\b/i
     QUERY_RENAME_INTENT_REGEX = /\b(rename|retitle|change)\b/i
+    QUERY_UPDATE_INTENT_REGEX = /\b(update|replace|overwrite|edit|modify)\b/i
     QUERY_DELETE_INTENT_REGEX = /\b(delete|remove)\b.*\bquery\b/i
+    QUERY_SAVE_AS_NEW_REGEX = /
+      \b(
+        save\s+(?:it|this|that)\s+as\s+(?:a\s+)?new\s+query|
+        save\s+as\s+new|
+        new\s+query|
+        keep\s+both
+      )\b
+    /ix
+    QUERY_UPDATE_EXISTING_REGEX = /
+      \b(update|replace|overwrite)\b.*\b(existing|current|saved|old|that|this|one|query)\b
+    /ix
     QUERY_RENAME_CONTEXT_REGEX = /
       \b(
         which\s+saved\s+query\s+to\s+rename|
@@ -380,7 +392,7 @@ module Chat
         [
           'Owners and Admins can manage data sources in chat.',
           'Owners, Admins, and Users can view saved queries, run read-only data-source queries,',
-          'save queries to the query library, and rename saved queries in chat.',
+          'save queries to the query library, rename saved queries, and update saved queries in chat.',
           'Deleting a saved query is destructive and requires confirmation.'
         ].join(' '),
         'If the user asks about saved queries or the query library, use query.list.',
@@ -394,9 +406,14 @@ module Chat
         ].join(' '),
         [
           'If the user says "save this query" after a successful query,',
-          'use query.save and reuse the recent query context.'
+          'reuse the recent query context.',
+          [
+            'If the latest draft is a refinement of an existing saved query,',
+            'prefer query.update or ask whether to update the existing query or save a new one.'
+          ].join(' ')
         ].join(' '),
         'If the user asks to rename a saved query, use query.rename.',
+        'If the user asks to update a saved query to match the latest draft SQL, use query.update.',
         'If the user asks to delete a saved query, use query.delete.',
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
         'Use missing_information for required fields that are still absent.',
@@ -432,6 +449,7 @@ module Chat
         'For query.run, pass the user request as the question field.',
         'For query.save, include an explicit name only when the user provided one; otherwise let the app generate one.',
         'For query.rename, include query_id and the new name.',
+        'For query.update, include query_id, sql, and name only when the user explicitly supplied a new name.',
         'For query.delete, include query_id and let the app render the confirmation step.',
         [
           'If the user names a workspace member directly, prefer a concrete tool call',
@@ -687,6 +705,8 @@ module Chat
 
     def query_follow_up_decision
       recent_query_delete_mistake_decision ||
+        query_save_resolution_follow_up_decision ||
+        query_update_follow_up_decision ||
         query_delete_follow_up_decision ||
         query_save_follow_up_decision ||
         query_rename_follow_up_decision
@@ -707,7 +727,7 @@ module Chat
       return true if query_mutation_guard_override?(selected_tool_name:, guarded_tool_name:)
 
       return false unless selected_tool_name == 'query.list'
-      return true if %w[query.rename query.delete].include?(guarded_tool_name)
+      return true if %w[query.rename query.update query.delete].include?(guarded_tool_name)
 
       guarded.finalize_without_tools
     end
@@ -718,12 +738,35 @@ module Chat
     end
 
     def query_mutation_guard_override?(selected_tool_name:, guarded_tool_name:)
-      %w[query.rename query.delete].include?(guarded_tool_name) &&
+      %w[query.rename query.update query.delete].include?(guarded_tool_name) &&
         %w[query.list query.run].include?(selected_tool_name)
     end
 
-    def query_save_follow_up_decision
+    def query_save_follow_up_decision # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       return nil unless query_save_follow_up?
+
+      refinement = query_refinement_resolver.resolve
+      if refinement.material_drift?
+        return Decision.new(
+          assistant_message: I18n.t(
+            'app.workspaces.chat.planner.query_save_update_or_new',
+            current_name: refinement.target_query.name,
+            suggested_name: refinement.generated_name.presence || refinement.target_query.name
+          ),
+          tool_calls: [],
+          missing_information: [],
+          finalize_without_tools: true
+        )
+      end
+
+      if refinement.minor_refinement?
+        return build_query_update_decision(
+          query_id: refinement.target_query.id,
+          query_name: refinement.target_query.name,
+          sql: refinement.draft_reference['sql'],
+          name: QueryNameParser.parse(text: message)
+        )
+      end
 
       payload = {}
       explicit_name = QueryNameParser.parse(text: message)
@@ -739,6 +782,26 @@ module Chat
         ],
         missing_information: [],
         finalize_without_tools: false
+      )
+    end
+
+    def query_save_resolution_follow_up_decision # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+      return nil unless query_save_resolution_context_active?
+
+      refinement = query_refinement_resolver.resolve
+      return nil unless refinement.target_query.present? && refinement.draft_reference['sql'].present?
+
+      if message.match?(QUERY_SAVE_AS_NEW_REGEX)
+        return build_query_save_decision(name: QueryNameParser.parse(text: message) || refinement.generated_name)
+      end
+
+      return nil unless message.match?(QUERY_UPDATE_EXISTING_REGEX)
+
+      build_query_update_decision(
+        query_id: refinement.target_query.id,
+        query_name: refinement.target_query.name,
+        sql: refinement.draft_reference['sql'],
+        name: QueryNameParser.parse(text: message) || refinement.generated_name
       )
     end
 
@@ -775,6 +838,21 @@ module Chat
         ],
         missing_information: [],
         finalize_without_tools: false
+      )
+    end
+
+    def query_update_follow_up_decision
+      return nil unless query_update_follow_up?
+
+      query_reference = resolved_query_reference_payload
+      draft_reference = recent_draft_query_reference_payload
+      return nil if query_reference['query_id'].blank? || draft_reference['sql'].to_s.strip.blank?
+
+      build_query_update_decision(
+        query_id: query_reference['query_id'],
+        query_name: query_reference['query_name'],
+        sql: draft_reference['sql'],
+        name: inferred_query_update_name
       )
     end
 
@@ -830,13 +908,17 @@ module Chat
       explicit_query_rename_request? || rename_follow_up_context_active?
     end
 
+    def query_update_follow_up?
+      explicit_query_update_request?
+    end
+
     def query_delete_follow_up?
       explicit_query_delete_request? || delete_follow_up_context_active?
     end
 
     def query_save_follow_up?
       return false unless message.match?(QUERY_SAVE_INTENT_REGEX)
-      return false if explicit_query_rename_request? || explicit_query_delete_request?
+      return false if explicit_query_rename_request? || explicit_query_update_request? || explicit_query_delete_request?
 
       recent_query_reference_payload.present? &&
         message.match?(/\b(save)\b.*\b(it|that|this|query|sql)\b/i)
@@ -844,6 +926,13 @@ module Chat
 
     def explicit_query_delete_request?
       message.match?(QUERY_DELETE_INTENT_REGEX)
+    end
+
+    def explicit_query_update_request?
+      return false unless message.match?(QUERY_UPDATE_INTENT_REGEX)
+      return false if recent_draft_query_reference_payload.blank?
+
+      message.match?(/\b(query|sql|saved\s+query|existing|current|old|it|that|this)\b/i)
     end
 
     def delete_follow_up_context_active?
@@ -855,6 +944,7 @@ module Chat
 
     def explicit_query_rename_request?
       return false unless message.match?(QUERY_RENAME_INTENT_REGEX)
+      return false if message.match?(QUERY_UPDATE_INTENT_REGEX)
 
       message.match?(/\bquery\b/i) || inferred_query_rename_name.present?
     end
@@ -869,6 +959,10 @@ module Chat
       QueryNameParser.parse(text: message) ||
         recent_requested_query_name ||
         recent_proposed_query_rename_name
+    end
+
+    def inferred_query_update_name
+      QueryNameParser.parse(text: message)
     end
 
     def recent_requested_query_name
@@ -911,12 +1005,55 @@ module Chat
       context_snapshot&.recent_query_reference.to_h.deep_stringify_keys
     end
 
+    def recent_draft_query_reference_payload
+      context_snapshot&.recent_draft_query_reference.to_h.deep_stringify_keys
+    end
+
     def query_reference_resolver
       @query_reference_resolver ||= QueryReferenceResolver.new(
         workspace:,
         query_references: context_snapshot&.query_references,
         recent_query_state: context_snapshot&.recent_query_state,
         conversation_messages:
+      )
+    end
+
+    def query_refinement_resolver
+      @query_refinement_resolver ||= QueryRefinementResolver.new(
+        workspace:,
+        context_snapshot:
+      )
+    end
+
+    def query_save_resolution_context_active?
+      recent_assistant_original_content.to_s.match?(/\bupdate\b.+\bsave\b.+\bnew query\b/i)
+    end
+
+    def build_query_save_decision(name: nil)
+      payload = {}
+      payload['name'] = name if name.present?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_save'),
+        tool_calls: [ToolCall.new(tool_name: 'query.save', arguments: payload)],
+        missing_information: [],
+        finalize_without_tools: false
+      )
+    end
+
+    def build_query_update_decision(query_id:, query_name:, sql:, name: nil)
+      payload = {
+        'query_id' => query_id,
+        'query_name' => query_name,
+        'sql' => sql
+      }
+      payload['name'] = name if name.present?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_update'),
+        tool_calls: [ToolCall.new(tool_name: 'query.update', arguments: payload)],
+        missing_information: [],
+        finalize_without_tools: false
       )
     end
 

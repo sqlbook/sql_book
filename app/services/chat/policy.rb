@@ -19,6 +19,7 @@ module Chat
       query.run
       query.save
       query.rename
+      query.update
       query.delete
     ].freeze
 
@@ -43,6 +44,7 @@ module Chat
       'query.run' => 'user_admin_or_owner',
       'query.save' => 'user_admin_or_owner',
       'query.rename' => 'user_admin_or_owner',
+      'query.update' => 'user_admin_or_owner',
       'query.delete' => 'user_admin_or_owner'
     }.freeze
     ACTION_HANDLERS = {
@@ -60,6 +62,7 @@ module Chat
       'query.run' => :authorize_query_run,
       'query.save' => :authorize_query_save,
       'query.rename' => :authorize_query_rename,
+      'query.update' => :authorize_query_update,
       'query.delete' => :authorize_query_delete
     }.freeze
 
@@ -192,6 +195,14 @@ module Chat
     end
 
     def authorize_query_rename(payload:)
+      query = target_query(payload:)
+      return deny(reason_code: 'validation_error') if query.nil?
+      return allow if capabilities.can_write_queries?
+
+      deny(reason_code: 'forbidden_role')
+    end
+
+    def authorize_query_update(payload:)
       query = target_query(payload:)
       return deny(reason_code: 'validation_error') if query.nil?
       return allow if capabilities.can_write_queries?

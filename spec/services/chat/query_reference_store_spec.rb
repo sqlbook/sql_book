@@ -88,6 +88,99 @@ RSpec.describe Chat::QueryReferenceStore, type: :service do
     end
   end
 
+  describe '#record_query_run!' do
+    it 'links a refinement draft back to the recent saved query reference' do
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      saved_reference = create(
+        :chat_query_reference,
+        chat_thread:,
+        data_source:,
+        saved_query: saved_query,
+        sql: saved_query.query,
+        current_name: saved_query.name
+      )
+
+      execution = Struct.new(:data).new(
+        {
+          'question' => 'Adjust the query so it only counts super admins',
+          'sql' => 'SELECT COUNT(*) AS user_count FROM public.users WHERE super_admin = true',
+          'data_source' => { 'id' => data_source.id, 'name' => data_source.display_name },
+          'row_count' => 1,
+          'columns' => ['user_count']
+        }
+      )
+
+      store.record_query_run!(
+        source_message: create(:chat_message, chat_thread:, user:, content: 'Adjust it'),
+        result_message: create(:chat_message, chat_thread:, role: ChatMessage::Roles::ASSISTANT, content: 'Adjusted.'),
+        execution:,
+        fallback_question: 'Adjust the query so it only counts super admins'
+      )
+
+      draft_reference = chat_thread.chat_query_references.recent_first.first
+      expect(draft_reference.refined_from_reference_id).to eq(saved_reference.id)
+    end
+  end
+
+  describe '#record_query_update!' do
+    it 'keeps the existing saved query reference in sync after an update' do
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      reference = create(
+        :chat_query_reference,
+        chat_thread:,
+        data_source:,
+        saved_query: saved_query,
+        sql: saved_query.query,
+        current_name: saved_query.name
+      )
+
+      saved_query.update!(
+        name: 'User count by super admin status',
+        query: <<~SQL.squish
+          SELECT super_admin, COUNT(*) AS user_count
+          FROM public.users
+          GROUP BY super_admin
+          ORDER BY super_admin
+        SQL
+      )
+      execution = Struct.new(:data).new(
+        {
+          'query' => {
+            'id' => saved_query.id,
+            'name' => saved_query.name
+          }
+        }
+      )
+
+      store.record_query_update!(
+        source_message: create(:chat_message, chat_thread:, user:, content: 'Update it'),
+        result_message: create(:chat_message, chat_thread:, role: ChatMessage::Roles::ASSISTANT, content: 'Updated.'),
+        execution:,
+        fallback_question: 'Update the query'
+      )
+
+      expect(reference.reload.current_name).to eq('User count by super admin status')
+      expect(reference.sql).to include('GROUP BY super_admin')
+      expect(reference.name_aliases).to include('User count')
+    end
+  end
+
   describe '#record_query_delete!' do
     it 'keeps a thread-only reference after a saved query is deleted' do
       saved_query = create(

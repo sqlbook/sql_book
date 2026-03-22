@@ -27,5 +27,12 @@ module Chat
         .to_h
         .deep_stringify_keys
     end
+
+    def recent_draft_query_reference
+      Array(query_references)
+        .find { |reference| reference.to_h.deep_stringify_keys['saved_query_id'].blank? }
+        .to_h
+        .deep_stringify_keys
+    end
   end
 end

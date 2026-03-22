@@ -657,7 +657,7 @@
       "post": {
         "operationId": "querySave",
         "summary": "Save query",
-        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
+        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one. Exact duplicates are prevented by a server-owned query fingerprint based on datasource plus normalized SQL: saving the same query again returns the existing saved query with `save_outcome: \"already_saved\"` instead of creating a duplicate. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
         "tags": [
           "Queries"
         ],
@@ -780,9 +780,9 @@
     },
     "/api/v1/workspaces/{workspace_id}/queries/{id}": {
       "patch": {
-        "operationId": "queryRename",
-        "summary": "Rename saved query",
-        "description": "Renames a saved query in the current workspace query library. The caller must target an existing saved query in the same workspace and provide the new name as a clean title value. If the saved query is linked to chat provenance, the thread-local chat query reference is updated as well so older names can still resolve in chat follow-ups.",
+        "operationId": "queryUpdate",
+        "summary": "Update saved query",
+        "description": "Updates a saved query in the current workspace query library. Callers can send `name`, `sql`, or both in one request. Rename-only updates still work, but SQL updates now happen in place rather than requiring a save-new-then-delete flow. If the saved query is linked to chat provenance, the thread-local chat query reference is updated as well so older names can still resolve in chat follow-ups. If an SQL update would collide with another saved query fingerprint in the same datasource, the server returns a validation error instead of overwriting or duplicating it.",
         "tags": [
           "Queries"
         ],
@@ -799,13 +799,20 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QueryRenameRequest"
+                "$ref": "#/components/schemas/QueryUpdateRequest"
               },
               "examples": {
                 "renameQuery": {
                   "summary": "Rename a saved query",
                   "value": {
                     "name": "List of users"
+                  }
+                },
+                "updateSqlAndName": {
+                  "summary": "Update saved SQL and rename",
+                  "value": {
+                    "name": "User count by super admin status",
+                    "sql": "SELECT super_admin, COUNT(*) AS user_count FROM public.users GROUP BY super_admin ORDER BY super_admin"
                   }
                 }
               }
@@ -814,7 +821,7 @@
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/QueryRenamed"
+            "$ref": "#/components/responses/QueryUpdated"
           },
           "401": {
             "$ref": "#/components/responses/ToolUnauthorized"
@@ -833,7 +840,7 @@
           {
             "lang": "Shell",
             "label": "curl",
-            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"List of users\"}'"
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"User count by super admin status\",\"sql\":\"SELECT super_admin, COUNT(*) AS user_count FROM public.users GROUP BY super_admin ORDER BY super_admin\"}'"
           }
         ]
       },
@@ -1307,11 +1314,39 @@
               "$ref": "#/components/schemas/QuerySavedResponse"
             },
             "examples": {
-              "success": {
+              "created": {
                 "value": {
                   "status": "executed",
                   "message": "I saved that query to the query library as \"User count\".",
                   "data": {
+                    "save_outcome": "created",
+                    "query": {
+                      "id": 14,
+                      "name": "User count",
+                      "sql": "SELECT COUNT(*) AS count FROM public.users",
+                      "saved": true,
+                      "chart_type": null,
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      },
+                      "author": {
+                        "id": 7,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com"
+                      },
+                      "updated_at": "2026-03-21T12:30:00Z"
+                    }
+                  },
+                  "error_code": null
+                }
+              },
+              "alreadySaved": {
+                "value": {
+                  "status": "executed",
+                  "message": "That query is already saved as \"User count\".",
+                  "data": {
+                    "save_outcome": "already_saved",
                     "query": {
                       "id": 14,
                       "name": "User count",
@@ -1416,23 +1451,51 @@
           }
         }
       },
-      "QueryRenamed": {
-        "description": "Saved query renamed",
+      "QueryUpdated": {
+        "description": "Saved query updated in place",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/QuerySavedResponse"
+              "$ref": "#/components/schemas/QueryUpdatedResponse"
             },
             "examples": {
-              "success": {
+              "renameOnly": {
                 "value": {
                   "status": "executed",
                   "message": "I renamed that saved query to \"List of users\".",
                   "data": {
+                    "update_outcome": "updated",
                     "query": {
                       "id": 14,
                       "name": "List of users",
                       "sql": "SELECT COUNT(*) AS count FROM public.users",
+                      "saved": true,
+                      "chart_type": null,
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      },
+                      "author": {
+                        "id": 7,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com"
+                      },
+                      "updated_at": "2026-03-21T12:31:00Z"
+                    }
+                  },
+                  "error_code": null
+                }
+              },
+              "sqlAndName": {
+                "value": {
+                  "status": "executed",
+                  "message": "I updated that saved query to \"User count by super admin status\".",
+                  "data": {
+                    "update_outcome": "updated",
+                    "query": {
+                      "id": 14,
+                      "name": "User count by super admin status",
+                      "sql": "SELECT super_admin, COUNT(*) AS user_count FROM public.users GROUP BY super_admin ORDER BY super_admin",
                       "saved": true,
                       "chart_type": null,
                       "data_source": {
@@ -2187,9 +2250,37 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "query"
+          "query",
+          "save_outcome"
         ],
         "properties": {
+          "save_outcome": {
+            "type": "string",
+            "enum": [
+              "created",
+              "already_saved"
+            ]
+          },
+          "query": {
+            "$ref": "#/components/schemas/QuerySummary"
+          }
+        }
+      },
+      "QueryUpdateData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query",
+          "update_outcome"
+        ],
+        "properties": {
+          "update_outcome": {
+            "type": "string",
+            "enum": [
+              "updated",
+              "unchanged"
+            ]
+          },
           "query": {
             "$ref": "#/components/schemas/QuerySummary"
           }
@@ -2574,17 +2665,58 @@
           }
         }
       },
-      "QueryRenameRequest": {
+      "QueryUpdateRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "name"
+        "anyOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "sql"
+            ]
+          }
         ],
         "properties": {
           "name": {
             "type": "string",
             "minLength": 1,
             "description": "The new saved-query title."
+          },
+          "sql": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Replacement read-only SQL for the saved query."
+          }
+        }
+      },
+      "QueryUpdatedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QueryUpdateData"
+          },
+          "error_code": {
+            "type": "null"
           }
         }
       },

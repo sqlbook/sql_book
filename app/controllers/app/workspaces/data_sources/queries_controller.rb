@@ -34,7 +34,18 @@ module App
         end
 
         def update
-          query.update(query_update_params)
+          result = Queries::UpdateService.new(
+            workspace:,
+            actor: current_user,
+            attributes: query_update_payload
+          ).call
+          unless result.success?
+            flash[:toast] = {
+              type: 'error',
+              title: I18n.t('toasts.workspaces.queries.update_failed.title'),
+              body: result.message
+            }
+          end
 
           redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: query_redirect_tab)
         end
@@ -163,15 +174,12 @@ module App
           )
         end
 
-        def query_update_params
-          params = {}
-          # TODO: Skip update if the query has not changed
-          params.merge!(query_params)
-          params[:last_updated_by] = current_user
-          params[:saved] = true if query_params[:name]
-          params[:chart_config] = {} if query_params[:chart_type].blank? # Reset the config
-
-          params
+        def query_update_payload
+          {
+            'query_id' => query.id,
+            'sql' => query_params[:query].presence,
+            'name' => query_params[:name].presence
+          }.compact
         end
 
         def query_chart_config_params

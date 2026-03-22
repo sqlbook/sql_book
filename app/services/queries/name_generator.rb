@@ -35,12 +35,17 @@ module Queries
       normalized.match?(/\A(?:can|could|would|will|please|show|tell|give|help|run|query|get|find|list)\b/i)
     end
 
-    def descriptive_name_from_sql(sql:)
+    def descriptive_name_from_sql(sql:) # rubocop:disable Metrics/MethodLength
       table_name = table_name_from(sql:)
       return nil if table_name.blank?
 
       selected_columns = selected_columns_from(sql:)
-      return count_name_for(table_name:) if count_query?(selected_columns)
+      if count_query?(selected_columns)
+        grouped_name = grouped_count_name_for(table_name:, sql:)
+        return grouped_name if grouped_name.present?
+
+        return count_name_for(table_name:)
+      end
 
       column_name = column_driven_name_for(table_name:, columns: selected_columns)
       return column_name if column_name.present?
@@ -73,6 +78,13 @@ module Queries
       "#{human_table_name(table_name).singularize} count"
     end
 
+    def grouped_count_name_for(table_name:, sql:)
+      group_columns = group_by_columns_from(sql:)
+      return nil if group_columns.empty?
+
+      "#{count_name_for(table_name:)} by #{human_group_columns(group_columns)}"
+    end
+
     def column_driven_name_for(table_name:, columns:)
       return nil if columns.empty?
 
@@ -91,6 +103,25 @@ module Queries
       columns.include?('email') &&
         columns.include?('first_name') &&
         columns.include?('last_name')
+    end
+
+    def group_by_columns_from(sql:)
+      group_by_clause = sql.to_s.match(/\bgroup\s+by\s+(.*?)(?:\border\s+by\b|\blimit\b|\z)/im)&.captures&.first.to_s
+      group_by_clause
+        .split(',')
+        .map { |column| column.to_s.strip.split('.').last.to_s.delete('"') }
+        .compact_blank
+    end
+
+    def human_group_columns(columns)
+      columns.map { |column| human_group_column(column) }.join(' and ')
+    end
+
+    def human_group_column(column)
+      humanized = column.to_s.tr('_', ' ').strip
+      return "#{humanized} status" if humanized.end_with?('admin')
+
+      humanized
     end
 
     def human_table_name(table_name)

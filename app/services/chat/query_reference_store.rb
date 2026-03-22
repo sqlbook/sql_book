@@ -25,15 +25,22 @@ module Chat
       reference ? reference.serialized_payload : {}
     end
 
+    def recent_saved_reference_record
+      ensure_seeded_from_legacy_state!
+      references.where.not(saved_query_id: nil).first
+    end
+
     # rubocop:disable Metrics/AbcSize
     def record_query_run!(source_message:, result_message:, execution:, fallback_question: nil)
       data = execution.data.to_h.deep_stringify_keys
       return if ActiveModel::Type::Boolean.new.cast(data['clarification_required'])
 
       data_source = data_source_for(id: data.dig('data_source', 'id'))
+      refined_from_reference = refinement_base_reference_for(question: data['question'].presence || fallback_question)
       chat_thread.chat_query_references.create!(
         source_message:,
         result_message:,
+        refined_from_reference:,
         data_source:,
         original_question: data['question'].presence || fallback_question.to_s.strip.presence,
         sql: data['sql'].to_s.presence,
@@ -73,6 +80,26 @@ module Chat
 
       reference = reference_for_saved_query(query) || build_saved_query_reference(query:, result_message:)
       reference.rename_to!(new_name: query.name, result_message:)
+      reference
+    end
+
+    def record_query_update!(source_message:, result_message:, execution:, fallback_question: nil)
+      data = execution.data.to_h.deep_stringify_keys
+      query = saved_query_from(data:)
+      return unless query
+
+      reference = reference_for_saved_query(query) ||
+                  matching_unsaved_reference_for(query:) ||
+                  build_saved_query_reference(
+                    query:,
+                    source_message:,
+                    result_message:,
+                    original_question: fallback_question
+                  )
+
+      reference.source_message ||= source_message
+      reference.result_message ||= result_message
+      reference.sync_with_saved_query!(query:)
       reference
     end
 
@@ -151,6 +178,18 @@ module Chat
         original_question: original_question.to_s.presence,
         sql: query.query,
         current_name: query.name
+      )
+    end
+
+    def refinement_base_reference_for(question:)
+      return unless refinement_follow_up?(question)
+
+      recent_saved_reference_record
+    end
+
+    def refinement_follow_up?(question)
+      question.to_s.match?(
+        /\b(adjust|update|change|modify|refine|instead|also|split|group|break(?:\s+it)?\s+down|filter|show)\b/i
       )
     end
 

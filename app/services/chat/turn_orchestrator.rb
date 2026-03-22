@@ -17,7 +17,7 @@ module Chat
       \b(
         workspace|team|teammate|member|members|user|users|
         invite|invitation|role|roles|admin|owner|read\s*only|readonly|
-        rename|delete|remove|resend|promote|demote|
+        save|saved|rename|update|replace|overwrite|edit|modify|delete|remove|resend|promote|demote|
         data\s+source|data\s+sources|datasource|datasources|database|databases|
         query|queries|sql|schema|table|tables|row|rows|column|columns
       )\b
@@ -30,8 +30,8 @@ module Chat
     /ix
     QUERY_CLARIFICATION_HINT_REGEX = /\b(first|second|third|last|that one|this one|those)\b/i
     QUERY_SCOPE_ASSISTANT_REGEX = /
-      \bworkspace\ members?\b.*\b(connected\ database|data\s+source|database\ records?)\b|
-      \b(connected\ database|data\s+source|database\ records?)\b.*\bworkspace\ members?\b
+      \bworkspace\ members?\b.*\b(connected(?:\s+app)?\s+database|data\s+source|database\ records?)\b|
+      \b(connected(?:\s+app)?\s+database|data\s+source|database\ records?)\b.*\bworkspace\ members?\b
     /ixm
     QUERY_CLARIFICATION_FOLLOW_UP_REGEX = /
       \b(
@@ -39,6 +39,17 @@ module Chat
       )\b
     /ix
     QUERY_DATABASE_ENTITY_FOLLOW_UP_REGEX = /\b(users?|records?)\b/i
+    CONNECTED_DATA_SOURCE_REFERENCE_REGEX = /
+      \b(
+        connected(?:\s+app)?\s+database|
+        connected\s+data\s+source|
+        already\s+connected|
+        already\s+have|
+        existing\s+data\s+source|
+        query\s+the\s+one|
+        use\s+the\s+connected
+      )\b
+    /ix
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
@@ -488,6 +499,11 @@ module Chat
     end
 
     def data_source_setup_resolution
+      if should_ignore_data_source_setup_for_current_message?
+        data_source_setup_coordinator.clear!
+        return nil
+      end
+
       @data_source_setup_resolution ||= data_source_setup_coordinator.call
     end
 
@@ -685,6 +701,30 @@ module Chat
       )
     end
 
+    def should_ignore_data_source_setup_for_current_message?
+      return false if context_snapshot.active_data_source_setup.blank?
+      return true if direct_sql_request?
+      return true if query_like_request?
+      return true if should_resume_query_clarification?
+      return true if should_resume_recent_query_scope_clarification?
+
+      connected_data_source_query_follow_up?
+    end
+
+    def connected_data_source_query_follow_up?
+      context_snapshot.data_source_inventory.present? &&
+        connected_data_source_reference? &&
+        !data_source_setup_intent?
+    end
+
+    def connected_data_source_reference?
+      content.match?(CONNECTED_DATA_SOURCE_REFERENCE_REGEX)
+    end
+
+    def data_source_setup_intent?
+      content.match?(/\b(add|create|connect|configure|set\s*up|setup)\b/i)
+    end
+
     def clear_transient_state_for(intent:, execution:)
       return unless execution.status == 'executed'
       return unless intent.action_type == 'query.run'
@@ -716,6 +756,7 @@ module Chat
         'query.run' => :persist_recent_query_run_state,
         'query.save' => :persist_recent_saved_query_state_for,
         'query.rename' => :persist_recent_renamed_query_state_for,
+        'query.update' => :persist_recent_updated_query_state_for,
         'query.delete' => :clear_deleted_query_reference_for
       }[action_type]
     end
@@ -725,6 +766,7 @@ module Chat
         'query.run' => :persist_query_run_reference_for,
         'query.save' => :persist_saved_query_reference_for,
         'query.rename' => :persist_renamed_query_reference_for,
+        'query.update' => :persist_updated_query_reference_for,
         'query.delete' => :persist_deleted_query_reference_for
       }[action_type]
     end
@@ -766,6 +808,11 @@ module Chat
     def persist_recent_renamed_query_state_for(execution:, intent:)
       _intent = intent
       persist_recent_renamed_query_state(execution:)
+    end
+
+    def persist_recent_updated_query_state_for(execution:, intent:)
+      _intent = intent
+      persist_recent_saved_query_state(execution:)
     end
 
     def persist_recent_renamed_query_state(execution:) # rubocop:disable Metrics/AbcSize
@@ -824,6 +871,15 @@ module Chat
       query_reference_store.record_query_rename!(
         result_message: assistant_message,
         execution:
+      )
+    end
+
+    def persist_updated_query_reference_for(intent:, execution:, assistant_message:)
+      query_reference_store.record_query_update!(
+        source_message: user_message,
+        result_message: assistant_message,
+        execution:,
+        fallback_question: intent.payload['question']
       )
     end
 

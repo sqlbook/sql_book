@@ -29,8 +29,8 @@ module Api
 
       def update
         execute_tool(
-          action_type: 'query.rename',
-          payload: rename_payload
+          action_type: update_action_type,
+          payload: update_payload
         )
       end
 
@@ -80,8 +80,18 @@ module Api
         }
       end
 
-      def rename_payload
-        query_name_payload.merge('query_id' => params[:id].to_i).compact
+      def update_action_type
+        return 'query.rename' if params[:sql].blank?
+
+        'query.update'
+      end
+
+      def update_payload
+        {
+          'query_id' => params[:id].to_i,
+          'sql' => params[:sql].to_s.presence,
+          'name' => params[:name].to_s.presence
+        }.compact
       end
 
       def delete_payload

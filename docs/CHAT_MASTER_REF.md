@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-21
+Last updated: 2026-03-22
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -23,12 +23,12 @@ Related references:
 ## Scope (v1)
 - Chat is strictly workspace-scoped and rendered on `GET /app/workspaces/:id`.
 - Chat history is isolated per user within each workspace (a member can only access threads they created).
-- Chat can execute workspace/team-management actions, the phase-1 datasource-management actions, saved-query list/save/rename/delete actions, and read-only single-datasource query assistance that already exists elsewhere in app UX/API.
+- Chat can execute workspace/team-management actions, the phase-1 datasource-management actions, saved-query list/save/update/rename/delete actions, and read-only single-datasource query assistance that already exists elsewhere in app UX/API.
 - Explicitly out of scope in v1:
   - cross-workspace actions
   - workspace list/get/create via chat
   - datasource update/delete/reconfigure actions beyond the phase-1 flow
-  - query-update management actions beyond `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete`
+  - query-management actions beyond `query.list`, `query.run`, `query.save`, `query.update`, `query.rename`, and `query.delete`
   - dashboard, billing/subscription/admin/super-admin actions
   - owner-role promotion via chat
 
@@ -160,6 +160,7 @@ Allowed action types:
 - `query.list`
 - `query.run`
 - `query.save`
+- `query.update`
 - `query.rename`
 - `query.delete`
 
@@ -167,7 +168,7 @@ Blocked prefixes:
 - `workspace.list`
 - `workspace.get`
 - `workspace.create`
-- `query.*` except `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete`
+- `query.*` except `query.list`, `query.run`, `query.save`, `query.update`, `query.rename`, and `query.delete`
 - `dashboard.*`
 - `billing.*`
 - `subscription.*`
@@ -212,15 +213,26 @@ High-risk writes (inline confirmation required):
 - Raw SQL messages beginning with `SELECT` or `WITH` should be treated as `query.run` immediately, even in threads that already contain saved-query or query-library context.
 - `query.list`: no required fields
 - `query.save`: `sql` + (`data_source_id` or `data_source_name`); `name` optional
+- `query.update`: `query_id`, `sql` or `name` (or both)
 - `query.rename`: `query_id`, `name`
 - `query.delete`: `query_id`
 - When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt or a generic analytic question like "How many users do I have?".
+- `query.save` should not create an exact duplicate saved query in the same datasource; the app should return the existing saved query instead.
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
 - Conversational rename follow-ups such as `rename it to DB User Count` or `Yes please` after the assistant offers a specific rename should stay in `query.rename`, not fall back to `query.run` or `query.list`.
+- Conversational save follow-ups such as `save that`, `Could you save that for me?`, `update that query to this`, and `the first one` should resolve from thread-local query context before any scope-limited capability fallback is considered.
 - Natural quoted rename phrasing such as `rename it 'User Count [Test]' please` should also stay in `query.rename`, even without the word `to`.
 - If chat has already inferred the target rename name and then shows a saved-query list, a follow-up like `the first one` should still complete the rename in query context.
 - Saved-query names rendered in chat list/save/rename responses should be internal links to the query page, using muted app link styling rather than bright external-link styling.
 - Query continuity should resolve against persisted thread-local query references first, then legacy fallback state, rather than assuming only one recent query exists in the thread.
+- Query continuity should preserve both thread-local drafts and saved-library links:
+  - unsaved drafts remain thread-only references
+  - saved queries attach to those references via `saved_query_id`
+  - refinements can point back to the saved query they are iterating on
+- When the latest draft is an obvious refinement of the currently discussed saved query, `save that` should update the saved query in place.
+- When the latest draft has materially drifted from the current saved query, chat should ask whether to update+rename the existing saved query or save a new one.
+- Combined update requests such as `update the User count [2] query to this, and rename it to User Count by SA Status` should resolve to one `query.update` action with both SQL and name.
+- Delete confirmations for saved queries must be bound to an immutable `query_id` + `query_name` payload and the confirmation card/copy should name the specific query being deleted.
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -237,6 +249,7 @@ High-risk writes (inline confirmation required):
 - `query.list` is available to all accepted workspace roles.
 - `query.run` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
 - `query.save` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
+- `query.update` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
 - `query.rename` is available to workspace `OWNER`, `ADMIN`, and `USER` roles, and denied for `READ_ONLY`.
 - `query.delete` is available to workspace `OWNER`, `ADMIN`, and `USER` roles when that role can delete the specific saved query; it is denied for `READ_ONLY`.
 - Query chat scope is limited to read-only execution against one connected datasource at a time.
@@ -294,6 +307,7 @@ High-risk writes (inline confirmation required):
 14. Query follow-ups about current mutable datasource/member facts should verify live workspace state before asserting them.
 15. Active query clarification and obvious query-scope follow-ups must take precedence over stale datasource-setup state in the same thread.
 16. Successful in-scope replies may end with one short natural next step (for example saving a query, refining a result, or asking one relevant follow-up), but chat should do this sparingly and avoid repetitive stock sign-offs.
+17. Permission denials and other variant-backed assistant replies must always collapse to one localized user-facing sentence; raw variant arrays must never leak into the chat stream.
 
 ## Context assembly rules
 - Chat should stay conversational, but server state remains authoritative.
