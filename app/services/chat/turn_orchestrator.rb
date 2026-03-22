@@ -432,24 +432,24 @@ module Chat
     end
 
     def capability_summary_message
-      actions = capability_action_items
-      return restricted_capability_message if actions.empty?
+      categories = capability_category_items
+      return restricted_capability_message if categories.empty?
 
       [
         I18n.t('app.workspaces.chat.messages.capability_summary_intro'),
-        actions.map { |action| "- #{action}" }.join("\n"),
+        categories.map { |category| "- #{category}" }.join("\n"),
         I18n.t('app.workspaces.chat.messages.capability_summary_footer')
       ].join("\n\n")
     end
 
     def scope_limited_message
-      actions = capability_action_items
-      return restricted_scope_message if actions.empty?
+      categories = capability_category_items
+      return restricted_scope_message if categories.empty?
 
       [
         I18n.t('app.workspaces.chat.messages.scope_limited_intro'),
         I18n.t('app.workspaces.chat.messages.scope_limited_supported_intro'),
-        actions.map { |action| "- #{action}" }.join("\n"),
+        categories.map { |category| "- #{category}" }.join("\n"),
         I18n.t('app.workspaces.chat.messages.scope_limited_footer')
       ].join("\n\n")
     end
@@ -468,15 +468,16 @@ module Chat
       )
     end
 
-    def capability_action_items
+    def capability_category_items
       snapshot = context_snapshot.capability_snapshot.to_h.symbolize_keys
-      items = []
-      items.concat(view_capability_items(snapshot:))
-      items.concat(member_management_capability_items(snapshot:))
-      items.concat(data_source_management_capability_items(snapshot:))
-      items.concat(query_capability_items(snapshot:))
-      items.concat(workspace_management_capability_items(snapshot:))
-      items
+      {
+        can_view_team_members: 'team',
+        can_view_data_sources: 'data_sources',
+        can_view_queries: 'queries',
+        can_manage_workspace_settings: 'workspace'
+      }.filter_map do |flag, category|
+        I18n.t("app.workspaces.chat.messages.capability_categories.#{category}") if snapshot[flag]
+      end
     end
 
     def conversation_context_resolver
@@ -484,52 +485,6 @@ module Chat
         workspace:,
         conversation_messages: context_snapshot.conversation_messages
       )
-    end
-
-    def view_capability_items(snapshot:)
-      return [] unless snapshot[:can_view_team_members]
-
-      [I18n.t('app.workspaces.chat.messages.capability_items.member_list')]
-    end
-
-    def member_management_capability_items(snapshot:)
-      return [] unless snapshot[:can_manage_workspace_members]
-
-      %w[
-        member_invite
-        member_resend_invite
-        member_update_role
-        member_remove
-      ].map do |key|
-        I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
-      end
-    end
-
-    def workspace_management_capability_items(snapshot:)
-      return [] unless snapshot[:can_manage_workspace_settings]
-
-      %w[workspace_update_name workspace_delete].map do |key|
-        I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
-      end
-    end
-
-    def data_source_management_capability_items(snapshot:)
-      return [] unless snapshot[:can_manage_data_sources]
-
-      %w[data_source_list data_source_add].map do |key|
-        I18n.t("app.workspaces.chat.messages.capability_items.#{key}")
-      end
-    end
-
-    def query_capability_items(snapshot:)
-      items = []
-      items << I18n.t('app.workspaces.chat.messages.capability_items.query_list') if snapshot[:can_view_queries]
-      items << I18n.t('app.workspaces.chat.messages.capability_items.query_run') if snapshot[:can_write_queries]
-      items << I18n.t('app.workspaces.chat.messages.capability_items.query_save') if snapshot[:can_write_queries]
-      items << I18n.t('app.workspaces.chat.messages.capability_items.query_rename') if snapshot[:can_write_queries]
-      items << I18n.t('app.workspaces.chat.messages.capability_items.query_delete') if snapshot[:can_write_queries]
-
-      items
     end
 
     def data_source_setup_resolution

@@ -47,7 +47,8 @@ Current OpenAPI coverage includes the workspace, team-management, datasource, an
 Current datasource API scope:
 - phase 1 is PostgreSQL-only for external database creation/validation
 - routes are workspace-scoped and session-authenticated
-- owner/admin only for datasource management actions
+- datasource list is available to workspace `OWNER`, `ADMIN`, and `USER`
+- datasource validation/create remain owner/admin-only
 - the API is intentionally phrased so both engineers and the workspace chat/runtime can consume the same contract cleanly
 
 Current query API scope:

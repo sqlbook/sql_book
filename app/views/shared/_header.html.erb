@@ -21,13 +21,6 @@
            aria_label: I18n.t('app.navigation.aria.chat', workspace_name: @workspace.name)
          },
          {
-           key: :data_sources,
-           path: app_workspace_data_sources_path(@workspace),
-           icon: 'ri-database-2-line',
-           label: I18n.t('app.navigation.data_sources'),
-           aria_label: I18n.t('app.navigation.aria.data_sources', workspace_name: @workspace.name)
-         },
-         {
            key: :queries,
            path: app_workspace_queries_path(@workspace),
            icon: 'ri-book-open-line',
@@ -42,6 +35,15 @@
            aria_label: I18n.t('app.navigation.aria.dashboards', workspace_name: @workspace.name)
          }
        ] %>
+    <% if can_view_data_sources?(workspace: @workspace) %>
+      <% workspace_navigation_items.insert(1, {
+           key: :data_sources,
+           path: app_workspace_data_sources_path(@workspace),
+           icon: 'ri-database-2-line',
+           label: I18n.t('app.navigation.data_sources'),
+           aria_label: I18n.t('app.navigation.aria.data_sources', workspace_name: @workspace.name)
+         }) %>
+    <% end %>
     <% if can_manage_workspace_settings?(workspace: @workspace) %>
       <% workspace_navigation_items << {
            key: :settings,

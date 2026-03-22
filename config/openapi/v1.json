@@ -440,7 +440,7 @@
       "get": {
         "operationId": "dataSourceList",
         "summary": "List data sources",
-        "description": "Returns the data sources attached to the current workspace. The payload is safe to consume directly in chat or UI code because it is already scoped to the current workspace and includes connector type, lifecycle status, selected table counts, and related query counts.",
+        "description": "Returns the data sources attached to the current workspace. This read endpoint is available to workspace owners, admins, and users, but not read-only members. The payload is safe to consume directly in chat or UI code because it is already scoped to the current workspace and includes connector type, lifecycle status, selected table counts, and related query counts.",
         "tags": [
           "Data Sources"
         ],
@@ -541,7 +541,7 @@
       "post": {
         "operationId": "dataSourceValidateConnection",
         "summary": "Validate PostgreSQL connection",
-        "description": "Tests a PostgreSQL connection without creating the data source. The response includes the tables that are discoverable with the supplied credentials, which makes it suitable for both the create flow and a chat-assisted validation step.",
+        "description": "Tests a PostgreSQL connection without creating the data source. The response includes the tables that are discoverable with the supplied credentials, which makes it suitable for both the create flow and a chat-assisted validation step. This endpoint remains owner/admin-only.",
         "tags": [
           "Data Sources"
         ],

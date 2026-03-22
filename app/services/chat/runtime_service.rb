@@ -31,6 +31,7 @@ module Chat
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
+    QUERY_SAVE_INTENT_REGEX = /\bsave\b/i
     QUERY_RENAME_INTENT_REGEX = /\b(rename|retitle|change)\b/i
     QUERY_DELETE_INTENT_REGEX = /\b(delete|remove)\b.*\bquery\b/i
     QUERY_RENAME_CONTEXT_REGEX = /
@@ -677,13 +678,18 @@ module Chat
     end
 
     def deterministic_follow_up_decision
-      recent_query_delete_mistake_decision ||
-        query_delete_follow_up_decision ||
-        query_rename_follow_up_decision ||
+      query_follow_up_decision ||
         recent_invited_member_role_answer_decision ||
         recent_member_context_answer_decision ||
         member_remove_follow_up_decision ||
         invite_follow_up_guard_decision
+    end
+
+    def query_follow_up_decision
+      recent_query_delete_mistake_decision ||
+        query_delete_follow_up_decision ||
+        query_save_follow_up_decision ||
+        query_rename_follow_up_decision
     end
 
     def should_apply_guard?(decision:, guarded:)
@@ -697,15 +703,43 @@ module Chat
     end
 
     def query_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
-      if %w[query.rename query.delete].include?(guarded_tool_name) &&
-         %w[query.list query.run].include?(selected_tool_name)
-        return true
-      end
+      return true if query_save_guard_override?(selected_tool_name:, guarded_tool_name:)
+      return true if query_mutation_guard_override?(selected_tool_name:, guarded_tool_name:)
 
       return false unless selected_tool_name == 'query.list'
       return true if %w[query.rename query.delete].include?(guarded_tool_name)
 
       guarded.finalize_without_tools
+    end
+
+    def query_save_guard_override?(selected_tool_name:, guarded_tool_name:)
+      guarded_tool_name == 'query.save' &&
+        %w[query.list query.run].include?(selected_tool_name)
+    end
+
+    def query_mutation_guard_override?(selected_tool_name:, guarded_tool_name:)
+      %w[query.rename query.delete].include?(guarded_tool_name) &&
+        %w[query.list query.run].include?(selected_tool_name)
+    end
+
+    def query_save_follow_up_decision
+      return nil unless query_save_follow_up?
+
+      payload = {}
+      explicit_name = QueryNameParser.parse(text: message)
+      payload['name'] = explicit_name if explicit_name.present?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_save'),
+        tool_calls: [
+          ToolCall.new(
+            tool_name: 'query.save',
+            arguments: payload
+          )
+        ],
+        missing_information: [],
+        finalize_without_tools: false
+      )
     end
 
     def recent_query_delete_mistake_decision
@@ -800,6 +834,14 @@ module Chat
       explicit_query_delete_request? || delete_follow_up_context_active?
     end
 
+    def query_save_follow_up?
+      return false unless message.match?(QUERY_SAVE_INTENT_REGEX)
+      return false if explicit_query_rename_request? || explicit_query_delete_request?
+
+      recent_query_reference_payload.present? &&
+        message.match?(/\b(save)\b.*\b(it|that|this|query|sql)\b/i)
+    end
+
     def explicit_query_delete_request?
       message.match?(QUERY_DELETE_INTENT_REGEX)
     end
@@ -863,6 +905,10 @@ module Chat
         'query_id' => recent_saved_query_reference['saved_query_id'],
         'query_name' => recent_saved_query_reference['saved_query_name']
       }
+    end
+
+    def recent_query_reference_payload
+      context_snapshot&.recent_query_reference.to_h.deep_stringify_keys
     end
 
     def query_reference_resolver

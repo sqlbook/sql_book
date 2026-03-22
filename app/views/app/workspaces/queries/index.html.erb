@@ -52,7 +52,7 @@
             <td><%= query.last_updated_by&.full_name || '-' %></td>
             <td><%= query.last_run_at&.strftime('%a, %e %b %Y') || '-' %></td>
             <td class="options" >
-              <button class="toggle-options" data-action="table#toggleOptions">
+              <button type="button" class="toggle-options" data-action="table#toggleOptions" aria-label="Open query actions for <%= query.name %>">
                 <i class="ri-more-2-fill ri-xl gray-250"></i>
               </button>
               <div class="dropdown-options context">

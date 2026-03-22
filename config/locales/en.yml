@@ -147,13 +147,18 @@ en:
           confirmation_default: I can run that action once you confirm.
           action_canceled: Okay, I canceled that action.
           runtime_retry: I hit an issue while planning that request. Please rephrase it and I will try again.
-          capability_summary_intro: "I can help with workspace, team, data source, and query tasks in this workspace. Right now I can:"
-          capability_summary_footer: If you want, ask me to do one of those directly.
+          capability_summary_intro: "I can help in a few areas in this workspace:"
+          capability_summary_footer: Ask me to do something specific, or ask about one of those areas and I can give more detail.
           capability_summary_restricted: In this chat I'm focused on sqlbook workspace, data source, and query tasks. With your current workspace role, I can't make those changes for you here. Please ask %{allowed_roles}.
           scope_limited_intro: I'm here to help with sqlbook workspace, data source, and query tasks, not as a general-purpose assistant.
-          scope_limited_supported_intro: "Right now I can help with:"
-          scope_limited_footer: If you want, ask me to do one of those directly.
+          scope_limited_supported_intro: "I can still help with things like:"
+          scope_limited_footer: If you want, ask me to do something specific in one of those areas.
           scope_limited_restricted: I'm here to help with sqlbook workspace, data source, and query tasks, not as a general-purpose assistant. With your current workspace role, please ask %{allowed_roles} if you need help with those actions.
+          capability_categories:
+            team: Team management
+            data_sources: Data sources
+            queries: Queries and query library
+            workspace: Workspace settings
           capability_items:
             member_list: List team members
             member_invite: Invite a team member
@@ -487,6 +492,8 @@ en:
           selected_tables_title: Selected tables
           deletion_title: Source deletion
           tracking_code_title: Tracking Code
+          read_only_title: View-only access
+          read_only_body: You can review this data source here, but only an Admin or Workspace owner can change its settings.
           deletion_intro: You can delete this data source at any time.
           deletion_points:
             one: The data source will be deleted immediately for all users in your workspace.

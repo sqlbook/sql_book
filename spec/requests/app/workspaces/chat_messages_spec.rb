@@ -477,7 +477,52 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       saved_query = Query.order(:id).last
       expect(saved_query.name).to eq('User names and email addresses')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User names and email addresses"')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('User names and email addresses')
+    end
+
+    it 'saves the most recent query when the user says save that for me' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['user_count'], [[3]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT COUNT(*) AS user_count FROM public.users;' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Could you save that for me?' },
+             as: :json
+      end.to change(Query, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+
+      saved_query = Query.order(:id).last
+      expect(saved_query.data_source_id).to eq(data_source.id)
+      expect(saved_query.name).to eq('User count')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User count"')
     end
 
     it 'renames a saved query from chat and carries the target query across the rename follow-up' do
@@ -1948,10 +1993,10 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('ok')
 
       assistant_content = response.parsed_body.dig('messages', -1, 'content')
-      expect(assistant_content).to include('data source')
-      expect(assistant_content).to include('List team members')
-      expect(assistant_content).to include('Invite a team member')
-      expect(assistant_content).to include('Add and manage PostgreSQL data sources')
+      expect(assistant_content).to include('Team management')
+      expect(assistant_content).to include('Data sources')
+      expect(assistant_content).to include('Queries and query library')
+      expect(assistant_content).not_to include('Invite a team member')
     end
 
     it 'does not leak stale invite follow-up prompts into unrelated off-scope questions' do

@@ -29,7 +29,8 @@ module App
       ].freeze
 
       before_action :require_authentication!
-      before_action :authorize_data_source_access!
+      before_action :authorize_data_source_view_access!, only: %i[index show]
+      before_action :authorize_data_source_manage_access!, except: %i[index show]
 
       def index
         @workspace = workspace
@@ -261,7 +262,13 @@ module App
         end
       end
 
-      def authorize_data_source_access!
+      def authorize_data_source_view_access!
+        return if can_view_data_sources?(workspace:)
+
+        deny_workspace_access!(workspace:)
+      end
+
+      def authorize_data_source_manage_access!
         return if can_manage_data_sources?(workspace:)
 
         deny_workspace_access!(workspace:)

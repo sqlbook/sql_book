@@ -40,6 +40,7 @@ sqlbook lets users:
 - Invite flows require full identity (`first_name`, `last_name`, `email`) plus an explicit `role` before `member.invite` executes.
 - Datasource setup flows are staged and should collect missing details progressively rather than asking for every field in one turn.
 - Query chat is single-source in phase 1; it can list saved queries, run read-only queries, save the most recent executed query into the query library, rename saved queries, and delete saved queries with confirmation. If multiple datasources or tables plausibly match the question, chat should ask a clarifying follow-up before execution.
+- Datasource viewing is allowed for workspace `OWNER`, `ADMIN`, and `USER`; datasource creation, validation, update, and deletion remain owner/admin-only.
 - Chat context is assembled from recent transcript + structured recent action results, not shadow LLM-maintained memory records.
 - Query continuity inside chat is now expected to use durable per-thread query references rather than a single "recent query" slot, so multiple queries discussed in one thread stay resolvable over time.
 - Saved queries can optionally expose chat provenance (`Chat source`) when they originated from chat and the current viewer can still access that private source thread.

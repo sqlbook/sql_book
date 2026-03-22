@@ -1,4 +1,7 @@
 <aside class="data-source-panel">
+  <% can_manage_data_source = can_manage_data_sources?(workspace: workspace) %>
+  <% default_tab_selected = params[:tab].blank? || (!can_manage_data_source && params[:tab] == 'source_deletion') %>
+
   <div class="data-source-panel__header">
     <h3><%= data_source.display_name %></h3>
     <%= link_to "[#{I18n.t('common.actions.close')}]", add_params(data_source_id: nil, tab: nil, confirm_delete: nil), class: "link secondary" %>
@@ -6,23 +9,37 @@
 
   <div class="tabs">
     <% if data_source.capture_source? %>
-      <%= render "shared/tabs/nav_item", tab: "source_url", name: I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), icon_class: "ri-global-line", default_selected: true %>
+      <%= render "shared/tabs/nav_item", tab: "source_url", name: I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), icon_class: "ri-global-line", default_selected: default_tab_selected %>
       <%= render "shared/tabs/nav_item", tab: "tracking_code", name: I18n.t('app.workspaces.data_sources.management.tracking_code_title'), icon_class: "ri-fire-line" %>
     <% else %>
-      <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line", default_selected: true %>
+      <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line", default_selected: default_tab_selected %>
     <% end %>
-    <%= render "shared/tabs/nav_item", tab: "source_deletion", name: I18n.t('app.workspaces.data_sources.management.deletion_title'), icon_class: "ri-delete-bin-line" %>
+    <% if can_manage_data_source %>
+      <%= render "shared/tabs/nav_item", tab: "source_deletion", name: I18n.t('app.workspaces.data_sources.management.deletion_title'), icon_class: "ri-delete-bin-line" %>
+    <% end %>
   </div>
 
-  <% if data_source.capture_source? && active_tab?(tab: "source_url", default_selected: true) %>
+  <% unless can_manage_data_source %>
+    <div class="message">
+      <i class="ri-information-line ri-lg gray-300"></i>
+      <div class="body">
+        <p class="title cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.read_only_title') %></b></p>
+        <p><%= I18n.t('app.workspaces.data_sources.management.read_only_body') %></p>
+      </div>
+    </div>
+  <% end %>
+
+  <% if data_source.capture_source? && active_tab?(tab: "source_url", default_selected: default_tab_selected) %>
     <div data-controller="form">
       <%= form_with url: app_workspace_data_source_path(workspace, data_source), method: :put, class: "update-data-source-form", html: { "data-form-target": "form" } do |form| %>
         <%= form.label :url, I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), class: "label block" %>
-        <%= form.text_field :url, type: "url", placeholder: "https://", class: "input block fluid", required: true, pattern: "https://.*", value: data_source.url %>
+        <%= form.text_field :url, type: "url", placeholder: "https://", class: "input block fluid", required: true, pattern: "https://.*", value: data_source.url, disabled: !can_manage_data_source %>
 
         <%= render "shared/flash" %>
 
-        <%= form.submit I18n.t('common.actions.save_changes'), class: "link primary", "data-form-target": "submit" %>
+        <% if can_manage_data_source %>
+          <%= form.submit I18n.t('common.actions.save_changes'), class: "link primary", "data-form-target": "submit" %>
+        <% end %>
       <% end %>
     </div>
   <% end %>
@@ -31,7 +48,7 @@
     <%= render "shared/tracking_code", data_source: data_source %>
   <% end %>
 
-  <% if data_source.external_database? && active_tab?(tab: "settings", default_selected: true) %>
+  <% if data_source.external_database? && active_tab?(tab: "settings", default_selected: default_tab_selected) %>
     <% form_state = @selected_data_source_form_state || {} %>
     <% form_errors = @selected_data_source_errors || {} %>
     <% available_tables = @selected_data_source_available_tables || [] %>
@@ -68,7 +85,8 @@
                 <%= text_field_tag :host,
                                    form_state['host'],
                                    class: class_names("input block fluid", invalid: form_errors['host'].present?),
-                                   required: true %>
+                                   required: true,
+                                   disabled: !can_manage_data_source %>
                 <% if form_errors['host'].present? %>
                   <p class="field-error"><%= form_errors['host'].first %></p>
                 <% end %>
@@ -79,7 +97,8 @@
                 <%= text_field_tag :port,
                                    form_state['port'],
                                    class: class_names("input block fluid", invalid: form_errors['port'].present?),
-                                   required: true %>
+                                   required: true,
+                                   disabled: !can_manage_data_source %>
                 <% if form_errors['port'].present? %>
                   <p class="field-error"><%= form_errors['port'].first %></p>
                 <% end %>
@@ -90,7 +109,8 @@
                 <%= text_field_tag :database_name,
                                    form_state['database_name'],
                                    class: class_names("input block fluid", invalid: form_errors['database_name'].present?),
-                                   required: true %>
+                                   required: true,
+                                   disabled: !can_manage_data_source %>
                 <% if form_errors['database_name'].present? %>
                   <p class="field-error"><%= form_errors['database_name'].first %></p>
                 <% end %>
@@ -101,7 +121,8 @@
                 <%= text_field_tag :username,
                                    form_state['username'],
                                    class: class_names("input block fluid", invalid: form_errors['username'].present?),
-                                   required: true %>
+                                   required: true,
+                                   disabled: !can_manage_data_source %>
                 <% if form_errors['username'].present? %>
                   <p class="field-error"><%= form_errors['username'].first %></p>
                 <% end %>
@@ -112,7 +133,8 @@
                 <%= password_field_tag :password,
                                        nil,
                                        class: class_names("input block fluid", invalid: form_errors['connection_password'].present?),
-                                       placeholder: I18n.t('app.workspaces.data_sources.management.fields.password_placeholder') %>
+                                       placeholder: I18n.t('app.workspaces.data_sources.management.fields.password_placeholder'),
+                                       disabled: !can_manage_data_source %>
                 <% if form_errors['connection_password'].present? %>
                   <p class="field-error"><%= form_errors['connection_password'].first %></p>
                 <% end %>
@@ -121,7 +143,7 @@
               <div class="field field--full">
                 <label class="checkbox">
                   <%= hidden_field_tag :extract_category_values, '0' %>
-                  <%= check_box_tag :extract_category_values, '1', ActiveModel::Type::Boolean.new.cast(form_state['extract_category_values']) %>
+                  <%= check_box_tag :extract_category_values, '1', ActiveModel::Type::Boolean.new.cast(form_state['extract_category_values']), disabled: !can_manage_data_source %>
                   <div class="check">
                     <i class="ri-check-line"></i>
                   </div>
@@ -156,7 +178,7 @@
                     <div class="data-source-management__schema-tables">
                       <% group[:tables].each do |table| %>
                         <label class="checkbox data-source-management__table-row">
-                          <%= check_box_tag 'selected_tables[]', table[:qualified_name], selected_tables.include?(table[:qualified_name]) %>
+                          <%= check_box_tag 'selected_tables[]', table[:qualified_name], selected_tables.include?(table[:qualified_name]), disabled: !can_manage_data_source %>
                           <div class="check">
                             <i class="ri-check-line"></i>
                           </div>
@@ -175,12 +197,14 @@
           </div>
         </div>
 
-        <%= submit_tag I18n.t('common.actions.save_changes'), class: "link primary" %>
+        <% if can_manage_data_source %>
+          <%= submit_tag I18n.t('common.actions.save_changes'), class: "link primary" %>
+        <% end %>
       <% end %>
     </div>
   <% end %>
 
-  <% if active_tab?(tab: "source_deletion") %>
+  <% if can_manage_data_source && active_tab?(tab: "source_deletion") %>
     <p class="cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_intro') %></b></p>
     <ul class="gray-250">
       <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.one') %></li>

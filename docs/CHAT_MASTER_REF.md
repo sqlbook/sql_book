@@ -228,7 +228,8 @@ High-risk writes (inline confirmation required):
 - `workspace.delete` is owner-only.
 - `member.invite` / `member.update_role` restrict target roles to editable non-owner roles.
 - `member.list` is visible only to workspace `OWNER` and `ADMIN` roles.
-- datasource chat actions are visible/executable only to workspace `OWNER` and `ADMIN` roles.
+- `datasource.list` is visible/executable to workspace `OWNER`, `ADMIN`, and `USER` roles.
+- `datasource.validate_connection` and `datasource.create` are visible/executable only to workspace `OWNER` and `ADMIN` roles.
 - datasource phase-1 chat scope is limited to:
   - listing workspace datasources
   - validating PostgreSQL connection details
@@ -313,6 +314,7 @@ High-risk writes (inline confirmation required):
   - "have they accepted?" or "which user are we talking about?" after an invite is later accepted in another session
 - Recent query context should support follow-ups such as:
   - "save this query"
+  - "save that for me"
   - "save it as Active users by day"
   - "show my query library"
   - "rename that query to Active users by day"
@@ -328,6 +330,7 @@ High-risk writes (inline confirmation required):
   - table disambiguation when multiple candidate tables match the question
   - scope clarification replies such as "I mean in my connected database"
   - branch-preserving follow-ups such as "And my users?" after the user first answered the workspace-members branch
+- Meta capability replies should stay high-level and category-based (for example team management, data sources, queries, workspace settings) rather than dumping a long action-by-action list unless the user asks for more detail in one category.
   - schema-guidance follow-ups such as "Can you tell from the schema?" without falling back to generic datasource listing
 - Questions such as "Who are my users?" should be treated as query-like when workspace datasource context indicates the user may mean database records.
 - If exactly one active datasource exists and the likely table is clear from schema/name/column hints, chat should resolve that datasource automatically instead of asking for a datasource id or name again.

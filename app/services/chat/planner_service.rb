@@ -38,6 +38,7 @@ module Chat
     QUERY_SAVE_REGEX = /
       \b(
         save\s+(?:this|that|the)?\s*query|
+        save\s+(?:this|that)\b|
         add\s+(?:this|that|the)?\s*query\s+to\s+(?:the\s+)?query\s+library|
         save\s+it
       )\b

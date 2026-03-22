@@ -158,27 +158,54 @@ RSpec.describe 'API v1 data sources', type: :request do
   end
 
   describe 'role enforcement' do
-    let(:member_user) { create(:user) }
+    context 'when the current member has user role permissions' do
+      let(:member_user) { create(:user) }
 
-    before do
-      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
-      sign_in(member_user)
+      before do
+        create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+        sign_in(member_user)
+        postgres_source
+      end
+
+      it 'allows datasource listing' do
+        get "/api/v1/workspaces/#{workspace.id}/data-sources"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body['status']).to eq('executed')
+        expect(response.parsed_body.dig('data', 'data_sources').map { |item| item['name'] }).to include('Sales DB')
+      end
+
+      it 'blocks datasource creation for non-admin members' do
+        post "/api/v1/workspaces/#{workspace.id}/data-sources",
+             params: {
+               name: 'Ecomm Warehouse',
+               host: 'db.example.com',
+               database_name: 'sales',
+               username: 'sqlbook',
+               password: 'secret',
+               selected_tables: ['public.orders']
+             },
+             as: :json
+
+        expect(response).to have_http_status(:forbidden)
+        expect(response.parsed_body['status']).to eq('forbidden')
+      end
     end
 
-    it 'blocks datasource creation for non-admin members' do
-      post "/api/v1/workspaces/#{workspace.id}/data-sources",
-           params: {
-             name: 'Ecomm Warehouse',
-             host: 'db.example.com',
-             database_name: 'sales',
-             username: 'sqlbook',
-             password: 'secret',
-             selected_tables: ['public.orders']
-           },
-           as: :json
+    context 'when the current member is read-only' do
+      let(:read_only_user) { create(:user) }
 
-      expect(response).to have_http_status(:forbidden)
-      expect(response.parsed_body['status']).to eq('forbidden')
+      before do
+        create(:member, workspace:, user: read_only_user, role: Member::Roles::READ_ONLY)
+        sign_in(read_only_user)
+      end
+
+      it 'blocks datasource listing' do
+        get "/api/v1/workspaces/#{workspace.id}/data-sources"
+
+        expect(response).to have_http_status(:forbidden)
+        expect(response.parsed_body['status']).to eq('forbidden')
+      end
     end
   end
 end

@@ -334,6 +334,15 @@ RSpec.describe 'App::Workspaces', type: :request do
           text: 'Settings'
         )
       end
+
+      it 'renders the data sources navigation item' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).to have_selector(
+          "a.workspace-desktop-nav-item[href='#{app_workspace_data_sources_path(workspace)}']",
+          text: 'Data Sources'
+        )
+      end
     end
 
     context 'when current user is read-only in the workspace' do
@@ -354,6 +363,15 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).not_to have_selector(
           "a.workspace-desktop-nav-item[href='#{app_workspace_settings_path(workspace)}']",
           text: 'Settings'
+        )
+      end
+
+      it 'does not render the data sources navigation item' do
+        get "/app/workspaces/#{workspace.id}"
+
+        expect(response.body).not_to have_selector(
+          "a.workspace-desktop-nav-item[href='#{app_workspace_data_sources_path(workspace)}']",
+          text: 'Data Sources'
         )
       end
     end

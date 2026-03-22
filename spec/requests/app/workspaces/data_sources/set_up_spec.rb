@@ -56,5 +56,20 @@ RSpec.describe 'App::Workspaces::DataSources::SetUp', type: :request do
         expect(response.body).to redirect_to(app_workspace_data_sources_path(workspace))
       end
     end
+
+    context 'when current user has user role permissions' do
+      let(:workspace) { create(:workspace_with_owner, owner: create(:user)) }
+      let(:data_source) { create(:data_source, workspace:) }
+
+      before do
+        create(:member, workspace:, user:, role: Member::Roles::USER)
+      end
+
+      it 'redirects to the workspace list' do
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/set_up"
+
+        expect(response).to redirect_to(app_workspaces_path)
+      end
+    end
   end
 end

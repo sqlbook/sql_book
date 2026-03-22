@@ -66,8 +66,32 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
     context 'when current user has user role permissions' do
       let(:owner) { create(:user) }
+      let!(:postgres_source) { create(:data_source, :postgres, workspace:, name: 'Warehouse DB') }
 
       before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'renders the data sources index without create affordances' do
+        get "/app/workspaces/#{workspace.id}/data_sources"
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('Warehouse DB')
+        expect(response.body).not_to include(I18n.t('common.actions.create_new'))
+      end
+
+      it 'renders the selected data source panel in read-only mode' do
+        get "/app/workspaces/#{workspace.id}/data_sources", params: { data_source_id: postgres_source.id }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.read_only_title'))
+        expect(response.body).not_to include(I18n.t('app.workspaces.data_sources.management.deletion_title'))
+        expect(response.body).to have_selector("input[name='host'][disabled]")
+      end
+    end
+
+    context 'when current user is read-only in the workspace' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::READ_ONLY) }
 
       it 'redirects to workspace list' do
         get "/app/workspaces/#{workspace.id}/data_sources"
@@ -96,6 +120,18 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
         "[data-data-source-wizard-target='connectionBox'][hidden]",
         visible: false
       )
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'redirects to the workspace list' do
+        get "/app/workspaces/#{workspace.id}/data_sources/new"
+
+        expect(response).to redirect_to(app_workspaces_path)
+      end
     end
   end
 
@@ -434,6 +470,21 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
         expect(response.body).to have_selector('.message',
                                                text: I18n.t('app.workspaces.data_sources.validation.connection_failed'))
         expect(response.body).to include('bad-db.internal')
+      end
+    end
+
+    context 'when current user has user role permissions' do
+      let(:owner) { create(:user) }
+
+      before { create(:member, workspace:, user:, role: Member::Roles::USER) }
+
+      it 'does not update the data source' do
+        original_url = data_source.url
+
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}", params: { url: 'https://valid-url.com' }
+
+        expect(response).to redirect_to(app_workspaces_path)
+        expect(data_source.reload.url).to eq(original_url)
       end
     end
   end

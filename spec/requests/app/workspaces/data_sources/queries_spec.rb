@@ -178,6 +178,18 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
     end
   end
 
+  describe 'GET /app/workspaces/:workspace_id/queries' do
+    let(:data_source) { create(:data_source, workspace:) }
+
+    it 'renders the delete action in the row options for deletable queries' do
+      query = create(:query, data_source:, author: user, last_updated_by: user, saved: true, name: 'User count')
+
+      get app_workspace_queries_path(workspace)
+
+      expect(response.body).to include("Delete the #{query.name} query")
+    end
+  end
+
   describe 'POST /app/workspaces/:workspace_id/data_sources/:data_source_id/queries' do
     let(:data_source) { create(:data_source, workspace:) }
     let(:query_string) { 'SELECT * FROM sessions;' }

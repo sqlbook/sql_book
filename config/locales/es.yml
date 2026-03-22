@@ -116,13 +116,18 @@ es:
           confirmation_default: Puedo ejecutar esa acción cuando la confirmes.
           action_canceled: Vale, cancelé esa acción.
           runtime_retry: Tuve un problema al planificar esa solicitud. Reformúlala y lo intento de nuevo.
-          capability_summary_intro: "Puedo ayudarte con tareas del espacio, del equipo, de fuentes de datos y de consultas en este espacio. Ahora mismo puedo:"
-          capability_summary_footer: Si quieres, pídeme directamente una de esas acciones.
+          capability_summary_intro: "Puedo ayudarte en varias áreas dentro de este espacio:"
+          capability_summary_footer: Pídeme algo concreto o pregúntame por una de esas áreas y te doy más detalle.
           capability_summary_restricted: En este chat estoy centrado en tareas de sqlbook relacionadas con el espacio, las fuentes de datos y las consultas. Con tu rol actual en este espacio, no puedo hacer esos cambios por ti aquí. Pídeselo a %{allowed_roles}.
           scope_limited_intro: Estoy aquí para ayudarte con tareas de sqlbook relacionadas con el espacio, las fuentes de datos y las consultas, no como un asistente de propósito general.
-          scope_limited_supported_intro: "Ahora mismo puedo ayudarte con:"
-          scope_limited_footer: Si quieres, pídeme directamente una de esas acciones.
+          scope_limited_supported_intro: "Aun así, puedo ayudarte con cosas como:"
+          scope_limited_footer: Si quieres, pídeme algo concreto dentro de una de esas áreas.
           scope_limited_restricted: Estoy aquí para ayudarte con tareas de sqlbook relacionadas con el espacio, las fuentes de datos y las consultas, no como un asistente de propósito general. Con tu rol actual en este espacio, pídeselo a %{allowed_roles} si necesitas ayuda con esas acciones.
+          capability_categories:
+            team: Gestión del equipo
+            data_sources: Fuentes de datos
+            queries: Consultas y biblioteca de consultas
+            workspace: Configuración del espacio
           capability_items:
             member_list: Mostrar los miembros del equipo
             member_invite: Invitar a un miembro del equipo
@@ -463,6 +468,8 @@ es:
           selected_tables_title: Tablas seleccionadas
           deletion_title: Eliminación de la fuente
           tracking_code_title: Código de seguimiento
+          read_only_title: Acceso solo de lectura
+          read_only_body: Puedes revisar esta fuente de datos aquí, pero solo un administrador o el propietario del espacio pueden cambiar su configuración.
           deletion_intro: Puedes eliminar esta fuente de datos en cualquier momento.
           deletion_points:
             one: La fuente de datos se eliminará inmediatamente para todos los usuarios de tu espacio.

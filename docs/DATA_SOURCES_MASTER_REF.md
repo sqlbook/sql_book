@@ -64,11 +64,13 @@ Chat/tool actions:
 - `query.save`
 
 ## Permissions
-- Datasource management is owner/admin only across:
-  - standalone UI
-  - `/api/v1`
-  - chat/tool execution
+- Datasource viewing is allowed for `OWNER`, `ADMIN`, and `USER` across:
+  - datasource home (`GET /app/workspaces/:workspace_id/data_sources`)
+  - datasource side-panel read route (`GET /app/workspaces/:workspace_id/data_sources/:id`)
+  - datasource list API (`GET /api/v1/workspaces/:workspace_id/data-sources`)
+  - chat/tool action `datasource.list`
 - User/read-only members must not be able to create, validate, update, or delete datasources.
+- Read-only members must not be able to access datasource routes or `datasource.list`.
 - Saved-query library read is allowed for all accepted roles.
 - Read-only query execution against connected datasources is allowed for `OWNER`, `ADMIN`, and `USER`, and denied for `READ_ONLY`.
 - Query save is allowed for `OWNER`, `ADMIN`, and `USER`, and denied for `READ_ONLY`.
@@ -93,6 +95,10 @@ Chat/tool actions:
 
 ## Datasource settings panel
 - Datasource settings open as a side panel from the datasource home page.
+- `USER` role sees the side panel in read-only mode:
+  - connection fields and selected tables are visible but disabled
+  - delete affordances are hidden
+  - setup/create/update/delete remain owner/admin only
 - Desktop layout:
   - datasource table remains on the left
   - settings panel takes 50% of the viewport on the right

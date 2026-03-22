@@ -13,6 +13,7 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
                 :can_manage_workspace_settings?,
                 :can_manage_workspace_members?,
                 :can_manage_data_sources?,
+                :can_view_data_sources?,
                 :can_write_queries?,
                 :can_destroy_query?,
                 :can_write_dashboards?,
@@ -53,6 +54,10 @@ class ApplicationController < ActionController::Base # rubocop:disable Metrics/C
 
   def can_manage_data_sources?(workspace:)
     workspace_capability_resolver(workspace:).can_manage_data_sources?
+  end
+
+  def can_view_data_sources?(workspace:)
+    workspace_capability_resolver(workspace:).can_view_data_sources?
   end
 
   def can_write_queries?(workspace:)

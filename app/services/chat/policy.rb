@@ -36,6 +36,15 @@ module Chat
     ].freeze
 
     EDITABLE_ROLES = [Member::Roles::ADMIN, Member::Roles::USER, Member::Roles::READ_ONLY].freeze
+    ALLOWED_ROLES_KEYS = {
+      'workspace.delete' => 'owner',
+      'datasource.list' => 'user_admin_or_owner',
+      'query.list' => 'workspace_member',
+      'query.run' => 'user_admin_or_owner',
+      'query.save' => 'user_admin_or_owner',
+      'query.rename' => 'user_admin_or_owner',
+      'query.delete' => 'user_admin_or_owner'
+    }.freeze
     ACTION_HANDLERS = {
       'workspace.update_name' => :authorize_workspace_update_name,
       'workspace.delete' => :authorize_workspace_delete,
@@ -59,14 +68,7 @@ module Chat
     end
 
     def self.allowed_roles_key_for(action_type)
-      return 'owner' if action_type == 'workspace.delete'
-      return 'workspace_member' if action_type == 'query.list'
-      return 'user_admin_or_owner' if action_type == 'query.run'
-      return 'user_admin_or_owner' if action_type == 'query.save'
-      return 'user_admin_or_owner' if action_type == 'query.rename'
-      return 'user_admin_or_owner' if action_type == 'query.delete'
-
-      'admin_or_owner'
+      ALLOWED_ROLES_KEYS.fetch(action_type, 'admin_or_owner')
     end
 
     def initialize(workspace:, actor:)
@@ -158,7 +160,9 @@ module Chat
     end
 
     def authorize_data_source_list(**)
-      authorize_data_source_management
+      return allow if capabilities.can_view_data_sources?
+
+      deny(reason_code: 'forbidden_role')
     end
 
     def authorize_data_source_validate_connection(**)

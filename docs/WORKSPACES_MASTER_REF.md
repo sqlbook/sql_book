@@ -78,7 +78,10 @@ Related references:
     - team visibility action (`member.list`) allowed only for owner/admin
     - mutating actions policy-gated by role and target constraints
   - Chat confirm/cancel routes (`chat/actions#confirm`, `chat/actions#cancel`): requester-only and workspace-scoped
-  - Data source settings routes (`data_sources*`, `data_sources/set_up#index`): owner/admin only
+  - Data source routes:
+    - `data_sources#index|show`: owner/admin/user
+    - `data_sources#new|validate_connection|create|update|destroy` + `data_sources/set_up#index`: owner/admin only
+    - read-only: forbidden
   - Query library (`GET /app/workspaces/:workspace_id/queries`): all roles
   - Query write (`data_sources/queries#create|update|chart_config`): owner/admin/user
   - Query destroy (`data_sources/queries#destroy`):
@@ -142,6 +145,8 @@ Related references:
   - `billing.*`, `subscription.*`, `admin.*`, `super_admin.*`
 - datasource note:
   - only `datasource.list`, `datasource.validate_connection`, and `datasource.create` are in scope
+  - `datasource.list` is available to workspace `OWNER`, `ADMIN`, and `USER`
+  - `datasource.validate_connection` and `datasource.create` remain owner/admin only
   - other datasource actions remain blocked until explicitly implemented
 - query note:
   - `query.list`, `query.run`, `query.save`, `query.rename`, and `query.delete` are in scope
@@ -250,7 +255,10 @@ Related references:
       - content:
         - `Workspace` heading
         - workspace switcher select
-        - links: `Chat`, `Data Sources`, `Query Library`, `Dashboards`, `Settings`
+        - links:
+          - `Chat`, `Query Library`, `Dashboards`
+          - `Data Sources` for owner/admin/user
+          - `Settings` for owner/admin
     - account menu dropdown:
       - width: 160px
       - aligned so dropdown right edge matches account-menu icon right edge
@@ -263,7 +271,7 @@ Related references:
     - persistent workspace switcher is shown in header, 16px right of logo, width 160px
     - centered top nav link group is shown with routes:
       - `Chat` -> `/app/workspaces/:id`
-      - `Data Sources` -> `/app/workspaces/:id/data_sources`
+      - `Data Sources` -> `/app/workspaces/:id/data_sources` (owner/admin/user only)
       - `Query Library` -> `/app/workspaces/:id/queries` (also active on nested query routes)
       - `Dashboards` -> `/app/workspaces/:id/dashboards`
       - `Settings` -> `/app/workspaces/:id/workspace-settings`

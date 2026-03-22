@@ -18,7 +18,11 @@
       <%= workspace.data_sources.count %>
     </h3> 
     <p class="subtitle small">
-      <%= link_to I18n.t('common.actions.view'), app_workspace_data_sources_path(workspace), class: "link gray-200", "aria-label": "View datasources for the #{workspace.name} workspace" %>
+      <% if can_view_data_sources?(workspace:) %>
+        <%= link_to I18n.t('common.actions.view'), app_workspace_data_sources_path(workspace), class: "link gray-200", "aria-label": "View datasources for the #{workspace.name} workspace" %>
+      <% else %>
+        -
+      <% end %>
     </p>
   </div>
   <div class="stat queries">

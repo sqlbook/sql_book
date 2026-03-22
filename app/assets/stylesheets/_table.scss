@@ -72,6 +72,18 @@ table {
     color: var(--gray-500);
   }
 
+  .input,
+  .select {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+  }
+
+  .input:not(:hover):not(:focus),
+  .select:not(:hover):not(:focus-within) {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+  }
+
   &.collapsible {
     th, td {
       overflow: hidden;
@@ -89,6 +101,7 @@ table {
     th.actions,
     td.actions {
       max-width: none;
+      overflow: visible;
       text-overflow: clip;
       white-space: nowrap;
       width: 1%;

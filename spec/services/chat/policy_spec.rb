@@ -286,12 +286,33 @@ RSpec.describe Chat::Policy, type: :service do
       expect(create_decision.allowed).to be(true)
     end
 
+    it 'allows regular members to list data sources' do
+      member_user = create(:user)
+      create(:member, workspace:, user: member_user, role: Member::Roles::USER)
+      policy = described_class.new(workspace:, actor: member_user)
+
+      decision = policy.authorize(action_type: 'datasource.list', payload: {})
+
+      expect(decision.allowed).to be(true)
+    end
+
     it 'blocks regular members from managing data sources' do
       member_user = create(:user)
       create(:member, workspace:, user: member_user, role: Member::Roles::USER)
       policy = described_class.new(workspace:, actor: member_user)
 
       decision = policy.authorize(action_type: 'datasource.create', payload: {})
+
+      expect(decision.allowed).to be(false)
+      expect(decision.reason_code).to eq('forbidden_role')
+    end
+
+    it 'blocks read-only members from listing data sources' do
+      read_only = create(:user)
+      create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)
+      policy = described_class.new(workspace:, actor: read_only)
+
+      decision = policy.authorize(action_type: 'datasource.list', payload: {})
 
       expect(decision.allowed).to be(false)
       expect(decision.reason_code).to eq('forbidden_role')
