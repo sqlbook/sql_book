@@ -657,7 +657,7 @@
       "post": {
         "operationId": "querySave",
         "summary": "Save query",
-        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one. Exact duplicates are prevented by a server-owned query fingerprint based on datasource plus normalized SQL: saving the same query again returns the existing saved query with `save_outcome: \"already_saved\"` instead of creating a duplicate. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
+        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one. Exact duplicates are prevented by a server-owned query fingerprint based on datasource plus normalized SQL: saving the same query again returns the existing saved query with `save_outcome: \"already_saved\"` instead of creating a duplicate. If that auto-generated name would collide with a different saved query in the same workspace, the server returns a validation error with `error_code: \"generated_name_conflict\"` plus the proposed name and conflicting query so callers can ask whether to keep that name or choose another. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
         "tags": [
           "Queries"
         ],
@@ -698,7 +698,7 @@
             "$ref": "#/components/responses/ToolForbidden"
           },
           "422": {
-            "$ref": "#/components/responses/ToolValidationError"
+            "$ref": "#/components/responses/QuerySaveValidationError"
           },
           "500": {
             "$ref": "#/components/responses/ToolExecutionError"
@@ -1425,6 +1425,53 @@
                   "error_code": "validation_error",
                   "message": "Please provide a workspace name.",
                   "data": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "QuerySaveValidationError": {
+        "description": "Invalid payload for requested query save operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationErrorResponse"
+            },
+            "examples": {
+              "validationError": {
+                "value": {
+                  "status": "validation_error",
+                  "error_code": "validation_error",
+                  "message": "Run a query here first, or provide SQL and a data source so I can save it.",
+                  "data": {}
+                }
+              },
+              "generatedNameConflict": {
+                "value": {
+                  "status": "validation_error",
+                  "error_code": "generated_name_conflict",
+                  "message": "I can save this as \"User count\", but there is already a different saved query with that name in the library. Do you want to keep that name or choose another?",
+                  "data": {
+                    "proposed_name": "User count",
+                    "conflicting_query": {
+                      "id": 19,
+                      "name": "User count",
+                      "sql": "SELECT COUNT(*) AS user_count FROM public.users WHERE super_admin = true",
+                      "saved": true,
+                      "chart_type": null,
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      },
+                      "author": {
+                        "id": 7,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com"
+                      },
+                      "updated_at": "2026-03-22T12:45:00Z"
+                    }
+                  }
                 }
               }
             }

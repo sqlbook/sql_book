@@ -63,9 +63,7 @@ module Chat
         data_source:,
         schema:,
         preferred_table:,
-        base_sql: payload['base_sql'],
-        base_question: payload['base_question'],
-        base_query_name: payload['base_query_name']
+        refinement_context: query_refinement_context
       ).call
 
       return clarification_result(question: plan.clarification_question) if plan.sql.blank?
@@ -95,6 +93,10 @@ module Chat
 
     def current_question
       payload['question'].to_s.strip.presence || payload['message'].to_s.strip
+    end
+
+    def query_refinement_context
+      payload.slice('base_sql', 'base_question', 'base_query_name')
     end
 
     def active_clarification_state
@@ -156,9 +158,7 @@ module Chat
         data_source:,
         schema:,
         preferred_table:,
-        base_sql: payload['base_sql'],
-        base_question: payload['base_question'],
-        base_query_name: payload['base_query_name']
+        refinement_context: query_refinement_context
       ).call
       return clarification_result(question: plan.clarification_question) if plan.sql.blank?
 

@@ -199,6 +199,14 @@ en:
             password: password
         query:
           question_required: Tell me what you'd like to query.
+          ask_scope: |-
+            Do you mean workspace team members or user records in your connected database?
+          ask_scope_read_only: |-
+            Do you mean workspace team members or user records in your connected database?
+
+            From your current role, I can't open the member list or run the database query here.
+
+            %{member_allowed_roles} can open the member list, and %{query_allowed_roles} can run the database query.
           no_data_sources: There are no connected data sources in this workspace yet, so I can't run that query here.
           data_source_not_found: I couldn't find that data source in this workspace.
           ask_data_source: "I found more than one possible data source for that. Which one should I use: %{data_sources}?"
@@ -216,6 +224,7 @@ en:
           item: "- **%{name}** — Data source: %{data_source}"
           saved: I saved that query to the query library as "%{name}".
           already_saved: That exact query is already saved in the query library as "%{name}".
+          generated_name_conflict: I can save this as "%{proposed_name}", but there is already a different saved query with that name in the library. Do you want to keep that name or choose another?
           renamed: I renamed that saved query to "%{name}".
           updated: I updated that saved query and it is now "%{name}".
           updated_unchanged: That saved query is already up to date as "%{name}".

@@ -37,14 +37,12 @@ module Chat
       )\b
     /ix
 
-    def initialize(question:, data_source:, schema:, preferred_table: nil, base_sql: nil, base_question: nil, base_query_name: nil)
+    def initialize(question:, data_source:, schema:, preferred_table: nil, refinement_context: {})
       @question = question.to_s.strip
       @data_source = data_source
       @schema = Array(schema)
       @preferred_table = preferred_table.to_s.presence
-      @base_sql = base_sql.to_s.strip
-      @base_question = base_question.to_s.strip
-      @base_query_name = base_query_name.to_s.strip
+      @refinement_context = refinement_context.to_h.deep_stringify_keys
     end
 
     def call
@@ -56,7 +54,19 @@ module Chat
 
     private
 
-    attr_reader :question, :data_source, :schema, :preferred_table, :base_sql, :base_question, :base_query_name
+    attr_reader :question, :data_source, :schema, :preferred_table, :refinement_context
+
+    def base_sql
+      refinement_context['base_sql'].to_s.strip
+    end
+
+    def base_question
+      refinement_context['base_question'].to_s.strip
+    end
+
+    def base_query_name
+      refinement_context['base_query_name'].to_s.strip
+    end
 
     def direct_sql_plan
       return nil unless question.match?(/\A\s*(select|with)\b/i)
@@ -101,7 +111,7 @@ module Chat
 
       normalized = question.downcase
       sql = if normalized.match?(/\b(how many|count|number of|total)\b/)
-              "SELECT COUNT(*) AS count FROM #{table}"
+              count_query_sql_for(table:)
             elsif identity_request?(normalized)
               identity_select_sql_for(table:) || "SELECT * FROM #{table} ORDER BY 1 LIMIT 25"
             elsif normalized.match?(/\b(show|list|find|get)\b/)
@@ -116,6 +126,9 @@ module Chat
     end
 
     def refinement_heuristic_sql
+      letter_variant_sql = letter_variant_refinement_sql
+      return letter_variant_sql if letter_variant_sql.present?
+
       return nil unless refinement_request?
       return nil unless base_sql.present? && base_sql.match?(/\bcount\s*\(/i)
       return nil unless question.downcase.match?(GROUPING_REQUEST_REGEX)
@@ -151,7 +164,62 @@ module Chat
     end
 
     def refinement_request?
-      question.downcase.match?(REFINEMENT_REQUEST_REGEX)
+      question.downcase.match?(REFINEMENT_REQUEST_REGEX) || QueryFollowUpMatcher.contextual_follow_up?(
+        text: question,
+        recent_query_reference: { 'sql' => base_sql }
+      )
+    end
+
+    def count_query_sql_for(table:)
+      letter_filter_clause = letter_filter_clause_for(table:)
+      return "SELECT COUNT(*) AS count FROM #{table}" if letter_filter_clause.blank?
+
+      [
+        'SELECT COUNT(*) AS count',
+        "FROM #{table}",
+        "WHERE #{letter_filter_clause}"
+      ].join("\n")
+    end
+
+    def letter_filter_clause_for(table:)
+      letter = QueryFollowUpMatcher.letter_variant(text: question)
+      return nil if letter.blank?
+
+      table_entry = flattened_tables.find { |candidate| candidate['qualified_name'] == table }
+      return nil unless table_entry
+
+      available_columns = Array(table_entry['columns']).map do |column|
+        (column[:name] || column['name']).to_s
+      end
+      target_column = if question.downcase.include?('first name')
+                        available_columns.find { |name| name.casecmp('first_name').zero? }
+                      elsif question.downcase.include?('last name')
+                        available_columns.find { |name| name.casecmp('last_name').zero? }
+                      else
+                        available_columns.find { |name| name.casecmp('name').zero? } ||
+                          available_columns.find { |name| name.casecmp('full_name').zero? } ||
+                          available_columns.find { |name| name.casecmp('first_name').zero? }
+                      end
+      return nil if target_column.blank?
+
+      "#{target_column} ILIKE '%#{letter}%'"
+    end
+
+    def letter_variant_refinement_sql
+      return nil unless refinement_request?
+      return nil if base_sql.blank?
+
+      letter = QueryFollowUpMatcher.letter_variant(text: question)
+      return nil if letter.blank?
+      return nil unless base_sql.match?(/\bilike\s+'%[^']+%'/i)
+
+      sql = base_sql.sub(/\bilike\s+'%[^']+%'/i, "ILIKE '%#{letter}%'")
+      return nil if sql == base_sql
+
+      DataSources::QuerySafetyGuard.validate!(sql:)
+      sql
+    rescue DataSources::Connectors::BaseConnector::QueryError
+      nil
     end
 
     def identity_select_sql_for(table:)
@@ -231,7 +299,7 @@ module Chat
     end
 
     def grouping_column_score(column_name:)
-      column_tokens = column_name.downcase.split(/[^a-z0-9]+/).reject(&:blank?)
+      column_tokens = column_name.downcase.split(/[^a-z0-9]+/).compact_blank
       return 0 if column_tokens.empty?
 
       overlap = question_tokens.count { |token| column_tokens.include?(token) }

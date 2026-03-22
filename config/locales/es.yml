@@ -168,6 +168,14 @@ es:
             password: contraseña
         query:
           question_required: Dime qué te gustaría consultar.
+          ask_scope: |-
+            ¿Te refieres a los miembros del equipo del espacio o a los registros de usuario en tu base de datos conectada?
+          ask_scope_read_only: |-
+            ¿Te refieres a los miembros del equipo del espacio o a los registros de usuario en tu base de datos conectada?
+
+            Con tu rol actual no puedo abrir la lista de miembros ni ejecutar la consulta de base de datos aquí.
+
+            %{member_allowed_roles} puede abrir la lista de miembros, y %{query_allowed_roles} puede ejecutar la consulta de base de datos.
           no_data_sources: No hay fuentes de datos conectadas en este espacio todavía, así que no puedo ejecutar esa consulta aquí.
           data_source_not_found: No pude encontrar esa fuente de datos en este espacio.
           ask_data_source: "Encontré más de una posible fuente de datos para eso. ¿Cuál debo usar: %{data_sources}?"
@@ -185,6 +193,7 @@ es:
           item: "- **%{name}** — Fuente de datos: %{data_source}"
           saved: Guardé esa consulta en la biblioteca como "%{name}".
           already_saved: Esa misma consulta ya está guardada en la biblioteca como "%{name}".
+          generated_name_conflict: Puedo guardarla como "%{proposed_name}", pero ya hay otra consulta guardada con ese nombre en la biblioteca. ¿Quieres conservar ese nombre o prefieres elegir otro?
           renamed: Renombré esa consulta guardada como "%{name}".
           updated: Actualicé esa consulta guardada y ahora se llama "%{name}".
           updated_unchanged: Esa consulta guardada ya estaba al día como "%{name}".

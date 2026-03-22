@@ -30,7 +30,7 @@ module Tooling
         return Result.new(
           status: 'validation_error',
           message: result.message,
-          data: {},
+          data: save_failure_data(result:),
           error_code: result.error_code
         )
       end
@@ -193,6 +193,15 @@ module Tooling
       {
         'conflicting_query' => serialize_query(query: result.conflicting_query)
       }
+    end
+
+    def save_failure_data(result:)
+      return {} unless result.error_code == 'generated_name_conflict' && result.conflicting_query.present?
+
+      {
+        'proposed_name' => result.proposed_name,
+        'conflicting_query' => serialize_query(query: result.conflicting_query)
+      }.compact
     end
   end
 end

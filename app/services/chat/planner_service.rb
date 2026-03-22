@@ -499,11 +499,23 @@ module Chat
       return false if member_list_intent?(lowered_message)
       return false if member_invite_intent?(lowered_message)
       return false if lowered_message.match?(/\b(resend|invite|rename|delete|remove|promote|demote)\b/)
-      return true if lowered_message.match?(/\A\s*(select|with)\b/)
-      return true if lowered_message.match?(/\b(how many|count|total|average|avg|sum|max|min|rows?)\b/)
+      return true if contextual_query_run_follow_up?
+      return true if direct_query_run_intent?(lowered_message)
       return false unless lowered_message.match?(QUERY_REQUEST_REGEX)
 
       lowered_message.match?(QUERY_DATA_HINT_REGEX) || referenced_data_source_name?(lowered_message)
+    end
+
+    def contextual_query_run_follow_up?
+      QueryFollowUpMatcher.contextual_follow_up?(
+        text: message,
+        recent_query_reference:
+      )
+    end
+
+    def direct_query_run_intent?(lowered_message)
+      lowered_message.match?(/\A\s*(select|with)\b/) ||
+        lowered_message.match?(/\b(how many|count|total|average|avg|sum|max|min|rows?)\b/)
     end
 
     def referenced_data_source_name?(lowered_message)

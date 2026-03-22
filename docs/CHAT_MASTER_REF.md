@@ -217,7 +217,9 @@ High-risk writes (inline confirmation required):
 - `query.rename`: `query_id`, `name`
 - `query.delete`: `query_id`
 - When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt or a generic analytic question like "How many users do I have?".
+- Generated saved-query names should incorporate meaningful filters when they materially define the query (for example letter/name filters) rather than collapsing to a generic title like `User count` or `User names and email addresses`.
 - `query.save` should not create an exact duplicate saved query in the same datasource; the app should return the existing saved query instead.
+- If an auto-generated `query.save` name collides with a different saved query in the workspace, chat should pause and ask whether to keep that generated name or choose another, rather than silently saving with the colliding name.
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
 - Conversational rename follow-ups such as `rename it to DB User Count` or `Yes please` after the assistant offers a specific rename should stay in `query.rename`, not fall back to `query.run` or `query.list`.
 - Conversational save follow-ups such as `save that`, `Could you save that for me?`, `update that query to this`, and `the first one` should resolve from thread-local query context before any scope-limited capability fallback is considered.
@@ -233,6 +235,7 @@ High-risk writes (inline confirmation required):
 - When the latest draft has materially drifted from the current saved query, chat should ask whether to update+rename the existing saved query or save a new one.
 - Combined update requests such as `update the User count [2] query to this, and rename it to User Count by SA Status` should resolve to one `query.update` action with both SQL and name.
 - Delete confirmations for saved queries must be bound to an immutable `query_id` + `query_name` payload and the confirmation card/copy should name the specific query being deleted.
+- For `READ_ONLY` members, ambiguous `users` clarifications should not imply that a database query is runnable; the clarification copy should surface the role limit up front instead of over-promising and only denying it on the next turn.
 
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
@@ -335,6 +338,7 @@ High-risk writes (inline confirmation required):
   - "delete that saved query"
   - "could you change it to User Count?" after saving or listing a recent query
   - explicit rename requests that quote both the current saved-query name and the new name, even when the user ends the sentence with punctuation
+  - short elliptical refinements such as "What about the letter i?" when the user is clearly continuing the most recent query
 - Datasource setup follow-ups should support:
   - friendly staged answers like "Call it Warehouse DB"
   - freeform connection-detail replies such as "my database name is JOHNNY and the type is PostgreSQL"

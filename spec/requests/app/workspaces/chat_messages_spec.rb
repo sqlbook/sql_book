@@ -155,6 +155,51 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(created_thread.title.downcase).to include('user')
     end
 
+    it 'treats short what-about follow-ups as refinements of the recent query' do
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' },
+                { name: 'first_name', data_type: 'text' }
+              ]
+            }
+          ]
+        }
+      ]
+      first_result = ActiveRecord::Result.new(['user_count'], [[0]])
+      refined_result = ActiveRecord::Result.new(['user_count'], [[2]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(first_result, refined_result)
+      create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'how many users have a letter A in their first name from my connected database?' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'What about the letter i?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+
+      assistant_content = response.parsed_body.dig('messages', -1, 'content')
+      expect(assistant_content).to include("ILIKE '%i%'")
+      expect(assistant_content).to include('Staging App DB')
+      expect(assistant_content).not_to include('not as a general-purpose assistant')
+    end
+
     it 'starts a staged data source setup flow instead of falling back to a capability summary' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'Can you help me add a data source?' },
@@ -557,6 +602,124 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content_html')).to include(
         %(href="/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{saved_query.id}")
       )
+    end
+
+    it 'asks before keeping an auto-generated name that collides with a different saved query' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users WHERE super_admin = true',
+        author: user,
+        last_updated_by: user
+      )
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['user_count'], [[3]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT COUNT(*) AS user_count FROM public.users;' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Could you save that for me?' },
+             as: :json
+      end.not_to change(Query, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('keep that name or choose another')
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Yes, keep that name' },
+             as: :json
+      end.to change(Query, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      saved_query = Query.order(:id).last
+      expect(saved_query.name).to eq('User count')
+      expect(saved_query.query).to eq('SELECT COUNT(*) AS user_count FROM public.users;')
+    end
+
+    it 'saves with a different explicit name after an auto-generated name collision prompt' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users WHERE super_admin = true',
+        author: user,
+        last_updated_by: user
+      )
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['user_count'], [[3]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT COUNT(*) AS user_count FROM public.users;' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Could you save that for me?' },
+           as: :json
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: "Let's call it Total user count" },
+             as: :json
+      end.to change(Query, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      saved_query = Query.order(:id).last
+      expect(saved_query.name).to eq('Total user count')
+      expect(saved_query.query).to eq('SELECT COUNT(*) AS user_count FROM public.users;')
     end
 
     it 'renames a saved query from chat and carries the target query across the rename follow-up' do
@@ -2260,6 +2423,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       allow(Chat::RuntimeService).to receive(:new).and_return(
         instance_double(
           Chat::RuntimeService,
+          compose_tool_result_message: 'Bob Smith now has the role Admin.',
           call: Chat::RuntimeService::Decision.new(
             assistant_message: 'Updating the role now.',
             tool_calls: [
@@ -2475,6 +2639,10 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('ok')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('workspace team members')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include(
+        I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
+      )
+      expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('I can query')
 
       post app_workspace_chat_messages_path(restricted_workspace),
            params: { thread_id:, content: 'workspace team members' },

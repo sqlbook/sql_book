@@ -59,19 +59,14 @@ module Chat
       data = execution.data.to_h.deep_stringify_keys
       query = saved_query_from(data:)
       return unless query
+      return preserve_unsaved_duplicate_reference(query:, result_message:) if save_outcome(data:) == 'already_saved'
 
-      if save_outcome(data:) == 'already_saved'
-        return preserve_unsaved_duplicate_reference(query:, result_message:)
-      end
-
-      reference = reference_for_saved_query(query) ||
-                  matching_unsaved_reference_for(query:) ||
-                  build_saved_query_reference(
-                    query:,
-                    source_message:,
-                    result_message:,
-                    original_question: fallback_question
-                  )
+      reference = existing_or_new_saved_reference(
+        query:,
+        source_message:,
+        result_message:,
+        fallback_question:
+      )
 
       reference.attach_saved_query!(query:, source_message:, result_message:)
       reference
@@ -105,6 +100,17 @@ module Chat
       reference.result_message ||= result_message
       reference.sync_with_saved_query!(query:)
       reference
+    end
+
+    def existing_or_new_saved_reference(query:, source_message:, result_message:, fallback_question:)
+      reference_for_saved_query(query) ||
+        matching_unsaved_reference_for(query:) ||
+        build_saved_query_reference(
+          query:,
+          source_message:,
+          result_message:,
+          original_question: fallback_question
+        )
     end
 
     def record_query_delete!(result_message:, execution:)
@@ -188,12 +194,15 @@ module Chat
     def refinement_base_reference_for(question:)
       return unless refinement_follow_up?(question)
 
-      recent_saved_reference_record
+      references.first
     end
 
     def refinement_follow_up?(question)
       question.to_s.match?(
         /\b(tweak|adjust|update|change|modify|refine|instead|also|split|group|break(?:\s+it)?\s+down|filter|show)\b/i
+      ) || QueryFollowUpMatcher.contextual_follow_up?(
+        text: question,
+        recent_query_reference: references.first&.serialized_payload
       )
     end
 

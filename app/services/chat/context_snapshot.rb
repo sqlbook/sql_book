@@ -18,21 +18,43 @@ module Chat
     keyword_init: true
   ) do
     def recent_query_reference
-      Array(query_references).first.to_h.deep_stringify_keys
+      query_reference_payload(Array(query_references).first) || recent_query_state.to_h.deep_stringify_keys
     end
 
     def recent_saved_query_reference
-      Array(query_references)
-        .find { |reference| reference.to_h.deep_stringify_keys['saved_query_id'].present? }
-        .to_h
-        .deep_stringify_keys
+      query_reference = Array(query_references)
+        .find { |reference| query_reference_payload(reference).to_h['saved_query_id'].present? }
+
+      query_reference_payload(query_reference) || saved_recent_query_state
     end
 
     def recent_draft_query_reference
-      Array(query_references)
-        .find { |reference| reference.to_h.deep_stringify_keys['saved_query_id'].blank? }
-        .to_h
-        .deep_stringify_keys
+      query_reference = Array(query_references)
+        .find { |reference| query_reference_payload(reference).to_h['saved_query_id'].blank? }
+
+      query_reference_payload(query_reference) || draft_recent_query_state
+    end
+
+    private
+
+    def query_reference_payload(reference)
+      payload = reference.to_h.deep_stringify_keys
+      payload.presence
+    end
+
+    def saved_recent_query_state
+      state = recent_query_state.to_h.deep_stringify_keys
+      return {} if state['saved_query_id'].to_s.strip.blank?
+
+      state
+    end
+
+    def draft_recent_query_state
+      state = recent_query_state.to_h.deep_stringify_keys
+      return {} if state['sql'].to_s.strip.blank?
+      return {} if state['saved_query_id'].present?
+
+      state
     end
   end
 end

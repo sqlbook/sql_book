@@ -197,13 +197,10 @@ module Chat
     def apply_query_run_refinement_context!(payload:)
       return unless query_refinement_request?
 
-      reference = context_snapshot.recent_query_reference.to_h.deep_stringify_keys
-      return if reference.blank? || reference['sql'].to_s.strip.blank?
+      reference = recent_query_refinement_reference
+      return if reference.blank?
 
-      payload['base_sql'] ||= reference['sql']
-      payload['base_question'] ||= reference['original_question']
-      payload['base_query_name'] ||= reference['saved_query_name'].presence || reference['current_name'].presence
-      payload['base_saved_query_id'] ||= reference['saved_query_id'] if reference['saved_query_id'].present?
+      payload.merge!(query_run_refinement_attributes(reference:))
     end
 
     def apply_recent_query_context!(payload:)
@@ -249,7 +246,30 @@ module Chat
     def query_refinement_request?
       message_text.match?(
         /\b(tweak|adjust|update|change|modify|refine|instead|also|split|group|break(?:\s+it)?\s+down|filter)\b/i
+      ) || QueryFollowUpMatcher.contextual_follow_up?(
+        text: message_text,
+        recent_query_reference: recent_query_refinement_reference
       )
+    end
+
+    def recent_query_refinement_reference
+      reference = context_snapshot.recent_query_reference.to_h.deep_stringify_keys
+      return {} if reference.blank? || reference['sql'].to_s.strip.blank?
+
+      reference
+    end
+
+    def query_run_refinement_attributes(reference:)
+      {}.tap do |attributes|
+        attributes['base_sql'] = reference['sql'] if reference['sql'].present?
+        attributes['base_question'] = reference['original_question'] if reference['original_question'].present?
+        attributes['base_query_name'] = preferred_query_reference_name(reference:)
+        attributes['base_saved_query_id'] = reference['saved_query_id'] if reference['saved_query_id'].present?
+      end
+    end
+
+    def preferred_query_reference_name(reference:)
+      reference['saved_query_name'].presence || reference['current_name'].presence
     end
 
     def query_reference_resolver

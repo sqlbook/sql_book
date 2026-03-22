@@ -61,6 +61,7 @@ Current query API scope:
 - save requests require SQL plus datasource identity; query name can be server-generated when omitted
 - exact duplicate saves are prevented by a server-owned query fingerprint (`data_source_id + normalized_sql`)
 - `POST /queries` returns `save_outcome: "created"` for a new saved query or `save_outcome: "already_saved"` when the exact same saved query already exists
+- when `POST /queries` is relying on an auto-generated name and that generated name collides with a different saved query in the workspace, it must fail validation with `error_code: "generated_name_conflict"` plus `proposed_name` and `conflicting_query` data so callers can ask whether to keep that generated name or choose another
 - `PATCH /queries/:id` can update `name`, `sql`, or both atomically and returns `update_outcome: "updated"` or `update_outcome: "unchanged"`
 - update requests that would collide with a different saved query fingerprint in the same datasource must fail validation instead of overwriting or duplicating the other saved query
 - delete requests require a target query id and should be treated as destructive

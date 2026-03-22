@@ -148,6 +148,34 @@ RSpec.describe 'API v1 queries', type: :request do
       expect(existing_query.reload.name).to eq('User count')
     end
 
+    it 'returns a validation error when an auto-generated name collides with a different saved query' do
+      existing_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users WHERE super_admin = true',
+        author: owner,
+        last_updated_by: owner
+      )
+
+      expect do
+        post "/api/v1/workspaces/#{workspace.id}/queries",
+             params: {
+               sql: 'SELECT COUNT(*) AS user_count FROM public.users',
+               question: 'How many users do I have?',
+               data_source_id: data_source.id
+             },
+             as: :json
+      end.not_to change(Query, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body['status']).to eq('validation_error')
+      expect(response.parsed_body['error_code']).to eq('generated_name_conflict')
+      expect(response.parsed_body.dig('data', 'proposed_name')).to eq('User count')
+      expect(response.parsed_body.dig('data', 'conflicting_query', 'id')).to eq(existing_query.id)
+    end
+
     it 'renames a saved query' do
       query = create(:query, data_source:, saved: true, name: 'Users', query: 'SELECT * FROM public.users')
 

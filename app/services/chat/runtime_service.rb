@@ -711,12 +711,29 @@ module Chat
     end
 
     def query_follow_up_decision
-      recent_query_delete_mistake_decision ||
+      query_run_follow_up_decision ||
+        recent_query_delete_mistake_decision ||
         query_save_resolution_follow_up_decision ||
         query_update_follow_up_decision ||
         query_delete_follow_up_decision ||
         query_save_follow_up_decision ||
         query_rename_follow_up_decision
+    end
+
+    def query_run_follow_up_decision
+      return nil unless contextual_query_run_follow_up?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.query_run'),
+        tool_calls: [
+          ToolCall.new(
+            tool_name: 'query.run',
+            arguments: { 'question' => message }
+          )
+        ],
+        missing_information: [],
+        finalize_without_tools: false
+      )
     end
 
     def should_apply_guard?(decision:, guarded:)
@@ -1010,6 +1027,13 @@ module Chat
 
     def recent_query_reference_payload
       context_snapshot&.recent_query_reference.to_h.deep_stringify_keys
+    end
+
+    def contextual_query_run_follow_up?
+      QueryFollowUpMatcher.contextual_follow_up?(
+        text: message,
+        recent_query_reference: recent_query_reference_payload
+      )
     end
 
     def recent_draft_query_reference_payload
