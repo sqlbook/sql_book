@@ -561,6 +561,11 @@ es:
         confirm_delete: "[Sí, me voy]"
 
   toasts:
+    workspaces:
+      queries:
+        missing:
+          title: La consulta ya no está disponible
+          body: La consulta que buscabas ya no existe.
 
   models:
     data_source:

@@ -590,6 +590,15 @@
     text-decoration: underline;
   }
 
+  .chat-assistant-block .chat-message-body a.chat-query-link {
+    color: var(--gray-300);
+    text-decoration: underline;
+
+    &:hover {
+      color: var(--cream-250);
+    }
+  }
+
   .chat-message-meta {
     color: var(--gray-500);
     font-size: 0.75rem;

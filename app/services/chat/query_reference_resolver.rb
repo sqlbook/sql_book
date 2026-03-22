@@ -264,7 +264,7 @@ module Chat
 
     def ordinal_reference_index_for(text)
       ORDINAL_REFERENCE_MAP.each do |label, index|
-        return index if text.match?(/\b#{Regexp.escape(label)}\s+query\b/i)
+        return index if text.match?(/\b#{Regexp.escape(label)}\s+(?:query|one)\b/i)
       end
 
       nil

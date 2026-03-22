@@ -147,17 +147,21 @@ module Chat
 
     def query_save_candidates(execution:)
       query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
-      translated_variants('query_save', name: query['name'] || query[:name])
+      translated_variants('query_save', name: query_link(query:))
     end
 
     def query_rename_candidates(execution:)
       query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
-      translated_variants('query_rename', name: query['name'] || query[:name])
+      translated_variants('query_rename', name: query_link(query:))
     end
 
     def query_delete_candidates(execution:)
       query = execution.data.to_h['deleted_query'] || execution.data.to_h[:deleted_query] || {}
       translated_variants('query_delete', name: query['name'] || query[:name])
+    end
+
+    def query_link(query:)
+      Queries::ChatLinkFormatter.new(workspace:).markdown_link(query:)
     end
 
     def translated_variants(key, **args)

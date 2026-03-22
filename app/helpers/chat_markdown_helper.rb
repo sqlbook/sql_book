@@ -4,7 +4,7 @@ module ChatMarkdownHelper
   MARKDOWN_ALLOWED_TAGS = %w[
     p br ul ol li strong em a code pre blockquote div table thead tbody tr th td
   ].freeze
-  MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel class].freeze
+  MARKDOWN_ALLOWED_ATTRIBUTES = %w[href title rel class target].freeze
   MARKDOWN_EXTENSIONS = {
     autolink: true,
     strikethrough: true,
@@ -52,11 +52,31 @@ module ChatMarkdownHelper
         next
       end
 
-      link['rel'] = 'nofollow noopener noreferrer'
+      decorate_markdown_link!(link:, href:)
     end
   end
 
   def allowed_markdown_link?(href)
-    href.start_with?('http://', 'https://', 'mailto:')
+    href.start_with?('http://', 'https://', 'mailto:', '/')
+  end
+
+  def internal_markdown_link?(href)
+    href.start_with?('/')
+  end
+
+  def internal_markdown_link_class(href)
+    return 'chat-query-link' if href.match?(%r{\A/app/workspaces/\d+/data_sources/\d+/queries/\d+\z})
+
+    nil
+  end
+
+  def decorate_markdown_link!(link:, href:)
+    if internal_markdown_link?(href)
+      link['class'] = [link['class'], internal_markdown_link_class(href)].compact_blank.join(' ')
+      link['target'] = '_blank'
+      link['rel'] = 'noopener noreferrer'
+    else
+      link['rel'] = 'nofollow noopener noreferrer'
+    end
   end
 end

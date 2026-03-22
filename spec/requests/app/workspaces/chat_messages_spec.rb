@@ -420,7 +420,12 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(saved_query.data_source_id).to eq(data_source.id)
       expect(saved_query.query).to eq('SELECT COUNT(*) AS count FROM public.users')
       expect(saved_query.name).to eq('User count')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User count"')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('[User count](/app/workspaces/')
+      expect(response.parsed_body.dig('messages', -1, 'content_html')).to include(
+        %(href="/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{saved_query.id}")
+      )
+      expect(response.parsed_body.dig('messages', -1, 'content_html')).to include('class="chat-query-link"')
+      expect(response.parsed_body.dig('messages', -1, 'content_html')).to include('target="_blank"')
 
       query_reference = ChatThread.find(thread_id).chat_query_references.recent_first.first
       expect(query_reference.saved_query_id).to eq(saved_query.id)
@@ -586,6 +591,57 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('Here’s what I found')
     end
 
+    it 'renames the most recently saved query from a quoted follow-up without needing the word to' do
+      create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['user_count'], [[3]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT COUNT(*) AS user_count FROM public.users;' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Can you save this query for me?' },
+           as: :json
+
+      saved_query = Query.order(:id).last
+      expect(saved_query.name).to eq('User count')
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id:,
+             content: "Nice, could you rename it 'User Count [Test]' please?"
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(saved_query.reload.name).to eq('User Count [Test]')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User Count [Test]"')
+      expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('Here are')
+    end
+
     it 'renames the recent saved query when the user confirms an assistant-proposed new name' do
       thread = ChatThread.active_for(workspace:, user:)
       data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
@@ -744,6 +800,86 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(second_query.reload.name).to eq('User names and emails')
     end
 
+    it 'can complete a rename after a saved-query list fallback once the user picks the first one' do
+      thread = ChatThread.active_for(workspace:, user:)
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      first_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      second_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'DB User Count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: user,
+        last_updated_by: user
+      )
+      create(
+        :chat_query_reference,
+        chat_thread: thread,
+        data_source:,
+        saved_query: first_query,
+        sql: first_query.query,
+        current_name: first_query.name
+      )
+      create(
+        :chat_query_reference,
+        chat_thread: thread,
+        data_source:,
+        saved_query: second_query,
+        sql: second_query.query,
+        current_name: second_query.name
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::USER,
+        content: "Nice, could you rename it 'User Count [Test]' please?"
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        user:,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: "Here are 2 saved queries:\n\n- #{first_query.name}\n- #{second_query.name}",
+        metadata: {
+          result_data: {
+            queries: [
+              {
+                id: first_query.id,
+                name: first_query.name,
+                data_source: { id: data_source.id, name: data_source.name }
+              },
+              {
+                id: second_query.id,
+                name: second_query.name,
+                data_source: { id: data_source.id, name: data_source.name }
+              }
+            ]
+          }
+        }
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'the first one mf' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(first_query.reload.name).to eq('User Count [Test]')
+      expect(second_query.reload.name).to eq('DB User Count')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('"User Count [Test]"')
+    end
+
     it 'requires confirmation before deleting a saved query from chat' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
       query = create(
@@ -853,7 +989,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
     it 'lists saved queries from chat' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
-      create(
+      saved_query = create(
         :query,
         data_source:,
         saved: true,
@@ -869,6 +1005,11 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('executed')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('User count')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
+      expect(response.parsed_body.dig('messages', -1, 'content_html')).to include(
+        %(href="/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{saved_query.id}")
+      )
+      expect(response.parsed_body.dig('messages', -1, 'content_html')).to include('class="chat-query-link"')
+      expect(response.parsed_body.dig('messages', -1, 'content_html')).to include('target="_blank"')
     end
 
     it 'asks a clarifying question when more than one data source could answer a query' do

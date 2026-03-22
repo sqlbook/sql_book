@@ -224,6 +224,7 @@ RSpec.describe Chat::RuntimeService do
               'saved_query_id' => saved_query.id,
               'saved_query_name' => saved_query.name
             },
+            query_references: [],
             conversation_messages: [],
             structured_context_lines: []
           ),
@@ -283,6 +284,7 @@ RSpec.describe Chat::RuntimeService do
               'saved_query_id' => saved_query.id,
               'saved_query_name' => saved_query.name
             },
+            query_references: [],
             conversation_messages: [],
             structured_context_lines: []
           ),
@@ -295,6 +297,65 @@ RSpec.describe Chat::RuntimeService do
         'query_id' => saved_query.id,
         'query_name' => saved_query.name,
         'name' => 'DB User Count'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'overrides a query.list misclassification for quoted rename requests without the word to' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'Here are 2 saved queries.',
+        tool_calls: [{ tool_name: 'query.list', arguments: {} }],
+        missing_information: [],
+        finalize_without_tools: false
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: "Nice, could you rename it 'User Count [Test]' please?",
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          context_snapshot: instance_double(
+            Chat::ContextSnapshot,
+            recent_query_state: {
+              'saved_query_id' => saved_query.id,
+              'saved_query_name' => saved_query.name
+            },
+            recent_saved_query_reference: {
+              'saved_query_id' => saved_query.id,
+              'saved_query_name' => saved_query.name
+            },
+            query_references: [],
+            conversation_messages: [],
+            structured_context_lines: []
+          ),
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.rename')
+      expect(decision.tool_calls.first.arguments).to include(
+        'query_id' => saved_query.id,
+        'query_name' => saved_query.name,
+        'name' => 'User Count [Test]'
       )
       expect(decision.finalize_without_tools).to be(false)
     end
@@ -337,6 +398,7 @@ RSpec.describe Chat::RuntimeService do
               'saved_query_id' => saved_query.id,
               'saved_query_name' => saved_query.name
             },
+            query_references: [],
             conversation_messages: [],
             structured_context_lines: []
           ),

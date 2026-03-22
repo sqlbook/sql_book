@@ -105,7 +105,7 @@ module Tooling
     def query_library_item_text(query:)
       I18n.t(
         'app.workspaces.chat.query_library.item',
-        name: query['name'],
+        name: query_link(query:),
         data_source: query.dig('data_source', 'name')
       )
     end
@@ -141,6 +141,10 @@ module Tooling
 
     def serialize_chat_source(query:)
       Queries::ChatSourceResolver.new(query:, viewer: actor, workspace:).call
+    end
+
+    def query_link(query:)
+      Queries::ChatLinkFormatter.new(workspace:).markdown_link(query:)
     end
   end
 end

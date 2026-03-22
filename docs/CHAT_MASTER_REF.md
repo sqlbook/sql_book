@@ -217,6 +217,9 @@ High-risk writes (inline confirmation required):
 - When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt or a generic analytic question like "How many users do I have?".
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
 - Conversational rename follow-ups such as `rename it to DB User Count` or `Yes please` after the assistant offers a specific rename should stay in `query.rename`, not fall back to `query.run` or `query.list`.
+- Natural quoted rename phrasing such as `rename it 'User Count [Test]' please` should also stay in `query.rename`, even without the word `to`.
+- If chat has already inferred the target rename name and then shows a saved-query list, a follow-up like `the first one` should still complete the rename in query context.
+- Saved-query names rendered in chat list/save/rename responses should be internal links to the query page, using muted app link styling rather than bright external-link styling.
 - Query continuity should resolve against persisted thread-local query references first, then legacy fallback state, rather than assuming only one recent query exists in the thread.
 
 ## Authorization and scope enforcement
@@ -250,6 +253,8 @@ High-risk writes (inline confirmation required):
   - query settings may show a `Chat source` link when the saved query originated from chat and the current viewer can still access that thread
   - `Chat source` must never expose another member's private chat thread
   - archived threads remain valid provenance targets; deleted threads simply remove the link
+- Saved-query names rendered in chat responses should be internal links that open in a new tab, so users can inspect the saved query without losing chat position.
+- If a user opens an old saved-query link from chat after that query has been deleted, the product should redirect them to Query Library and show an error toast explaining that the query no longer exists.
 - If multiple datasources or tables plausibly match a query question, chat must ask a clarifying follow-up before running SQL.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.

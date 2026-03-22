@@ -6,6 +6,10 @@ module Chat
 
     PATTERNS = [
       /\b(?:rename|retitle|change)\b.*\bto\b\s+["']?([^"']+?)["']?\s*[.!?]*\s*\z/i,
+      /
+        \b(?:rename|retitle|change)\b.*\b(?:it|that|that\s+one|this|this\s+one|the\s+query|query)\b
+        \s+["']([^"']+?)["']\s*(?:please|now)?\s*[.!?]*\s*\z
+      /ix,
       /\b(?:save|call|name)\b.*\b(?:as|called|named)\b\s+["']?([^"']+?)["']?\s*[.!?]*\s*\z/i,
       /\b(?:save|call|name)\s+it\s+["']?([^"']+?)["']?\s*[.!?]*\s*\z/i
     ].freeze

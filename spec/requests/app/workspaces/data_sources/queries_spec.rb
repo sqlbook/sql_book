@@ -96,9 +96,14 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
     let(:data_source) { create(:data_source, workspace:) }
 
     context 'when the query does not exist' do
-      it 'renders a 404 page' do
+      it 'redirects to query library with an error toast' do
         get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/234243242"
-        expect(response.status).to eq(404)
+        expect(response).to redirect_to(app_workspace_queries_path(workspace))
+        expect(flash[:toast]).to eq(
+          type: 'error',
+          title: I18n.t('toasts.workspaces.queries.missing.title'),
+          body: I18n.t('toasts.workspaces.queries.missing.body')
+        )
       end
     end
 
@@ -140,6 +145,7 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
         expect(response.body).to include(
           app_workspace_path(workspace, thread_id: thread.id, anchor: "chat-message-#{result_message.id}")
         )
+        expect(response.body).to include('target="_blank"')
       end
 
       it 'hides the chat source link when the current user cannot access the source thread' do

@@ -159,8 +159,10 @@ Related references:
 - Thread-local query references and saved library queries are distinct:
   - unsaved query runs live only in the owning chat thread
   - saved queries live in the workspace query library and may also remain linked back to their source thread
+- Saved-query names rendered inside chat should open the saved query in a new tab rather than replacing the active chat view.
 - Query settings may show a `Chat source` link when the saved query originated from chat and the current viewer can still access that thread.
 - If a saved query is deleted, the thread-local query reference should remain for chat continuity but lose its library link.
+- If a user follows an old saved-query chat link after the query has been deleted, the product should redirect to Query Library and show an error toast instead of rendering a missing-record page.
 - If the source chat thread is deleted, saved queries should simply stop showing the `Chat source` link.
 - Destructive chat writes require explicit inline confirmation (`workspace.delete`, `member.remove`, `query.delete`).
 - Chat permission visibility should mirror workspace UI permissions:

@@ -52,7 +52,9 @@
         <strong><%= I18n.t('app.workspaces.queries.settings.chat_source_label') %>:</strong>
         <%= link_to I18n.t('app.workspaces.queries.settings.chat_source_link'),
                     @query_chat_source['path'],
-                    class: 'link secondary' %>
+                    class: 'link secondary',
+                    target: '_blank',
+                    rel: 'noopener noreferrer' %>
       </p>
     <% end %>
   <% end %>

@@ -12,8 +12,11 @@ module App
         def index; end
 
         def show
-          query.update(last_run_at: Time.current)
-          @query = query
+          @query = find_query
+          raise ActiveRecord::RecordNotFound if @query_lookup_result == :mismatched
+          return redirect_to_missing_query unless @query
+
+          @query.update(last_run_at: Time.current)
           @query_chat_source = Queries::ChatSourceResolver.new(
             query: @query,
             viewer: current_user,
@@ -119,6 +122,14 @@ module App
           Query.find_by!(id: params[:id], data_source_id: data_source.id)
         end
 
+        def find_query
+          scoped_query = Query.find_by(id: params[:id], data_source_id: data_source.id)
+          return scoped_query if scoped_query
+
+          @query_lookup_result = Query.exists?(id: params[:id]) ? :mismatched : :missing
+          nil
+        end
+
         def query_params
           params.permit(:chart_type, :query, :name)
         end
@@ -189,6 +200,15 @@ module App
           return if can_destroy_query?(workspace:, query:)
 
           deny_workspace_access!(workspace:)
+        end
+
+        def redirect_to_missing_query
+          flash[:toast] = {
+            type: 'error',
+            title: I18n.t('toasts.workspaces.queries.missing.title'),
+            body: I18n.t('toasts.workspaces.queries.missing.body')
+          }
+          redirect_to app_workspace_queries_path(workspace)
         end
       end # rubocop:enable Metrics/ClassLength
     end

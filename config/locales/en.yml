@@ -693,6 +693,10 @@ en:
         title: New workspace invitation
         body: You've been invited to join the %{workspace_name} workspace on sqlbook.
     workspaces:
+      queries:
+        missing:
+          title: Query no longer available
+          body: The query you were looking for no longer exists.
       updated:
         title: Workspace settings saved
         body: Your workspace name has been updated.

@@ -790,7 +790,9 @@ module Chat
     end
 
     def rename_follow_up_context_active?
-      inferred_query_rename_name.present? && recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX)
+      return false if inferred_query_rename_name.blank?
+
+      recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX) || rename_target_selection_active?
     end
 
     def recent_query_state
@@ -861,6 +863,11 @@ module Chat
       return explicit_reference if explicit_reference['query_id'].present?
 
       recent_saved_query_reference_payload
+    end
+
+    def rename_target_selection_active?
+      recent_assistant_content.to_s.match?(/\b(saved\s+queries?|query\s+library)\b/i) &&
+        query_reference_resolver.reference_payload(text: message)['query_id'].present?
     end
 
     def recent_saved_query_reference_payload
