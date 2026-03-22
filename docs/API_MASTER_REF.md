@@ -27,6 +27,8 @@ Important:
 ## Current documented API scope
 The API reference should be treated as the documented surface for the app as it exists today, even though coverage is still being expanded over time.
 
+Some expensive or abuse-prone endpoints are rate limited and may return `429 Too Many Requests`. See [RATE_LIMITING_MASTER_REF.md](/Users/chrispattison/sql_book/docs/RATE_LIMITING_MASTER_REF.md) for the currently shipped scope and the deferred phases.
+
 Current OpenAPI coverage includes the workspace, team-management, datasource, and query contracts that are already exposed through product and chat flows:
 - `PATCH /api/v1/workspaces/:workspace_id`
 - `DELETE /api/v1/workspaces/:workspace_id`

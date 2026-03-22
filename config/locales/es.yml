@@ -1,4 +1,11 @@
 es:
+  rate_limits:
+    messages:
+      auth: Has hecho demasiadas solicitudes de autenticación. Espera un momento e inténtalo de nuevo.
+      chat: Has enviado demasiadas solicitudes al chat muy rápido. Espera un momento e inténtalo de nuevo.
+      query: Has ejecutado demasiadas consultas muy rápido. Espera un momento e inténtalo de nuevo.
+      data_source: Has hecho demasiadas solicitudes de fuentes de datos muy rápido. Espera un momento e inténtalo de nuevo.
+      generic: Has hecho demasiadas solicitudes muy rápido. Espera un momento e inténtalo de nuevo.
   shared:
     step_indicator:
       aria_label: Progreso por los pasos del formulario

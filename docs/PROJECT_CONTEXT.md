@@ -46,6 +46,7 @@ sqlbook lets users:
 - Query continuity inside chat now uses durable per-thread query references rather than a single "recent query" slot, so multiple queries discussed in one thread stay resolvable over time and thread-local drafts can stay distinct from saved-library queries.
 - Saved queries can optionally expose chat provenance (`Chat source`) when they originated from chat and the current viewer can still access that private source thread.
 - Chat write lifecycle now separates semantic identity from attempt identity so old-thread retries create fresh attempts without replaying stale results.
+- Rate limiting is now in a targeted first-pass rollout for auth, chat, query execution, and data source validation/create. Later expansion phases are tracked in [RATE_LIMITING_MASTER_REF.md](/Users/chrispattison/sql_book/docs/RATE_LIMITING_MASTER_REF.md).
 - Chat surface uses split sibling panels (history + conversation) on desktop and overlay history on mobile (`<=760px`).
 - Message stream keeps the latest content in view (bottom-oriented UX), hides per-message timestamps, and shows animated `Thinking...` status rows.
 

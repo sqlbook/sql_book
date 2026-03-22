@@ -61,6 +61,21 @@ RSpec.configure do |config|
     DatabaseCleaner.cleaning { example.run }
   end
 
+  config.before do
+    next unless defined?(Rack::Attack)
+
+    Rack::Attack.enabled = true
+    Rack::Attack.reset!
+    Rack::Attack.cache.store.clear if Rack::Attack.cache.store.respond_to?(:clear)
+  end
+
+  config.after do
+    next unless defined?(Rack::Attack)
+
+    Rack::Attack.reset!
+    Rack::Attack.cache.store.clear if Rack::Attack.cache.store.respond_to?(:clear)
+  end
+
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false
 
