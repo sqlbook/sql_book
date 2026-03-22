@@ -148,6 +148,20 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - chat expands beyond workspace/team actions and we want to generalize the same orchestrator contracts to datasource/query/dashboard domains
 
+## 2026-03-22
+### Decision: Keep chat locale ownership focused on product copy, not every assistant phrase
+- Status: Accepted
+- Why:
+  - locale-backed chat micro-copy was growing too quickly and creating maintenance overhead for ordinary assistant acknowledgements
+  - the model is better suited to phrasing normal tool outcomes naturally in the user's locale
+  - the app still needs to own confirmations, permission/validation constraints, and no-LLM fallback wording
+- Consequences:
+  - runtime should prefer model-authored user-facing execution replies from structured tool results
+  - `Chat::ResponseComposer` remains the fallback/confirmation layer rather than the primary source of all execution prose
+  - translation management should keep product-owned chat chrome/fallback strings, not every incidental acknowledgement
+- Revisit when:
+  - we add more locales or identify product areas where model-authored phrasing is too unstable and needs to move back to app-owned copy
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

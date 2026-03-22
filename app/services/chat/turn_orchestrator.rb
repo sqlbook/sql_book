@@ -307,11 +307,9 @@ module Chat
         payload: active_pending_action.payload,
         execution:
       )
+      intent = direct_intent(action_type: active_pending_action.action_type, payload: active_pending_action.payload)
       assistant_content = normalized_assistant_content(
-        response_composer.compose(
-          execution:,
-          action_type: active_pending_action.action_type
-        )
+        compose_execution_message(intent:, execution:)
       )
       action_request_lifecycle.mark_executed!(
         action_request: active_pending_action,
@@ -333,7 +331,6 @@ module Chat
           action_type: active_pending_action.action_type
         }
       )
-      intent = direct_intent(action_type: active_pending_action.action_type, payload: active_pending_action.payload)
       persist_recent_query_state_for(intent:, execution:)
       persist_query_reference_for(intent:, execution:, assistant_message:)
 
@@ -384,15 +381,12 @@ module Chat
         return execution.user_message
       end
 
-      if execution.status == 'executed' && intent.read?
-        return runtime_service.compose_tool_result_message(
-          tool_name: intent.action_type,
-          tool_arguments: intent.payload,
-          execution:
-        )
-      end
-
-      response_composer.compose(execution:, action_type: intent.action_type)
+      runtime_service.compose_tool_result_message(
+        tool_name: intent.action_type,
+        tool_arguments: intent.payload,
+        execution:,
+        fallback_message: response_composer.compose(execution:, action_type: intent.action_type)
+      )
     end
 
     def create_assistant_message(content:, status:, metadata: {})
@@ -794,15 +788,15 @@ module Chat
 
     def persist_recent_saved_query_state(execution:)
       data = execution.data.to_h.deep_stringify_keys
-      existing_state = context_snapshot.recent_query_state.to_h.deep_stringify_keys
+      query_payload = saved_query_payload(data:)
+      merged_state = recent_saved_query_state_for(data:)
 
-      recent_query_state_store.save(
-        existing_state.merge(
-          query_state_attributes_from_saved_query(data:),
-          'saved_query_id' => saved_query_payload(data:)['id'],
-          'saved_query_name' => saved_query_payload(data:)['name']
-        )
-      )
+      if duplicate_saved_query_outside_current_thread?(data:, query_payload:)
+        recent_query_state_store.save(clear_saved_query_linkage(state: merged_state))
+        return
+      end
+
+      recent_query_state_store.save(attach_saved_query_linkage(state: merged_state, query_payload:))
     end
 
     def persist_recent_renamed_query_state_for(execution:, intent:)
@@ -855,6 +849,35 @@ module Chat
         execution:,
         fallback_question: intent.payload['question']
       )
+    end
+
+    def current_thread_tracks_saved_query?(query_payload:)
+      return false if query_payload['id'].to_s.strip.blank?
+
+      recent_saved_query_id == query_payload['id'].to_i
+    end
+
+    def duplicate_saved_query_outside_current_thread?(data:, query_payload:)
+      data['save_outcome'] == 'already_saved' && !current_thread_tracks_saved_query?(query_payload:)
+    end
+
+    def recent_saved_query_state_for(data:)
+      context_snapshot.recent_query_state.to_h.deep_stringify_keys.merge(query_state_attributes_from_saved_query(data:))
+    end
+
+    def clear_saved_query_linkage(state:)
+      state.except('saved_query_id', 'saved_query_name')
+    end
+
+    def attach_saved_query_linkage(state:, query_payload:)
+      state.merge(
+        'saved_query_id' => query_payload['id'],
+        'saved_query_name' => query_payload['name']
+      )
+    end
+
+    def recent_saved_query_id
+      context_snapshot.recent_saved_query_reference.to_h.deep_stringify_keys['saved_query_id'].to_i
     end
 
     def persist_saved_query_reference_for(intent:, execution:, assistant_message:)

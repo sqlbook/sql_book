@@ -20,17 +20,31 @@ module Chat
         columns: %w[email user_id member_id account_id first_name last_name full_name]
       }
     }.freeze
+    REFINEMENT_REQUEST_REGEX = /
+      \b(
+        tweak|adjust|update|change|modify|refine|instead|also|split|group|
+        break(?:\s+it)?\s+down|filter
+      )\b
+    /ix
+    GROUPING_REQUEST_REGEX = /
+      \b(
+        split|group(?:ed)?|break(?:\s+it)?\s+down|by
+      )\b
+    /ix
     IDENTITY_REQUEST_REGEX = /
       \b(
         who\s+are|who\s+they\s+are|just\s+who\s+they\s+are|list\s+users|show\s+users|all\s+users
       )\b
     /ix
 
-    def initialize(question:, data_source:, schema:, preferred_table: nil)
+    def initialize(question:, data_source:, schema:, preferred_table: nil, base_sql: nil, base_question: nil, base_query_name: nil)
       @question = question.to_s.strip
       @data_source = data_source
       @schema = Array(schema)
       @preferred_table = preferred_table.to_s.presence
+      @base_sql = base_sql.to_s.strip
+      @base_question = base_question.to_s.strip
+      @base_query_name = base_query_name.to_s.strip
     end
 
     def call
@@ -42,7 +56,7 @@ module Chat
 
     private
 
-    attr_reader :question, :data_source, :schema, :preferred_table
+    attr_reader :question, :data_source, :schema, :preferred_table, :base_sql, :base_question, :base_query_name
 
     def direct_sql_plan
       return nil unless question.match?(/\A\s*(select|with)\b/i)
@@ -79,6 +93,9 @@ module Chat
     end
 
     def heuristic_plan
+      refinement_sql = refinement_heuristic_sql
+      return Plan.new(sql: refinement_sql, clarification_question: nil) if refinement_sql.present?
+
       table = preferred_table.presence || heuristic_table_match
       return nil if table.blank?
 
@@ -98,6 +115,30 @@ module Chat
       nil
     end
 
+    def refinement_heuristic_sql
+      return nil unless refinement_request?
+      return nil unless base_sql.present? && base_sql.match?(/\bcount\s*\(/i)
+      return nil unless question.downcase.match?(GROUPING_REQUEST_REGEX)
+
+      table = prior_table_name.presence || preferred_table.presence || heuristic_table_match
+      return nil if table.blank?
+
+      grouping_column = grouping_column_for(table:)
+      return nil if grouping_column.blank?
+
+      count_alias = count_alias_from(sql: base_sql) || 'count'
+      sql = [
+        "SELECT #{grouping_column}, COUNT(*) AS #{count_alias}",
+        "FROM #{table}",
+        "GROUP BY #{grouping_column}",
+        "ORDER BY #{grouping_column}"
+      ].join("\n")
+      DataSources::QuerySafetyGuard.validate!(sql:)
+      sql
+    rescue DataSources::Connectors::BaseConnector::QueryError
+      nil
+    end
+
     def clarification_plan
       Plan.new(
         sql: nil,
@@ -107,6 +148,10 @@ module Chat
 
     def identity_request?(normalized_question)
       normalized_question.match?(IDENTITY_REQUEST_REGEX)
+    end
+
+    def refinement_request?
+      question.downcase.match?(REFINEMENT_REQUEST_REGEX)
     end
 
     def identity_select_sql_for(table:)
@@ -163,6 +208,40 @@ module Chat
       return nil if scored_tables.empty?
 
       scored_tables.max_by(&:last).first
+    end
+
+    def prior_table_name
+      @prior_table_name ||= table_name_from(sql: Queries::Fingerprint.normalize_sql(base_sql).to_s)
+    end
+
+    def grouping_column_for(table:)
+      table_entry = flattened_tables.find { |candidate| candidate['qualified_name'] == table }
+      return nil unless table_entry
+
+      Array(table_entry['columns'])
+        .map { |column| (column[:name] || column['name']).to_s }
+        .filter_map do |column_name|
+          score = grouping_column_score(column_name:)
+          next if score.zero?
+
+          [column_name, score]
+        end
+        .max_by(&:last)
+        &.first
+    end
+
+    def grouping_column_score(column_name:)
+      column_tokens = column_name.downcase.split(/[^a-z0-9]+/).reject(&:blank?)
+      return 0 if column_tokens.empty?
+
+      overlap = question_tokens.count { |token| column_tokens.include?(token) }
+      overlap += 2 if question.downcase.include?(column_name.downcase.tr('_', ' '))
+      overlap += 2 if question.downcase.include?(column_name.downcase)
+      overlap
+    end
+
+    def count_alias_from(sql:)
+      sql.to_s.match(/\bcount\s*\(\s*\*\s*\)\s+as\s+("?[\w]+"?)/i)&.captures&.first.to_s.delete('"').presence
     end
 
     def relevance_score_for(table:)
@@ -274,9 +353,18 @@ module Chat
       [
         "Data source: #{data_source.display_name} (#{data_source.source_type})",
         (preferred_table.present? ? "Preferred table: #{preferred_table}" : nil),
+        (base_query_context.present? ? "Previous query context:\n#{base_query_context}" : nil),
         "Question: #{question}",
         "Schema:\n#{schema_summary}"
       ].compact.join("\n\n")
+    end
+
+    def base_query_context
+      lines = []
+      lines << "Saved query name: #{base_query_name}" if base_query_name.present?
+      lines << "Previous question: #{base_question}" if base_question.present?
+      lines << "Previous SQL: #{base_sql}" if base_sql.present?
+      lines.compact.join("\n")
     end
 
     def schema_summary

@@ -60,6 +60,10 @@ module Chat
       query = saved_query_from(data:)
       return unless query
 
+      if save_outcome(data:) == 'already_saved'
+        return preserve_unsaved_duplicate_reference(query:, result_message:)
+      end
+
       reference = reference_for_saved_query(query) ||
                   matching_unsaved_reference_for(query:) ||
                   build_saved_query_reference(
@@ -189,8 +193,21 @@ module Chat
 
     def refinement_follow_up?(question)
       question.to_s.match?(
-        /\b(adjust|update|change|modify|refine|instead|also|split|group|break(?:\s+it)?\s+down|filter|show)\b/i
+        /\b(tweak|adjust|update|change|modify|refine|instead|also|split|group|break(?:\s+it)?\s+down|filter|show)\b/i
       )
+    end
+
+    def preserve_unsaved_duplicate_reference(query:, result_message:)
+      existing_reference = reference_for_saved_query(query)
+      return existing_reference if existing_reference
+
+      unsaved_reference = matching_unsaved_reference_for(query:)
+      return unless unsaved_reference
+
+      unsaved_reference.result_message ||= result_message
+      unsaved_reference.current_name ||= query.name
+      unsaved_reference.save! if unsaved_reference.changed?
+      unsaved_reference
     end
 
     def build_deleted_query_reference(deleted_query:, result_message:)
@@ -223,6 +240,10 @@ module Chat
       return if query_payload.blank?
 
       saved_query_for(id: query_payload['id'])
+    end
+
+    def save_outcome(data:)
+      data['save_outcome'].to_s
     end
 
     def saved_query_for(id:)

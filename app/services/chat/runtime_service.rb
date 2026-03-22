@@ -106,18 +106,20 @@ module Chat
       fallback_decision
     end
 
-    def compose_tool_result_message(tool_name:, tool_arguments:, execution:)
-      return execution.user_message if api_key.blank?
+    def compose_tool_result_message(tool_name:, tool_arguments:, execution:, fallback_message: nil)
+      fallback_message ||= execution.user_message
+      return fallback_message if api_key.blank?
 
       rendered = render_tool_result_with_models(
         tool_name:,
         tool_arguments:,
-        execution:
+        execution:,
+        fallback_message:
       )
-      rendered.presence || execution.user_message
+      rendered.presence || fallback_message
     rescue StandardError => e
       Rails.logger.warn("Chat runtime result rendering failed: #{e.class} #{e.message}")
-      execution.user_message
+      fallback_message
     end
 
     private
@@ -149,13 +151,14 @@ module Chat
       nil
     end
 
-    def render_tool_result_with_models(tool_name:, tool_arguments:, execution:)
+    def render_tool_result_with_models(tool_name:, tool_arguments:, execution:, fallback_message:)
       chat_model_candidates.each do |model|
         rendered = rendered_tool_result_for_model(
           model:,
           tool_name:,
           tool_arguments:,
-          execution:
+          execution:,
+          fallback_message:
         )
         return rendered if rendered.present?
       end
@@ -248,31 +251,33 @@ module Chat
       )
     end
 
-    def rendered_tool_result_for_model(model:, tool_name:, tool_arguments:, execution:)
+    def rendered_tool_result_for_model(model:, tool_name:, tool_arguments:, execution:, fallback_message:)
       response = tool_result_response_for(
         model:,
         tool_name:,
         tool_arguments:,
-        execution:
+        execution:,
+        fallback_message:
       )
       return nil unless response
 
       parsed_tool_result_message(
         response_body: response.body,
-        fallback_message: execution.user_message
+        fallback_message:
       )
     rescue JSON::ParserError => e
       Rails.logger.warn("Chat runtime tool result parse failed (model=#{model}): #{e.class} #{e.message}")
       nil
     end
 
-    def tool_result_response_for(model:, tool_name:, tool_arguments:, execution:)
+    def tool_result_response_for(model:, tool_name:, tool_arguments:, execution:, fallback_message:)
       response = perform_request(
         payload: tool_result_request_payload(
           model:,
           tool_name:,
           tool_arguments:,
-          execution:
+          execution:,
+          fallback_message:
         )
       )
       return response if response.is_a?(Net::HTTPSuccess)
@@ -311,7 +316,7 @@ module Chat
       }
     end
 
-    def tool_result_request_payload(model:, tool_name:, tool_arguments:, execution:)
+    def tool_result_request_payload(model:, tool_name:, tool_arguments:, execution:, fallback_message:)
       {
         model:,
         input: [
@@ -337,7 +342,7 @@ module Chat
                   "Tool arguments: #{tool_arguments.to_json}",
                   "Execution status: #{execution.status}",
                   "Execution data: #{execution.data.to_json}",
-                  "Default fallback message: #{execution.user_message}"
+                  "Default fallback message: #{fallback_message}"
                 ].join("\n")
               }
             ]
@@ -490,6 +495,7 @@ module Chat
         'You are sqlbook\'s workspace chat assistant.',
         'Write the final user-facing response from tool output.',
         'Be clear and concise; do not mention internal tool names.',
+        'For ordinary tool results, sound natural and conversational rather than like a canned product string.',
         'If data is present, answer directly from that data.',
         'Use markdown when it improves readability.',
         'Preserve meaningful paragraph breaks.',
@@ -506,6 +512,7 @@ module Chat
         'If an action is forbidden, say who can perform it in natural language instead of repeating a flat refusal.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
         'For member list results, include useful member details instead of only counts.',
+        'When the fallback text sounds terse or product-like, improve the phrasing while preserving the exact meaning.',
         "Reply in the user locale: #{actor_locale}."
       ].join(' ')
     end
@@ -1307,10 +1314,9 @@ module Chat
     end
 
     def recent_member_context_answer_decision
-      return nil unless conversation_context_resolver.member_state_request?(text: message)
-
-      member = conversation_context_resolver.current_member_for_recent_reference(text: message)
-      return nil unless member
+      member = current_member_from_recent_context
+      return nil if member.blank?
+      return nil unless member_context_request?
 
       Decision.new(
         assistant_message: I18n.t(
@@ -1324,6 +1330,66 @@ module Chat
         missing_information: [],
         finalize_without_tools: true
       )
+    end
+
+    def member_context_request?
+      conversation_context_resolver.member_state_request?(text: message) ||
+        conversation_context_resolver.identity_question?(text: message)
+    end
+
+    def current_member_from_recent_context
+      conversation_context_resolver.current_member_for_recent_reference(text: message) ||
+        current_member_from_recent_result_payload
+    end
+
+    def current_member_from_recent_result_payload
+      member_payload = latest_recent_member_payload
+      return nil if member_payload.blank?
+
+      member = current_member_record_from(payload: member_payload)
+      return nil unless member
+
+      serialize_current_member(member:)
+    end
+
+    def latest_recent_member_payload
+      conversation_messages.reverse_each do |entry|
+        payload = result_data(entry).with_indifferent_access.slice(:invited_member, :removed_member, :member).values
+          .find { |value| value.is_a?(Hash) }
+        return payload.deep_stringify_keys if payload.present?
+      end
+
+      {}
+    end
+
+    def current_member_record_from(payload:)
+      by_id = current_member_record_by_id(payload:)
+      return by_id if by_id
+
+      current_member_record_by_email(payload:)
+    end
+
+    def serialize_current_member(member:)
+      {
+        'member_id' => member.id,
+        'email' => member.user&.email.to_s,
+        'full_name' => member.user&.full_name.to_s,
+        'role_name' => member.role_name,
+        'status_name' => member.status_name
+      }
+    end
+
+    def current_member_record_by_id(payload:)
+      return nil if payload['member_id'].blank?
+
+      workspace.members.includes(:user).find_by(id: payload['member_id'])
+    end
+
+    def current_member_record_by_email(payload:)
+      email = payload['email'].to_s.strip.downcase
+      return nil if email.blank?
+
+      workspace.members.includes(:user).joins(:user).find_by(users: { email: })
     end
 
     def chat_model_candidates

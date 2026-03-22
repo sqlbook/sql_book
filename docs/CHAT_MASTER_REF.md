@@ -65,7 +65,7 @@ Related references:
   - `Chat::ActionExecutor` for normalized execution statuses
   - `Chat::ExecutionTruthReconciler` for post-write DB refresh before final reply composition
   - `Chat::ActionRequestLifecycle` for action fingerprint / attempt lifecycle handling
-  - `Chat::ResponseComposer` for final user-facing execution replies
+  - `Chat::ResponseComposer` for localized fallback and confirmation copy when the app must own the wording
 
 ## Data model
 - `ChatThread` (`chat_threads`)
@@ -299,8 +299,8 @@ High-risk writes (inline confirmation required):
    - refresh an active pending confirmation
    - supersede stale pending confirmations
    - create a fresh write attempt for a new user turn
-9. `Chat::ResponseComposer` converts execution/preflight results into user-facing assistant copy using locale-backed variants and recent assistant history to reduce repetition.
-10. For read tools, runtime may produce a naturalized response from tool output, with deterministic fallback text if needed.
+9. Runtime should prefer model-authored user-facing execution replies from structured tool results, in the actor's locale, for ordinary acknowledgements and follow-up prose.
+10. `Chat::ResponseComposer` remains the fallback/confirmation layer for product-owned wording such as confirm prompts, no-LLM fallbacks, and fixed permission/validation copy.
 11. If model planning fails while API key is present, runtime returns localized retry copy (`app.workspaces.chat.messages.runtime_retry`) rather than generic capability text.
 12. Clearly off-scope or general-purpose questions should be intercepted before tool planning and answered with a scope-limited help message rather than being forced through stale action context.
 13. Datasource setup should collect missing connection information in sensible stages instead of dumping every possible field request into one turn.
@@ -468,21 +468,21 @@ High-risk writes (inline confirmation required):
 - Existing deletion side effects remain authoritative (toast + notification behavior).
 
 ## Localization and copy rules
-- All deterministic chat copy must use locale keys:
+- Product-owned chat copy must use locale keys:
   - empty-state UI copy
   - composer helper/aria text
   - confirmation card labels
   - status rows
   - planner fallback copy
   - runtime retry copy for planning failures
-  - executor/API validation and result copy
+  - executor/API validation and hard permission/constraint copy
   - client-side validation/fallback errors
-- LLM free-form responses are dynamic and are not locale-key managed.
+- Ordinary assistant acknowledgements and naturalized tool-result phrasing should be model-authored in the user's locale from structured tool output rather than expanded into per-phrase locale keys.
 - Deterministic follow-up prompts for missing required fields must use locale keys.
 - Current supported locales: `en`, `es`.
 - When adding chat copy:
   1. check reusable keys first (`common.*`, existing workspace/team labels)
-  2. add missing keys under `app.workspaces.chat.*`
+  2. add missing keys under `app.workspaces.chat.*` only when the app itself must own the wording
   3. add both `en` and `es` entries in the same change
   4. verify through request specs with non-default locale
 

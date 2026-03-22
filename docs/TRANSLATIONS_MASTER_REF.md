@@ -89,27 +89,28 @@ For every feature/change before merge:
 3. If creating a new common key, update all matching call sites in the same change.
 4. Confirm `used_in` metadata links still map to the affected pages.
 
-## Chat deterministic copy rule
-- All non-LLM chat copy must be locale-key backed in `app.workspaces.chat.*` or `common.*`.
+## Chat copy rule
+- Product-owned chat chrome and fallback copy must be locale-key backed in `app.workspaces.chat.*` or `common.*`.
 - This includes:
   - empty-state headings/placeholders/hints
   - confirmation card labels and fixed action labels
   - system/status rows
   - planner fallback text (when no LLM or parsing fallback)
-  - executor validation/success/failure responses
+  - executor validation/permission messages and other hard product constraints
   - deterministic structured output labels (for example member list `email/role/status` labels, reusing workspace settings keys where available)
   - client-side validation and fallback request errors in Stimulus controllers
-- LLM free-form generated responses are intentionally not key-managed.
-- For chat changes, add/update both `en.yml` and `es.yml` in the same PR.
+- Ordinary assistant acknowledgements and naturalized tool-result phrasing should be model-authored in the user's locale from structured execution data, not expanded into per-phrase locale keys.
+- Add new locale keys for chat only when the app itself must own the wording for correctness, compliance, fixed UI, or no-LLM fallback behavior.
+- For product-owned chat copy changes, add/update both `en.yml` and `es.yml` in the same PR.
 
 ## Data source copy rule
 - All datasource UI copy must be locale-key backed under `app.workspaces.data_sources.*` or `common.*`.
-- All deterministic datasource API/chat result copy must be locale-key backed under `app.workspaces.chat.datasource.*` or `common.*`.
+- Datasource API validation/errors and no-LLM fallback chat copy must be locale-key backed under `app.workspaces.chat.datasource.*` or `common.*`.
 - This includes:
   - datasource index section headings and empty states
   - wizard step headings, field labels, descriptions, validation, and button text
   - datasource settings/management copy
-  - deterministic API/chat success and validation messages for datasource list/validate/create actions
+  - deterministic API validation/failure messages and chat fallback copy for datasource list/validate/create actions
 - New datasource copy is not considered complete unless `en.yml` and `es.yml` are updated in the same change.
 
 ## Data model

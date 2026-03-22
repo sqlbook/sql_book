@@ -62,7 +62,10 @@ module Chat
         question: current_question,
         data_source:,
         schema:,
-        preferred_table:
+        preferred_table:,
+        base_sql: payload['base_sql'],
+        base_question: payload['base_question'],
+        base_query_name: payload['base_query_name']
       ).call
 
       return clarification_result(question: plan.clarification_question) if plan.sql.blank?
@@ -148,7 +151,15 @@ module Chat
 
     def execute_original_question(data_source:, question:, preferred_table: nil)
       schema = schema_for(data_source)
-      plan = QuerySqlPlanner.new(question:, data_source:, schema:, preferred_table:).call
+      plan = QuerySqlPlanner.new(
+        question:,
+        data_source:,
+        schema:,
+        preferred_table:,
+        base_sql: payload['base_sql'],
+        base_question: payload['base_question'],
+        base_query_name: payload['base_query_name']
+      ).call
       return clarification_result(question: plan.clarification_question) if plan.sql.blank?
 
       query_result = data_source.connector.execute_readonly(sql: plan.sql)

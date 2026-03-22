@@ -845,6 +845,25 @@ RSpec.describe Chat::RuntimeService do
   end
 
   describe '#compose_tool_result_message' do
+    it 'uses the explicit fallback message when no API key is available' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('')
+
+      execution = Struct.new(:status, :data, :user_message).new('executed', {}, 'raw fallback')
+      rendered = described_class.new(
+        message: 'Save that query',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).compose_tool_result_message(
+        tool_name: 'query.save',
+        tool_arguments: {},
+        execution:,
+        fallback_message: 'friendly fallback'
+      )
+
+      expect(rendered).to eq('friendly fallback')
+    end
+
     it 'preserves markdown line breaks from tool result rendering' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       response = double(

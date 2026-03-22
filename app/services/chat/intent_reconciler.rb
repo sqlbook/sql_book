@@ -113,7 +113,7 @@ module Chat
     end
 
     def query_payload_steps_for(action_type:)
-      return [:apply_query_question!] if action_type == 'query.run'
+      return %i[apply_query_question! apply_query_run_refinement_context!] if action_type == 'query.run'
       return %i[apply_recent_query_context! apply_explicit_query_name!] if action_type == 'query.save'
       if action_type == 'query.rename'
         return %i[apply_explicit_query_reference! apply_recent_query_reference! apply_explicit_query_name!]
@@ -194,6 +194,18 @@ module Chat
       payload['question'] = payload['question'].to_s.strip.presence || message_text.strip.presence
     end
 
+    def apply_query_run_refinement_context!(payload:)
+      return unless query_refinement_request?
+
+      reference = context_snapshot.recent_query_reference.to_h.deep_stringify_keys
+      return if reference.blank? || reference['sql'].to_s.strip.blank?
+
+      payload['base_sql'] ||= reference['sql']
+      payload['base_question'] ||= reference['original_question']
+      payload['base_query_name'] ||= reference['saved_query_name'].presence || reference['current_name'].presence
+      payload['base_saved_query_id'] ||= reference['saved_query_id'] if reference['saved_query_id'].present?
+    end
+
     def apply_recent_query_context!(payload:)
       recent_query_reference = context_snapshot.recent_query_reference
       return if recent_query_reference.blank?
@@ -232,6 +244,12 @@ module Chat
 
       payload['query_id'] = recent_saved_query_reference['saved_query_id']
       payload['query_name'] ||= recent_saved_query_reference['saved_query_name']
+    end
+
+    def query_refinement_request?
+      message_text.match?(
+        /\b(tweak|adjust|update|change|modify|refine|instead|also|split|group|break(?:\s+it)?\s+down|filter)\b/i
+      )
     end
 
     def query_reference_resolver

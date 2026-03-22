@@ -207,12 +207,12 @@ UI fidelity notes:
   - OpenAPI-documented `/api/v1`
   - chat tool execution
 - Chat/tool execution uses the same server-authoritative handlers and policy layer as the API-facing surface.
-- Deterministic datasource chat copy is locale-key backed under `app.workspaces.chat.datasource.*`.
+- Datasource chat fallbacks and product-owned validation copy are locale-key backed under `app.workspaces.chat.datasource.*`.
 
 ## Localization rules
 - Datasource UI copy lives under `app.workspaces.data_sources.*`.
 - Shared repeated labels should prefer `common.*`.
-- Datasource deterministic API/chat result copy lives under `app.workspaces.chat.datasource.*`.
+- Datasource deterministic API validation/errors and chat fallback copy live under `app.workspaces.chat.datasource.*`.
 - New datasource copy is incomplete unless both `en` and `es` ship in the same change.
 
 ## Mixed-source stats semantics
