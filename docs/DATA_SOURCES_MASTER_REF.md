@@ -15,6 +15,7 @@ Related references:
 - `docs/ROLES_RIGHTS_MASTER_REF.md`
 - `docs/API_MASTER_REF.md`
 - `docs/CHAT_MASTER_REF.md`
+- `docs/QUERIES_MASTER_REF.md`
 - `docs/TRANSLATIONS_MASTER_REF.md`
 - `docs/ENGINEERING_GUARDRAILS.md`
 

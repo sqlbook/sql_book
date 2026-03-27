@@ -67,6 +67,7 @@ RSpec.describe 'App::Workspaces::DataSourcesHelper', type: :helper do
     let(:workspace) { create(:workspace) }
     let(:data_source) { create(:data_source, workspace:) }
     let(:query) { create(:query) }
+    let(:draft_query) { Query.new(query: 'SELECT 1', data_source:) }
 
     context 'when a query is provided' do
       it 'returns the update path' do
@@ -83,10 +84,19 @@ RSpec.describe 'App::Workspaces::DataSourcesHelper', type: :helper do
         )
       end
     end
+
+    context 'when a query is provided but not persisted' do
+      it 'returns the create path' do
+        expect(helper.query_form_path(workspace:, data_source:, query: draft_query)).to eq(
+          app_workspace_data_source_queries_path(workspace, data_source)
+        )
+      end
+    end
   end
 
   describe '#query_form_method' do
     let(:query) { create(:query) }
+    let(:draft_query) { Query.new(query: 'SELECT 1') }
 
     context 'when a query is provided' do
       it 'returns put' do
@@ -97,6 +107,12 @@ RSpec.describe 'App::Workspaces::DataSourcesHelper', type: :helper do
     context 'when a query is not provided' do
       it 'returns post' do
         expect(helper.query_form_method(query: nil)).to eq(:post)
+      end
+    end
+
+    context 'when a query is provided but not persisted' do
+      it 'returns post' do
+        expect(helper.query_form_method(query: draft_query)).to eq(:post)
       end
     end
   end

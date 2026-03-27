@@ -3,8 +3,12 @@
 <% data_source = query_card['data_source'].to_h.deep_stringify_keys %>
 <% saved_query = query_card['saved_query'].to_h.deep_stringify_keys %>
 <% base_saved_query = query_card['base_saved_query'].to_h.deep_stringify_keys %>
+<% schema_options = Array(query_card['schema_options']) %>
+<% schema_tables = Array(query_card['schema_tables']) %>
+<% default_schema_key = query_card['default_schema_key'] %>
 <% editor_name = query_card['suggested_name'].presence || saved_query['name'].presence || base_saved_query['name'].presence %>
 <% editor_path = app_workspace_data_source_queries_path(workspace, data_source['id'], query: query_card['sql'], name: editor_name) %>
+<% data_source_settings_path = app_workspace_data_source_path(workspace, data_source['id']) %>
 <% saved_query_path = if saved_query['id'].present?
                         app_workspace_data_source_query_path(workspace, saved_query['data_source_id'] || data_source['id'], saved_query['id'])
                       elsif base_saved_query['id'].present?
@@ -25,9 +29,63 @@
 
     <div class="chat-query-card-drawer-body">
       <div class="chat-query-card-data-source">
-        <i class="ri-database-2-line" aria-hidden="true"></i>
-        <span><%= data_source['name'] %></span>
+        <span class="chat-query-card-data-source-label">Data source: <%= data_source['name'] %></span>
+        <div class="chat-query-card-data-source-actions">
+          <%= link_to data_source_settings_path,
+                      class: 'link secondary',
+                      target: '_blank',
+                      rel: 'noopener noreferrer',
+                      aria: { label: I18n.t('common.actions.settings') } do %>
+            <i class="ri-settings-3-line" aria-hidden="true"></i>
+          <% end %>
+          <% if schema_options.any? %>
+            <button type="button"
+                    class="link secondary"
+                    data-action="workspace-chat#toggleQueryCardSchema"
+                    aria-label="<%= I18n.t('app.workspaces.queries.editor.schema_label') %>">
+              <i class="ri-node-tree" aria-hidden="true"></i>
+            </button>
+          <% end %>
+        </div>
       </div>
+
+      <% if schema_options.any? %>
+        <div class="chat-query-card-schema hide">
+          <div class="chat-query-card-schema-row">
+            <div class="select">
+              <select data-action="workspace-chat#changeQueryCardSchema">
+                <%= options_for_select(schema_options, selected: default_schema_key) %>
+              </select>
+              <i class="ri-arrow-drop-down-line" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <div class="chat-query-card-schema-tables">
+            <% schema_tables.each do |table| %>
+              <table class="<%= "hide" unless table['schema_key'] == default_schema_key %>"
+                     data-schema-key="<%= table['schema_key'] %>">
+                <tr>
+                  <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.name') %></th>
+                  <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.type') %></th>
+                  <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.default') %></th>
+                </tr>
+                <% Array(table['columns']).each do |column| %>
+                  <tr>
+                    <td><%= column['name'] %></td>
+                    <td><%= column['data_type'] %></td>
+                    <td><%= column['default'] || I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
+                  </tr>
+                <% end %>
+                <% if Array(table['columns']).empty? %>
+                  <tr>
+                    <td colspan="3"><%= I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
+                  </tr>
+                <% end %>
+              </table>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
 
       <pre class="chat-query-card-sql"><code><%= query_card['sql'] %></code></pre>
     </div>

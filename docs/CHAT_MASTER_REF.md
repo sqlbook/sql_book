@@ -7,6 +7,7 @@ Single source of truth for workspace chat architecture, scope, permissions, conf
 
 Related references:
 - `docs/WORKSPACES_MASTER_REF.md`
+- `docs/QUERIES_MASTER_REF.md`
 - `docs/DATA_SOURCES_MASTER_REF.md`
 - `docs/ROLES_RIGHTS_MASTER_REF.md`
 - `docs/API_MASTER_REF.md`

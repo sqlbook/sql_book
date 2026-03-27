@@ -14,17 +14,7 @@ module Chat
       data_source = resolved_data_source
       return {} unless data_source
 
-      {
-        'state' => base_saved_query.present? ? 'refinement' : 'unsaved',
-        'question' => question,
-        'sql' => sql,
-        'row_count' => row_count,
-        'columns' => columns,
-        'rows' => rows,
-        'suggested_name' => suggested_name(data_source:),
-        'data_source' => serialized_data_source(data_source),
-        'base_saved_query' => serialized_query(base_saved_query)
-      }.compact
+      base_payload(data_source:).merge(schema_payload(data_source:)).compact
     end
 
     def summary_message
@@ -102,6 +92,24 @@ module Chat
 
       Query.joins(:data_source)
         .find_by(id: query_id, data_sources: { workspace_id: workspace.id })
+    end
+
+    def base_payload(data_source:)
+      {
+        'state' => base_saved_query.present? ? 'refinement' : 'unsaved',
+        'question' => question,
+        'sql' => sql,
+        'row_count' => row_count,
+        'columns' => columns,
+        'rows' => rows,
+        'suggested_name' => suggested_name(data_source:),
+        'data_source' => serialized_data_source(data_source),
+        'base_saved_query' => serialized_query(base_saved_query)
+      }
+    end
+
+    def schema_payload(data_source:)
+      QueryCardSchemaBuilder.new(data_source:).call
     end
   end
 end

@@ -17,6 +17,9 @@ sqlbook lets users:
 - Tenant isolation and read-only guarantees are non-negotiable for user-executed queries.
 - For v1 external database connectors, store connector metadata/credentials only; do not ingest full external datasets.
 
+## Reference docs
+- Query editor, query library, saved-query identity, and chat-query card behavior are documented in `docs/QUERIES_MASTER_REF.md`.
+
 ## Near-Term Priorities
 1. Stable staging environment (`staging.sqlbook.com`).
 2. Reliable auth email delivery in staging/production.

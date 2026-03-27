@@ -119,13 +119,13 @@ module App
       end
 
       def query_form_path(workspace:, data_source:, query: nil)
-        return app_workspace_data_source_queries_path(workspace, data_source) unless query
+        return app_workspace_data_source_queries_path(workspace, data_source) unless query&.persisted?
 
         app_workspace_data_source_query_path(workspace, data_source, query)
       end
 
       def query_form_method(query: nil)
-        return :put if query
+        return :put if query&.persisted?
 
         :post
       end

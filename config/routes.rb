@@ -85,7 +85,7 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
     get 'workspaces/:id/workspace-settings', to: 'workspaces/settings#show', as: :workspace_settings
     patch 'workspaces/:id/workspace-settings', to: 'workspaces/settings#update', as: nil
 
-    resources :workspaces, except: %i[edit update] do
+    resources :workspaces, except: %i[edit update] do # rubocop:disable Metrics/BlockLength
       resources :chat_threads,
                 only: %i[index create update destroy],
                 path: 'chat/threads',
@@ -93,8 +93,12 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       get 'chat/messages', to: 'workspaces/chat_messages#index', as: :chat_messages
       post 'chat/messages', to: 'workspaces/chat_messages#create'
       post 'chat/query-cards/:message_id/save', to: 'workspaces/chat_query_cards#save', as: :chat_query_card_save
-      post 'chat/query-cards/:message_id/save-as-new', to: 'workspaces/chat_query_cards#save_as_new', as: :chat_query_card_save_as_new
-      post 'chat/query-cards/:message_id/save-changes', to: 'workspaces/chat_query_cards#save_changes', as: :chat_query_card_save_changes
+      post 'chat/query-cards/:message_id/save-as-new',
+           to: 'workspaces/chat_query_cards#save_as_new',
+           as: :chat_query_card_save_as_new
+      post 'chat/query-cards/:message_id/save-changes',
+           to: 'workspaces/chat_query_cards#save_changes',
+           as: :chat_query_card_save_changes
       post 'chat/actions/:id/confirm', to: 'workspaces/chat_actions#confirm', as: :chat_action_confirm
       post 'chat/actions/:id/cancel', to: 'workspaces/chat_actions#cancel', as: :chat_action_cancel
 
@@ -113,6 +117,6 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
           member { put 'chart_config' }
         end
       end
-    end
+    end # rubocop:enable Metrics/BlockLength
   end # rubocop:enable Metrics/BlockLength
 end

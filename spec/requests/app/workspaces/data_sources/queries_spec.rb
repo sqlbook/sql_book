@@ -38,6 +38,18 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
         get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries"
         expect(response.body).to include('data-source-query')
       end
+
+      it 'renders an unsaved draft query from params without requiring a persisted query id' do
+        get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries",
+            params: {
+              query: 'SELECT COUNT(*) AS user_count FROM public.users;',
+              name: 'User count'
+            }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include('SELECT COUNT(*) AS user_count FROM public.users;')
+        expect(response.body).to include('User count')
+      end
     end
 
     context 'when the data source is an external postgres source' do

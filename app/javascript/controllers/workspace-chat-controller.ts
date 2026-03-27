@@ -274,6 +274,29 @@ export default class extends Controller<HTMLDivElement> {
     this.submitQueryCardAction(event, 'save-changes');
   }
 
+  public toggleQueryCardSchema(event: Event): void {
+    event.preventDefault();
+
+    const button = event.currentTarget as HTMLElement;
+    const card = button.closest('.chat-query-card');
+    const schema = card?.querySelector('.chat-query-card-schema');
+    if (!schema) return;
+
+    schema.classList.toggle('hide');
+    button.classList.toggle('active');
+  }
+
+  public changeQueryCardSchema(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const card = target.closest('.chat-query-card');
+    if (!card) return;
+
+    card.querySelectorAll<HTMLElement>('.chat-query-card-schema-tables table').forEach((table) => {
+      const matches = table.dataset.schemaKey === target.value;
+      table.classList.toggle('hide', !matches);
+    });
+  }
+
   public toggleSidebar(event: Event): void {
     event.preventDefault();
     this.setSidebarOpen(!this.sidebarOpen());

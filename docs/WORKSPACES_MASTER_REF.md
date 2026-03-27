@@ -16,6 +16,7 @@ Related references:
 - `docs/CHAT_MASTER_REF.md` for chat-specific architecture, lifecycle, and localization rules.
 - `docs/API_MASTER_REF.md` for documented workspace/team API contracts and docs maintenance rules.
 - `docs/DATA_SOURCES_MASTER_REF.md` for datasource-specific routes, setup flow, and security semantics.
+- `docs/QUERIES_MASTER_REF.md` for query editor, query library, and chat-query interaction rules.
 
 ## Core routes
 - Workspaces:
