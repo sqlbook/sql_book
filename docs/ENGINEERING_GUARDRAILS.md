@@ -35,6 +35,26 @@
 - See `docs/TOASTS_MASTER_REF.md` for toast-specific copy/encoding/interpolation rules.
 - For workspace chat, all deterministic system copy (UI labels, validation text, status rows, fixed executor/planner text) must use locale keys and ship with `en` + `es` entries.
 
+## Chat Context Guardrails
+- Keep chat continuity server-owned and provider-agnostic.
+- Prefer structured app context over longer transcript when improving follow-up continuity.
+- Do not introduce domain-specific ad hoc chat memory/state if the behavior can be represented by the shared continuity contract.
+- The shared contract is:
+  - `active_focus`: the single most relevant current object/flow
+  - `pending_follow_up`: the single unresolved next step most likely being answered
+- Prompt/context work must preserve stable ordered sections rather than mixed free-form context blobs.
+- New chat-supported domains must extend the shared continuity contract by defining:
+  - focus derivation
+  - pending follow-up derivation
+  - concise app-authored task summaries
+  - prompt-section placement
+- Do not make provider/model-specific memory features the source of truth for:
+  - object identity
+  - permissions
+  - confirmations
+  - lifecycle state
+- If continuity work touches prompting, runtime, planner, or context builders, update `docs/CHAT_MASTER_REF.md` in the same change.
+
 ## API Docs Contract Safety
 - Treat `config/openapi/v1.json` as a maintained contract, not optional documentation.
 - Any change to documented API behavior must update the OpenAPI document in the same change.

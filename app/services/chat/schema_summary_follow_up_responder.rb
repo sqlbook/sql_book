@@ -15,6 +15,10 @@ module Chat
       @conversation_messages = Array(conversation_messages).compact
     end
 
+    def self.pending_summary(conversation_messages:)
+      new(message: '', conversation_messages:).send(:pending_schema_summary)
+    end
+
     def call
       summary = pending_schema_summary
       return nil if summary.blank?

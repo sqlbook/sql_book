@@ -4,6 +4,7 @@ module Chat
   ContextSnapshot = Struct.new(
     :conversation_messages,
     :structured_context_lines,
+    :structured_context_sections,
     :active_pending_action,
     :active_data_source_setup,
     :active_query_clarification,
@@ -15,6 +16,8 @@ module Chat
     :data_source_inventory,
     :query_references,
     :recent_query_state,
+    :active_focus,
+    :pending_follow_up,
     keyword_init: true
   ) do
     def recent_query_reference

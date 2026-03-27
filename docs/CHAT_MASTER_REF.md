@@ -49,6 +49,10 @@ Related references:
   - `Chat::ContextSnapshot`
   - `Chat::ConversationContextResolver`
   - rebuilds each turn from recent transcript plus structured recent action context, rather than relying on parallel LLM-authored memory documents
+  - continuity contract is domain-agnostic and server-owned:
+    - `active_focus` = the single most relevant current object/flow across query/member/workspace/datasource domains
+    - `pending_follow_up` = the one unresolved next-step the user is most likely answering
+    - future chat-supported domains must extend this shared contract instead of inventing parallel ad hoc memory/state
 - Intent reconciliation layer:
   - `Chat::IntentReconciler`
   - explicit current-turn instructions override stale or incorrect model payload fields before execution
@@ -90,6 +94,43 @@ Related references:
   - `idempotency_key`: per-attempt identity anchored to the source user message
   - `source_message_id`: the user turn that created the attempt
   - `superseded_at`: stale pending confirmations are marked superseded instead of remaining actionable
+
+## Continuity contract
+- Chat continuity stays app-owned. The model receives a structured summary of the current thread state; it does not become the source of truth for object identity, permissions, or pending actions.
+- `Chat::ContextSnapshot` should carry:
+  - `active_focus`
+    - one normalized focus object/flow for the turn
+    - shape includes `domain`, `focus_kind`, `target_type`, `target_id`, `target_name`, `last_action_type`, `last_result_kind`, `result_summary`, and `follow_up_expected`
+  - `pending_follow_up`
+    - one normalized unresolved next-step for the turn
+    - shape includes `domain`, `kind`, `prompt_summary`, `expected_response_types`, `target_snapshot`, `proposed_value`, and `created_from_message_id` when available
+- Current populated domains:
+  - query
+  - member
+  - workspace
+  - datasource
+- Future domains such as visualisations and dashboards must plug into this same continuity contract by defining:
+  - focus derivation
+  - pending follow-up derivation
+  - concise app-authored task summaries
+  - prompt-section placement
+
+## Prompt context ordering
+- `Chat::RuntimeService` and `Chat::PlannerService` should present structured context in a stable order:
+  1. `Active focus`
+  2. `Pending follow-up`
+  3. `Recent domain references`
+  4. `Pending confirmation`
+  5. `Recent failure`
+  6. `Connected data sources`
+  7. `Recent conversation`
+- Keep prompt context compact:
+  - one `active_focus`
+  - one `pending_follow_up`
+  - bounded recent references
+  - bounded recent transcript
+- Prefer higher-quality structured context over longer transcript.
+- When `pending_follow_up` is present, short ambiguous replies such as `yes`, `sure`, `go for it`, `the first one`, and `choose another` should be interpreted against that pending item before generic capability/help fallback is considered.
 
 ## HTTP interfaces
 App routes:

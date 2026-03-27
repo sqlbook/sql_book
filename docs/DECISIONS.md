@@ -162,6 +162,21 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - we add more locales or identify product areas where model-authored phrasing is too unstable and needs to move back to app-owned copy
 
+## 2026-03-27
+### Decision: Use a server-owned domain-agnostic chat continuity contract
+- Status: Accepted
+- Why:
+  - continuity bugs were coming from the model seeing an inconsistent picture of the current focus and unresolved next step
+  - object identity, permissions, confirmations, and lifecycle state must stay provider-agnostic and app-owned
+  - future chat domains should extend one continuity model instead of creating separate ad hoc memory rules
+- Consequences:
+  - `Chat::ContextSnapshot` should expose `active_focus` and `pending_follow_up` as first-class structured fields
+  - runtime/planner prompts should consume ordered structured sections rather than a flat bag of context lines
+  - new chat-supported domains must plug into the shared continuity contract with concise app-authored summaries
+  - provider/model changes should not require rethinking where continuity truth lives
+- Revisit when:
+  - chat grows into materially broader multi-step workflows that need a deeper summarization/compression strategy on top of the same server-owned contract
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

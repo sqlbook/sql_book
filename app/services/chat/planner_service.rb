@@ -205,6 +205,13 @@ module Chat
                   ].join(' '),
                   'Use the recent conversation context to resolve follow-up references like "their names/details".',
                   [
+                    [
+                      'When Pending follow-up context is present, interpret short ambiguous replies',
+                      'against that pending item'
+                    ].join(' '),
+                    'before falling back to generic capability help.'
+                  ].join(' '),
+                  [
                     'When the user asks for team members, `member.list` means detailed member output',
                     '(name, email, role, status), not only a count.'
                   ].join(' '),
@@ -355,26 +362,13 @@ module Chat
       "Image attachments count: #{attachment_count} (#{details.join('; ')})"
     end
 
-    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      lines = transcript_messages.last(8).map do |entry|
-        role = conversation_entry_role(entry)
-        content = conversation_entry_content(entry)
-        next if role.blank? || content.blank?
-
-        "#{role}: #{content}"
-      end.compact
-
-      structured_lines = if context_snapshot.present?
-                           Array(context_snapshot.structured_context_lines)
-                         else
-                           conversation_context_resolver.structured_context_lines
-                         end
-      return 'Recent conversation: none' if lines.empty? && structured_lines.empty?
-
-      parts = []
-      parts << "Recent conversation:\n#{lines.join("\n")}" if lines.any?
-      parts << "Recent structured context:\n#{structured_lines.join("\n")}" if structured_lines.any?
-      parts.join("\n")
+    def conversation_context_line
+      Chat::PromptContextFormatter.new(
+        context_snapshot:,
+        conversation_messages: transcript_messages,
+        transcript_limit: 8,
+        transcript_character_limit: 280
+      ).call
     end
 
     def conversation_entry_role(entry)
@@ -946,10 +940,10 @@ module Chat
     end
 
     def recent_member_context_answer_plan
-      return nil unless conversation_context_resolver.member_state_request?(text: message)
-
       member = conversation_context_resolver.current_member_for_recent_reference(text: message)
+      member ||= current_member_from_recent_context
       return nil unless member
+      return nil unless member_context_answerable?(member:)
 
       Plan.new(
         assistant_message: I18n.t(
@@ -962,6 +956,46 @@ module Chat
         action_type: nil,
         payload: {}
       )
+    end
+
+    def member_context_answerable?(member:)
+      conversation_context_resolver.member_state_request?(text: message) ||
+        (
+          member.present? &&
+          conversation_context_resolver.member_follow_up_question?(text: message) &&
+          recent_member_context_snapshot.present?
+        )
+    end
+
+    def current_member_from_recent_context # rubocop:disable Metrics/AbcSize
+      recent_member = recent_member_context_snapshot
+      return nil if recent_member.blank?
+      return nil if recent_member['email'].to_s.strip.blank?
+
+      workspace_member = workspace_member_by_email(email: recent_member['email'])
+      return nil unless workspace_member
+
+      {
+        'member_id' => workspace_member.id,
+        'email' => workspace_member.user&.email.to_s,
+        'full_name' => workspace_member.user&.full_name.to_s,
+        'role_name' => workspace_member.role_name,
+        'status_name' => workspace_member.status_name
+      }
+    end
+
+    def workspace_member_by_email(email:)
+      workspace.members
+        .includes(:user)
+        .joins(:user)
+        .find_by(users: { email: email.to_s.downcase })
+    end
+
+    def recent_member_context_snapshot
+      conversation_context_resolver.recent_member_reference(text: message) ||
+        conversation_context_resolver.recent_updated_member ||
+        conversation_context_resolver.recent_invited_member ||
+        conversation_context_resolver.recent_removed_member
     end
 
     def cleaned_name(value)

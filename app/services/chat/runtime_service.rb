@@ -517,6 +517,10 @@ module Chat
           'If you suggest renaming something, include the exact proposed name.',
           'Do not use vague placeholders like "something shorter or more descriptive".'
         ].join(' '),
+        [
+          'When Pending follow-up context is present, interpret short ambiguous replies against that pending item',
+          'before falling back to generic capability help.'
+        ].join(' '),
         "Reply in the user locale: #{actor_locale}."
       ].join(' ')
     end
@@ -540,26 +544,13 @@ module Chat
       content
     end
 
-    def conversation_context_line # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      lines = transcript_messages.last(10).map do |entry|
-        role = conversation_entry_role(entry)
-        content = conversation_entry_content(entry)
-        next if role.blank? || content.blank?
-
-        "#{role}: #{content}"
-      end.compact
-
-      structured_lines = if context_snapshot.present?
-                           Array(context_snapshot.structured_context_lines)
-                         else
-                           conversation_context_resolver.structured_context_lines
-                         end
-      return 'Recent conversation: none' if lines.empty? && structured_lines.empty?
-
-      parts = []
-      parts << "Recent conversation:\n#{lines.join("\n")}" if lines.any?
-      parts << "Recent structured context:\n#{structured_lines.join("\n")}" if structured_lines.any?
-      parts.join("\n")
+    def conversation_context_line
+      Chat::PromptContextFormatter.new(
+        context_snapshot:,
+        conversation_messages: transcript_messages,
+        transcript_limit: 10,
+        transcript_character_limit: 400
+      ).call
     end
 
     def attachment_context_line
@@ -1035,7 +1026,13 @@ module Chat
     end
 
     def recent_saved_query_reference_payload
-      recent_saved_query_reference = context_snapshot&.recent_saved_query_reference.to_h.deep_stringify_keys
+      recent_saved_query_reference = context_snapshot_reference_payload(
+        method_name: :recent_saved_query_reference
+      )
+      if recent_saved_query_reference.blank?
+        recent_query_state = context_snapshot&.recent_query_state.to_h.deep_stringify_keys
+        recent_saved_query_reference = recent_query_state
+      end
       return {} if recent_saved_query_reference.blank?
       return {} if recent_saved_query_reference['saved_query_id'].to_s.strip.blank?
 
@@ -1046,7 +1043,8 @@ module Chat
     end
 
     def recent_query_reference_payload
-      context_snapshot&.recent_query_reference.to_h.deep_stringify_keys
+      context_snapshot_reference_payload(method_name: :recent_query_reference) ||
+        context_snapshot&.recent_query_state.to_h.deep_stringify_keys
     end
 
     def contextual_query_run_follow_up?
@@ -1057,7 +1055,15 @@ module Chat
     end
 
     def recent_draft_query_reference_payload
-      context_snapshot&.recent_draft_query_reference.to_h.deep_stringify_keys
+      context_snapshot_reference_payload(method_name: :recent_draft_query_reference) ||
+        context_snapshot&.recent_query_state.to_h.deep_stringify_keys
+    end
+
+    def context_snapshot_reference_payload(method_name:)
+      return {} if context_snapshot.blank?
+      return {} unless context_snapshot.respond_to?(method_name)
+
+      context_snapshot.public_send(method_name).to_h.deep_stringify_keys
     end
 
     def query_reference_resolver
