@@ -755,6 +755,9 @@ en:
         missing:
           title: Query no longer available
           body: The query you were looking for no longer exists.
+        already_saved:
+          title: Query already saved
+          body: That exact query is already saved in the query library as "%{name}".
         update_failed:
           title: Couldn't save query changes
       updated:

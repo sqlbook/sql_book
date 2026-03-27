@@ -340,6 +340,50 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
           .from(nil)
           .to(user)
       end
+
+      it 'can save a newly created draft query from the settings tab' do
+        post "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries",
+             params: { query: 'SELECT COUNT(*) AS user_count FROM public.users;' }
+        draft_query = Query.order(:id).last
+
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{draft_query.id}",
+            params: { name: 'Count of users' }
+
+        expect(response).to redirect_to(
+          app_workspace_data_source_query_path(workspace, data_source, draft_query, tab: 'settings')
+        )
+        expect(draft_query.reload.saved).to be(true)
+        expect(draft_query.name).to eq('Count of users')
+      end
+
+      it 'redirects to the existing saved query when saving a draft with identical SQL' do
+        existing_query = create(
+          :query,
+          data_source:,
+          saved: true,
+          name: 'User count',
+          query: 'SELECT COUNT(*) AS user_count FROM public.users;'
+        )
+        draft_query = create(
+          :query,
+          data_source:,
+          saved: false,
+          query: existing_query.query
+        )
+
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{draft_query.id}",
+            params: { name: 'Count of users' }
+
+        expect(response).to redirect_to(
+          app_workspace_data_source_query_path(workspace, data_source, existing_query, tab: 'settings')
+        )
+        expect(flash[:toast]).to eq(
+          type: 'info',
+          title: I18n.t('toasts.workspaces.queries.already_saved.title'),
+          body: I18n.t('toasts.workspaces.queries.already_saved.body', name: existing_query.name)
+        )
+        expect(draft_query.reload.saved).to be(false)
+      end
     end
 
     context 'when updating the chart type' do

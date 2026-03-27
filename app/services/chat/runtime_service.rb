@@ -703,11 +703,27 @@ module Chat
     end
 
     def deterministic_follow_up_decision
-      query_follow_up_decision ||
+      schema_summary_follow_up_decision ||
+        query_follow_up_decision ||
         recent_invited_member_role_answer_decision ||
         recent_member_context_answer_decision ||
         member_remove_follow_up_decision ||
         invite_follow_up_guard_decision
+    end
+
+    def schema_summary_follow_up_decision
+      response = Chat::SchemaSummaryFollowUpResponder.new(
+        message:,
+        conversation_messages: transcript_messages
+      ).call
+      return nil if response.blank?
+
+      Decision.new(
+        assistant_message: response,
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      )
     end
 
     def query_follow_up_decision

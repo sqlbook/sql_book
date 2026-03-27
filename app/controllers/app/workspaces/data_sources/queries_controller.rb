@@ -40,20 +40,11 @@ module App
         end
 
         def update
-          result = Queries::UpdateService.new(
-            workspace:,
-            actor: current_user,
-            attributes: query_update_payload
-          ).call
-          unless result.success?
-            flash[:toast] = {
-              type: 'error',
-              title: I18n.t('toasts.workspaces.queries.update_failed.title'),
-              body: result.message
-            }
-          end
+          result = Queries::UpdateService.new(workspace:, actor: current_user, attributes: query_update_payload).call
+          toast = query_update_toast(result:)
+          flash[:toast] = toast if toast
 
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: query_redirect_tab)
+          redirect_to query_update_redirect_path(result:)
         end
 
         def destroy
@@ -223,6 +214,40 @@ module App
             body: I18n.t('toasts.workspaces.queries.missing.body')
           }
           redirect_to app_workspace_queries_path(workspace)
+        end
+
+        def query_update_toast(result:)
+          return already_saved_query_toast(result:) if result.success? && result.update_outcome == 'already_saved'
+          return if result.success?
+
+          {
+            type: 'error',
+            title: I18n.t('toasts.workspaces.queries.update_failed.title'),
+            body: result.message
+          }
+        end
+
+        def query_update_redirect_path(result:)
+          app_workspace_data_source_query_path(
+            workspace,
+            data_source,
+            redirect_query(result:),
+            tab: query_redirect_tab
+          )
+        end
+
+        def redirect_query(result:)
+          return query unless result.success? && result.query.present?
+
+          result.query
+        end
+
+        def already_saved_query_toast(result:)
+          {
+            type: 'info',
+            title: I18n.t('toasts.workspaces.queries.already_saved.title'),
+            body: I18n.t('toasts.workspaces.queries.already_saved.body', name: result.query.name)
+          }
         end
       end # rubocop:enable Metrics/ClassLength
     end

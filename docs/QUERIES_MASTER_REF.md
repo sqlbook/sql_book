@@ -31,6 +31,9 @@ Related references:
 - Opening a draft from chat into the query editor should prefill the editor using request params or equivalent transient state.
 - If the user closes the tab or navigates away without saving, the draft should disappear.
 - A query becomes a saved-library object only when the user explicitly saves it.
+- Saving a draft from the query editor settings tab should use the same duplicate rules as chat:
+  - exact duplicate saved SQL should resolve to the existing saved query rather than surfacing a generic save failure
+  - naming a draft for the first time should promote that draft to `saved: true`
 
 ## Saved query identity
 - Exact saved-query identity is app-owned, not LLM-owned.

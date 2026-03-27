@@ -414,6 +414,8 @@ module Chat
       return default_help_plan if message.blank? && attachment_count.zero?
 
       lower = message.downcase
+      schema_follow_up = schema_summary_follow_up_plan
+      return schema_follow_up if schema_follow_up
 
       role_context_plan = recent_invited_member_role_context_plan
       return role_context_plan if role_context_plan
@@ -446,6 +448,20 @@ module Chat
       end
 
       nil
+    end
+
+    def schema_summary_follow_up_plan
+      response = Chat::SchemaSummaryFollowUpResponder.new(
+        message:,
+        conversation_messages: transcript_messages
+      ).call
+      return nil if response.blank?
+
+      Plan.new(
+        assistant_message: response,
+        action_type: nil,
+        payload: {}
+      )
     end
 
     def member_list_intent?(lowered_message)

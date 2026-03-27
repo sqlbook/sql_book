@@ -180,6 +180,10 @@ module Tooling
 
     def query_update_message(result:)
       query = result.query
+      if result.update_outcome == 'already_saved'
+        return I18n.t('app.workspaces.chat.query_library.already_saved', name: query.name)
+      end
+
       if result.update_outcome == 'unchanged'
         return I18n.t('app.workspaces.chat.query_library.updated_unchanged', name: query.name)
       end

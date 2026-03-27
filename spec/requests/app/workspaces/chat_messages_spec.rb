@@ -1599,6 +1599,85 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('data source(s) found')
     end
 
+    it 'groups a recent schema summary into categories when the user accepts that follow-up offer' do
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Users schema summary')
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: <<~TEXT
+          public.users includes these data points:
+
+          id — integer identifier
+          email — user email address
+          encrypted_password — hashed password value
+          failed_attempts — failed login attempts
+          first_name — user first name
+          settings — user settings payload
+
+          If you want, I can also group these into categories like identity, authentication, security, and profile fields.
+        TEXT
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id: thread.id, content: 'Sure :)' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      content = response.parsed_body.dig('messages', -1, 'content')
+      expect(content).to include('public.users grouped into categories:')
+      expect(content).to include('Identity')
+      expect(content).to include('Authentication')
+      expect(content).to include('Security')
+      expect(content).to include('Profile')
+      expect(content).not_to include("I'm here to help with sqlbook")
+    end
+
+    it 'still groups the earlier schema summary when the user points out that the summarising was not done yet' do
+      thread = create(:chat_thread, workspace:, created_by: user, title: 'Users schema summary reminder')
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: <<~TEXT
+          public.users includes these data points:
+
+          id — integer identifier
+          email — user email address
+          encrypted_password — hashed password value
+          failed_attempts — failed login attempts
+          first_name — user first name
+          settings — user settings payload
+
+          If you want, I can also group these into categories like identity, authentication, security, and profile fields.
+        TEXT
+      )
+      create(
+        :chat_message,
+        chat_thread: thread,
+        role: ChatMessage::Roles::ASSISTANT,
+        status: ChatMessage::Statuses::COMPLETED,
+        content: 'If you want, I can also run a read-only profiling query on public.users.'
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: {
+             thread_id: thread.id,
+             content: "You didn't do the summarising yet that you'd suggested doing?"
+           },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('ok')
+      content = response.parsed_body.dig('messages', -1, 'content')
+      expect(content).to include('public.users grouped into categories:')
+      expect(content).to include('Authentication')
+      expect(content).not_to include("I'm here to help with sqlbook")
+    end
+
     it 'continues the database branch after a team answer with one connected data source' do
       create(:data_source, :postgres, workspace:, name: 'Staging App DB')
       thread = create(:chat_thread, workspace:, created_by: user, title: 'Users follow-up')

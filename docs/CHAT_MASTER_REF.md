@@ -232,6 +232,8 @@ High-risk writes (inline confirmation required):
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
 - Conversational rename follow-ups such as `rename it to DB User Count` or `Yes please` after the assistant offers a specific rename should stay in `query.rename`, not fall back to `query.run` or `query.list`.
 - Conversational save follow-ups such as `save that`, `Could you save that for me?`, `update that query to this`, and `the first one` should resolve from thread-local query context before any scope-limited capability fallback is considered.
+- If the assistant offers to group a recent schema summary into categories, a natural confirmation such as `Sure :)` should complete that schema follow-up instead of falling back to generic help or pivoting to a different suggested next step.
+- If that schema-grouping offer was missed on the previous turn, a reminder such as `you didn't do the summarising yet` should still recover the earlier offer from recent thread context.
 - Natural quoted rename phrasing such as `rename it 'User Count [Test]' please` should also stay in `query.rename`, even without the word `to`.
 - If chat has already inferred the target rename name and then shows a saved-query list, a follow-up like `the first one` should still complete the rename in query context.
 - Saved-query names rendered in chat list/save/rename responses should be internal links to the query page, using muted app link styling rather than bright external-link styling.

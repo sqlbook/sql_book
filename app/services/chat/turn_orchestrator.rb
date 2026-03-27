@@ -107,6 +107,10 @@ module Chat
         return handle_data_source_setup_resolution(setup_resolution)
       end
 
+      if (schema_summary_follow_up = schema_summary_follow_up_response)
+        return render_non_action(schema_summary_follow_up)
+      end
+
       return render_non_action(capability_summary_message) if capability_question?
       return render_non_action(scope_limited_message) if off_scope_general_question?
       return render_non_action(query_scope_clarification_message) if initial_query_scope_clarification_needed?
@@ -219,6 +223,13 @@ module Chat
         action_type: nil,
         data: {}
       )
+    end
+
+    def schema_summary_follow_up_response
+      Chat::SchemaSummaryFollowUpResponder.new(
+        message: content,
+        conversation_messages: context_snapshot.conversation_messages
+      ).call
     end
 
     def execute_direct_tool(action_type:, payload:)

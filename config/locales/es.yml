@@ -624,6 +624,9 @@ es:
         missing:
           title: La consulta ya no está disponible
           body: La consulta que buscabas ya no existe.
+        already_saved:
+          title: La consulta ya estaba guardada
+          body: Esa misma consulta ya está guardada en la biblioteca como "%{name}".
         update_failed:
           title: No se pudieron guardar los cambios de la consulta
 
