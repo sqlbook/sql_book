@@ -26,7 +26,7 @@
   <% else %>
     <div class="chat-assistant-block">
       <div class="chat-message-body">
-        <%= render_chat_markdown(message.content) %>
+        <%= render_chat_message_body(message:) %>
       </div>
 
       <% action_request_id = message.metadata.to_h["action_request_id"] %>

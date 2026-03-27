@@ -291,9 +291,10 @@ module Chat
     end
 
     def render_executed_intent(intent:, execution:)
-      assistant_content = normalized_assistant_content(compose_execution_message(intent:, execution:))
+      query_card = query_card_payload(intent:, execution:)
+      assistant_content = normalized_assistant_content(executed_assistant_content(intent:, execution:, query_card:))
       action_request = persist_executed_action_request(intent:, execution:, assistant_content:)
-      outcome = render_execution(intent:, execution:, assistant_content:, action_request:)
+      outcome = render_execution(intent:, execution:, assistant_content:, action_request:, query_card:)
       persist_recent_query_state_for(intent:, execution:)
       persist_query_reference_for(intent:, execution:, assistant_message: outcome.assistant_message)
       clear_transient_state_for(intent:, execution:)
@@ -301,7 +302,7 @@ module Chat
     end
 
     # rubocop:disable Metrics/AbcSize
-    def render_execution(intent:, execution:, assistant_content: nil, action_request: nil)
+    def render_execution(intent:, execution:, assistant_content: nil, action_request: nil, query_card: nil)
       assistant_content = normalized_assistant_content(
         assistant_content || compose_execution_message(intent:, execution:)
       )
@@ -312,7 +313,8 @@ module Chat
           action_request_id: action_request&.id,
           action_state: execution.status,
           result_data: execution.data,
-          action_type: intent.action_type
+          action_type: intent.action_type,
+          query_card:
         }.compact
       )
 
@@ -435,6 +437,33 @@ module Chat
         content: normalized_assistant_content(content),
         metadata:
       )
+    end
+
+    def query_card_payload(intent:, execution:)
+      return {} unless execution.status == 'executed'
+      return {} unless intent.action_type == 'query.run'
+
+      Chat::QueryCardBuilder.new(
+        workspace:,
+        execution_data: execution.data,
+        intent_payload: intent.payload
+      ).call
+    end
+
+    def query_card_summary(intent:, execution:, query_card:)
+      return compose_execution_message(intent:, execution:) if query_card.blank?
+
+      Chat::QueryCardBuilder.new(
+        workspace:,
+        execution_data: execution.data,
+        intent_payload: intent.payload
+      ).summary_message
+    end
+
+    def executed_assistant_content(intent:, execution:, query_card:)
+      return compose_execution_message(intent:, execution:) if query_card.blank?
+
+      query_card_summary(intent:, execution:, query_card:)
     end
 
     def normalized_assistant_content(value)

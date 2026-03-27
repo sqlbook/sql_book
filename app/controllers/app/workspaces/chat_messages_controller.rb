@@ -174,7 +174,7 @@ module App
       def serialized_message_content_html(message:)
         return unless message.assistant?
 
-        helpers.render_chat_markdown(message.content.to_s)
+        helpers.render_chat_message_body(message:)
       end
 
       def serialize_attachment(attachment:)

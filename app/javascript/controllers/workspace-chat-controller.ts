@@ -262,6 +262,18 @@ export default class extends Controller<HTMLDivElement> {
       });
   }
 
+  public saveQueryCard(event: Event): void {
+    this.submitQueryCardAction(event, 'save');
+  }
+
+  public saveQueryCardAsNew(event: Event): void {
+    this.submitQueryCardAction(event, 'save-as-new');
+  }
+
+  public saveQueryCardChanges(event: Event): void {
+    this.submitQueryCardAction(event, 'save-changes');
+  }
+
   public toggleSidebar(event: Event): void {
     event.preventDefault();
     this.setSidebarOpen(!this.sidebarOpen());
@@ -400,6 +412,35 @@ export default class extends Controller<HTMLDivElement> {
 
       return data;
     });
+  }
+
+  private submitQueryCardAction(event: Event, action: 'save' | 'save-as-new' | 'save-changes'): void {
+    event.preventDefault();
+
+    const target = event.currentTarget as HTMLElement;
+    const messageId = target.dataset.messageId;
+    const threadId = this.currentThreadId();
+    if (!messageId || threadId <= 0) return;
+
+    target.setAttribute('aria-busy', 'true');
+    (target as HTMLButtonElement).disabled = true;
+
+    const formData = new FormData();
+    formData.set('thread_id', String(threadId));
+
+    const path = `/app/workspaces/${this.workspaceIdValue}/chat/query-cards/${messageId}/${action}`;
+    this.fetchJson(path, formData)
+      .then((data) => {
+        this.applyQueryCardResponse(data);
+        this.setAttachmentError('');
+      })
+      .catch((error) => {
+        this.setAttachmentError(error.message || this.translate('requestFailedError'));
+      })
+      .finally(() => {
+        target.removeAttribute('aria-busy');
+        (target as HTMLButtonElement).disabled = false;
+      });
   }
 
   private csrfToken(): string {
@@ -704,6 +745,14 @@ export default class extends Controller<HTMLDivElement> {
     this.restoreComposerFocus();
   }
 
+  private applyQueryCardResponse(data: JsonPayload): void {
+    const updatedMessage = this.updatedMessagePayload(data);
+    if (updatedMessage) this.replaceRenderedMessage(updatedMessage);
+
+    this.appendServerMessages(this.payloadMessages(data));
+    this.scrollConversationToBottom(true);
+  }
+
   private payloadMessages(data: JsonPayload): ChatMessagePayload[] {
     const rawMessages = data.messages;
     if (!Array.isArray(rawMessages)) return [];
@@ -711,6 +760,14 @@ export default class extends Controller<HTMLDivElement> {
     return rawMessages.filter((message): message is ChatMessagePayload => {
       return Boolean(message && typeof message === 'object' && 'id' in message && 'role' in message);
     });
+  }
+
+  private updatedMessagePayload(data: JsonPayload): ChatMessagePayload | null {
+    const message = data.updated_message;
+    if (!message || typeof message !== 'object') return null;
+    if (!('id' in message) || !('role' in message)) return null;
+
+    return message as ChatMessagePayload;
   }
 
   private appendServerMessages(messages: ChatMessagePayload[]): void {
@@ -725,6 +782,19 @@ export default class extends Controller<HTMLDivElement> {
 
       messageStream.appendChild(article);
     });
+  }
+
+  private replaceRenderedMessage(message: ChatMessagePayload): void {
+    const messageStream = this.ensureMessageStream();
+    if (!messageStream) return;
+
+    const existing = messageStream.querySelector(`[data-message-id="${message.id}"]`);
+    if (!(existing instanceof HTMLElement)) return;
+
+    const replacement = this.buildMessageArticle(message);
+    if (!replacement) return;
+
+    existing.replaceWith(replacement);
   }
 
   private messageAlreadyRendered(messageStream: HTMLElement, messageId: number): boolean {

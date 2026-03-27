@@ -75,6 +75,7 @@ Related references:
   - role: `user`, `assistant`, `system`
   - status: `pending`, `completed`, `failed`
   - supports image attachments via Active Storage (`has_many_attached :images`)
+  - assistant query-run messages may carry a structured `metadata.query_card` payload for app-rendered query UI blocks
 - `ChatQueryReference` (`chat_query_references`)
   - durable per-thread query reference model owned by the app, not the LLM
   - stores query question, SQL, datasource, current name, prior aliases, lightweight result metadata, and optional `saved_query_id`
@@ -211,6 +212,13 @@ High-risk writes (inline confirmation required):
 - `datasource.create`: `name`, `host`, `database_name`, `username`, `password`, `selected_tables`
 - `query.run`: `question`
 - Raw SQL messages beginning with `SELECT` or `WITH` should be treated as `query.run` immediately, even in threads that already contain saved-query or query-library context.
+- Successful `query.run` turns should render as a structured chat query card rather than plain markdown SQL/results:
+  - the chat card shows `Query` and `Results` drawers
+  - initial state is `Query` closed and `Results` open
+  - unsaved query cards show `Save Query` and `Open in query editor`
+  - saved query cards remove `Save Query`
+  - refinement cards based on a saved query show `Save Changes`, `Save as new`, and `Open in query library`
+- `Open in query editor` from chat should open a prefilled unsaved draft view; it should not persist a draft query record until the user explicitly saves.
 - `query.list`: no required fields
 - `query.save`: `sql` + (`data_source_id` or `data_source_name`); `name` optional
 - `query.update`: `query_id`, `sql` or `name` (or both)

@@ -9,7 +9,13 @@ module App
         before_action :authorize_query_destroy_access!, only: %i[destroy]
         before_action :prepare_query_editor, only: %i[index show]
 
-        def index; end
+        def index
+          @query = Query.new(
+            query: params[:query].to_s.presence,
+            name: params[:name].to_s.presence,
+            data_source:
+          )
+        end
 
         def show
           @query = find_query

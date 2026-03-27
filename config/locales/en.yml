@@ -148,6 +148,14 @@ en:
           confirmation_needed: Confirmation needed
           action_label: "Action:"
           action_update: Action update
+        query_card:
+          invalid_state: I couldn't use that query card action just now. Please try running the query again.
+          query_label: Query
+          results_label: Results
+          save_query: "[Save Query]"
+          save_as_new: Save as new
+          open_in_query_editor: Open in query editor
+          open_in_query_library: Open in query library
         statuses:
           thinking: Thinking
         messages:

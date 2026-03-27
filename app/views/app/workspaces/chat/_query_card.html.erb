@@ -1,0 +1,93 @@
+<% workspace = message.chat_thread.workspace %>
+<% query_card = query_card.to_h.deep_stringify_keys %>
+<% data_source = query_card['data_source'].to_h.deep_stringify_keys %>
+<% saved_query = query_card['saved_query'].to_h.deep_stringify_keys %>
+<% base_saved_query = query_card['base_saved_query'].to_h.deep_stringify_keys %>
+<% editor_name = query_card['suggested_name'].presence || saved_query['name'].presence || base_saved_query['name'].presence %>
+<% editor_path = app_workspace_data_source_queries_path(workspace, data_source['id'], query: query_card['sql'], name: editor_name) %>
+<% saved_query_path = if saved_query['id'].present?
+                        app_workspace_data_source_query_path(workspace, saved_query['data_source_id'] || data_source['id'], saved_query['id'])
+                      elsif base_saved_query['id'].present?
+                        app_workspace_data_source_query_path(workspace, base_saved_query['data_source_id'] || data_source['id'], base_saved_query['id'])
+                      end %>
+<% saved_state = query_card['state'] == 'saved' %>
+<% refinement_state = query_card['state'] == 'refinement' %>
+
+<section class="chat-query-card" data-message-id="<%= message.id %>">
+  <details class="chat-query-card-drawer" data-drawer="query">
+    <summary class="chat-query-card-drawer-toggle">
+      <span class="chat-query-card-drawer-label">
+        <i class="ri-code-s-slash-line" aria-hidden="true"></i>
+        <span><%= I18n.t('app.workspaces.chat.query_card.query_label') %></span>
+      </span>
+      <i class="ri-arrow-down-s-line chat-query-card-chevron" aria-hidden="true"></i>
+    </summary>
+
+    <div class="chat-query-card-drawer-body">
+      <div class="chat-query-card-data-source">
+        <i class="ri-database-2-line" aria-hidden="true"></i>
+        <span><%= data_source['name'] %></span>
+      </div>
+
+      <pre class="chat-query-card-sql"><code><%= query_card['sql'] %></code></pre>
+    </div>
+  </details>
+
+  <details class="chat-query-card-drawer" data-drawer="results" open>
+    <summary class="chat-query-card-drawer-toggle">
+      <span class="chat-query-card-drawer-label">
+        <i class="ri-table-2" aria-hidden="true"></i>
+        <span><%= I18n.t('app.workspaces.chat.query_card.results_label') %></span>
+      </span>
+      <i class="ri-arrow-down-s-line chat-query-card-chevron" aria-hidden="true"></i>
+    </summary>
+
+    <div class="chat-query-card-drawer-body">
+      <%= render 'app/workspaces/chat/query_card_results_table', query_card: %>
+    </div>
+  </details>
+
+  <div class="chat-query-card-actions">
+    <% if refinement_state %>
+      <button type="button"
+              class="link primary"
+              data-action="workspace-chat#saveQueryCardChanges"
+              data-message-id="<%= message.id %>">
+        <%= I18n.t('common.actions.save_changes') %>
+      </button>
+      <button type="button"
+              class="link secondary"
+              data-action="workspace-chat#saveQueryCardAsNew"
+              data-message-id="<%= message.id %>">
+        <%= I18n.t('app.workspaces.chat.query_card.save_as_new') %>
+      </button>
+      <% if saved_query_path.present? %>
+        <%= link_to I18n.t('app.workspaces.chat.query_card.open_in_query_library'),
+                    saved_query_path,
+                    class: 'link secondary',
+                    target: '_blank',
+                    rel: 'noopener noreferrer' %>
+      <% end %>
+    <% elsif saved_state %>
+      <% if saved_query_path.present? %>
+        <%= link_to I18n.t('app.workspaces.chat.query_card.open_in_query_library'),
+                    saved_query_path,
+                    class: 'link secondary',
+                    target: '_blank',
+                    rel: 'noopener noreferrer' %>
+      <% end %>
+    <% else %>
+      <button type="button"
+              class="link primary"
+              data-action="workspace-chat#saveQueryCard"
+              data-message-id="<%= message.id %>">
+        <%= I18n.t('app.workspaces.chat.query_card.save_query') %>
+      </button>
+      <%= link_to I18n.t('app.workspaces.chat.query_card.open_in_query_editor'),
+                  editor_path,
+                  class: 'link secondary',
+                  target: '_blank',
+                  rel: 'noopener noreferrer' %>
+    <% end %>
+  </div>
+</section>

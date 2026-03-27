@@ -117,6 +117,14 @@ es:
           confirmation_needed: Confirmación necesaria
           action_label: "Acción:"
           action_update: Actualización de acción
+        query_card:
+          invalid_state: No pude usar esa acción de la tarjeta de consulta ahora mismo. Vuelve a ejecutar la consulta e inténtalo otra vez.
+          query_label: Consulta
+          results_label: Resultados
+          save_query: "[Guardar consulta]"
+          save_as_new: Guardar como nueva
+          open_in_query_editor: Abrir en el editor de consultas
+          open_in_query_library: Abrir en la biblioteca de consultas
         statuses:
           thinking: Pensando
         messages:

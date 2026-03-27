@@ -1,0 +1,35 @@
+<% query_card = query_card.to_h.deep_stringify_keys %>
+<% columns = Array(query_card['columns']).map(&:to_s) %>
+<% rows = Array(query_card['rows']) %>
+
+<% if rows.empty? %>
+  <p class="chat-query-card-empty"><%= I18n.t('app.workspaces.chat.query.no_rows') %></p>
+<% else %>
+  <div class="chat-query-card-results-table">
+    <table>
+      <thead>
+        <tr>
+          <% columns.each do |column| %>
+            <th><%= column %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.each do |row| %>
+          <tr>
+            <% columns.each_with_index do |_, index| %>
+              <% cell = row.is_a?(Array) ? row[index] : nil %>
+              <td>
+                <% if cell.present? || cell == false || cell == 0 %>
+                  <%= cell %>
+                <% else %>
+                  <span class="null">NULL</span>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

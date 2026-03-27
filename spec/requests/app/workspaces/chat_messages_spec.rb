@@ -194,10 +194,10 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
 
-      assistant_content = response.parsed_body.dig('messages', -1, 'content')
-      expect(assistant_content).to include("ILIKE '%i%'")
-      expect(assistant_content).to include('Staging App DB')
-      expect(assistant_content).not_to include('not as a general-purpose assistant')
+      assistant_message = response.parsed_body.dig('messages', -1)
+      expect(assistant_message['content']).to include('Staging App DB')
+      expect(assistant_message['content']).not_to include('not as a general-purpose assistant')
+      expect(assistant_message.dig('metadata', 'query_card', 'sql')).to include("ILIKE '%i%'")
     end
 
     it 'starts a staged data source setup flow instead of falling back to a capability summary' do
@@ -314,9 +314,10 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| count |')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 12 |')
+      assistant_message = response.parsed_body.dig('messages', -1)
+      expect(assistant_message['content']).to include('Warehouse DB')
+      expect(assistant_message['content_html']).to include('chat-query-card')
+      expect(assistant_message.dig('metadata', 'query_card', 'rows')).to eq([[12]])
     end
 
     it 'treats direct SQL as query.run even in a thread with recent query-library context' do
@@ -377,11 +378,13 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
-      assistant_content = response.parsed_body.dig('messages', -1, 'content')
-      expect(assistant_content).to include('Staging App DB')
-      expect(assistant_content).to include('SELECT COUNT(*) AS user_count FROM public.users;')
-      expect(assistant_content).to include('| user_count |')
-      expect(assistant_content).not_to include('I can save this SQL as a query')
+      assistant_message = response.parsed_body.dig('messages', -1)
+      expect(assistant_message['content']).to include('Staging App DB')
+      expect(assistant_message.dig('metadata', 'query_card', 'sql')).to eq(
+        'SELECT COUNT(*) AS user_count FROM public.users;'
+      )
+      expect(assistant_message.dig('metadata', 'query_card', 'rows')).to eq([[3]])
+      expect(assistant_message['content']).not_to include('I can save this SQL as a query')
     end
 
     it 'serializes assistant markdown html for inline chat rendering' do
@@ -415,9 +418,12 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       assistant_message = response.parsed_body['messages'].last
-      expect(assistant_message['content_html']).to include('<pre><code')
+      expect(assistant_message['content']).to include('Here’s what I found from')
+      expect(assistant_message['content_html']).to include('chat-query-card')
+      expect(assistant_message['content_html']).to include('[Save Query]')
+      expect(assistant_message['content_html']).to include('Open in query editor')
       expect(assistant_message['content_html']).to include('<table>')
-      expect(assistant_message['content_html']).to include('<td>12</td>')
+      expect(assistant_message.dig('metadata', 'query_card', 'rows')).to eq([[12]])
     end
 
     it 'saves the most recent chat query to the query library' do
@@ -1499,8 +1505,9 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Warehouse DB')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 7 |')
+      assistant_message = response.parsed_body.dig('messages', -1)
+      expect(assistant_message['content']).to include('Warehouse DB')
+      expect(assistant_message.dig('metadata', 'query_card', 'rows')).to eq([[7]])
     end
 
     it 'resumes a recent database query clarification before stale datasource setup state' do
@@ -1559,9 +1566,10 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('Staging App DB')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 12 |')
-      expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('host, database name')
+      assistant_message = response.parsed_body.dig('messages', -1)
+      expect(assistant_message['content']).to include('Staging App DB')
+      expect(assistant_message.dig('metadata', 'query_card', 'rows')).to eq([[12]])
+      expect(assistant_message['content']).not_to include('host, database name')
     end
 
     it 'uses schema guidance during table clarification follow-ups instead of falling back to datasource listing' do
@@ -1667,11 +1675,13 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
-      assistant_content = response.parsed_body.dig('messages', -1, 'content')
-      expect(assistant_content).to include('Staging App DB')
-      expect(assistant_content).to include('SELECT first_name, last_name, email FROM public.users')
-      expect(assistant_content).to include('hello@sitelabs.ai')
-      expect(assistant_content).not_to include('Which data source should I use')
+      assistant_message = response.parsed_body.dig('messages', -1)
+      expect(assistant_message['content']).to include('Staging App DB')
+      expect(assistant_message.dig('metadata', 'query_card', 'sql')).to include(
+        'SELECT first_name, last_name, email FROM public.users'
+      )
+      expect(assistant_message.dig('metadata', 'query_card', 'rows')).to eq([['Bob', 'Smith', 'hello@sitelabs.ai']])
+      expect(assistant_message['content']).not_to include('Which data source should I use')
     end
 
     it 'blocks data source setup for regular users but still allows querying' do
@@ -1716,7 +1726,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('executed')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('| 5 |')
+      expect(response.parsed_body.dig('messages', -1, 'metadata', 'query_card', 'rows')).to eq([[5]])
     end
 
     it 'auto-executes low-risk write actions' do
