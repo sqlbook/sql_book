@@ -728,6 +728,62 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(saved_query.query).to eq('SELECT COUNT(*) AS user_count FROM public.users;')
     end
 
+    it 'chooses and saves a concrete alternative name after a generated-name collision prompt' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User count',
+        query: 'SELECT COUNT(*) AS user_count FROM public.users WHERE super_admin = true',
+        author: user,
+        last_updated_by: user
+      )
+      schema_groups = [
+        {
+          schema: 'public',
+          tables: [
+            {
+              name: 'users',
+              qualified_name: 'public.users',
+              columns: [
+                { name: 'id', data_type: 'bigint' }
+              ]
+            }
+          ]
+        }
+      ]
+      query_result = ActiveRecord::Result.new(['user_count'], [[3]])
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return(schema_groups)
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'SELECT COUNT(*) AS user_count FROM public.users;' },
+           as: :json
+      thread_id = response.parsed_body['thread_id']
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { thread_id:, content: 'Could you save that for me?' },
+           as: :json
+
+      expect do
+        post app_workspace_chat_messages_path(workspace),
+             params: { thread_id:, content: 'Choose another' },
+             as: :json
+      end.to change(Query, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      saved_query = Query.order(:id).last
+      expect(saved_query.name).to eq('Total users')
+      expect(saved_query.query).to eq('SELECT COUNT(*) AS user_count FROM public.users;')
+    end
+
     it 'renames a saved query from chat and carries the target query across the rename follow-up' do
       thread = ChatThread.active_for(workspace:, user:)
       data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')

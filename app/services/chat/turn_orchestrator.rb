@@ -63,6 +63,21 @@ module Chat
       \bthat\s+name\s+is\s+fine\b|
       \bsave\s+it\s+anyway\b
     /ix
+    QUERY_SAVE_CHOOSE_ANOTHER_REGEX = /
+      \A\s*(
+        choose|pick|use
+      )\s+(
+        another|different|new
+      )(?:\s+name)?\b|
+      \A\s*(?:another|different)\s+name\b
+    /ix
+    QUERY_SAVE_CHOOSE_FOR_ME_REGEX = /
+      \A\s*(
+        you\s+(?:choose|decide|pick)|
+        choose\s+for\s+me|
+        pick\s+for\s+me
+      )\b
+    /ix
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(workspace:, chat_thread:, actor:, user_message:, content:, tool_metadata: nil)
@@ -1118,6 +1133,8 @@ module Chat
       return nil if active_query_save_name_conflict.blank?
       return { type: :cancel } if pending_action_command == :cancel
 
+      return { type: :choose_another_name } if choose_alternative_query_name?
+
       new_name = QueryNameParser.parse(text: content)
       return { type: :rename, name: new_name } if new_name.present?
       return { type: :keep_existing_name } if keep_generated_query_name?
@@ -1129,10 +1146,19 @@ module Chat
       pending_action_command == :confirm || content.match?(QUERY_SAVE_KEEP_NAME_REGEX)
     end
 
+    def choose_alternative_query_name?
+      content.match?(QUERY_SAVE_CHOOSE_ANOTHER_REGEX) ||
+        content.match?(QUERY_SAVE_CHOOSE_FOR_ME_REGEX)
+    end
+
     def handle_query_save_name_conflict_resolution(resolution)
       return cancel_query_save_name_conflict if resolution[:type] == :cancel
 
-      resolved_name = resolution[:name] || active_query_save_name_conflict['proposed_name']
+      resolved_name = if resolution[:type] == :choose_another_name
+                        alternative_query_save_name
+                      else
+                        resolution[:name] || active_query_save_name_conflict['proposed_name']
+                      end
       execute_query_save_name_conflict_resolution(name: resolved_name)
     end
 
@@ -1146,6 +1172,24 @@ module Chat
       payload['name'] = name
       query_save_name_conflict_state_store.clear!
       execute_direct_tool(action_type: 'query.save', payload:)
+    end
+
+    def alternative_query_save_name
+      data_source = workspace.data_sources.find_by(id: active_query_save_name_conflict['data_source_id'])
+      return active_query_save_name_conflict['proposed_name'] if data_source.blank?
+
+      Queries::NameGenerator.generate_alternative(
+        question: active_query_save_name_conflict['question'],
+        sql: active_query_save_name_conflict['sql'],
+        data_source:,
+        existing_names: workspace_saved_query_names
+      )
+    end
+
+    def workspace_saved_query_names
+      @workspace_saved_query_names ||= Query.joins(:data_source)
+        .where(saved: true, data_sources: { workspace_id: workspace.id })
+        .pluck(:name)
     end
 
     def query_save_name_conflict_execution?(intent:, execution:)

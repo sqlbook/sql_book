@@ -513,6 +513,10 @@ module Chat
         'If execution status is not executed, explain what failed and what the user can provide next.',
         'For member list results, include useful member details instead of only counts.',
         'When the fallback text sounds terse or product-like, improve the phrasing while preserving the exact meaning.',
+        [
+          'If you suggest renaming something, include the exact proposed name.',
+          'Do not use vague placeholders like "something shorter or more descriptive".'
+        ].join(' '),
         "Reply in the user locale: #{actor_locale}."
       ].join(' ')
     end

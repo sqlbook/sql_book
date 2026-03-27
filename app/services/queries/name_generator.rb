@@ -15,6 +15,18 @@ module Queries
       "#{data_source.display_name} query"
     end
 
+    def generate_alternative(question:, sql:, data_source:, existing_names:)
+      existing_name_set = normalized_existing_name_set(existing_names)
+      resolved_candidate = first_available_candidate(
+        candidates: alternative_name_candidates(question:, sql:, data_source:),
+        existing_name_set:
+      )
+      return resolved_candidate if resolved_candidate.present?
+
+      fallback_base = generate(question:, sql:, data_source:)
+      fallback_candidate_for(base: fallback_base, existing_name_set:)
+    end
+
     def normalized_question(question)
       value = question.to_s.strip
       return nil if value.blank?
@@ -58,6 +70,35 @@ module Queries
       "#{human_table_name(table_name)} query"
     end
 
+    def alternative_name_candidates(question:, sql:, data_source:)
+      table_name = table_name_from(sql:)
+      selected_columns = selected_columns_from(sql:)
+      ilike_filter = ilike_filter_details_from(sql:)
+      group_columns = group_by_columns_from(sql:)
+
+      [
+        alternative_name_from_sql(
+          table_name:,
+          selected_columns:,
+          ilike_filter:,
+          group_columns:
+        ),
+        descriptive_name_from_sql(sql:),
+        normalized_question(question),
+        "#{human_table_name(table_name)} overview".presence,
+        "#{data_source.display_name} query"
+      ].compact_blank.uniq
+    end
+
+    def alternative_name_from_sql(table_name:, selected_columns:, ilike_filter:, group_columns:)
+      return nil if table_name.blank?
+
+      return alternative_count_name_for(table_name:, ilike_filter:, group_columns:) if count_query?(selected_columns)
+
+      normalized_columns = selected_columns.map { |column| column.split(/\s+as\s+/i).last.to_s.strip }
+      alternative_column_name_for(table_name:, normalized_columns:, ilike_filter:)
+    end
+
     def table_name_from(sql:)
       match = sql.to_s.match(/\bfrom\s+("?[\w.]+"?)/i)
       return nil unless match
@@ -81,6 +122,17 @@ module Queries
 
     def count_name_for(table_name:)
       "#{human_table_name(table_name).singularize} count"
+    end
+
+    def alternative_count_name_for(table_name:, ilike_filter:, group_columns:)
+      prefix = "Total #{human_table_name(table_name).downcase}"
+      if ilike_filter.present?
+        return "#{prefix} with '#{ilike_filter[:fragment]}' in #{human_filter_column(ilike_filter[:column_name])}"
+      end
+
+      return "#{human_table_name(table_name)} grouped by #{human_group_columns(group_columns)}" if group_columns.any?
+
+      prefix
     end
 
     def filtered_count_name_for(table_name:, ilike_filter:)
@@ -112,6 +164,14 @@ module Queries
       nil
     end
 
+    def alternative_column_name_for(table_name:, normalized_columns:, ilike_filter:)
+      if user_name_and_email_columns?(normalized_columns)
+        return users_name_and_email_alternative_for(table_name:, ilike_filter:)
+      end
+
+      nil
+    end
+
     def user_name_and_email_columns?(columns)
       columns.include?('email') &&
         columns.include?('first_name') &&
@@ -129,6 +189,15 @@ module Queries
       end
 
       "#{human_table_name(table_name).singularize} names and email addresses"
+    end
+
+    def users_name_and_email_alternative_for(table_name:, ilike_filter:)
+      base = "#{human_table_name(table_name)}: names and emails"
+      if ilike_filter.present?
+        return "#{base} with '#{ilike_filter[:fragment]}' in #{human_filter_column(ilike_filter[:column_name])}"
+      end
+
+      base
     end
 
     def group_by_columns_from(sql:)
@@ -170,6 +239,35 @@ module Queries
 
     def human_table_name(table_name)
       table_name.to_s.split('.').last.to_s.tr('_', ' ').titleize
+    end
+
+    def normalized_existing_name_set(existing_names)
+      Array(existing_names).filter_map { |name| name.to_s.strip.downcase.presence }.to_set
+    end
+
+    def first_available_candidate(candidates:, existing_name_set:)
+      Array(candidates).each do |candidate|
+        cleaned_candidate = candidate.to_s.strip.presence
+        next if cleaned_candidate.blank?
+        next if existing_name_set.include?(cleaned_candidate.downcase)
+
+        return cleaned_candidate
+      end
+
+      nil
+    end
+
+    def fallback_candidate_for(base:, existing_name_set:)
+      candidate = "#{base} query".strip
+      return candidate unless existing_name_set.include?(candidate.downcase)
+
+      suffix = 2
+      loop do
+        numbered_candidate = "#{base} #{suffix}"
+        return numbered_candidate unless existing_name_set.include?(numbered_candidate.downcase)
+
+        suffix += 1
+      end
     end
   end
   # rubocop:enable Metrics/ModuleLength

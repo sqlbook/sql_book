@@ -104,3 +104,4 @@ Related references:
 - Auto-generated saved-query names should be concise but specific to the query’s real purpose.
 - Meaningful filters should be reflected in the generated name when they materially define the query.
 - Generic fallback names like `User count` or `User names and email addresses` are only acceptable when they truly match the query scope.
+- When an auto-generated saved-query name collides with a different existing saved query, chat may pause to reconcile the name. If the user delegates the choice back with `choose another` or `you choose`, the system should generate a concrete alternative and save with that name rather than asking another vague naming question.

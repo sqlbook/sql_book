@@ -39,4 +39,38 @@ RSpec.describe Queries::NameGenerator do
       expect(name).to eq("Users with 'i' in last name")
     end
   end
+
+  describe '.generate_alternative' do
+    it 'picks a more specific non-conflicting alternative for generic user list names' do
+      sql = <<~SQL.squish
+        SELECT first_name, last_name, email
+        FROM public.users;
+      SQL
+
+      name = described_class.generate_alternative(
+        question: 'List the users and their email addresses',
+        sql:,
+        data_source:,
+        existing_names: ['User names and email addresses']
+      )
+
+      expect(name).to eq('Users: names and emails')
+    end
+
+    it 'falls back to a non-conflicting count alternative' do
+      sql = <<~SQL.squish
+        SELECT COUNT(*) AS user_count
+        FROM public.users;
+      SQL
+
+      name = described_class.generate_alternative(
+        question: 'How many users do I have?',
+        sql:,
+        data_source:,
+        existing_names: ['User count']
+      )
+
+      expect(name).to eq('Total users')
+    end
+  end
 end

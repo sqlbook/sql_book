@@ -518,3 +518,5 @@ High-risk writes (inline confirmation required):
 ## Component preview surface
 - Route: `GET /app/chat-components`
 - Purpose: visual QA page for chat component styling/states before final design sign-off.
+- When chat is resolving a generated save-name collision and the user says `choose another` or `you choose`, the app should generate and use a concrete alternative name rather than asking the user to invent one unless clarification is genuinely required.
+- Vague assistant rename placeholders such as `something shorter or more descriptive` are not valid proposed names and must not be treated as literal rename targets on a follow-up `yes` or `go for it`.

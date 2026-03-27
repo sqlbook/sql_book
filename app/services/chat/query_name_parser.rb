@@ -17,6 +17,20 @@ module Chat
       /\brename\s+it\s+to\b\s+["']?([^"']+?)["']?(?:\s+now)?\s*[.!?]*\s*\z/i,
       /\brenombrar(?:lo)?\s+a\b\s+["']?([^"']+?)["']?(?:\s+ahora)?\s*[.!?]*\s*\z/i
     ].freeze
+    VAGUE_NAME_REGEX = /
+      \A\s*(
+        something|
+        anything|
+        whatever|
+        another\s+name|
+        a\s+better\s+name|
+        a\s+cleaner(?:,\s*)?\s+more\s+descriptive\s+name|
+        something\s+shorter(?:\s+or\s+more\s+descriptive)?|
+        something\s+more\s+descriptive|
+        shorter(?:\s+or\s+more\s+descriptive)?|
+        more\s+descriptive(?:\s+name)?
+      )\s*\z
+    /ix
 
     def parse(text:)
       source = text.to_s.strip
@@ -40,10 +54,19 @@ module Chat
 
       PROPOSED_RENAME_PATTERNS.each do |pattern|
         match = source.match(pattern)
-        return cleaned(match[1]) if match
+        next unless match
+
+        parsed_name = cleaned(match[1])
+        return nil if vague_name?(parsed_name)
+
+        return parsed_name
       end
 
       nil
+    end
+
+    def vague_name?(value)
+      value.to_s.strip.match?(VAGUE_NAME_REGEX)
     end
   end
 end
