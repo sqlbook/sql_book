@@ -8,12 +8,19 @@ module Chat
       \b(?:related\s+to\s+the\s+query\s+before|query\s+before|previous\s+query|same\s+query)\b
     /ix
     QUERY_REFINEMENT_FOLLOW_UP_REGEX = /
+      \b(?:refine|refined|adjust|adjusted|change|changed|modify|modified|tweak|tweaked)\b.+\b(?:query|sql|results?)\b|
       \A\s*(?:can|could|would|should)\s+we\s+(?:remove|drop|exclude|include|add|filter|group|order|sort|limit|select)\b|
+      \A\s*(?:thanks[,!\s]*)?
+      (?:(?:can|could|would|should)\s+(?:you\s+)?)?
+      (?:also\s+)?
+      (?:remove|drop|exclude|include|add|filter|group|order|sort|limit|select)\b|
+      \A\s*(?:oh\s+interesting[,!\s]*)?(?:then\s+)?(?:let'?s|lets)\s+(?:just\s+)?(?:focus|stick)\s+on\b|
       \b(?:remove|drop|exclude|include|add)\b.+\b(?:column|columns|field|fields)\b|
+      \bdoes(?:\s+not|n't)\s+include\b.+\b(?:column|columns|field|fields|created_at|updated_at)\b|
       \b(?:without|except)\b.+\b(?:column|columns|field|fields)\b|
       \b(?:only|just)\s+(?:show|return|include|select)\b
     /ix
-    NON_QUERY_TOPIC_REGEX = /\b(team|member|invite|invitation|role|workspace|settings?|dashboard)\b/i
+    NON_QUERY_TOPIC_REGEX = /\b(team|member|invite|invitation|role|settings?|dashboard)\b/i
     LETTER_VARIANT_REGEX = /\bletter\s+['"]?([[:alpha:]])['"]?\b/i
 
     def self.contextual_follow_up?(text:, recent_query_reference:)

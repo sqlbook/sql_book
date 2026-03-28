@@ -198,6 +198,7 @@ es:
           schema_guidance: "Basándome en el esquema, la(s) tabla(s) más probable(s) para eso son %{tables}. ¿Cuál debo usar?"
           ask_for_table_or_metric: Puedo consultar una fuente de datos conectada aquí, pero todavía necesito un poco más de detalle sobre la tabla o la métrica que quieres.
           result_intro: "Esto es lo que encontré en %{data_source} (%{row_count} fila(s)):"
+          result_intro_refined: "Resultados actualizados (%{row_count} fila(s)):"
           no_rows: La consulta se ejecutó correctamente, pero no devolvió filas.
           query_failed: No pude ejecutar esa consulta contra la fuente de datos seleccionada.
         query_library:

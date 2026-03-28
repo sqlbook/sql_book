@@ -8,16 +8,27 @@ RSpec.describe Member, type: :model do
     let(:workspace) { create(:workspace_with_owner, owner:) }
     let(:member_user) { create(:user) }
 
-    it 'refreshes workspace members and app streams when membership changes' do
+    it 'refreshes workspace members and only the affected user app when a role changes' do
       allow(RealtimeUpdatesService).to receive(:refresh_workspace_members)
       allow(RealtimeUpdatesService).to receive(:refresh_users_app)
 
-      member = create(:member, workspace:, user: member_user, status: Member::Status::PENDING)
-      member.update!(status: Member::Status::ACCEPTED)
-      member.destroy!
+      member = create(
+        :member,
+        workspace:,
+        user: member_user,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      RSpec::Mocks.space.proxy_for(RealtimeUpdatesService).reset
+      allow(RealtimeUpdatesService).to receive(:refresh_workspace_members)
+      allow(RealtimeUpdatesService).to receive(:refresh_users_app)
+
+      member.update!(role: Member::Roles::USER)
 
       expect(RealtimeUpdatesService).to have_received(:refresh_workspace_members).at_least(:once)
-      expect(RealtimeUpdatesService).to have_received(:refresh_users_app).at_least(:once)
+      expect(RealtimeUpdatesService).to have_received(:refresh_users_app).with(users: [member_user]).at_least(:once)
+      expect(RealtimeUpdatesService).not_to have_received(:refresh_users_app).with(users: array_including(owner))
     end
   end
 

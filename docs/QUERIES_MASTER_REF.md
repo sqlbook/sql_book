@@ -86,9 +86,17 @@ Related references:
   - exact duplicate => no new row
   - obvious refinement of a saved query => update in place
   - material drift => ask whether to update+rename or save as new
+- If an unsaved chat query is opened in the query editor and then saved there, the originating chat query card should reconcile into saved mode as well:
+  - remove `Save Query`
+  - link to the saved query/library object instead of continuing to present as an unsaved draft
+  - exact-duplicate saves that resolve to an existing saved query should reconcile the card the same way
 - Query-refinement targeting should be explicit:
   - use linked reference fields (`saved_query_id` / `refined_saved_query_id`) when deciding update-vs-new behavior
   - do not infer a saved-query refinement target from stale fallback state alone
+- Natural-language query follow-ups should stay attached to the active query even when the user does not restate `query` or `SQL` explicitly:
+  - examples: `include the creation date as well`, `remove created_at`, `let's just focus on workspace name and creation date`
+  - do not drop to generic capability help just because the follow-up is phrased conversationally
+  - do not treat `workspace` as automatically non-query language when the active focus is a datasource query about workspace records
 - Saved query links rendered in chat should open the saved query page in a new tab.
 - If a saved query is deleted later, old chat links may still exist in the transcript:
   - following one should redirect to query library home

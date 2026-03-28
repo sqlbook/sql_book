@@ -1,0 +1,1 @@
+[{"severity":"convention","location":{"begin_pos":1409,"end_pos":2018},"message":"Metrics/AbcSize: Assignment Branch Condition size for sync_result_message! is too high. [<7, 17, 4> 18.81/17]","cop_name":"Metrics/AbcSize","status":"unsupported"}]

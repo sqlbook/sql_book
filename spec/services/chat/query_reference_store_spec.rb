@@ -128,6 +128,96 @@ RSpec.describe Chat::QueryReferenceStore, type: :service do
       draft_reference = chat_thread.chat_query_references.recent_first.first
       expect(draft_reference.refined_from_reference_id).to eq(saved_reference.id)
     end
+
+    it 'keeps saved-query linkage for natural include-as-well follow-ups' do
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Workspace count',
+        query: 'SELECT COUNT(*) AS workspace_count FROM public.workspaces',
+        author: user,
+        last_updated_by: user
+      )
+      saved_reference = create(
+        :chat_query_reference,
+        chat_thread:,
+        data_source:,
+        saved_query: saved_query,
+        sql: saved_query.query,
+        current_name: saved_query.name
+      )
+
+      execution = Struct.new(:data).new(
+        {
+          'question' => 'Thanks, can you include the creation date as well?',
+          'sql' => 'SELECT name, created_at FROM public.workspaces',
+          'data_source' => { 'id' => data_source.id, 'name' => data_source.display_name },
+          'row_count' => 2,
+          'columns' => %w[name created_at]
+        }
+      )
+
+      store.record_query_run!(
+        source_message: create(
+          :chat_message,
+          chat_thread:,
+          user:,
+          content: 'Thanks, can you include the creation date as well?'
+        ),
+        result_message: create(:chat_message, chat_thread:, role: ChatMessage::Roles::ASSISTANT, content: 'Adjusted.'),
+        execution:,
+        fallback_question: 'Thanks, can you include the creation date as well?'
+      )
+
+      draft_reference = chat_thread.chat_query_references.recent_first.first
+      expect(draft_reference.refined_from_reference_id).to eq(saved_reference.id)
+    end
+
+    it 'keeps saved-query linkage for lets-focus-on clarifications' do
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Workspace count',
+        query: 'SELECT COUNT(*) AS workspace_count FROM public.workspaces',
+        author: user,
+        last_updated_by: user
+      )
+      saved_reference = create(
+        :chat_query_reference,
+        chat_thread:,
+        data_source:,
+        saved_query: saved_query,
+        sql: saved_query.query,
+        current_name: saved_query.name
+      )
+
+      execution = Struct.new(:data).new(
+        {
+          'question' => "Oh interesting, then let's just focus on workspace name, and creation date",
+          'sql' => 'SELECT name, created_at FROM public.workspaces',
+          'data_source' => { 'id' => data_source.id, 'name' => data_source.display_name },
+          'row_count' => 2,
+          'columns' => %w[name created_at]
+        }
+      )
+
+      store.record_query_run!(
+        source_message: create(
+          :chat_message,
+          chat_thread:,
+          user:,
+          content: "Oh interesting, then let's just focus on workspace name, and creation date"
+        ),
+        result_message: create(:chat_message, chat_thread:, role: ChatMessage::Roles::ASSISTANT, content: 'Adjusted.'),
+        execution:,
+        fallback_question: "Oh interesting, then let's just focus on workspace name, and creation date"
+      )
+
+      draft_reference = chat_thread.chat_query_references.recent_first.first
+      expect(draft_reference.refined_from_reference_id).to eq(saved_reference.id)
+    end
   end
 
   describe '#record_query_update!' do

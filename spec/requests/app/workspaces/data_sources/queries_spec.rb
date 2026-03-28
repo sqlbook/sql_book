@@ -356,6 +356,52 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
         expect(draft_query.name).to eq('Count of users')
       end
 
+      it 'reconciles matching unsaved chat query cards when a draft is saved from settings' do
+        thread = create(:chat_thread, workspace:, created_by: user, title: 'User count chat')
+        result_message = create(
+          :chat_message,
+          chat_thread: thread,
+          role: ChatMessage::Roles::ASSISTANT,
+          status: ChatMessage::Statuses::COMPLETED,
+          content: 'Here’s what I found from Staging App DB (1 row(s)):',
+          metadata: {
+            'query_card' => {
+              'state' => 'unsaved',
+              'question' => 'How many users do I have?',
+              'sql' => 'SELECT COUNT(*) AS user_count FROM public.users;',
+              'row_count' => 1,
+              'columns' => ['user_count'],
+              'rows' => [[3]],
+              'suggested_name' => 'User count',
+              'data_source' => {
+                'id' => data_source.id,
+                'name' => data_source.display_name
+              }
+            }
+          }
+        )
+        create(
+          :chat_query_reference,
+          chat_thread: thread,
+          result_message:,
+          data_source:,
+          saved_query: nil,
+          sql: 'SELECT COUNT(*) AS user_count FROM public.users;',
+          current_name: 'User count'
+        )
+
+        post "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries",
+             params: { query: 'SELECT COUNT(*) AS user_count FROM public.users;' }
+        draft_query = Query.order(:id).last
+
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{draft_query.id}",
+            params: { name: 'Count of users' }
+
+        expect(result_message.reload.metadata.dig('query_card', 'state')).to eq('saved')
+        expect(result_message.metadata.dig('query_card', 'saved_query', 'id')).to eq(draft_query.id)
+        expect(result_message.metadata.dig('query_card', 'saved_query', 'name')).to eq('Count of users')
+      end
+
       it 'redirects to the existing saved query when saving a draft with identical SQL' do
         existing_query = create(
           :query,
@@ -383,6 +429,61 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
           body: I18n.t('toasts.workspaces.queries.already_saved.body', name: existing_query.name)
         )
         expect(draft_query.reload.saved).to be(false)
+      end
+
+      it 'reconciles matching unsaved chat query cards to the existing saved query on duplicate save' do
+        thread = create(:chat_thread, workspace:, created_by: user, title: 'User count duplicate chat')
+        result_message = create(
+          :chat_message,
+          chat_thread: thread,
+          role: ChatMessage::Roles::ASSISTANT,
+          status: ChatMessage::Statuses::COMPLETED,
+          content: 'Here’s what I found from Staging App DB (1 row(s)):',
+          metadata: {
+            'query_card' => {
+              'state' => 'unsaved',
+              'question' => 'How many users do I have?',
+              'sql' => 'SELECT COUNT(*) AS user_count FROM public.users;',
+              'row_count' => 1,
+              'columns' => ['user_count'],
+              'rows' => [[3]],
+              'suggested_name' => 'User count',
+              'data_source' => {
+                'id' => data_source.id,
+                'name' => data_source.display_name
+              }
+            }
+          }
+        )
+        create(
+          :chat_query_reference,
+          chat_thread: thread,
+          result_message:,
+          data_source:,
+          saved_query: nil,
+          sql: 'SELECT COUNT(*) AS user_count FROM public.users;',
+          current_name: 'User count'
+        )
+        existing_query = create(
+          :query,
+          data_source:,
+          saved: true,
+          name: 'User count',
+          query: 'SELECT COUNT(*) AS user_count FROM public.users;'
+        )
+        draft_query = create(
+          :query,
+          data_source:,
+          saved: false,
+          query: existing_query.query
+        )
+
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{draft_query.id}",
+            params: { name: 'Count of users' }
+
+        expect(result_message.reload.metadata.dig('query_card', 'state')).to eq('saved')
+        expect(result_message.metadata.dig('query_card', 'saved_query', 'id')).to eq(existing_query.id)
+        expect(result_message.metadata.dig('query_card', 'saved_query', 'name')).to eq(existing_query.name)
       end
     end
 

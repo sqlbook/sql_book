@@ -2813,6 +2813,8 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       message = response.parsed_body.dig('messages', -1, 'content')
       expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.owner'))
       expect(message).not_to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
+      expect(message).not_to include('his role')
+      expect(message).not_to include('her role')
     end
 
     it 'rejects member list requests for user-role members with allowed-role guidance' do

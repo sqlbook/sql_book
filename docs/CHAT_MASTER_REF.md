@@ -131,6 +131,12 @@ Related references:
   - bounded recent transcript
 - Prefer higher-quality structured context over longer transcript.
 - When `pending_follow_up` is present, short ambiguous replies such as `yes`, `sure`, `go for it`, `the first one`, and `choose another` should be interpreted against that pending item before generic capability/help fallback is considered.
+- When `active_focus.domain=query`, conversational refinement follow-ups should still resolve against that query even if the user does not restate `query` or `SQL` explicitly.
+  - Examples:
+    - `include the creation date as well`
+    - `remove created_at`
+    - `let's just focus on workspace name and creation date`
+  - Generic capability/help fallback should be a last resort for these turns, not the default.
 
 ## HTTP interfaces
 App routes:
@@ -295,6 +301,7 @@ High-risk writes (inline confirmation required):
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
 - Role and outrank rules mirror workspace team-management permissions.
 - Member-role writes require outrank permissions; admins cannot update another admin's role, so those requests are owner-only.
+- Peer-admin member-role denials should preserve that owner-only guidance in the final assistant reply; do not broaden it back to generic `Admin or Workspace owner` wording during response rewriting.
 - `workspace.delete` is owner-only.
 - `member.invite` / `member.update_role` restrict target roles to editable non-owner roles.
 - `member.list` is visible only to workspace `OWNER` and `ADMIN` roles.
@@ -330,6 +337,8 @@ High-risk writes (inline confirmation required):
 - If multiple datasources or tables plausibly match a query question, chat must ask a clarifying follow-up before running SQL.
 - Scope checks reject payloads that do not belong to the current workspace/thread/message.
 - Permission-denied replies should say which workspace roles can perform the requested action instead of only returning a flat refusal.
+- Permission-denied and validation-error replies should preserve the exact app-authored execution truth rather than letting a later LLM phrasing pass weaken or alter the allowed-role guidance.
+- Member-management replies should use neutral phrasing for people unless the user explicitly supplied pronouns; do not introduce `his`/`her` in final response rendering.
 - Execution/preflight wording should be composed separately from the executor so chat can vary phrasing naturally and avoid repeating the same template back-to-back.
 - Only destructive chat writes require confirmation in v1 (`workspace.delete`, `member.remove`, `query.delete`). `member.update_role`, `query.save`, and `query.rename` auto-execute after preflight passes.
 

@@ -20,11 +20,7 @@ module Chat
     def summary_message
       return '' unless resolved_data_source
 
-      I18n.t(
-        'app.workspaces.chat.query.result_intro',
-        data_source: execution_data.dig('data_source', 'name').presence || resolved_data_source.display_name,
-        row_count:
-      )
+      I18n.t(summary_message_key, **summary_message_arguments)
     end
 
     private
@@ -43,6 +39,21 @@ module Chat
       execution_data['row_count'].to_i
     end
 
+    def summary_message_key
+      return 'app.workspaces.chat.query.result_intro_refined' if refined_or_updated_query?
+
+      'app.workspaces.chat.query.result_intro'
+    end
+
+    def summary_message_arguments
+      arguments = { row_count: }
+      return arguments if refined_or_updated_query?
+
+      arguments.merge(
+        data_source: execution_data.dig('data_source', 'name').presence || resolved_data_source.display_name
+      )
+    end
+
     def columns
       Array(execution_data['columns']).map(&:to_s)
     end
@@ -53,6 +64,10 @@ module Chat
 
     def resolved_data_source
       @resolved_data_source ||= workspace.data_sources.find_by(id: execution_data.dig('data_source', 'id'))
+    end
+
+    def refined_or_updated_query?
+      intent_payload['base_sql'].to_s.strip.present? || intent_payload['query_id'].to_s.strip.present?
     end
 
     def base_saved_query

@@ -504,6 +504,142 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(false)
     end
 
+    it 'overrides finalize-without-tools for saved-query refinement phrasing and runs query.run' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User names and email addresses',
+        query: 'SELECT first_name, last_name, email, created_at FROM public.users',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: [
+          'I can refine it.',
+          'Do you want me to update the existing saved query',
+          'or save this as a new query?'
+        ].join(' '),
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = Chat::ContextSnapshot.new(
+        recent_query_state: {
+          'question' => saved_query.name,
+          'sql' => saved_query.query,
+          'data_source_id' => data_source.id,
+          'data_source_name' => data_source.display_name,
+          'saved_query_id' => saved_query.id,
+          'saved_query_name' => saved_query.name
+        },
+        query_references: [
+          {
+            'sql' => saved_query.query,
+            'data_source_id' => data_source.id,
+            'data_source_name' => data_source.display_name,
+            'saved_query_id' => saved_query.id,
+            'saved_query_name' => saved_query.name
+          }
+        ],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: "Thanks, could you refine that query actually so that it doesn't include created_at?",
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          context_snapshot:,
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.run')
+      expect(decision.tool_calls.first.arguments).to include(
+        'question' => "Thanks, could you refine that query actually so that it doesn't include created_at?"
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'overrides generic capability fallback for natural saved-query refinements and runs query.run' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Workspace count',
+        query: 'SELECT COUNT(*) AS workspace_count FROM public.workspaces',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: "I'm here to help with sqlbook workspace, data source, and query tasks, not as a general-purpose assistant.", # rubocop:disable Layout/LineLength
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = Chat::ContextSnapshot.new(
+        recent_query_state: {
+          'question' => saved_query.name,
+          'sql' => saved_query.query,
+          'data_source_id' => data_source.id,
+          'data_source_name' => data_source.display_name,
+          'saved_query_id' => saved_query.id,
+          'saved_query_name' => saved_query.name
+        },
+        query_references: [
+          {
+            'sql' => saved_query.query,
+            'data_source_id' => data_source.id,
+            'data_source_name' => data_source.display_name,
+            'saved_query_id' => saved_query.id,
+            'saved_query_name' => saved_query.name
+          }
+        ],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: 'Thanks, can you include the creation date as well?',
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          context_snapshot:,
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.run')
+      expect(decision.tool_calls.first.arguments).to include(
+        'question' => 'Thanks, can you include the creation date as well?'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
     it 'acknowledges a recent wrong-query deletion instead of falling back to query.list' do
       allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
       llm_payload = {
@@ -952,6 +1088,29 @@ RSpec.describe Chat::RuntimeService do
       )
 
       expect(rendered).to eq('friendly fallback')
+    end
+
+    it 'returns the app-authored fallback for forbidden results even when an API key is available' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      execution = Struct.new(:status, :data, :user_message).new(
+        'forbidden',
+        {},
+        "You can't change team member roles with your current workspace role. Please ask a Workspace owner."
+      )
+
+      rendered = described_class.new(
+        message: 'Make Tim a User',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).compose_tool_result_message(
+        tool_name: 'member.update_role',
+        tool_arguments: { email: 'tim@example.com', role: Member::Roles::USER },
+        execution:,
+        fallback_message: execution.user_message
+      )
+
+      expect(rendered).to eq(execution.user_message)
     end
 
     it 'preserves markdown line breaks from tool result rendering' do

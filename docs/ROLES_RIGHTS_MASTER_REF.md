@@ -289,6 +289,10 @@ UI should hide actions users cannot perform, but server remains source of truth.
   - title: `Action not allowed`
   - body: `Your workspace role does not allow this action.`
 - Deny behavior is implemented server-side in controller guards, independent of UI visibility.
+- Team-role outrank rules also apply in chat and assistant-led flows:
+  - an Admin cannot change another Admin's role
+  - those denials should explicitly say a Workspace owner is required
+  - deny copy should remain gender-neutral
 - Invitation accept redirect behavior:
   - all roles -> workspace home route (`/app/workspaces/:id`)
 - Workspace access fallback behavior:

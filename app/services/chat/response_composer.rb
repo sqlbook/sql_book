@@ -53,27 +53,35 @@ module Chat
 
     def response_candidates(execution:, action_type:)
       builder = STATUS_CANDIDATE_BUILDERS[execution.status]
-      return send(builder, action_type:) if builder == :forbidden_candidates
+      return send(builder, action_type:, execution:) if builder == :forbidden_candidates
       return send(builder, execution:) if builder
       return success_candidates(execution:, action_type:) if execution.status == 'executed'
 
       [execution.user_message.to_s]
     end
 
-    def forbidden_candidates(action_type:)
+    def forbidden_candidates(action_type:, execution:)
+      detail_candidates = forbidden_detail_candidates(execution:)
+      return detail_candidates if detail_candidates.present?
+
       action = translated_action(action_type:)
       allowed_roles = translated_allowed_roles(action_type:)
-
-      Array(I18n.t('app.workspaces.chat.responses.forbidden.variants')).map do |template|
-        I18n.t(
-          template,
-          default: template,
-          action:,
-          allowed_roles:
-        )
-      end
+      translated_forbidden_variants(action:, allowed_roles:)
     rescue I18n::MissingTranslationData
       [I18n.t('app.workspaces.chat.executor.forbidden')]
+    end
+
+    def forbidden_detail_candidates(execution:)
+      detail = execution.user_message.to_s.strip
+      return [] if detail.blank?
+
+      [detail]
+    end
+
+    def translated_forbidden_variants(action:, allowed_roles:)
+      Array(I18n.t('app.workspaces.chat.responses.forbidden.variants')).map do |template|
+        I18n.t(template, default: template, action:, allowed_roles:)
+      end
     end
 
     def validation_candidates(execution:)

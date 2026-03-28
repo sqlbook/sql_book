@@ -41,6 +41,7 @@ module App
 
         def update
           result = Queries::UpdateService.new(workspace:, actor: current_user, attributes: query_update_payload).call
+          reconcile_chat_query_cards!(result:) if result.success? && result.query.present?
           toast = query_update_toast(result:)
           flash[:toast] = toast if toast
 
@@ -248,6 +249,10 @@ module App
             title: I18n.t('toasts.workspaces.queries.already_saved.title'),
             body: I18n.t('toasts.workspaces.queries.already_saved.body', name: result.query.name)
           }
+        end
+
+        def reconcile_chat_query_cards!(result:)
+          Queries::ChatQueryCardReconciler.new(query: result.query).call
         end
       end # rubocop:enable Metrics/ClassLength
     end

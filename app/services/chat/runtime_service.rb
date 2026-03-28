@@ -109,6 +109,7 @@ module Chat
 
     def compose_tool_result_message(tool_name:, tool_arguments:, execution:, fallback_message: nil)
       fallback_message ||= execution.user_message
+      return fallback_message if execution.status != 'executed'
       return fallback_message if api_key.blank?
 
       rendered = render_tool_result_with_models(
@@ -417,6 +418,11 @@ module Chat
             'If the latest draft is a refinement of an existing saved query,',
             'prefer query.update or ask whether to update the existing query or save a new one.'
           ].join(' ')
+        ].join(' '),
+        [
+          'If the user explicitly asks to refine, adjust, or change the currently discussed saved query itself,',
+          'treat that as an in-place saved-query update by default.',
+          'Do not ask update-versus-new unless the requested change clearly turns it into a materially different query'
         ].join(' '),
         'If the user asks to rename a saved query, use query.rename.',
         'If the user asks to update a saved query to match the latest draft SQL, use query.update.',

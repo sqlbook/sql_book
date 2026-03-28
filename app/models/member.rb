@@ -114,9 +114,11 @@ class Member < ApplicationRecord
     workspace_record = Workspace.find_by(id: workspace_id)
     return unless workspace_record
 
-    workspace_users = workspace_record.members.includes(:user).map(&:user)
-
     RealtimeUpdatesService.refresh_workspace_members(workspace: workspace_record)
-    RealtimeUpdatesService.refresh_users_app(users: workspace_users + [user])
+    RealtimeUpdatesService.refresh_users_app(users: realtime_refresh_users)
+  end
+
+  def realtime_refresh_users
+    Array(user).compact
   end
 end

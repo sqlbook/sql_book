@@ -278,6 +278,11 @@ module Chat
                     'For query-library requests, prefer query.list.',
                     'For "save this query" follow-ups, prefer query.save and reuse the recent executed query context.',
                     'For updating a saved query to match a refined SQL draft, prefer query.update.',
+                    [
+                      'If the user explicitly asks to refine or change the current saved query itself,',
+                      'default to updating that query rather than asking update-versus-new',
+                      'unless the requested change clearly alters the query purpose.'
+                    ].join(' '),
                     'For renaming or deleting saved queries, prefer query.rename or query.delete.',
                     'For data questions, prefer query.run.',
                     'If multiple connected data sources or tables could answer, ask a clarifying question.'

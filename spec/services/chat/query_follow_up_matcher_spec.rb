@@ -19,6 +19,30 @@ RSpec.describe Chat::QueryFollowUpMatcher do
       ).to be(true)
     end
 
+    it 'treats explicit refine-the-query phrasing as a query follow-up' do
+      text = "Could you refine that query so that it doesn't include created_at?"
+
+      expect(
+        described_class.contextual_follow_up?(text:, recent_query_reference:)
+      ).to be(true)
+    end
+
+    it 'treats natural include-as-well phrasing as a query follow-up' do
+      text = 'Thanks, can you include the creation date as well?'
+
+      expect(
+        described_class.contextual_follow_up?(text:, recent_query_reference:)
+      ).to be(true)
+    end
+
+    it 'treats lets-focus-on phrasing as a query follow-up' do
+      text = "Oh interesting, then let's just focus on workspace name, and creation date"
+
+      expect(
+        described_class.contextual_follow_up?(text:, recent_query_reference:)
+      ).to be(true)
+    end
+
     it 'does not treat obvious non-query topic text as a query follow-up' do
       text = 'Can we remove that team member?'
 
