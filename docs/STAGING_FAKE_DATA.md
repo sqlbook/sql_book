@@ -38,5 +38,6 @@ This removes:
 
 ## Safety
 - These tasks only run in `staging` or `development`.
+- Render staging currently runs with `RAILS_ENV=production`, so the task also allows the staging deploy shape when `APP_HOST=staging.sqlbook.com`.
 - They do not modify existing real workspaces unless a real workspace was manually named with the same fake prefix.
 - Fake users are tagged via the `seed.sqlbook.test` email domain so cleanup can stay targeted.

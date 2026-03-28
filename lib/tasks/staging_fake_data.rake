@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-namespace :staging do
-  namespace :fake_data do
+namespace :staging do # rubocop:disable Metrics/BlockLength
+  namespace :fake_data do # rubocop:disable Metrics/BlockLength
     desc 'Seed fake workspaces and members for staging/dev chat testing'
     task seed_workspaces: :environment do
       abort_unless_supported_environment!
@@ -32,9 +32,13 @@ namespace :staging do
     end
 
     def abort_unless_supported_environment!
-      return if Rails.env.staging? || Rails.env.development?
+      return if Rails.env.development?
+      return if ENV.fetch('APP_HOST', '').casecmp('staging.sqlbook.com').zero?
 
-      abort 'This task is only intended for staging or development.'
+      abort [
+        'This task is only intended for staging or development',
+        '(including Render staging on APP_HOST=staging.sqlbook.com).'
+      ].join(' ')
     end
   end
 end
