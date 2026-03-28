@@ -186,6 +186,47 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(false)
     end
 
+    it 'turns explicit member role updates into member.update_role when model returns no tool' do
+      teammate = create(:user, first_name: 'Tim', last_name: 'Bananas', email: 'hello@sqlbook.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::USER,
+        status: Member::Status::ACCEPTED
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: '',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      decision = described_class.new(
+        message: 'Could you promote Tim Bananas to Admin?',
+        workspace:,
+        actor:,
+        tool_metadata:
+      ).call
+
+      expect(decision.tool_calls.size).to eq(1)
+      expect(decision.tool_calls.first.tool_name).to eq('member.update_role')
+      expect(decision.tool_calls.first.arguments).to include(
+        'email' => 'hello@sqlbook.com',
+        'full_name' => 'Tim Bananas',
+        'role' => Member::Roles::ADMIN
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
     it 'overrides a query.list misclassification for explicit saved-query rename requests' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
       saved_query = create(
@@ -410,6 +451,55 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.tool_calls.first.arguments).to include(
         'query_id' => saved_query.id,
         'query_name' => saved_query.name
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'overrides finalize-without-tools for unsaved query refinements and runs query.run' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: [
+          'I can help with that. Do you want me to update the saved query Users',
+          'or run a new one-off query?'
+        ].join(' '),
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = Chat::ContextSnapshot.new(
+        recent_query_state: {
+          'question' => 'List users',
+          'sql' => 'SELECT id, first_name, last_name, email, created_at FROM public.users',
+          'data_source_name' => 'Staging App DB',
+          'saved_query_id' => nil,
+          'saved_query_name' => nil
+        },
+        query_references: [],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: 'Can we remove the terms version column, pending_email, email_change_verification_token, and email_change_verification_sent_at columns?', # rubocop:disable Layout/LineLength
+        workspace:,
+        actor:,
+        tool_metadata:,
+        context: {
+          context_snapshot:,
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.run')
+      expect(decision.tool_calls.first.arguments).to include(
+        'question' => 'Can we remove the terms version column, pending_email, email_change_verification_token, and email_change_verification_sent_at columns?' # rubocop:disable Layout/LineLength
       )
       expect(decision.finalize_without_tools).to be(false)
     end

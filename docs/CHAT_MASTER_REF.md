@@ -254,7 +254,8 @@ High-risk writes (inline confirmation required):
 - `datasource.create`: `name`, `host`, `database_name`, `username`, `password`, `selected_tables`
 - `query.run`: `question`
 - Raw SQL messages beginning with `SELECT` or `WITH` should be treated as `query.run` immediately, even in threads that already contain saved-query or query-library context.
-- Successful `query.run` turns should render as a structured chat query card rather than plain markdown SQL/results:
+- Successful `query.run` turns should render as a structured chat query card rather than plain markdown SQL/results.
+- Successful `query.update` turns that include SQL updates should also render as structured chat query cards (with updated SQL/results), not only plain confirmation text:
   - the chat card shows `Query` and `Results` drawers
   - initial state is `Query` closed and `Results` open
   - unsaved query cards show `Save Query` and `Open in query editor`
@@ -283,6 +284,7 @@ High-risk writes (inline confirmation required):
   - unsaved drafts remain thread-only references
   - saved queries attach to those references via `saved_query_id`
   - refinements can point back to the saved query they are iterating on
+- Refinement target selection must use explicit linkage (`saved_query_id` / `refined_saved_query_id`) from thread-local references; do not infer a saved-query target from stale fallback state alone.
 - When the latest draft is an obvious refinement of the currently discussed saved query, `save that` should update the saved query in place.
 - When the latest draft has materially drifted from the current saved query, chat should ask whether to update+rename the existing saved query or save a new one.
 - Combined update requests such as `update the User count [2] query to this, and rename it to User Count by SA Status` should resolve to one `query.update` action with both SQL and name.
@@ -292,6 +294,7 @@ High-risk writes (inline confirmation required):
 ## Authorization and scope enforcement
 - Authorization is server-side only (`Chat::Policy` + `Chat::ActionExecutor`).
 - Role and outrank rules mirror workspace team-management permissions.
+- Member-role writes require outrank permissions; admins cannot update another admin's role, so those requests are owner-only.
 - `workspace.delete` is owner-only.
 - `member.invite` / `member.update_role` restrict target roles to editable non-owner roles.
 - `member.list` is visible only to workspace `OWNER` and `ADMIN` roles.

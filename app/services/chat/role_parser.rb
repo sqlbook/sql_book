@@ -2,6 +2,15 @@
 
 module Chat
   class RoleParser
+    ROLE_VALUE_PATTERN = 'admin|administrator|user|read[-\\s]?only|readonly'
+
+    EXPLICIT_TARGET_ROLE_REGEXES = [
+      /\b(?:promote|demote|change|update|switch)\b.*?\bto\b\s+
+        (?:a\s+|an\s+)?(?<role>#{ROLE_VALUE_PATTERN})\b/ix,
+      /\b(?:make|set|give)\b.*?\b(?<role>#{ROLE_VALUE_PATTERN})\b(?:\s+role)?\b/ix,
+      /\b(?<role>#{ROLE_VALUE_PATTERN})\b(?:\s+role)?\s+\b(?:instead of|rather than)\b/ix
+    ].freeze
+
     ROLE_INLINE_REFERENCE = /
       (?=\s+(?:called|named|with|whose|who|at|for)\b)
     /ix
@@ -17,6 +26,9 @@ module Chat
     class << self
       def parse(text:)
         lowered = text.to_s.downcase.strip
+        explicit_target = explicit_target_role(lowered)
+        return explicit_target if explicit_target
+
         return Member::Roles::ADMIN if admin_role?(lowered)
         return Member::Roles::READ_ONLY if lowered.match?(READ_ONLY_ROLE_REGEX)
         return Member::Roles::USER if user_role?(lowered)
@@ -25,6 +37,27 @@ module Chat
       end
 
       private
+
+      def explicit_target_role(lowered)
+        EXPLICIT_TARGET_ROLE_REGEXES.each do |regex|
+          match = lowered.match(regex)
+          next unless match
+
+          parsed = role_value_for(role_text: match[:role])
+          return parsed if parsed
+        end
+
+        nil
+      end
+
+      def role_value_for(role_text:)
+        normalized = role_text.to_s.strip
+        return Member::Roles::ADMIN if normalized.match?(/\A(admin|administrator)\z/i)
+        return Member::Roles::READ_ONLY if normalized.match?(/\A(read[-\s]?only|readonly)\z/i)
+        return Member::Roles::USER if normalized.match?(/\Auser\z/i)
+
+        nil
+      end
 
       def admin_role?(lowered)
         lowered.match?(admin_role_regex)

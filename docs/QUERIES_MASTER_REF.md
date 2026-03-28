@@ -56,7 +56,8 @@ Related references:
 - If an update would collide with another saved query fingerprint in the same datasource, it must fail validation rather than overwrite or duplicate the other query.
 
 ## Chat query cards
-- Successful `query.run` chat turns should render as a structured query card.
+- Successful `query.run` turns should render as a structured query card.
+- Successful `query.update` turns that include SQL updates should also render as a structured query card, using the updated SQL/result payload rather than stale prior draft state.
 - Current card sections:
   - `Query` drawer
   - `Results` drawer
@@ -75,6 +76,7 @@ Related references:
   - `Save Changes`
   - `Save as new`
   - `Open in query library`
+- Query cards produced from an in-place `query.update` of a saved query should render in saved-query mode for that updated query identity (not as an unsaved draft card).
 - Query adjustments should render as a new query card lower in the chat stream, not mutate prior result cards.
 
 ## Chat/editor/query-library interaction
@@ -84,6 +86,9 @@ Related references:
   - exact duplicate => no new row
   - obvious refinement of a saved query => update in place
   - material drift => ask whether to update+rename or save as new
+- Query-refinement targeting should be explicit:
+  - use linked reference fields (`saved_query_id` / `refined_saved_query_id`) when deciding update-vs-new behavior
+  - do not infer a saved-query refinement target from stale fallback state alone
 - Saved query links rendered in chat should open the saved query page in a new tab.
 - If a saved query is deleted later, old chat links may still exist in the transcript:
   - following one should redirect to query library home

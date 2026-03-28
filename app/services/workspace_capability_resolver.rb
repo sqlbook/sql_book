@@ -9,7 +9,7 @@ class WorkspaceCapabilityResolver
   end
 
   def role
-    @role ||= workspace.members.find_by(user_id: actor.id)&.role
+    @role ||= selected_member_record_for_actor&.role
   end
 
   def can_manage_workspace_settings?
@@ -69,5 +69,16 @@ class WorkspaceCapabilityResolver
       can_write_dashboards: can_write_dashboards?,
       can_destroy_dashboards: can_destroy_dashboards?
     }
+  end
+
+  private
+
+  def selected_member_record_for_actor
+    memberships = workspace.members.where(user_id: actor.id).to_a
+    return nil if memberships.empty?
+
+    accepted_memberships = memberships.select { |membership| membership.status == Member::Status::ACCEPTED }
+    preferred_memberships = accepted_memberships.presence || memberships
+    preferred_memberships.min_by { |membership| [membership.role.to_i, membership.id.to_i] }
   end
 end

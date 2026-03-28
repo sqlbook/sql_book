@@ -177,6 +177,19 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - chat grows into materially broader multi-step workflows that need a deeper summarization/compression strategy on top of the same server-owned contract
 
+## 2026-03-28
+### Decision: Treat chat query cards as execution-truth views of query state
+- Status: Accepted
+- Why:
+  - users should see chat query cards as the current state of the query object they are iterating on, not detached markdown summaries
+  - stale-card regressions appeared when update flows reused older draft/reference context instead of the latest update execution payload
+- Consequences:
+  - SQL-changing `query.update` executions should emit card-ready SQL/result payloads and render as query cards
+  - card state should reflect saved-query identity when update execution is tied to a saved query
+  - update-vs-new refinement targeting should rely on explicit query-reference linkage (`saved_query_id` / `refined_saved_query_id`), not stale fallback state
+- Revisit when:
+  - we split query-card rendering into a dedicated projection layer shared across chat and query editor surfaces
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

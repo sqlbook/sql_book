@@ -225,6 +225,7 @@ module Chat
 
     def render_non_action(assistant_content)
       assistant_content = normalized_assistant_content(assistant_content)
+      assistant_content = fallback_assistant_content if assistant_content.blank?
       assistant_message = create_assistant_message(
         content: assistant_content,
         status: ChatMessage::Statuses::COMPLETED
@@ -327,10 +328,11 @@ module Chat
       outcome
     end
 
-    # rubocop:disable Metrics/AbcSize
     def render_execution(intent:, execution:, assistant_content: nil, action_request: nil, query_card: nil)
-      assistant_content = normalized_assistant_content(
-        assistant_content || compose_execution_message(intent:, execution:)
+      assistant_content = execution_assistant_content(
+        intent:,
+        execution:,
+        assistant_content:
       )
       assistant_message = create_assistant_message(
         content: assistant_content,
@@ -357,7 +359,6 @@ module Chat
         redirect_path: execution.data[:redirect_path]
       )
     end
-    # rubocop:enable Metrics/AbcSize
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def confirm_pending_action
@@ -456,6 +457,18 @@ module Chat
       )
     end
 
+    def execution_assistant_content(intent:, execution:, assistant_content:)
+      candidate = normalized_assistant_content(
+        assistant_content || compose_execution_message(intent:, execution:)
+      )
+      return candidate if candidate.present?
+
+      fallback_candidate = normalized_assistant_content(
+        response_composer.compose(execution:, action_type: intent.action_type)
+      )
+      fallback_candidate.presence || fallback_assistant_content
+    end
+
     def create_assistant_message(content:, status:, metadata: {})
       chat_thread.chat_messages.create!(
         role: ChatMessage::Roles::ASSISTANT,
@@ -467,7 +480,7 @@ module Chat
 
     def query_card_payload(intent:, execution:)
       return {} unless execution.status == 'executed'
-      return {} unless intent.action_type == 'query.run'
+      return {} unless %w[query.run query.update].include?(intent.action_type)
 
       Chat::QueryCardBuilder.new(
         workspace:,
@@ -502,6 +515,10 @@ module Chat
       else
         value.to_s.strip
       end
+    end
+
+    def fallback_assistant_content
+      I18n.t('app.workspaces.chat.messages.runtime_retry')
     end
 
     def capability_question?

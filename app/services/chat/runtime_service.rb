@@ -30,6 +30,7 @@ module Chat
     /ix
     INVITE_CONTEXT_REGEX = /\b(invitation|invite|invitar|invitacion|correo|email)\b/i
     INVITE_INTENT_REGEX = /\b(invite|invitar|invitaci[oó]n)\b/i
+    MEMBER_ROLE_UPDATE_INTENT_REGEX = /\b(promote|demote|change|update|switch|set|make)\b/i
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
     QUERY_SAVE_INTENT_REGEX = /\bsave\b/i
     QUERY_RENAME_INTENT_REGEX = /\b(rename|retitle|change)\b/i
@@ -702,6 +703,7 @@ module Chat
         query_follow_up_decision ||
         recent_invited_member_role_answer_decision ||
         recent_member_context_answer_decision ||
+        member_role_update_follow_up_decision ||
         member_remove_follow_up_decision ||
         invite_follow_up_guard_decision
     end
@@ -935,8 +937,32 @@ module Chat
       )
     end
 
+    def member_role_update_follow_up_decision
+      return nil unless explicit_member_role_update_request?
+
+      member_reference = resolved_member_reference_payload
+      return nil if member_reference.empty?
+
+      role = parsed_role
+      return nil if role.blank?
+
+      Decision.new(
+        assistant_message: I18n.t('app.workspaces.chat.planner.member_role_update'),
+        tool_calls: [ToolCall.new(tool_name: 'member.update_role', arguments: member_reference.merge('role' => role))],
+        missing_information: [],
+        finalize_without_tools: false
+      )
+    end
+
     def no_tool_selected?(decision)
       decision.tool_calls.empty?
+    end
+
+    def explicit_member_role_update_request?
+      return false if message.match?(INVITE_INTENT_REGEX)
+      return false if parsed_role.blank?
+
+      message.match?(MEMBER_ROLE_UPDATE_INTENT_REGEX) || message.match?(/\brole\b/i)
     end
 
     def query_rename_follow_up?

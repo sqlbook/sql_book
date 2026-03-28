@@ -63,10 +63,9 @@ module Chat
     def target_query_for(draft_reference:)
       explicit_target_id = draft_reference['refined_saved_query_id'].presence ||
                            draft_reference['saved_query_id'].presence
-      return query_by_id(explicit_target_id) if explicit_target_id.present?
+      return nil if explicit_target_id.blank?
 
-      recent_saved_reference = context_snapshot&.recent_saved_query_reference.to_h.deep_stringify_keys
-      query_by_id(recent_saved_reference['saved_query_id'])
+      query_by_id(explicit_target_id)
     end
 
     def query_by_id(query_id)

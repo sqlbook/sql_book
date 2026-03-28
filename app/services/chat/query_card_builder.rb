@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Chat
-  class QueryCardBuilder
+  class QueryCardBuilder # rubocop:disable Metrics/ClassLength
     def initialize(workspace:, execution_data:, intent_payload:)
       @workspace = workspace
       @execution_data = execution_data.to_h.deep_stringify_keys
@@ -59,6 +59,17 @@ module Chat
       @base_saved_query ||= find_base_saved_query
     end
 
+    def saved_query
+      @saved_query ||= query_payload_from_execution_data
+    end
+
+    def card_state
+      return 'saved' if saved_query.present?
+      return 'refinement' if base_saved_query.present?
+
+      'unsaved'
+    end
+
     def suggested_name(data_source:)
       Queries::NameGenerator.generate(
         question: question,
@@ -96,13 +107,14 @@ module Chat
 
     def base_payload(data_source:)
       {
-        'state' => base_saved_query.present? ? 'refinement' : 'unsaved',
+        'state' => card_state,
         'question' => question,
         'sql' => sql,
         'row_count' => row_count,
         'columns' => columns,
         'rows' => rows,
         'suggested_name' => suggested_name(data_source:),
+        'saved_query' => saved_query,
         'data_source' => serialized_data_source(data_source),
         'base_saved_query' => serialized_query(base_saved_query)
       }
@@ -110,6 +122,19 @@ module Chat
 
     def schema_payload(data_source:)
       QueryCardSchemaBuilder.new(data_source:).call
+    end
+
+    def query_payload_from_execution_data
+      payload = execution_data['query'].to_h.deep_stringify_keys
+      return if payload.blank? || payload['id'].blank?
+
+      {
+        'id' => payload['id'],
+        'name' => payload['name'],
+        'data_source_id' => payload.dig('data_source', 'id') || payload['data_source_id'],
+        'data_source_name' => payload.dig('data_source', 'name') || payload['data_source_name'],
+        'sql' => payload['sql']
+      }.compact
     end
   end
 end

@@ -20,7 +20,7 @@ module Chat
     def preflight(action_type:, payload:)
       normalized_payload = payload.to_h
       if scope_mismatch?(payload: normalized_payload)
-        return forbidden_result(action_type:, reason_code: 'forbidden_scope')
+        return forbidden_result(action_type:, reason_code: 'forbidden_scope', payload: normalized_payload)
       end
 
       decision = policy.authorize(action_type:, payload: normalized_payload)
@@ -37,7 +37,7 @@ module Chat
       execution = registry.execute(name: action_type, arguments: normalized_payload)
       map_tooling_result(execution)
     rescue Tooling::UnknownToolError
-      forbidden_result(action_type:, reason_code: 'forbidden_action')
+      forbidden_result(action_type:, reason_code: 'forbidden_action', payload: normalized_payload)
     rescue Tooling::ValidationError => e
       validation_error_result(message: e.message, code: e.code)
     rescue ActiveRecord::RecordInvalid => e
@@ -54,7 +54,7 @@ module Chat
     def denied_result(action_type:, payload:, reason_code:)
       return validation_result(action_type:, payload:) if reason_code == 'validation_error'
 
-      forbidden_result(action_type:, reason_code:)
+      forbidden_result(action_type:, reason_code:, payload:)
     end
 
     def policy
@@ -143,26 +143,47 @@ module Chat
       Chat::Policy::EDITABLE_ROLES.include?(role)
     end
 
-    def forbidden_result(action_type:, reason_code:)
+    def forbidden_result(action_type:, reason_code:, payload:)
       Result.new(
         status: 'forbidden',
-        user_message: forbidden_message(action_type:, reason_code:),
+        user_message: forbidden_message(action_type:, reason_code:, payload:),
         data: {},
         error_code: reason_code
       )
     end
 
-    def forbidden_message(action_type:, reason_code:)
+    def forbidden_message(action_type:, reason_code:, payload:)
       return I18n.t('app.workspaces.chat.executor.forbidden') if action_type.blank?
       return I18n.t('app.workspaces.chat.executor.forbidden') if reason_code == 'forbidden_action'
 
-      I18n.t(
-        'app.workspaces.chat.executor.forbidden_with_allowed_roles',
-        action: I18n.t("app.workspaces.chat.executor.forbidden_actions.#{translation_action_key(action_type)}"),
-        allowed_roles: I18n.t("app.workspaces.chat.executor.allowed_roles.#{allowed_roles_key(action_type)}")
+      forbidden_with_allowed_roles_message(
+        action_type:,
+        allowed_roles_key: target_specific_allowed_roles_key(action_type:, payload:) || allowed_roles_key(action_type)
       )
     rescue I18n::MissingTranslationData
       I18n.t('app.workspaces.chat.executor.forbidden')
+    end
+
+    def forbidden_with_allowed_roles_message(action_type:, allowed_roles_key:)
+      I18n.t(
+        'app.workspaces.chat.executor.forbidden_with_allowed_roles',
+        action: I18n.t("app.workspaces.chat.executor.forbidden_actions.#{translation_action_key(action_type)}"),
+        allowed_roles: I18n.t("app.workspaces.chat.executor.allowed_roles.#{allowed_roles_key}")
+      )
+    end
+
+    def target_specific_allowed_roles_key(action_type:, payload:)
+      return nil unless action_type == 'member.update_role'
+      return nil unless actor_workspace_role == Member::Roles::ADMIN
+
+      target_member = target_member(payload:)
+      return nil unless target_member&.role == Member::Roles::ADMIN
+
+      'owner'
+    end
+
+    def actor_workspace_role
+      @actor_workspace_role ||= WorkspaceCapabilityResolver.new(workspace:, actor:).role
     end
 
     def translation_action_key(action_type)

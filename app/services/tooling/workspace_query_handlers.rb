@@ -81,13 +81,14 @@ module Tooling
       end
 
       query = result.query
+      query_run_data = query_result_data_for_update(query:, arguments:)
       Result.new(
         status: 'executed',
         message: query_update_message(result:),
         data: {
           'query' => serialize_query(query:),
           'update_outcome' => result.update_outcome
-        },
+        }.merge(query_run_data),
         error_code: nil
       )
     end
@@ -206,6 +207,44 @@ module Tooling
         'proposed_name' => result.proposed_name,
         'conflicting_query' => serialize_query(query: result.conflicting_query)
       }.compact
+    end
+
+    def query_result_data_for_update(query:, arguments:)
+      return {} unless sql_update_requested?(arguments:)
+
+      query_result = execute_query_update_result(query:)
+      return {} unless query_result
+
+      serialize_query_result(query:, query_result:)
+    end
+
+    def sql_update_requested?(arguments:)
+      arguments.to_h.deep_stringify_keys['sql'].to_s.strip.present?
+    end
+
+    def execute_query_update_result(query:)
+      query.data_source.connector.execute_readonly(sql: query.query)
+    rescue DataSources::Connectors::BaseConnector::QueryError => e
+      log_update_query_result_failure(query:, error: e)
+      nil
+    end
+
+    def serialize_query_result(query:, query_result:)
+      {
+        'question' => query.name,
+        'sql' => query.query,
+        'data_source' => serialize_data_source(query:),
+        'columns' => query_result.columns,
+        'rows' => query_result.rows,
+        'row_count' => query_result.rows.length
+      }
+    end
+
+    def log_update_query_result_failure(query:, error:)
+      Rails.logger.warn(
+        "WorkspaceQueryHandlers#update result query failed for Query##{query.id}: " \
+        "#{error.class} #{error.message}"
+      )
     end
   end
 end

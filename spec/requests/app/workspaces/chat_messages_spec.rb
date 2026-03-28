@@ -61,6 +61,27 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(payload['status']).to eq('ok')
     end
 
+    it 'falls back to a non-empty assistant message when runtime returns blank no-tool output' do
+      allow(Chat::RuntimeService).to receive(:new).and_return(
+        instance_double(
+          Chat::RuntimeService,
+          call: Chat::RuntimeService::Decision.new(
+            assistant_message: '',
+            tool_calls: [],
+            missing_information: [],
+            finalize_without_tools: true
+          )
+        )
+      )
+
+      post app_workspace_chat_messages_path(workspace), params: { content: 'Hello chat' }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('ok')
+      expect(payload.dig('messages', -1, 'content')).to eq(I18n.t('app.workspaces.chat.messages.runtime_retry'))
+    end
+
     it 'returns member list details instead of count-only output' do
       teammate_user = create(:user, first_name: 'Tess', last_name: 'Member', email: 'tess@example.com')
       create(
@@ -2502,6 +2523,29 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(promoted_member.role).to eq(Member::Roles::ADMIN)
     end
 
+    it 'auto-executes owner demotion phrasing that includes an old role reference' do
+      teammate = create(:user, first_name: 'Tim', last_name: 'Bananas', email: 'tim@example.com')
+      create(
+        :member,
+        workspace:,
+        user: teammate,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(workspace),
+           params: { content: 'Could you make Tim Bananas a User role instead of Admin please?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      payload = response.parsed_body
+      expect(payload['status']).to eq('executed')
+      expect(payload.dig('messages', -1, 'content')).to include('Tim Bananas')
+      expect(payload.dig('messages', -1, 'content')).to include('User')
+      updated_member = workspace.members.joins(:user).find_by(users: { email: 'tim@example.com' })
+      expect(updated_member.role).to eq(Member::Roles::USER)
+    end
+
     it 'returns a deterministic capability summary for meta capability questions' do
       post app_workspace_chat_messages_path(workspace),
            params: { content: 'What can you do for me?' },
@@ -2739,6 +2783,36 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       message = response.parsed_body.dig('messages', -1, 'content')
       expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
       expect(message).to include('remove')
+    end
+
+    it 'uses owner-only guidance when an admin tries to change another admin role' do
+      owner = create(:user)
+      restricted_workspace = create(:workspace_with_owner, owner:)
+      create(
+        :member,
+        workspace: restricted_workspace,
+        user:,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+      teammate = create(:user, first_name: 'Tim', last_name: 'Bananas', email: 'tim@example.com')
+      create(
+        :member,
+        workspace: restricted_workspace,
+        user: teammate,
+        role: Member::Roles::ADMIN,
+        status: Member::Status::ACCEPTED
+      )
+
+      post app_workspace_chat_messages_path(restricted_workspace),
+           params: { content: 'Could you make Tim Bananas a User role instead of Admin please?' },
+           as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('forbidden')
+      message = response.parsed_body.dig('messages', -1, 'content')
+      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.owner'))
+      expect(message).not_to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
     end
 
     it 'rejects member list requests for user-role members with allowed-role guidance' do

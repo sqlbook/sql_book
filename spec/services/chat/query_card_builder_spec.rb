@@ -48,5 +48,44 @@ RSpec.describe Chat::QueryCardBuilder do
         )
       )
     end
+
+    it 'marks query.update cards as saved when execution data includes a saved query payload' do
+      workspace = create(:workspace_with_owner)
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'User names and email addresses',
+        query: 'SELECT id, first_name, last_name, email FROM public.users LIMIT 10;'
+      )
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:list_tables)
+        .and_return([])
+
+      payload = described_class.new(
+        workspace:,
+        execution_data: {
+          'question' => query.name,
+          'sql' => query.query,
+          'row_count' => 1,
+          'columns' => %w[id first_name last_name email],
+          'rows' => [[1, 'Bob', 'Smith', 'hello@sitelabs.ai']],
+          'data_source' => { 'id' => data_source.id, 'name' => data_source.display_name },
+          'query' => {
+            'id' => query.id,
+            'name' => query.name,
+            'sql' => query.query,
+            'data_source' => { 'id' => data_source.id, 'name' => data_source.display_name }
+          }
+        },
+        intent_payload: { 'query_id' => query.id }
+      ).call
+
+      expect(payload['state']).to eq('saved')
+      expect(payload.dig('saved_query', 'id')).to eq(query.id)
+      expect(payload.dig('saved_query', 'name')).to eq(query.name)
+    end
   end
 end
