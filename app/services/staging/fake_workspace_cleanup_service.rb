@@ -13,27 +13,36 @@ module Staging
     end
 
     def call
-      deleted_workspaces = []
-      deleted_users = []
-
-      ActiveRecord::Base.transaction do
-        seeded_workspaces.find_each do |workspace|
-          deleted_workspaces << workspace.name
-          workspace.destroy!
-        end
-
-        seeded_users.find_each do |user|
-          deleted_users << user.email
-          user.destroy!
-        end
-      end
-
-      Result.new(deleted_workspaces:, deleted_users:)
+      Result.new(
+        deleted_workspaces: destroy_seeded_workspaces,
+        deleted_users: destroy_seeded_users
+      )
     end
 
     private
 
     attr_reader :prefix, :fake_email_domain
+
+    def destroy_seeded_workspaces
+      destroy_records(seeded_workspaces, &:name)
+    end
+
+    def destroy_seeded_users
+      destroy_records(seeded_users, &:email)
+    end
+
+    def destroy_records(scope)
+      deleted_values = []
+
+      ActiveRecord::Base.transaction do
+        scope.find_each do |record|
+          deleted_values << yield(record)
+          record.destroy!
+        end
+      end
+
+      deleted_values
+    end
 
     def seeded_workspaces
       Workspace.where('name LIKE ?', "#{prefix}%")

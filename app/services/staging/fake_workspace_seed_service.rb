@@ -1,69 +1,15 @@
 # frozen_string_literal: true
 
 module Staging
-  class FakeWorkspaceSeedService
+  class FakeWorkspaceSeedService # rubocop:disable Metrics/ClassLength
     DEFAULT_COUNT = 12
-    DEFAULT_PREFIX = 'Seed Workspace'.freeze
-    DEFAULT_FAKE_EMAIL_DOMAIN = 'seed.sqlbook.test'.freeze
-    CHRIS_EMAIL = 'chris.pattison@protonmail.com'.freeze
-    CHRIS_ROLE_CYCLE = [
-      Member::Roles::ADMIN,
-      Member::Roles::USER,
-      Member::Roles::READ_ONLY
-    ].freeze
-    TEAM_SIZE_PATTERN = [2, 3, 4, 5].freeze
-    FIRST_NAMES = %w[
-      Alice
-      Sofia
-      Noah
-      Emma
-      Lucas
-      Mila
-      Ethan
-      Chloe
-      Oscar
-      Nina
-      Leo
-      Ruby
-      Jack
-      Maya
-      Eli
-      Zoe
-      Finn
-      Iris
-      Max
-      Layla
-      Sam
-      Ava
-      Theo
-      Hazel
-    ].freeze
-    LAST_NAMES = %w[
-      Carter
-      Bennett
-      Hughes
-      Foster
-      Walsh
-      Palmer
-      Reid
-      Sutton
-      Griffin
-      Brooks
-      Harper
-      Ellis
-      Turner
-      Morris
-      Bailey
-      Dixon
-      Kennedy
-      Porter
-      Shaw
-      Walters
-      Dawson
-      Perry
-      Spencer
-      Flynn
-    ].freeze
+    DEFAULT_PREFIX = FakeWorkspaceSeedCatalog::DEFAULT_PREFIX
+    DEFAULT_FAKE_EMAIL_DOMAIN = FakeWorkspaceSeedCatalog::DEFAULT_FAKE_EMAIL_DOMAIN
+    CHRIS_EMAIL = FakeWorkspaceSeedCatalog::CHRIS_EMAIL
+    CHRIS_ROLE_CYCLE = FakeWorkspaceSeedCatalog::CHRIS_ROLE_CYCLE
+    TEAM_SIZE_PATTERN = FakeWorkspaceSeedCatalog::TEAM_SIZE_PATTERN
+    FIRST_NAMES = FakeWorkspaceSeedCatalog::FIRST_NAMES
+    LAST_NAMES = FakeWorkspaceSeedCatalog::LAST_NAMES
 
     Result = Struct.new(:created_workspaces, :created_users, :attached_memberships, keyword_init: true)
 
@@ -78,70 +24,34 @@ module Staging
       @fake_email_domain = fake_email_domain.to_s
       @chris_email = chris_email.to_s.downcase
       @name_cursor = 0
+      @created_workspaces = []
+      @created_users = []
+      @attached_memberships = []
     end
 
     def call
+      validate_arguments!
+      chris = User.find_by!(email: chris_email)
+
+      ActiveRecord::Base.transaction do
+        count.times { |index| seed_workspace!(index:, chris:) }
+      end
+
+      result
+    end
+
+    private
+
+    attr_reader :count, :prefix, :fake_email_domain, :chris_email,
+                :created_workspaces, :created_users, :attached_memberships
+
+    def validate_arguments!
       raise ArgumentError, 'count must be positive' if count <= 0
       raise ArgumentError, 'prefix must be present' if prefix.blank?
       raise ArgumentError, 'fake_email_domain must be present' if fake_email_domain.blank?
+    end
 
-      chris = User.find_by!(email: chris_email)
-      created_workspaces = []
-      created_users = []
-      attached_memberships = []
-
-      ActiveRecord::Base.transaction do
-        count.times do |index|
-          workspace_number = index + 1
-          workspace_name = format('%<prefix>s %<number>02d', prefix:, number: workspace_number)
-          workspace_created_at = workspace_timestamp(index:)
-          workspace = Workspace.find_or_initialize_by(name: workspace_name)
-          workspace.assign_attributes(created_at: workspace_created_at, updated_at: workspace_created_at)
-          workspace.save! if workspace.new_record? || workspace.changed?
-          created_workspaces << workspace if workspace.previous_changes.key?('id')
-
-          owner = seed_user_for!(
-            workspace_number:,
-            slot: 0,
-            role: Member::Roles::OWNER,
-            created_at: workspace_created_at
-          )
-          created_users << owner if owner.previous_changes.key?('id')
-          attached_memberships << ensure_membership!(
-            workspace:,
-            user: owner,
-            role: Member::Roles::OWNER,
-            created_at: workspace_created_at
-          )
-
-          chris_role = CHRIS_ROLE_CYCLE[index % CHRIS_ROLE_CYCLE.length]
-          attached_memberships << ensure_membership!(
-            workspace:,
-            user: chris,
-            role: chris_role,
-            created_at: workspace_created_at + 5.minutes
-          )
-
-          extra_member_count(index:).times do |slot_offset|
-            slot = slot_offset + 1
-            member_created_at = workspace_created_at + (slot + 1).hours
-            teammate = seed_user_for!(
-              workspace_number:,
-              slot:,
-              role: slot.even? ? Member::Roles::ADMIN : Member::Roles::USER,
-              created_at: member_created_at
-            )
-            created_users << teammate if teammate.previous_changes.key?('id')
-            attached_memberships << ensure_membership!(
-              workspace:,
-              user: teammate,
-              role: teammate_role_for(slot:),
-              created_at: member_created_at
-            )
-          end
-        end
-      end
-
+    def result
       Result.new(
         created_workspaces: created_workspaces.uniq,
         created_users: created_users.uniq,
@@ -149,16 +59,85 @@ module Staging
       )
     end
 
-    private
+    def seed_workspace!(index:, chris:)
+      workspace_number = index + 1
+      workspace_created_at = workspace_timestamp(index:)
+      workspace = ensure_workspace!(workspace_number:, created_at: workspace_created_at)
 
-    attr_reader :count, :prefix, :fake_email_domain, :chris_email
+      attach_owner!(workspace:, workspace_number:, created_at: workspace_created_at)
+      attach_chris!(workspace:, chris:, index:, created_at: workspace_created_at)
+      attach_teammates!(workspace:, workspace_number:, index:, created_at: workspace_created_at)
+    end
+
+    def ensure_workspace!(workspace_number:, created_at:)
+      workspace_name = format('%<prefix>s %<number>02d', prefix:, number: workspace_number)
+      workspace = Workspace.find_or_initialize_by(name: workspace_name)
+      workspace.assign_attributes(created_at:, updated_at: created_at)
+      workspace.save! if workspace.new_record? || workspace.changed?
+      created_workspaces << workspace if workspace.previous_changes.key?('id')
+      workspace
+    end
+
+    def attach_owner!(workspace:, workspace_number:, created_at:)
+      owner = seed_user_for!(
+        workspace_number:,
+        slot: 0,
+        role: Member::Roles::OWNER,
+        created_at:
+      )
+      record_created_user(owner)
+      attached_memberships << ensure_membership!(
+        workspace:,
+        user: owner,
+        role: Member::Roles::OWNER,
+        created_at:
+      )
+    end
+
+    def attach_chris!(workspace:, chris:, index:, created_at:)
+      chris_role = CHRIS_ROLE_CYCLE[index % CHRIS_ROLE_CYCLE.length]
+      attached_memberships << ensure_membership!(
+        workspace:,
+        user: chris,
+        role: chris_role,
+        created_at: created_at + 5.minutes
+      )
+    end
+
+    def attach_teammates!(workspace:, workspace_number:, index:, created_at:)
+      extra_member_count(index:).times do |slot_offset|
+        slot = slot_offset + 1
+        member_created_at = created_at + (slot + 1).hours
+        teammate = seed_user_for!(
+          workspace_number:,
+          slot:,
+          role: seed_role_for(slot:),
+          created_at: member_created_at
+        )
+        record_created_user(teammate)
+        attached_memberships << ensure_membership!(
+          workspace:,
+          user: teammate,
+          role: teammate_role_for(slot:),
+          created_at: member_created_at
+        )
+      end
+    end
+
+    def record_created_user(user)
+      created_users << user if user.previous_changes.key?('id')
+    end
 
     def extra_member_count(index:)
       TEAM_SIZE_PATTERN[index % TEAM_SIZE_PATTERN.length] - 2
     end
 
+    def seed_role_for(slot:)
+      slot.even? ? Member::Roles::ADMIN : Member::Roles::USER
+    end
+
     def teammate_role_for(slot:)
-      slot % 3 == 0 ? Member::Roles::READ_ONLY : Member::Roles::USER
+      (slot % 3).zero? ? Member::Roles::READ_ONLY : Member::Roles::USER
     end
 
     def workspace_timestamp(index:)
