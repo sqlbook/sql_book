@@ -898,7 +898,7 @@ module Chat
     end
 
     def rename_prompt_query_name(payload:)
-      payload['query_name'].presence || I18n.t('app.workspaces.chat.query_library.this_query')
+      payload['query_name'].presence || 'this query'
     end
 
     def rename_follow_up_context_active?

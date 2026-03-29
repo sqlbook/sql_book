@@ -1,0 +1,1 @@
+[{"severity":"convention","location":{"begin_pos":352,"end_pos":436},"message":"Metrics/ParameterLists: Avoid parameter lists longer than 5 parameters. [6/5]","cop_name":"Metrics/ParameterLists","status":"unsupported"}]

@@ -444,11 +444,6 @@ module Chat
     end
 
     def compose_execution_message(intent:, execution:)
-      rich_read_actions = %w[member.list datasource.list query.list query.run]
-      if execution.status == 'executed' && intent.read? && intent.action_type.in?(rich_read_actions)
-        return execution.user_message
-      end
-
       runtime_service.compose_tool_result_message(
         tool_name: intent.action_type,
         tool_arguments: intent.payload,
@@ -573,14 +568,14 @@ module Chat
     def restricted_capability_message
       I18n.t(
         'app.workspaces.chat.messages.capability_summary_restricted',
-        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
+        allowed_roles: allowed_roles_phrase(%w[User Admin Owner])
       )
     end
 
     def restricted_scope_message
       I18n.t(
         'app.workspaces.chat.messages.scope_limited_restricted',
-        allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
+        allowed_roles: allowed_roles_phrase(%w[User Admin Owner])
       )
     end
 
@@ -732,9 +727,16 @@ module Chat
 
       I18n.t(
         'app.workspaces.chat.query.ask_scope_read_only',
-        member_allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'),
-        query_allowed_roles: I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
+        member_allowed_roles: allowed_roles_phrase(%w[Admin Owner]),
+        query_allowed_roles: allowed_roles_phrase(%w[User Admin Owner])
       )
+    end
+
+    def allowed_roles_phrase(labels)
+      labels = Array(labels).map { |label| label.to_s == 'Owner' ? 'Workspace owner' : label.to_s }
+      return labels.first.to_s if labels.size <= 1
+
+      "#{labels[0...-1].join(', ')}, or #{labels.last}"
     end
 
     def can_write_queries?
@@ -1230,11 +1232,15 @@ module Chat
 
     def query_save_name_conflict_message(execution:)
       data = execution.data.to_h.deep_stringify_keys
-      I18n.t(
-        'app.workspaces.chat.query_library.generated_name_conflict',
-        proposed_name: data['proposed_name'],
-        existing_name: data.dig('conflicting_query', 'name')
-      )
+      proposed_name = data['proposed_name']
+      existing_name = data.dig('conflicting_query', 'name')
+      [
+        [
+          "I can save this as \"#{proposed_name}\",",
+          "but a different saved query already uses that name (#{existing_name})."
+        ].join(' '),
+        'Do you want to keep that name or choose another?'
+      ].join(' ')
     end
 
     def clear_query_save_name_conflict_state_for(intent:, execution:)

@@ -56,6 +56,10 @@ es:
         dashboards: Ver paneles del espacio de trabajo %{workspace_name}
         settings: Ver configuración del espacio de trabajo %{workspace_name}
     workspaces:
+      index:
+        title: Espacios de trabajo
+        search_placeholder: Buscar...
+        search_empty: Ningún espacio de trabajo coincide con esa búsqueda.
       queries:
         index:
           title: Biblioteca de consultas
@@ -158,18 +162,6 @@ es:
             query_delete: Eliminar una consulta guardada
             workspace_update_name: Cambiar el nombre del espacio
             workspace_delete: Eliminar el espacio
-        datasource:
-          data_sources_none: Aún no hay fuentes de datos conectadas.
-          data_sources_found: "Se encontraron %{count} fuente(s) de datos."
-          data_source_item: "- **%{name}** — %{source_type} — %{status} — %{tables_count} tabla(s) seleccionada(s)"
-          data_source_tables_preview: "  Tablas seleccionadas: %{tables}"
-          connection_validated: Conexión validada correctamente. Se encontraron %{table_count} tabla(s).
-          data_source_created: Se creó la fuente de datos PostgreSQL %{name}.
-          selected_tables_required: Selecciona al menos una tabla antes de crear la fuente de datos.
-          selected_tables_limit: Puedes seleccionar hasta %{count} tablas.
-          invalid_selected_tables: Una o más tablas seleccionadas no están disponibles en la base de datos conectada.
-          connection_failed: No se pudo validar la conexión PostgreSQL.
-          validation_error: La configuración de la fuente de datos no es válida.
         datasource_setup:
           ask_name: Claro. ¿Cómo quieres llamar a esta fuente de datos PostgreSQL?
           only_postgres: Ahora mismo puedo ayudarte a añadir fuentes de datos PostgreSQL en el chat, pero no %{source_type}. Si quieres, puedo ayudarte a conectar una fuente PostgreSQL.
@@ -182,7 +174,6 @@ es:
             username: usuario
             password: contraseña
         query:
-          question_required: Dime qué te gustaría consultar.
           ask_scope: |-
             ¿Te refieres a los miembros del equipo del espacio o a los registros de usuario en tu base de datos conectada?
           ask_scope_read_only: |-
@@ -191,123 +182,10 @@ es:
             Con tu rol actual no puedo abrir la lista de miembros ni ejecutar la consulta de base de datos aquí.
 
             %{member_allowed_roles} puede abrir la lista de miembros, y %{query_allowed_roles} puede ejecutar la consulta de base de datos.
-          no_data_sources: No hay fuentes de datos conectadas en este espacio todavía, así que no puedo ejecutar esa consulta aquí.
-          data_source_not_found: No pude encontrar esa fuente de datos en este espacio.
-          ask_data_source: "Encontré más de una posible fuente de datos para eso. ¿Cuál debo usar: %{data_sources}?"
-          ask_table: "Encontré más de una posible tabla para eso. ¿Cuál debo usar: %{tables}?"
-          schema_guidance: "Basándome en el esquema, la(s) tabla(s) más probable(s) para eso son %{tables}. ¿Cuál debo usar?"
           ask_for_table_or_metric: Puedo consultar una fuente de datos conectada aquí, pero todavía necesito un poco más de detalle sobre la tabla o la métrica que quieres.
           result_intro: "Esto es lo que encontré en %{data_source} (%{row_count} fila(s)):"
           result_intro_refined: "Resultados actualizados (%{row_count} fila(s)):"
           no_rows: La consulta se ejecutó correctamente, pero no devolvió filas.
-          query_failed: No pude ejecutar esa consulta contra la fuente de datos seleccionada.
-        query_library:
-          none: Todavía no hay consultas guardadas en este espacio.
-          found:
-            one: "Aquí tienes %{count} consulta guardada:"
-            other: "Aquí tienes %{count} consultas guardadas:"
-          item: "- **%{name}** — Fuente de datos: %{data_source}"
-          saved: Guardé esa consulta en la biblioteca como "%{name}".
-          already_saved: Esa misma consulta ya está guardada en la biblioteca como "%{name}".
-          generated_name_conflict: Puedo guardarla como "%{proposed_name}", pero ya hay otra consulta guardada con ese nombre en la biblioteca. ¿Quieres conservar ese nombre o prefieres elegir otro?
-          renamed: Renombré esa consulta guardada como "%{name}".
-          updated: Actualicé esa consulta guardada y ahora se llama "%{name}".
-          updated_unchanged: Esa consulta guardada ya estaba al día como "%{name}".
-          deleted: Eliminé la consulta guardada "%{name}".
-          sql_required: Primero ejecuta una consulta aquí o indícame el SQL y la fuente de datos para que pueda guardarla.
-          rename_query_required: Dime qué consulta guardada quieres renombrar.
-          rename_name_required: Dime el nuevo nombre que quieres para esa consulta guardada.
-          update_query_required: Dime qué consulta guardada quieres actualizar.
-          duplicate_saved_query: Esa misma consulta guardada ya existe como "%{name}".
-          delete_query_required: Dime qué consulta guardada quieres eliminar.
-          query_not_found: No pude encontrar esa consulta guardada en este espacio.
-          this_query: esta consulta
-        responses:
-          confirmation:
-            variants:
-              - "Puedo %{action} en cuanto lo confirmes."
-              - "Confirma si quieres que %{action}."
-              - "Si quieres que %{action}, confírmalo y me encargo."
-            query_delete_named: 'Confirma si quieres que elimine la consulta guardada "%{name}".'
-          forbidden:
-            variants:
-              - "No puedes %{action} con tu rol actual en este espacio. Pídeselo a %{allowed_roles}."
-              - "Esa acción no está disponible con tu rol actual en este espacio. %{allowed_roles} puede ayudarte."
-              - "No puedo hacerlo desde tu rol actual en este espacio. %{allowed_roles} puede encargarse."
-          validation:
-            variants:
-              - "%{detail}"
-              - "Puedo ayudarte con eso, pero todavía me falta un detalle: %{detail}"
-              - "Antes de poder hacerlo, necesito esto de tu parte: %{detail}"
-          execution_error:
-            variants:
-              - "%{detail}"
-              - "Me encontré con un problema al intentar hacerlo: %{detail}"
-              - "Algo salió mal de mi lado mientras lo intentaba: %{detail}"
-          success:
-            workspace_update_name:
-              variants:
-                - "El espacio ahora se llama %{name}."
-                - "Hecho. Cambié el nombre del espacio a %{name}."
-                - "Ya actualicé el nombre del espacio a %{name}."
-            workspace_delete_success:
-              variants:
-                - "El espacio se ha eliminado y ya se ha avisado a todas las personas afectadas."
-                - "Hecho. El espacio se eliminó y se enviaron las notificaciones."
-            workspace_delete_partial:
-              variants:
-                - "El espacio se ha eliminado, pero no pude avisar por correo a algunas personas."
-                - "El espacio ya no existe, aunque algunas notificaciones por correo no se enviaron."
-            member_invite:
-              variants:
-                - "He enviado una invitación a %{email} con el rol %{role}."
-                - "Invitación enviada a %{email} como %{role}."
-                - "Hecho. %{email} ha sido invitado como %{role}."
-            member_resend_invite:
-              variants:
-                - "He enviado una nueva invitación a %{email}."
-                - "Hecho. Reenvié la invitación a %{email}."
-                - "Ya va de camino una invitación nueva para %{email}."
-            member_update_role:
-              variants:
-                - "%{name} ahora tiene el rol %{role}."
-                - "Actualicé el rol de %{name} a %{role}."
-                - "Hecho. El rol de %{name} ahora es %{role}."
-            member_remove:
-              variants:
-                - "%{name} ha sido eliminado de este espacio."
-                - "Eliminé a %{name} del espacio."
-                - "Hecho. %{name} ya no forma parte de este espacio."
-            query_save:
-              variants:
-                - "Guardé esa consulta en la biblioteca como \"%{name}\"."
-                - "Hecho. La consulta ya está guardada como \"%{name}\"."
-                - "Listo. Ahora puedes encontrarla en la biblioteca como \"%{name}\"."
-            query_already_saved:
-              variants:
-                - "Esa misma consulta ya está guardada en la biblioteca como \"%{name}\"."
-                - "No hace falta volver a guardarla: ya existe como \"%{name}\"."
-                - "Esa consulta ya está en la biblioteca como \"%{name}\"."
-            query_rename:
-              variants:
-                - "Renombré esa consulta guardada como \"%{name}\"."
-                - "Hecho. La consulta guardada ahora se llama \"%{name}\"."
-                - "Actualizado. Ahora puedes encontrarla en la biblioteca como \"%{name}\"."
-            query_update:
-              variants:
-                - "Actualicé esa consulta guardada y ahora se llama \"%{name}\"."
-                - "Hecho. Actualicé la consulta guardada y ahora se llama \"%{name}\"."
-                - "Actualizado. La consulta guardada ahora coincide con el SQL más reciente como \"%{name}\"."
-            query_update_unchanged:
-              variants:
-                - "Esa consulta guardada ya estaba al día como \"%{name}\"."
-                - "No hacía falta cambiar nada: \"%{name}\" ya coincide con el SQL más reciente."
-                - "\"%{name}\" ya estaba actualizada, así que la dejé tal cual."
-            query_delete:
-              variants:
-                - "Eliminé la consulta guardada \"%{name}\"."
-                - "Hecho. \"%{name}\" ya no está en la biblioteca."
-                - "\"%{name}\" ha sido eliminada de la biblioteca."
         errors:
           message_or_image_required: Se requiere contenido del mensaje o al menos una imagen.
           max_images: Puedes adjuntar hasta %{count} imágenes por mensaje.
@@ -379,60 +257,6 @@ es:
           attachments_context: Puedo ver %{count} imagen(es) adjunta(s). Dime qué acción de equipo o espacio quieres ejecutar.
           fallback_with_action: Puedo ayudarte con eso. Confirma para continuar.
           fallback_without_action: Puedo ayudarte con acciones del espacio, del equipo, de fuentes de datos y de consultas.
-        executor:
-          forbidden: No puedo ejecutar esa acción con tus permisos actuales en este espacio.
-          forbidden_with_allowed_roles: No puedes %{action} con tu rol actual en este espacio. Pídeselo a %{allowed_roles}.
-          forbidden_actions:
-            workspace_update_name: cambiar el nombre de este espacio
-            workspace_delete: eliminar este espacio
-            member_list: ver la lista de miembros del equipo
-            member_invite: invitar a miembros del equipo
-            member_resend_invite: reenviar invitaciones del equipo
-            member_update_role: cambiar los roles de los miembros del equipo
-            member_remove: eliminar a miembros del equipo
-            datasource_list: gestionar las fuentes de datos del espacio
-            datasource_validate_connection: validar conexiones de fuentes de datos
-            datasource_create: crear fuentes de datos
-            query_list: ver las consultas guardadas
-            query_run: ejecutar consultas sobre fuentes de datos
-            query_save: guardar consultas en la biblioteca
-            query_rename: renombrar consultas guardadas
-            query_update: actualizar consultas guardadas
-            query_delete: eliminar consultas guardadas
-          allowed_roles:
-            owner: un propietario del espacio
-            admin_or_owner: un administrador o un propietario del espacio
-            user_admin_or_owner: un usuario, administrador o propietario del espacio
-            workspace_member: cualquier miembro del espacio
-          unexpected_error: Hubo un error inesperado al ejecutar esa acción.
-          workspace_name_required: Indica un nombre para el espacio.
-          workspace_name_updated: Nombre del espacio actualizado a %{name}.
-          workspace_delete_failed: No pudimos eliminar ese espacio ahora mismo.
-          workspace_delete_success: Espacio eliminado. Se notificó a todos los usuarios afectados.
-          workspace_delete_partial: El espacio se eliminó, pero no pudimos notificar por correo a algunos usuarios.
-          member_list_found: Se encontraron %{count} miembros del equipo.
-          member_list_none: No se encontraron miembros del equipo en este espacio.
-          member_list_item: "- **%{name}** — %{email_label}: %{email} — %{role_label}: %{role} — %{status_label}: %{status}"
-          member_unknown_name: Miembro sin nombre
-          member_unknown_email: Sin correo
-          member_unknown_role: Rol desconocido
-          member_unknown_status: Estado desconocido
-          member_invite_first_name_required: Indica un nombre.
-          member_invite_last_name_required: Indica un apellido.
-          member_invite_email_required: Indica una dirección de correo válida.
-          member_invite_role_required: Elige un rol para esta invitación.
-          member_invite_already_member: Este usuario ya está en el equipo del espacio.
-          member_invite_sent: Invitación enviada a %{email}.
-          member_not_found: No se encontró al miembro del equipo.
-          member_resend_only_pending: Solo se pueden reenviar invitaciones pendientes.
-          member_resend_cooldown: Espera un poco antes de volver a reenviar esa invitación.
-          member_resend_sent: Se ha enviado una invitación nueva a %{email}.
-          member_role_invalid: Elige un rol válido.
-          member_role_updated: "%{name} ahora tiene el rol %{role}."
-          member_remove_owner_forbidden: No se pueden eliminar los propietarios del espacio.
-          member_remove_success: "%{name} ha sido eliminado del espacio."
-          inferred_first_name: Equipo
-          inferred_last_name: Miembro
       data_sources:
         index:
           title: Fuentes de datos
@@ -576,11 +400,12 @@ es:
           workspace_name_label: Nombre del espacio de trabajo
         team:
           description: Usa la configuración de abajo para ver, invitar y gestionar los roles de los miembros asociados a este espacio de trabajo. Añadir miembros siempre es gratuito, independientemente de su rol.
-          table:
-            name: Nombre
-            role: Rol
-            status: Estado
-            actions: Acciones
+        table:
+          name: Nombre
+          role: Rol
+          status: Estado
+          actions: Acciones
+          you: "(tú)"
           actions:
             resend_invitation: Reenviar invitación
             invite_member: Invitar miembro del equipo

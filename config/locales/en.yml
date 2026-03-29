@@ -87,6 +87,10 @@ en:
         dashboards: View dashboards for the %{workspace_name} workspace
         settings: View workspace settings for the %{workspace_name} workspace
     workspaces:
+      index:
+        title: Workspaces
+        search_placeholder: Search...
+        search_empty: No workspaces matched that search.
       queries:
         index:
           title: Query Library
@@ -189,18 +193,6 @@ en:
             query_delete: Delete a saved query
             workspace_update_name: Rename the workspace
             workspace_delete: Delete the workspace
-        datasource:
-          data_sources_none: No data sources are connected yet.
-          data_sources_found: "%{count} data source(s) found."
-          data_source_item: "- **%{name}** — %{source_type} — %{status} — %{tables_count} selected table(s)"
-          data_source_tables_preview: "  Selected tables: %{tables}"
-          connection_validated: Connection validated successfully. %{table_count} table(s) found.
-          data_source_created: Created PostgreSQL data source %{name}.
-          selected_tables_required: Select at least one table before creating the data source.
-          selected_tables_limit: You can select up to %{count} tables.
-          invalid_selected_tables: One or more selected tables are not available on the connected database.
-          connection_failed: Could not validate the PostgreSQL connection.
-          validation_error: The data source configuration is invalid.
         datasource_setup:
           ask_name: Sure. What should I call this PostgreSQL data source?
           only_postgres: I can help add PostgreSQL data sources in chat right now, but not %{source_type}. If you want, I can help you connect a PostgreSQL source instead.
@@ -213,7 +205,6 @@ en:
             username: username
             password: password
         query:
-          question_required: Tell me what you'd like to query.
           ask_scope: |-
             Do you mean workspace team members or user records in your connected database?
           ask_scope_read_only: |-
@@ -222,123 +213,10 @@ en:
             From your current role, I can't open the member list or run the database query here.
 
             %{member_allowed_roles} can open the member list, and %{query_allowed_roles} can run the database query.
-          no_data_sources: There are no connected data sources in this workspace yet, so I can't run that query here.
-          data_source_not_found: I couldn't find that data source in this workspace.
-          ask_data_source: "I found more than one possible data source for that. Which one should I use: %{data_sources}?"
-          ask_table: "I found more than one possible table for that. Which one should I use: %{tables}?"
-          schema_guidance: "Based on the schema, the likeliest table(s) for that are %{tables}. Which one should I use?"
           ask_for_table_or_metric: I can query a connected data source here, but I still need a little more detail about the table or metric you want.
           result_intro: "Here’s what I found from %{data_source} (%{row_count} row(s)):"
           result_intro_refined: "Updated results (%{row_count} row(s)):"
           no_rows: That query ran successfully, but it returned no rows.
-          query_failed: I couldn't run that query against the selected data source.
-        query_library:
-          none: There are no saved queries in this workspace yet.
-          found:
-            one: "Here is %{count} saved query:"
-            other: "Here are %{count} saved queries:"
-          item: "- **%{name}** — Data source: %{data_source}"
-          saved: I saved that query to the query library as "%{name}".
-          already_saved: That exact query is already saved in the query library as "%{name}".
-          generated_name_conflict: I can save this as "%{proposed_name}", but there is already a different saved query with that name in the library. Do you want to keep that name or choose another?
-          renamed: I renamed that saved query to "%{name}".
-          updated: I updated that saved query and it is now "%{name}".
-          updated_unchanged: That saved query is already up to date as "%{name}".
-          deleted: I deleted the saved query "%{name}".
-          sql_required: Run a query here first, or provide SQL and a data source so I can save it.
-          rename_query_required: Tell me which saved query you want to rename.
-          rename_name_required: Tell me the new name you want for that saved query.
-          update_query_required: Tell me which saved query you want to update.
-          duplicate_saved_query: That exact saved query already exists as "%{name}".
-          delete_query_required: Tell me which saved query you want to delete.
-          query_not_found: I couldn't find that saved query in this workspace.
-          this_query: this query
-        responses:
-          confirmation:
-            variants:
-              - "I can %{action} once you confirm."
-              - "Please confirm if you want me to %{action}."
-              - "If you'd like me to %{action}, confirm and I'll take it from there."
-            query_delete_named: 'Please confirm if you want me to delete the saved query "%{name}".'
-          forbidden:
-            variants:
-              - "You can't %{action} with your current workspace role. Please ask %{allowed_roles}."
-              - "That action isn't available from your current workspace role. %{allowed_roles} can help with it."
-              - "I can't do that from your current role in this workspace. %{allowed_roles} can take care of it."
-          validation:
-            variants:
-              - "%{detail}"
-              - "I can help with that, but I still need one detail: %{detail}"
-              - "Before I can do that, I need this from you: %{detail}"
-          execution_error:
-            variants:
-              - "%{detail}"
-              - "I ran into a problem while doing that: %{detail}"
-              - "Something went wrong on my side while trying that: %{detail}"
-          success:
-            workspace_update_name:
-              variants:
-                - "The workspace is now called %{name}."
-                - "Done. I renamed the workspace to %{name}."
-                - "I've updated the workspace name to %{name}."
-            workspace_delete_success:
-              variants:
-                - "The workspace has been deleted, and everyone affected has been notified."
-                - "Done. The workspace has been deleted and the notifications have been sent."
-            workspace_delete_partial:
-              variants:
-                - "The workspace has been deleted, but I couldn't notify some users by email."
-                - "The workspace is gone, though a few email notifications didn't go out."
-            member_invite:
-              variants:
-                - "I've sent an invitation to %{email} as %{role}."
-                - "Invitation sent to %{email} with the %{role} role."
-                - "Done. %{email} has been invited as %{role}."
-            member_resend_invite:
-              variants:
-                - "I've sent a fresh invitation to %{email}."
-                - "Done. I resent the invitation to %{email}."
-                - "A new invitation is on its way to %{email}."
-            member_update_role:
-              variants:
-                - "%{name} now has the role %{role}."
-                - "I updated %{name}'s role to %{role}."
-                - "Done. %{name}'s role is now %{role}."
-            member_remove:
-              variants:
-                - "%{name} has been removed from this workspace."
-                - "I removed %{name} from the workspace."
-                - "Done. %{name} is no longer part of this workspace."
-            query_save:
-              variants:
-                - "I saved that query to the query library as \"%{name}\"."
-                - "Done. The query is now saved as \"%{name}\"."
-                - "Saved. You can now find it in the query library as \"%{name}\"."
-            query_already_saved:
-              variants:
-                - "That exact query is already saved in the query library as \"%{name}\"."
-                - "No need to save it again — it already exists as \"%{name}\"."
-                - "That query is already in the query library as \"%{name}\"."
-            query_rename:
-              variants:
-                - "I renamed that saved query to \"%{name}\"."
-                - "Done. The saved query is now called \"%{name}\"."
-                - "Updated. You can now find it in the query library as \"%{name}\"."
-            query_update:
-              variants:
-                - "I updated that saved query and it is now \"%{name}\"."
-                - "Done. I updated the saved query and it is now \"%{name}\"."
-                - "Updated. The saved query now matches the latest SQL as \"%{name}\"."
-            query_update_unchanged:
-              variants:
-                - "That saved query is already up to date as \"%{name}\"."
-                - "No changes were needed — \"%{name}\" already matches the latest SQL."
-                - "\"%{name}\" is already current, so I left it as is."
-            query_delete:
-              variants:
-                - "I deleted the saved query \"%{name}\"."
-                - "Done. \"%{name}\" has been removed from the query library."
-                - "\"%{name}\" is no longer in the query library."
         errors:
           message_or_image_required: Message content or at least one image is required.
           max_images: You can attach up to %{count} images per message.
@@ -410,60 +288,6 @@ en:
           attachments_context: I can see %{count} attached image(s). Tell me what team or workspace action you want to run.
           fallback_with_action: I can help with that. Please confirm to proceed.
           fallback_without_action: I can help with workspace, team, data source, and query actions.
-        executor:
-          forbidden: I can't run that action with your current workspace permissions.
-          forbidden_with_allowed_roles: You can't %{action} with your current workspace role. Please ask %{allowed_roles}.
-          forbidden_actions:
-            workspace_update_name: rename this workspace
-            workspace_delete: delete this workspace
-            member_list: view the team members list
-            member_invite: invite team members
-            member_resend_invite: resend team invitations
-            member_update_role: change team member roles
-            member_remove: remove team members
-            datasource_list: manage workspace data sources
-            datasource_validate_connection: validate data source connections
-            datasource_create: create data sources
-            query_list: view saved queries
-            query_run: run data-source queries
-            query_save: save queries to the query library
-            query_rename: rename saved queries
-            query_update: update saved queries
-            query_delete: delete saved queries
-          allowed_roles:
-            owner: a Workspace owner
-            admin_or_owner: an Admin or Workspace owner
-            user_admin_or_owner: a User, Admin, or Workspace owner
-            workspace_member: any workspace member
-          unexpected_error: There was an unexpected error while running that action.
-          workspace_name_required: Please provide a workspace name.
-          workspace_name_updated: Workspace name updated to %{name}.
-          workspace_delete_failed: We could not delete that workspace right now.
-          workspace_delete_success: Workspace deleted. All affected users were notified.
-          workspace_delete_partial: Workspace deleted, but we could not notify some users by email.
-          member_list_found: Found %{count} team members.
-          member_list_none: No team members were found in this workspace.
-          member_list_item: "- **%{name}** — %{email_label}: %{email} — %{role_label}: %{role} — %{status_label}: %{status}"
-          member_unknown_name: Unnamed member
-          member_unknown_email: No email
-          member_unknown_role: Unknown role
-          member_unknown_status: Unknown status
-          member_invite_first_name_required: Please provide a first name.
-          member_invite_last_name_required: Please provide a last name.
-          member_invite_email_required: Please provide a valid email address.
-          member_invite_role_required: Please choose a role for this invitation.
-          member_invite_already_member: This user is already in the workspace team.
-          member_invite_sent: Invitation sent to %{email}.
-          member_not_found: Team member not found.
-          member_resend_only_pending: Only pending invitations can be resent.
-          member_resend_cooldown: Please wait before resending that invitation.
-          member_resend_sent: A fresh invitation has been sent to %{email}.
-          member_role_invalid: Please choose a valid role.
-          member_role_updated: "%{name} now has the role %{role}."
-          member_remove_owner_forbidden: Workspace owners cannot be removed.
-          member_remove_success: "%{name} has been removed from the workspace."
-          inferred_first_name: Team
-          inferred_last_name: Member
       data_sources:
         index:
           title: Data sources
@@ -607,11 +431,12 @@ en:
           workspace_name_label: Workspace name
         team:
           description: Use the settings below to view, invite and manage the roles of any team members associated with this workspace. Adding members is always free of charge, regardless of their role.
-          table:
-            name: Name
-            role: Role
-            status: Status
-            actions: Actions
+        table:
+          name: Name
+          role: Role
+          status: Status
+          actions: Actions
+          you: "(you)"
           actions:
             resend_invitation: Resend invitation
             invite_member: Invite team member

@@ -1,6 +1,6 @@
 # Translations Master Reference
 
-Last updated: 2026-03-20
+Last updated: 2026-03-29
 
 ## Service and goal
 - Service: database-backed internationalization for the signed-in and email experiences.
@@ -96,21 +96,24 @@ For every feature/change before merge:
   - confirmation card labels and fixed action labels
   - system/status rows
   - planner fallback text (when no LLM or parsing fallback)
-  - executor validation/permission messages and other hard product constraints
+  - app-owned confirmations
   - deterministic structured output labels (for example member list `email/role/status` labels, reusing workspace settings keys where available)
   - client-side validation and fallback request errors in Stimulus controllers
 - Ordinary assistant acknowledgements and naturalized tool-result phrasing should be model-authored in the user's locale from structured execution data, not expanded into per-phrase locale keys.
 - Add new locale keys for chat only when the app itself must own the wording for correctness, compliance, fixed UI, or no-LLM fallback behavior.
+- API/tool result codes and typed payloads may remain English-only; the model is expected to translate ordinary assistant responses on the fly.
+- Do not use Rails locales as the primary management layer for chat business outcomes.
 - For product-owned chat copy changes, add/update both `en.yml` and `es.yml` in the same PR.
 
 ## Data source copy rule
 - All datasource UI copy must be locale-key backed under `app.workspaces.data_sources.*` or `common.*`.
-- Datasource API validation/errors and no-LLM fallback chat copy must be locale-key backed under `app.workspaces.chat.datasource.*` or `common.*`.
+- Datasource setup prompts that the app still owns in chat should be locale-key backed under `app.workspaces.chat.datasource_setup.*`.
+- Datasource API/tool outcomes should be represented as English-first structured codes/payloads, not locale-backed chat prose.
 - This includes:
   - datasource index section headings and empty states
   - wizard step headings, field labels, descriptions, validation, and button text
   - datasource settings/management copy
-  - deterministic API validation/failure messages and chat fallback copy for datasource list/validate/create actions
+  - deterministic UI validation and app-owned fallback for datasource setup collection
 - New datasource copy is not considered complete unless `en.yml` and `es.yml` are updated in the same change.
 
 ## Data model

@@ -78,7 +78,8 @@ module Chat
 
     def forbidden_intent(decision:)
       ActionIntent.new(
-        assistant_message: decision.assistant_message.to_s.presence || I18n.t('app.workspaces.chat.executor.forbidden'),
+        assistant_message: decision.assistant_message.to_s.presence ||
+          'That action is not available in this workspace chat.',
         action_type: nil,
         payload: {},
         missing_information: [],
@@ -311,7 +312,7 @@ module Chat
         return I18n.t('app.workspaces.chat.planner.query_save_needs_query') if payload['sql'].to_s.strip.blank?
         if payload['data_source_id'].to_s.strip.blank? &&
            payload['data_source_name'].to_s.strip.blank?
-          return I18n.t('app.workspaces.chat.query.data_source_not_found')
+          return 'I could not tell which data source to use for that query.'
         end
       when 'query.rename'
         query_id_blank = payload['query_id'].to_s.strip.blank?
@@ -323,7 +324,7 @@ module Chat
         if name_blank
           return I18n.t(
             'app.workspaces.chat.planner.query_rename_needs_name',
-            query_name: payload['query_name'].to_s.presence || I18n.t('app.workspaces.chat.query_library.this_query')
+            query_name: payload['query_name'].to_s.presence || 'this query'
           )
         end
       when 'query.update'

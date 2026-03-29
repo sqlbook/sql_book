@@ -1,0 +1,1 @@
+[{"severity":"warning","location":{"begin_pos":1083,"end_pos":1116},"message":"Lint/RedundantCopDisableDirective: Unnecessary disabling of `Metrics/AbcSize`.","cop_name":"Lint/RedundantCopDisableDirective","status":"uncorrected"}]

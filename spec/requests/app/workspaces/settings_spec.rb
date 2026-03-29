@@ -28,5 +28,12 @@ RSpec.describe 'App::Workspaces::Settings', type: :request do
       expect(response.body).to include(I18n.t('app.workspaces.settings.team.table.status', locale: :es))
       expect(response.body).to include(I18n.t('models.member.roles.owner', locale: :es))
     end
+
+    it 'marks the current user in the team table' do
+      get app_workspace_settings_path(workspace, tab: 'team')
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("#{owner.full_name} #{I18n.t('app.workspaces.settings.team.table.you')}")
+    end
   end
 end

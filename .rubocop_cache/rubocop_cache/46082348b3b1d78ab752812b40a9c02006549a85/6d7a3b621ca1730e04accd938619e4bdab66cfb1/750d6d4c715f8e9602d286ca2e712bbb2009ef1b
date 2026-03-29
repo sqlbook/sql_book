@@ -1,0 +1,1 @@
+[{"severity":"convention","location":{"begin_pos":2094,"end_pos":2840},"message":"Metrics/AbcSize: Assignment Branch Condition size for update is too high. [<3, 17, 1> 17.29/17]","cop_name":"Metrics/AbcSize","status":"unsupported"}]

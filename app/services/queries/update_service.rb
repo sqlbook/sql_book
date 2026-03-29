@@ -5,12 +5,23 @@ module Queries
     Result = Struct.new(
       :success?,
       :query,
-      :message,
-      :error_code,
+      :code,
+      :fallback_message,
       :update_outcome,
       :conflicting_query,
       keyword_init: true
-    )
+    ) do
+      def message
+        fallback_message
+      end
+
+      def error_code
+        return code unless code.to_s.include?('.')
+
+        _namespace, remainder = code.to_s.split('.', 2)
+        remainder.to_s.tr('.', '_')
+      end
+    end
 
     def initialize(workspace:, actor:, attributes:)
       @workspace = workspace
@@ -20,7 +31,7 @@ module Queries
 
     def call # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       if missing_update_attributes?
-        return failure(message: I18n.t('app.workspaces.chat.query_library.update_query_required'))
+        return failure(code: 'query.update_required', fallback_message: 'Please provide changes for the saved query.')
       end
 
       query = resolve_query
@@ -38,7 +49,7 @@ module Queries
       query.update!(updates)
       success(query: query.reload, update_outcome: 'updated')
     rescue DataSources::Connectors::BaseConnector::QueryError => e
-      failure(message: e.message, code: e.code || 'validation_error')
+      failure(code: normalized_query_code(e.code), fallback_message: e.message)
     end
 
     private
@@ -47,9 +58,13 @@ module Queries
 
     def resolve_query
       query_id = attributes['query_id'].to_i
-      return failure(message: I18n.t('app.workspaces.chat.query_library.update_query_required')) if query_id.zero?
+      if query_id.zero?
+        return failure(code: 'query.update_required',
+                       fallback_message: 'Please specify which saved query to update.')
+      end
 
-      query_scope.find_by(id: query_id) || failure(message: I18n.t('app.workspaces.chat.query_library.query_not_found'))
+      query_scope.find_by(id: query_id) || failure(code: 'query.not_found',
+                                                   fallback_message: 'I could not find that saved query.')
     end
 
     def resolved_sql(query:)
@@ -125,8 +140,8 @@ module Queries
       Result.new(
         success?: true,
         query:,
-        message: nil,
-        error_code: nil,
+        code: update_code(update_outcome:),
+        fallback_message: nil,
         update_outcome:,
         conflicting_query: nil
       )
@@ -165,25 +180,38 @@ module Queries
       Result.new(
         success?: false,
         query: nil,
-        message: I18n.t(
-          'app.workspaces.chat.query_library.duplicate_saved_query',
-          name: conflicting_query.name
-        ),
-        error_code: 'duplicate_saved_query',
+        code: 'query.duplicate_saved_query',
+        fallback_message: "That SQL already matches the saved query \"#{conflicting_query.name}\".",
         update_outcome: nil,
         conflicting_query:
       )
     end
 
-    def failure(message:, code: 'validation_error')
+    def failure(code:, fallback_message: nil)
       Result.new(
         success?: false,
         query: nil,
-        message:,
-        error_code: code,
+        code:,
+        fallback_message:,
         update_outcome: nil,
         conflicting_query: nil
       )
+    end
+
+    def update_code(update_outcome:)
+      case update_outcome
+      when 'already_saved' then 'query.already_saved'
+      when 'unchanged' then 'query.unchanged'
+      else
+        'query.updated'
+      end
+    end
+
+    def normalized_query_code(code)
+      return 'query.validation_error' if code.blank?
+      return code if code.to_s.include?('.')
+
+      "query.#{code}"
     end
   end
 end

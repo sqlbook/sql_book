@@ -5,13 +5,24 @@ module Queries
     Result = Struct.new(
       :success?,
       :query,
-      :message,
-      :error_code,
+      :code,
+      :fallback_message,
       :save_outcome,
       :conflicting_query,
       :proposed_name,
       keyword_init: true
-    )
+    ) do
+      def message
+        fallback_message
+      end
+
+      def error_code
+        return code unless code.to_s.include?('.')
+
+        _namespace, remainder = code.to_s.split('.', 2)
+        remainder.to_s.tr('.', '_')
+      end
+    end
 
     def initialize(workspace:, actor:, attributes:)
       @workspace = workspace
@@ -20,7 +31,7 @@ module Queries
     end
 
     def call
-      return failure(message: I18n.t('app.workspaces.chat.query_library.sql_required')) if sql.blank?
+      return failure(code: 'query.sql_required', fallback_message: 'Please provide SQL to save.') if sql.blank?
 
       data_source = resolve_data_source
       return data_source if data_source.is_a?(Result)
@@ -28,7 +39,7 @@ module Queries
       DataSources::QuerySafetyGuard.validate!(sql:)
       persist_saved_query_for(data_source:)
     rescue DataSources::Connectors::BaseConnector::QueryError => e
-      failure(message: e.message, code: e.code || 'validation_error')
+      failure(code: normalized_query_code(e.code), fallback_message: e.message)
     end
 
     private
@@ -56,7 +67,7 @@ module Queries
     def resolve_data_source
       workspace.data_sources.find_by(id: attributes['data_source_id'].to_i).presence ||
         resolve_data_source_by_name ||
-        failure(message: I18n.t('app.workspaces.chat.query.data_source_not_found'))
+        failure(code: 'query.data_source_not_found', fallback_message: 'I could not find that data source.')
     end
 
     def resolve_data_source_by_name
@@ -123,8 +134,8 @@ module Queries
       Result.new(
         success?: true,
         query:,
-        message: nil,
-        error_code: nil,
+        code: save_outcome == 'already_saved' ? 'query.already_saved' : 'query.saved',
+        fallback_message: nil,
         save_outcome:,
         conflicting_query: nil,
         proposed_name: nil
@@ -135,28 +146,34 @@ module Queries
       Result.new(
         success?: false,
         query: nil,
-        message: I18n.t(
-          'app.workspaces.chat.query_library.generated_name_conflict',
-          proposed_name:,
-          existing_name: conflicting_query.name
-        ),
-        error_code: 'generated_name_conflict',
+        code: 'query.generated_name_conflict',
+        fallback_message: [
+          "I can save this as \"#{proposed_name}\",",
+          "but a different saved query already uses that name (#{conflicting_query.name})."
+        ].join(' '),
         save_outcome: nil,
         conflicting_query:,
         proposed_name:
       )
     end
 
-    def failure(message:, code: 'validation_error')
+    def failure(code:, fallback_message: nil)
       Result.new(
         success?: false,
         query: nil,
-        message:,
-        error_code: code,
+        code:,
+        fallback_message:,
         save_outcome: nil,
         conflicting_query: nil,
         proposed_name: nil
       )
+    end
+
+    def normalized_query_code(code)
+      return 'query.validation_error' if code.blank?
+      return code if code.to_s.include?('.')
+
+      "query.#{code}"
     end
   end
 end

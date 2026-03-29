@@ -2,23 +2,23 @@
 
 module Chat
   class ResponseComposer # rubocop:disable Metrics/ClassLength
-    STATUS_CANDIDATE_BUILDERS = {
-      'forbidden' => :forbidden_candidates,
-      'validation_error' => :validation_candidates,
-      'execution_error' => :execution_error_candidates
-    }.freeze
-
-    SUCCESS_CANDIDATE_BUILDERS = {
-      'workspace.update_name' => :workspace_update_candidates,
-      'workspace.delete' => :workspace_delete_candidates,
-      'member.invite' => :member_invite_candidates,
-      'member.resend_invite' => :member_resend_candidates,
-      'member.update_role' => :member_role_update_candidates,
-      'member.remove' => :member_remove_candidates,
-      'query.save' => :query_save_candidates,
-      'query.rename' => :query_rename_candidates,
-      'query.update' => :query_update_candidates,
-      'query.delete' => :query_delete_candidates
+    ACTION_LABELS = {
+      'workspace.update_name' => 'rename the workspace',
+      'workspace.delete' => 'delete the workspace',
+      'member.list' => 'view the team members list',
+      'member.invite' => 'invite workspace members',
+      'member.resend_invite' => 'resend workspace invitations',
+      'member.update_role' => 'change workspace member roles',
+      'member.remove' => 'remove workspace members',
+      'datasource.list' => 'view data sources',
+      'datasource.validate_connection' => 'validate a data source connection',
+      'datasource.create' => 'create a data source',
+      'query.list' => 'view saved queries',
+      'query.run' => 'run a query',
+      'query.save' => 'save a query',
+      'query.rename' => 'rename a query',
+      'query.update' => 'update a query',
+      'query.delete' => 'delete a query'
     }.freeze
 
     def initialize(workspace:, actor:, prior_assistant_messages: [])
@@ -28,273 +28,320 @@ module Chat
     end
 
     def compose(execution:, action_type:)
-      candidates = response_candidates(execution:, action_type:)
-      fallback = normalized_message_candidate(execution.user_message)
-      select_candidate(candidates:, fallback:)
+      candidate = normalized_message_candidate(build_fallback(execution:, action_type:))
+      return candidate if candidate.present? && !prior_message_match?(candidate)
+
+      alternate_candidate(execution:) || candidate
     end
 
-    # rubocop:disable Metrics/CyclomaticComplexity
     def confirmation_message(action_type:, proposed_message:, payload: {})
-      candidate = normalized_message_candidate(proposed_message)
-      named_candidate = available_named_confirmation_candidate(action_type:, payload:)
+      named_candidate = named_confirmation_candidate(action_type:, payload:)
       return named_candidate if named_candidate.present?
 
+      candidate = normalized_message_candidate(proposed_message)
       return candidate if candidate.present? && confirmation_prompt?(candidate)
 
-      default_confirmation_candidate(action_type:) || candidate.presence || default_confirmation_fallback
-    rescue I18n::MissingTranslationData
-      candidate.presence || default_confirmation_fallback
+      default_confirmation_message(action_type:)
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
 
     private
 
     attr_reader :workspace, :actor, :prior_assistant_messages
 
-    def response_candidates(execution:, action_type:)
-      builder = STATUS_CANDIDATE_BUILDERS[execution.status]
-      return send(builder, action_type:, execution:) if builder == :forbidden_candidates
-      return send(builder, execution:) if builder
-      return success_candidates(execution:, action_type:) if execution.status == 'executed'
-
-      [execution.user_message.to_s]
-    end
-
-    def forbidden_candidates(action_type:, execution:)
-      detail_candidates = forbidden_detail_candidates(execution:)
-      return detail_candidates if detail_candidates.present?
-
-      action = translated_action(action_type:)
-      allowed_roles = translated_allowed_roles(action_type:)
-      translated_forbidden_variants(action:, allowed_roles:)
-    rescue I18n::MissingTranslationData
-      [I18n.t('app.workspaces.chat.executor.forbidden')]
-    end
-
-    def forbidden_detail_candidates(execution:)
-      detail = execution.user_message.to_s.strip
-      return [] if detail.blank?
-
-      [detail]
-    end
-
-    def translated_forbidden_variants(action:, allowed_roles:)
-      Array(I18n.t('app.workspaces.chat.responses.forbidden.variants')).map do |template|
-        I18n.t(template, default: template, action:, allowed_roles:)
+    def build_fallback(execution:, action_type:)
+      case execution.status
+      when 'forbidden'
+        forbidden_fallback(execution:, action_type:)
+      when 'validation_error'
+        validation_fallback(execution:)
+      when 'execution_error'
+        execution_error_fallback(execution:)
+      else
+        success_fallback(execution:, action_type:)
       end
     end
 
-    def validation_candidates(execution:)
-      detail = execution.user_message.to_s.strip
-      return [] if detail.blank?
+    def alternate_candidate(execution:)
+      return nil unless execution.status == 'forbidden'
 
-      Array(I18n.t('app.workspaces.chat.responses.validation.variants')).map do |template|
-        I18n.t(template, default: template, detail:)
-      end
-    rescue I18n::MissingTranslationData
-      [detail]
-    end
-
-    def execution_error_candidates(execution:)
-      detail = execution.user_message.to_s.strip
-      return [] if detail.blank?
-
-      Array(I18n.t('app.workspaces.chat.responses.execution_error.variants')).map do |template|
-        I18n.t(template, default: template, detail:)
-      end
-    rescue I18n::MissingTranslationData
-      [detail]
-    end
-
-    def success_candidates(execution:, action_type:)
-      return [execution.user_message.to_s] if action_type == 'member.list'
-
-      builder = SUCCESS_CANDIDATE_BUILDERS[action_type]
-      return [execution.user_message.to_s] unless builder
-
-      send(builder, execution:)
-    end
-
-    def workspace_update_candidates(execution:)
-      name = execution.data.to_h['workspace_name'] || execution.data.to_h[:workspace_name] || workspace.name
-      translated_variants('workspace_update_name', name:)
-    end
-
-    def workspace_delete_candidates(execution:)
-      failed_notifications = execution.data.to_h['failed_notifications'] || execution.data.to_h[:failed_notifications]
-      key = failed_notifications.to_i.zero? ? 'workspace_delete_success' : 'workspace_delete_partial'
-      translated_variants(key)
-    end
-
-    def member_invite_candidates(execution:)
-      invited_member = execution.data.to_h['invited_member'] || execution.data.to_h[:invited_member] || {}
-      translated_variants(
-        'member_invite',
-        email: invited_member['email'] || invited_member[:email],
-        role: invited_member['role_name'] || invited_member[:role_name]
+      data = execution.data.to_h
+      action_label = data['action_label'] || data[:action_label] || 'that'
+      allowed_roles = formatted_allowed_roles(data['allowed_roles'] || data[:allowed_roles])
+      normalized_message_candidate(
+        ["I can’t #{action_label} from your current permissions.", allowed_roles].compact.join("\n\n")
       )
     end
 
-    def member_resend_candidates(execution:)
-      invited_member = execution.data.to_h['invited_member'] || execution.data.to_h[:invited_member] || {}
-      translated_variants('member_resend_invite', email: invited_member['email'] || invited_member[:email])
-    end
-
-    def member_role_update_candidates(execution:)
-      member = execution.data.to_h['member'] || execution.data.to_h[:member] || {}
-      translated_variants(
-        'member_update_role',
-        name: member['full_name'] || member[:full_name],
-        role: member['role_name'] || member[:role_name]
+    def forbidden_fallback(execution:, action_type:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
+      data = execution.data.to_h
+      action_label = data['action_label'] || data[:action_label] || inferred_action_label(action_type)
+      allowed_roles = formatted_allowed_roles(
+        data['allowed_roles'] || data[:allowed_roles] || inferred_allowed_roles(action_type)
       )
+      detail = normalized_message_candidate(execution.fallback_message)
+      return [detail, allowed_roles].compact.join("\n\n") if detail.present? && allowed_roles.present?
+      return detail if detail.present?
+
+      ["I can’t #{action_label} from your current permissions in this workspace.", allowed_roles].compact.join("\n\n")
     end
 
-    def member_remove_candidates(execution:)
-      member = execution.data.to_h['removed_member'] || execution.data.to_h[:removed_member] || {}
-      translated_variants('member_remove', name: member['full_name'] || member[:full_name])
+    def validation_fallback(execution:)
+      normalized_message_candidate(execution.fallback_message) || generic_validation_message(execution.code)
     end
 
-    def query_save_candidates(execution:)
-      query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
-      if save_outcome(execution:) == 'already_saved'
-        return translated_variants('query_already_saved', name: query_link(query:))
+    def execution_error_fallback(execution:)
+      normalized_message_candidate(execution.fallback_message) || generic_execution_error_message(execution.code)
+    end
+
+    def success_fallback(execution:, action_type:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      data = execution.data.to_h
+
+      case action_type
+      when 'workspace.update_name'
+        "Workspace name updated to #{data['workspace_name'] || data[:workspace_name]}."
+      when 'workspace.delete'
+        'Workspace deleted.'
+      when 'member.list'
+        member_list_fallback(data:)
+      when 'member.invite'
+        invited_member_fallback(data:)
+      when 'member.resend_invite'
+        resent_member_fallback(data:)
+      when 'member.update_role'
+        updated_member_role_fallback(data:)
+      when 'member.remove'
+        removed_member_fallback(data:)
+      when 'datasource.list'
+        data_source_list_fallback(data:)
+      when 'datasource.validate_connection'
+        validated_data_source_fallback(data:)
+      when 'datasource.create'
+        created_data_source_fallback(data:)
+      when 'query.list'
+        query_list_fallback(data:)
+      when 'query.save'
+        query_save_fallback(data:)
+      when 'query.rename'
+        query_rename_fallback(data:)
+      when 'query.update'
+        query_update_fallback(data:)
+      when 'query.delete'
+        query_delete_fallback(data:)
+      else
+        normalized_message_candidate(execution.fallback_message) || 'Done.'
+      end
+    end
+
+    def member_list_fallback(data:) # rubocop:disable Metrics/AbcSize
+      members = Array(data['members'] || data[:members])
+      return 'No workspace members were found.' if members.empty?
+
+      lines = members.map do |member|
+        [
+          "#{member['full_name'] || member[:full_name]} (#{member['email'] || member[:email]})",
+          "#{member_role_label}: #{localized_role_name(member)}",
+          "#{member_status_label}: #{localized_status_name(member)}"
+        ].join(' - ')
+      end
+      ["Found #{members.size} team members.", lines.join("\n")].join("\n\n")
+    end
+
+    def invited_member_fallback(data:)
+      member = (data['invited_member'] || data[:invited_member] || {}).to_h
+      "Invitation sent to #{member['email'] || member[:email]} as #{localized_role_name(member)}."
+    end
+
+    def resent_member_fallback(data:)
+      member = (data['invited_member'] || data[:invited_member] || {}).to_h
+      "Invitation resent to #{member['email'] || member[:email]}."
+    end
+
+    def updated_member_role_fallback(data:)
+      member = (data['member'] || data[:member] || {}).to_h
+      "#{member['full_name'] || member[:full_name]} is now #{localized_role_name(member)} in #{workspace.name}."
+    end
+
+    def removed_member_fallback(data:)
+      member = (data['removed_member'] || data[:removed_member] || {}).to_h
+      "#{member['full_name'] || member[:full_name]} has been removed from #{workspace.name}."
+    end
+
+    def data_source_list_fallback(data:) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      data_sources = Array(data['data_sources'] || data[:data_sources])
+      return 'No data sources are connected to this workspace.' if data_sources.empty?
+
+      lines = data_sources.map do |data_source|
+        line = [
+          data_source['name'] || data_source[:name],
+          (data_source['source_type'] || data_source[:source_type]).to_s.humanize,
+          (data_source['status'] || data_source[:status]).to_s.humanize
+        ].join(' - ')
+        tables = Array(data_source['selected_tables'] || data_source[:selected_tables]).first(6)
+        tables.any? ? "#{line}\nTables: #{tables.join(', ')}" : line
       end
 
-      translated_variants('query_save', name: query_link(query:))
+      ["Found #{data_sources.size} data source#{'s' unless data_sources.size == 1}.", lines.join("\n")].join("\n\n")
     end
 
-    def query_rename_candidates(execution:)
-      query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
-      translated_variants('query_rename', name: query_link(query:))
+    def validated_data_source_fallback(data:)
+      count = (data['table_count'] || data[:table_count]).to_i
+      "Connection validated. Found #{count} table#{'s' unless count == 1}."
     end
 
-    def query_update_candidates(execution:)
-      query = execution.data.to_h['query'] || execution.data.to_h[:query] || {}
-      key = update_outcome(execution:) == 'unchanged' ? 'query_update_unchanged' : 'query_update'
-      translated_variants(key, name: query_link(query:))
+    def created_data_source_fallback(data:)
+      data_source = (data['data_source'] || data[:data_source] || {}).to_h
+      "Created data source #{data_source['name'] || data_source[:name]}."
     end
 
-    def query_delete_candidates(execution:)
-      query = execution.data.to_h['deleted_query'] || execution.data.to_h[:deleted_query] || {}
-      translated_variants('query_delete', name: query['name'] || query[:name])
-    end
+    def query_list_fallback(data:)
+      queries = Array(data['queries'] || data[:queries])
+      return 'There are no saved queries in this workspace yet.' if queries.empty?
 
-    def query_link(query:)
-      Queries::ChatLinkFormatter.new(workspace:).markdown_link(query:)
-    end
-
-    def save_outcome(execution:)
-      execution.data.to_h['save_outcome'] || execution.data.to_h[:save_outcome]
-    end
-
-    def update_outcome(execution:)
-      execution.data.to_h['update_outcome'] || execution.data.to_h[:update_outcome]
-    end
-
-    def translated_variants(key, **args)
-      Array(I18n.t("app.workspaces.chat.responses.success.#{key}.variants")).map do |template|
-        I18n.t(template, default: template, **args.compact)
+      lines = queries.map do |query|
+        source_name = query.dig('data_source', 'name') || query.dig(:data_source, :name)
+        query_link = query_link_formatter.markdown_link(query:)
+        source_name.present? ? "#{query_link} (#{source_name})" : query_link
       end
-    rescue I18n::MissingTranslationData
+
+      ["Found #{queries.size} saved quer#{queries.size == 1 ? 'y' : 'ies'}.", lines.join("\n")].join("\n\n")
+    end
+
+    def query_save_fallback(data:)
+      query = (data['query'] || data[:query] || {}).to_h
+      outcome = data['save_outcome'] || data[:save_outcome]
+      query_link = query_link_formatter.markdown_link(query:)
+      return "That SQL is already saved in the query library as #{query_link}." if outcome == 'already_saved'
+
+      "I saved that query to the query library as #{query_link}."
+    end
+
+    def query_rename_fallback(data:)
+      query = (data['query'] || data[:query] || {}).to_h
+      "I renamed the saved query to #{query_link_formatter.markdown_link(query:)}."
+    end
+
+    def query_update_fallback(data:) # rubocop:disable Metrics/MethodLength
+      query = (data['query'] || data[:query] || {}).to_h
+      outcome = data['update_outcome'] || data[:update_outcome]
+      query_link = query_link_formatter.markdown_link(query:)
+      case outcome
+      when 'already_saved'
+        "That SQL is already saved in the query library as #{query_link}."
+      when 'unchanged'
+        "#{query_link} is already up to date."
+      else
+        "I updated the saved query in the query library: #{query_link}."
+      end
+    end
+
+    def query_delete_fallback(data:)
+      query = (data['deleted_query'] || data[:deleted_query] || {}).to_h
+      "Deleted the saved query #{query['name'] || query[:name]}."
+    end
+
+    def query_link_formatter
+      @query_link_formatter ||= Queries::ChatLinkFormatter.new(workspace:)
+    end
+
+    def formatted_allowed_roles(allowed_roles) # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+      labels = Array(allowed_roles).map(&:to_s).map(&:strip).reject(&:empty?).map do |label|
+        label.casecmp('Owner').zero? ? 'Workspace owner' : label
+      end
+      return nil if labels.empty?
+      return 'A Workspace owner can do that.' if labels == ['Workspace owner']
+
+      if labels.size == 1
+        "#{labels.first} can do that."
+      else
+        "#{labels[0...-1].join(', ')}, or #{labels.last} can do that."
+      end
+    end
+
+    def inferred_allowed_roles(action_type)
+      Chat::Policy.allowed_roles_for(action_type).map { |role| Member.role_name_for(role, locale: :en) }
+    rescue StandardError
       []
     end
 
-    def translated_action(action_type:)
-      return I18n.t('app.navigation.settings') if action_type.blank?
-
-      I18n.t("app.workspaces.chat.executor.forbidden_actions.#{translation_action_key(action_type)}")
-    end
-
-    def translated_allowed_roles(action_type:)
-      I18n.t("app.workspaces.chat.executor.allowed_roles.#{allowed_roles_key(action_type)}")
-    end
-
-    def confirmation_candidates(action:)
-      Array(I18n.t('app.workspaces.chat.responses.confirmation.variants')).map do |template|
-        I18n.t(template, default: template, action:)
-      end
+    def inferred_action_label(action_type)
+      ACTION_LABELS[action_type] || 'do that'
     end
 
     def named_confirmation_candidate(action_type:, payload:)
-      case action_type
-      when 'query.delete'
-        query_name = payload.to_h['query_name'] || payload.to_h[:query_name]
-        return nil if query_name.to_s.strip.blank?
+      return nil unless action_type == 'query.delete'
 
-        I18n.t('app.workspaces.chat.responses.confirmation.query_delete_named', name: query_name)
-      end
-    rescue I18n::MissingTranslationData
-      nil
+      query_name = payload.to_h['query_name'] || payload.to_h[:query_name]
+      return nil if query_name.to_s.strip.blank?
+
+      "Are you sure you want to delete the saved query #{query_name}?"
     end
 
-    def available_named_confirmation_candidate(action_type:, payload:)
-      candidate = named_confirmation_candidate(action_type:, payload:)
-      return nil if candidate.blank?
-      return nil if prior_message_match?(candidate)
-
-      candidate
+    def default_confirmation_message(action_type)
+      action = case action_type
+               when 'workspace.delete' then 'delete this workspace'
+               when 'query.delete' then 'delete this saved query'
+               else
+                 'do that'
+               end
+      "Please confirm that you want to #{action}."
     end
 
-    def default_confirmation_candidate(action_type:)
-      action = translated_action(action_type:)
-      confirmation_candidates(action:).find { |value| !prior_message_match?(value) }
-    end
-
-    def default_confirmation_fallback
-      I18n.t('app.workspaces.chat.messages.confirmation_default')
-    end
-
-    def translation_action_key(action_type)
-      action_type.to_s.tr('.', '_')
-    end
-
-    def allowed_roles_key(action_type)
-      Chat::Policy.allowed_roles_key_for(action_type)
-    end
-
-    def select_candidate(candidates:, fallback:)
-      viable_candidates = normalized_message_candidates(candidates)
-      viable_candidates.each do |candidate|
-        return candidate unless prior_message_match?(candidate)
-      end
-
-      fallback.presence || viable_candidates.first || ''
-    end
-
-    def prior_message_match?(candidate)
-      normalized_candidate = normalize_text(candidate)
-      prior_assistant_messages.any? do |message|
-        normalize_text(message.content.to_s) == normalized_candidate
+    def generic_validation_message(code)
+      case code
+      when 'query.not_found'
+        'I could not find that saved query.'
+      when 'member.not_found'
+        'I could not find that workspace member.'
+      else
+        'I need a bit more information before I can do that.'
       end
     end
 
-    def normalize_text(text)
-      text.to_s.downcase.gsub(/\s+/, ' ').gsub(/[[:punct:]]+/, '').strip
-    end
-
-    def confirmation_prompt?(content)
-      content.to_s.downcase.match?(/\b(confirm|confirmed|confirmation|confirma|confirmar)\b/)
+    def generic_execution_error_message(_code)
+      'Something went wrong while carrying out that action.'
     end
 
     def normalized_message_candidate(value)
-      case value
-      when Array
-        value.flatten.filter_map do |entry|
-          normalized_message_candidate(entry)
-        end.first.to_s.strip
-      else
-        value.to_s.strip
+      value.to_s.strip.presence
+    end
+
+    def confirmation_prompt?(value)
+      text = value.to_s.strip
+      text.end_with?('?') || text.match?(/\bconfirm\b/i)
+    end
+
+    def prior_message_match?(candidate)
+      prior_assistant_messages.any? do |message|
+        message.content.to_s.strip == candidate.to_s.strip
       end
     end
 
-    def normalized_message_candidates(values)
-      Array(values).flat_map do |value|
-        if value.is_a?(Array)
-          normalized_message_candidates(value)
-        else
-          normalized_message_candidate(value).presence
-        end
-      end.compact
+    def localized_role_name(member)
+      role = member['role'] || member[:role]
+      fallback = member['role_name'] || member[:role_name]
+      return fallback if role.blank?
+
+      Member.role_name_for(role, locale: response_locale)
+    end
+
+    def localized_status_name(member)
+      status = member['status'] || member[:status]
+      fallback = member['status_name'] || member[:status_name]
+      return fallback if status.blank?
+
+      Member.status_name_for(status, locale: response_locale)
+    end
+
+    def member_role_label
+      response_locale == :es ? 'Rol' : 'Role'
+    end
+
+    def member_status_label
+      response_locale == :es ? 'Estado' : 'Status'
+    end
+
+    def response_locale
+      @response_locale ||= actor&.preferred_locale.to_s.presence&.to_sym || I18n.locale
     end
   end
 end

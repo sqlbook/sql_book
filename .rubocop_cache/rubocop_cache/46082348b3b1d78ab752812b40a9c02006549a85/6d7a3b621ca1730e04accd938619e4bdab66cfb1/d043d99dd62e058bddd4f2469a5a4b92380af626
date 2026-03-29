@@ -1,0 +1,1 @@
+[{"severity":"convention","location":{"begin_pos":4503,"end_pos":4532},"message":"Layout/LineLength: Line is too long. [149/120]","cop_name":"Layout/LineLength","status":"unsupported"}]

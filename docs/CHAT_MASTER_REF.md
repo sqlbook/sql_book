@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-22
+Last updated: 2026-03-29
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -68,9 +68,10 @@ Related references:
 - Server-authoritative policy/execution:
   - `Chat::Policy` for role/scope checks
   - `Chat::ActionExecutor` for normalized execution statuses
+  - `Tooling::Result` / `Chat::ActionExecutor::Result` as the canonical structured outcome contract
   - `Chat::ExecutionTruthReconciler` for post-write DB refresh before final reply composition
   - `Chat::ActionRequestLifecycle` for action fingerprint / attempt lifecycle handling
-  - `Chat::ResponseComposer` for localized fallback and confirmation copy when the app must own the wording
+  - `Chat::ResponseComposer` for deterministic fallback and confirmation copy when the app must own the wording
 
 ## Data model
 - `ChatThread` (`chat_threads`)
@@ -193,6 +194,18 @@ Executor result statuses:
 - `forbidden`
 - `validation_error`
 - `execution_error`
+
+Executor / tool result payload contract:
+- `status`
+- `code`
+- `data`
+- `fallback_message`
+
+Contract rules:
+- `status + code + data` are the app-owned source of truth.
+- `fallback_message` exists only for deterministic fallback/no-LLM rendering and should not be treated as the primary truth layer.
+- Result `code` values are English-first and domain-scoped (`workspace.*`, `member.*`, `query.*`, `datasource.*`), not chat-taxonomy prose keys.
+- Compatibility fields such as legacy `message` / `error_code` may exist temporarily during migration, but new chat logic should consume `status + code + data`.
 
 ## Allowlist and blocked namespaces
 Allowed action types:
@@ -541,18 +554,24 @@ High-risk writes (inline confirmation required):
   - composer helper/aria text
   - confirmation card labels
   - status rows
-  - planner fallback copy
+  - no-LLM fallback copy the app must own
   - runtime retry copy for planning failures
-  - executor/API validation and hard permission/constraint copy
+  - app-owned confirmation copy
   - client-side validation/fallback errors
 - Ordinary assistant acknowledgements and naturalized tool-result phrasing should be model-authored in the user's locale from structured tool output rather than expanded into per-phrase locale keys.
-- Deterministic follow-up prompts for missing required fields must use locale keys.
+- Rails locales are not the primary management system for ordinary assistant prose.
+- API/tool contracts and structured result codes may remain English-only unless they are rendered directly to users outside the LLM path.
+- New chat-localized business prose should not be added when a structured result code plus typed data would suffice.
 - Current supported locales: `en`, `es`.
 - When adding chat copy:
   1. check reusable keys first (`common.*`, existing workspace/team labels)
-  2. add missing keys under `app.workspaces.chat.*` only when the app itself must own the wording
+  2. add missing keys under `app.workspaces.chat.*` only when the app itself must own the wording for UI, deterministic fallback, or confirmations
   3. add both `en` and `es` entries in the same change
-  4. verify through request specs with non-default locale
+  4. verify through request specs with non-default locale when that copy is still user-visible outside the model path
+- Audit/enforcement:
+  - `bundle exec rake chat:audit_copy_surface`
+  - `bundle exec rake chat:enforce_copy_contract`
+  - committed audit artifact: `docs/CHAT_COPY_AUDIT.yml`
 
 ## Testing baseline
 - Policy tests for allowlist/blocked namespaces and role/scope checks.

@@ -3,7 +3,18 @@
 # rubocop:disable Metrics/AbcSize, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 module Chat
   class DataSourceQueryService
-    Result = Struct.new(:status, :message, :data, :error_code, keyword_init: true)
+    Result = Struct.new(:status, :code, :data, :fallback_message, keyword_init: true) do
+      def message
+        fallback_message
+      end
+
+      def error_code
+        return code unless code.to_s.include?('.')
+
+        _namespace, remainder = code.to_s.split('.', 2)
+        remainder.to_s.tr('.', '_')
+      end
+    end
     NullClarificationStore = Struct.new(:_unused) do
       def load = {}
       def save(_state) = {}
@@ -45,7 +56,10 @@ module Chat
     end
 
     def call # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      return validation_error(I18n.t('app.workspaces.chat.query.question_required')) if current_question.blank?
+      if current_question.blank?
+        return validation_error('Please tell me what you want to query.',
+                                code: 'query.question_required')
+      end
 
       return continue_from_clarification_state if active_clarification_state.present? && !new_query_request?
 
@@ -82,9 +96,9 @@ module Chat
         }
       )
     rescue DataSources::Connectors::BaseConnector::ConnectionError => e
-      validation_error(e.message, code: 'connection_failed')
+      validation_error(e.message, code: 'query.connection_failed')
     rescue DataSources::Connectors::BaseConnector::QueryError => e
-      validation_error(e.message, code: e.code || 'query_failed')
+      validation_error(e.message, code: normalized_query_code(e.code || 'query_failed'))
     end
 
     private
@@ -128,7 +142,10 @@ module Chat
         return execute_original_question(data_source:, question: state['question'], preferred_table: table_resolution)
       when 'table'
         data_source = workspace.data_sources.find_by(id: state['data_source_id'])
-        return validation_error(I18n.t('app.workspaces.chat.query.data_source_not_found')) if data_source.nil?
+        if data_source.nil?
+          return validation_error('I could not find that data source.',
+                                  code: 'query.data_source_not_found')
+        end
 
         table = resolve_table_candidate_from_state(state:)
         if table.blank?
@@ -148,7 +165,7 @@ module Chat
       end
 
       clarification_store.clear!
-      validation_error(I18n.t('app.workspaces.chat.query.query_failed'))
+      validation_error('I could not complete that query.', code: 'query.failed')
     end
 
     def execute_original_question(data_source:, question:, preferred_table: nil)
@@ -178,7 +195,10 @@ module Chat
 
     def resolve_data_source(question)
       data_sources = workspace.data_sources.active.order(:name, :id)
-      return validation_error(I18n.t('app.workspaces.chat.query.no_data_sources')) if data_sources.empty?
+      if data_sources.empty?
+        return validation_error('No data sources are connected to this workspace.',
+                                code: 'query.no_data_sources')
+      end
 
       explicit = explicit_data_source(data_sources:)
       return explicit if explicit
@@ -352,6 +372,7 @@ module Chat
 
     def clarification_result(question:)
       executed(
+        code: 'query.clarification_required',
         message: question,
         data: { 'clarification_required' => true }
       )
@@ -359,32 +380,28 @@ module Chat
 
     def data_source_clarification_message(candidates:)
       names = Array(candidates).map { |candidate| candidate['name'] || candidate[:name] }
-      I18n.t('app.workspaces.chat.query.ask_data_source', data_sources: names.to_sentence)
+      "Which data source did you mean: #{names.to_sentence}?"
     end
 
     def table_clarification_message(candidates:)
       names = Array(candidates).map { |candidate| candidate['qualified_name'] || candidate[:qualified_name] }
-      I18n.t('app.workspaces.chat.query.ask_table', tables: names.to_sentence)
+      "Which table did you mean: #{names.to_sentence}?"
     end
 
     def schema_guidance_message(candidates:)
       names = Array(candidates).map { |candidate| candidate['qualified_name'] || candidate[:qualified_name] }
-      I18n.t('app.workspaces.chat.query.schema_guidance', tables: names.to_sentence)
+      "From the schema, the closest matches are #{names.to_sentence}."
     end
 
     def formatted_query_result_message(data_source:, sql:, query_result:)
       row_count = query_result.rows.length
       lines = [
-        I18n.t(
-          'app.workspaces.chat.query.result_intro',
-          data_source: data_source.display_name,
-          row_count:
-        ),
+        "Here’s what I found from #{data_source.display_name} (#{row_count} row(s)):",
         "```sql\n#{sql}\n```"
       ]
 
       if row_count.zero?
-        lines << I18n.t('app.workspaces.chat.query.no_rows')
+        lines << 'The query returned no rows.'
         return lines.join("\n\n")
       end
 
@@ -470,12 +487,19 @@ module Chat
       payload['thread_id'].presence || payload[:thread_id]
     end
 
-    def executed(message:, data: {})
-      Result.new(status: 'executed', message:, data:, error_code: nil)
+    def executed(message:, data: {}, code: 'query.run.executed')
+      Result.new(status: 'executed', code:, data:, fallback_message: message)
     end
 
     def validation_error(message, code: 'validation_error')
-      Result.new(status: 'validation_error', message:, data: {}, error_code: code)
+      Result.new(status: 'validation_error', code:, data: {}, fallback_message: message)
+    end
+
+    def normalized_query_code(code)
+      return 'query.validation_error' if code.blank?
+      return code if code.to_s.include?('.')
+
+      "query.#{code}"
     end
   end
 end

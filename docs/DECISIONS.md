@@ -190,6 +190,21 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - we split query-card rendering into a dedicated projection layer shared across chat and query editor surfaces
 
+## 2026-03-29
+### Decision: Use English-first structured chat outcome contracts instead of chat-localized business prose
+- Status: Accepted
+- Why:
+  - chat locale keys had grown into a second business-logic layer, making ordinary assistant copy hard to maintain and translate
+  - the app should own permissions, validation truth, confirmations, object identity, and lifecycle state as structured data
+  - the model can phrase normal outcomes naturally in the user's locale without requiring Rails locale keys for every acknowledgement
+- Consequences:
+  - `Tooling::Result` / `Chat::ActionExecutor::Result` now treat `status + code + data` as the primary contract and `fallback_message` as deterministic fallback only
+  - chat-facing handler/executor business outcomes should be expressed as English-first domain-scoped codes (`workspace.*`, `member.*`, `query.*`, `datasource.*`)
+  - deprecated chat locale namespaces for business outcomes are removed instead of expanded
+  - audit/enforcement now guards the retained `app.workspaces.chat.*` surface and blocks drift back toward locale-managed assistant prose
+- Revisit when:
+  - we add new locales and identify specific chat flows where model-authored phrasing is too unstable for the required UX/compliance bar
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

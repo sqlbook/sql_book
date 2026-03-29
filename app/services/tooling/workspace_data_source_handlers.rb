@@ -2,11 +2,11 @@
 
 module Tooling
   class WorkspaceDataSourceHandlers # rubocop:disable Metrics/ClassLength
-    FAILURE_MESSAGE_KEYS = {
-      'selected_tables_required' => :selected_tables_required,
-      'selected_tables_limit' => :selected_tables_limit,
-      'invalid_selected_tables' => :invalid_selected_tables,
-      'connection_failed' => :connection_failed
+    ERROR_CODE_MAP = {
+      'selected_tables_required' => 'datasource.selected_tables.required',
+      'selected_tables_limit' => 'datasource.selected_tables.limit',
+      'invalid_selected_tables' => 'datasource.selected_tables.invalid',
+      'connection_failed' => 'datasource.connection.failed'
     }.freeze
 
     def initialize(workspace:, actor:)
@@ -14,40 +14,19 @@ module Tooling
       @actor = actor
     end
 
-    def list(arguments:) # rubocop:disable Lint/UnusedMethodArgument, Metrics/AbcSize
+    def list(arguments:) # rubocop:disable Lint/UnusedMethodArgument
       data_sources = workspace.data_sources
         .includes(:queries)
         .order(Arel.sql(ordering_sql), :name, :id)
 
       payload = data_sources.map { |data_source| serialize_data_source(data_source:) }
-      message = if payload.empty?
-                  default_message('data_sources_none')
-                else
-                  [
-                    default_message('data_sources_found', count: payload.size),
-                    payload.map do |data_source|
-                      item = I18n.t(
-                        'app.workspaces.chat.datasource.data_source_item',
-                        name: data_source['name'],
-                        source_type: data_source['source_type'].to_s.humanize,
-                        status: data_source['status'].to_s.humanize,
-                        tables_count: data_source['tables_count']
-                      )
-                      selected_tables_preview = Array(data_source['selected_tables']).first(6)
-                      next item if selected_tables_preview.empty?
 
-                      [
-                        item,
-                        I18n.t(
-                          'app.workspaces.chat.datasource.data_source_tables_preview',
-                          tables: selected_tables_preview.join(', ')
-                        )
-                      ].join("\n")
-                    end.join("\n")
-                  ].join("\n\n")
-                end
-
-      executed(message:, data: { 'data_sources' => payload })
+      Result.new(
+        status: 'executed',
+        code: 'datasource.listed',
+        data: { 'data_sources' => payload, 'count' => payload.size },
+        fallback_message: data_source_list_fallback(payload:)
+      )
     end
 
     def validate_connection(arguments:)
@@ -58,23 +37,22 @@ module Tooling
 
       if validation.success?
         tables = validation.available_tables
-        executed(
-          message: default_message('connection_validated', table_count: table_count(tables)),
+        count = table_count(tables)
+        Result.new(
+          status: 'executed',
+          code: 'datasource.connection.validated',
           data: {
             'checked_at' => validation.checked_at&.iso8601,
-            'available_tables' => tables
-          }
+            'available_tables' => tables,
+            'table_count' => count
+          },
+          fallback_message: "Connection validated. Found #{count} #{table_label(count)}."
         )
       else
         validation_error(
-          message: normalized_failure_message(
-            validation.message,
-            'connection_failed',
-            default: default_message('connection_failed')
-          ),
-          data: {
-            'available_tables' => validation.available_tables
-          }
+          code: mapped_error_code(validation.error_code || 'connection_failed'),
+          data: { 'available_tables' => validation.available_tables },
+          fallback_message: normalized_failure_message(validation.message, default: 'Connection failed.')
         )
       end
     end
@@ -132,28 +110,16 @@ module Tooling
       Array(groups).sum { |group| Array(group[:tables] || group['tables']).size }
     end
 
-    def normalized_failure_message(message, code, default:)
+    def normalized_failure_message(message, default:)
       value = message.to_s.strip
       return default if value.blank?
       return default if value.start_with?('translation missing:')
 
-      translated_failure_message(code) || value
+      value
     end
 
-    def default_failure_message(code)
-      translated_failure_message(code) || default_message('validation_error')
-    end
-
-    def default_message(key, **args)
-      I18n.t("app.workspaces.chat.datasource.#{key}", **args)
-    end
-
-    def executed(message:, data: {})
-      Result.new(status: 'executed', message:, data:, error_code: nil)
-    end
-
-    def validation_error(message:, data: {}, code: 'validation_error')
-      Result.new(status: 'validation_error', message:, data:, error_code: code)
+    def validation_error(code:, data: {}, fallback_message: nil)
+      Result.new(status: 'validation_error', code:, data:, fallback_message:)
     end
 
     def create_postgres_data_source(arguments:)
@@ -165,35 +131,63 @@ module Tooling
 
     def successful_create_result(result)
       data_source = result.data_source
-      executed(
-        message: default_message('data_source_created', name: data_source.display_name),
+      Result.new(
+        status: 'executed',
+        code: 'datasource.created',
         data: {
           'data_source' => serialize_data_source(data_source:),
           'available_tables' => result.available_tables
-        }
+        },
+        fallback_message: "Created data source #{data_source.display_name}."
       )
     end
 
     def failed_create_result(result)
       validation_error(
-        message: normalized_failure_message(
-          result.message,
-          result.error_code,
-          default: default_failure_message(result.error_code)
-        ),
+        code: mapped_error_code(result.error_code),
         data: {
           'available_tables' => result.available_tables
-        }
+        },
+        fallback_message: normalized_failure_message(result.message,
+                                                     default: default_failure_message(result.error_code))
       )
     end
 
-    def translated_failure_message(code)
-      key = FAILURE_MESSAGE_KEYS[code.to_s]
-      return unless key
+    def mapped_error_code(error_code)
+      ERROR_CODE_MAP[error_code.to_s] || "datasource.#{error_code.presence || 'validation_error'}"
+    end
 
-      return default_message(key, count: DataSource::MAX_SELECTED_TABLES) if key == :selected_tables_limit
+    def default_failure_message(error_code)
+      case error_code.to_s
+      when 'selected_tables_required'
+        'Please select at least one table.'
+      when 'selected_tables_limit'
+        "Please select #{DataSource::MAX_SELECTED_TABLES} tables or fewer."
+      when 'invalid_selected_tables'
+        'One or more selected tables are invalid.'
+      else
+        'I could not validate that data source.'
+      end
+    end
 
-      default_message(key)
+    def data_source_list_fallback(payload:) # rubocop:disable Metrics/AbcSize
+      return 'No data sources are connected to this workspace.' if payload.empty?
+
+      lines = payload.map do |data_source|
+        line = [
+          data_source['name'],
+          data_source['source_type'].to_s.humanize,
+          data_source['status'].to_s.humanize
+        ].join(' - ')
+        tables = Array(data_source['selected_tables']).first(6)
+        tables.any? ? "#{line}\nTables: #{tables.join(', ')}" : line
+      end
+
+      ["Found #{payload.size} data source#{'s' unless payload.size == 1}.", lines.join("\n")].join("\n\n")
+    end
+
+    def table_label(count)
+      count == 1 ? 'table' : 'tables'
     end
   end
 end

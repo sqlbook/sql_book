@@ -27,9 +27,9 @@ module Chat
 
       Chat::ActionExecutor::Result.new(
         status: execution.status,
-        user_message: execution.user_message,
+        code: execution.code,
         data:,
-        error_code: execution.error_code
+        fallback_message: execution.fallback_message
       )
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength

@@ -18,6 +18,11 @@
     .name {
       min-width: 4rem;
       width: auto;
+
+      .you-indicator {
+        font-style: italic;
+        margin-left: .35rem;
+      }
     }
 
     .role,

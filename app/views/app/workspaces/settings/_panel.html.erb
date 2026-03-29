@@ -40,7 +40,14 @@
         <% can_edit_member = can_manage_members && current_role < member.role %>
         <tr>
           <td class="name">
-            <span class="truncate-text" data-tooltip-text="<%= member.user.full_name %>"><%= member.user.full_name %></span>
+            <% member_name = member.user.full_name %>
+            <% you_label = member.user_id == @current_user.id ? " #{I18n.t('app.workspaces.settings.team.table.you')}" : '' %>
+            <span class="truncate-text" data-tooltip-text="<%= "#{member_name}#{you_label}" %>">
+              <%= member_name %>
+              <% if member.user_id == @current_user.id %>
+                <span class="you-indicator text-small gray-300"><%= I18n.t('app.workspaces.settings.team.table.you') %></span>
+              <% end %>
+            </span>
           </td>
           <td class="role">
             <% if can_edit_member %>

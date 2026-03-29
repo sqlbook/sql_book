@@ -11,7 +11,7 @@ RSpec.describe Chat::ResponseComposer do
       composer = described_class.new(workspace:, actor:)
       execution = Chat::ActionExecutor::Result.new(
         status: 'forbidden',
-        user_message: I18n.t('app.workspaces.chat.executor.forbidden'),
+        user_message: 'Forbidden.',
         data: {},
         error_code: 'forbidden_role'
       )
@@ -38,7 +38,7 @@ RSpec.describe Chat::ResponseComposer do
       )
       execution = Chat::ActionExecutor::Result.new(
         status: 'forbidden',
-        user_message: I18n.t('app.workspaces.chat.executor.forbidden'),
+        user_message: 'Forbidden.',
         data: {},
         error_code: 'forbidden_role'
       )

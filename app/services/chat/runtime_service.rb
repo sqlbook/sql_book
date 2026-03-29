@@ -107,9 +107,12 @@ module Chat
       fallback_decision
     end
 
-    def compose_tool_result_message(tool_name:, tool_arguments:, execution:, fallback_message: nil)
-      fallback_message ||= execution.user_message
-      return fallback_message if execution.status != 'executed'
+    def compose_tool_result_message(tool_name:, tool_arguments:, execution:, fallback_message: nil) # rubocop:disable Metrics/MethodLength
+      fallback_message ||= if execution.respond_to?(:fallback_message)
+                             execution.fallback_message
+                           elsif execution.respond_to?(:user_message)
+                             execution.user_message
+                           end
       return fallback_message if api_key.blank?
 
       rendered = render_tool_result_with_models(
@@ -343,8 +346,9 @@ module Chat
                   "Tool called: #{tool_name}",
                   "Tool arguments: #{tool_arguments.to_json}",
                   "Execution status: #{execution.status}",
+                  "Execution code: #{execution_code(execution)}",
                   "Execution data: #{execution.data.to_json}",
-                  "Default fallback message: #{fallback_message}"
+                  "Deterministic fallback message: #{fallback_message}"
                 ].join("\n")
               }
             ]
@@ -500,9 +504,11 @@ module Chat
     def tool_result_system_prompt
       [
         'You are sqlbook\'s workspace chat assistant.',
-        'Write the final user-facing response from tool output.',
+        'Write the final user-facing response from structured tool output.',
         'Be clear and concise; do not mention internal tool names.',
         'For ordinary tool results, sound natural and conversational rather than like a canned product string.',
+        'Treat execution status, execution code, and execution data as the source of truth.',
+        'Use the deterministic fallback message only as a fallback or extra context, not as the primary truth source.',
         'If data is present, answer directly from that data.',
         'Use markdown when it improves readability.',
         'Preserve meaningful paragraph breaks.',
@@ -519,7 +525,10 @@ module Chat
         'If an action is forbidden, say who can perform it in natural language instead of repeating a flat refusal.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
         'For member list results, include useful member details instead of only counts.',
-        'When the fallback text sounds terse or product-like, improve the phrasing while preserving the exact meaning.',
+        [
+          'When the deterministic fallback sounds terse or product-like,',
+          'improve the phrasing while preserving the exact meaning.'
+        ].join(' '),
         [
           'If you suggest renaming something, include the exact proposed name.',
           'Do not use vague placeholders like "something shorter or more descriptive".'
@@ -643,6 +652,13 @@ module Chat
       formatted.presence || fallback_message
     rescue JSON::ParserError
       fallback_message
+    end
+
+    def execution_code(execution)
+      return execution.code if execution.respond_to?(:code)
+      return execution.error_code if execution.respond_to?(:error_code)
+
+      nil
     end
 
     def build_tool_calls(parsed:)

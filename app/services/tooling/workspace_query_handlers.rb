@@ -11,16 +11,21 @@ module Tooling
       queries = Queries::LibraryService.new(workspace:, filters: arguments).call
       payload = queries.map { |query| serialize_query(query:) }
 
-      Result.new(status: 'executed', message: list_message(payload:), data: { 'queries' => payload }, error_code: nil)
+      Result.new(
+        status: 'executed',
+        code: 'query.listed',
+        data: { 'queries' => payload, 'count' => payload.size },
+        fallback_message: list_fallback(payload:)
+      )
     end
 
     def run(arguments:)
       result = Queries::RunService.new(workspace:, actor:, payload: arguments).call
       Result.new(
         status: result.status,
-        message: result.message,
+        code: result.code,
         data: result.data,
-        error_code: result.error_code
+        fallback_message: result.fallback_message
       )
     end
 
@@ -29,21 +34,21 @@ module Tooling
       unless result.success?
         return Result.new(
           status: 'validation_error',
-          message: result.message,
+          code: result.code,
           data: save_failure_data(result:),
-          error_code: result.error_code
+          fallback_message: result.fallback_message
         )
       end
 
       query = result.query
       Result.new(
         status: 'executed',
-        message: query_save_message(result:),
+        code: result.code,
         data: {
           'query' => serialize_query(query:),
           'save_outcome' => result.save_outcome
         },
-        error_code: nil
+        fallback_message: query_save_fallback(result:)
       )
     end
 
@@ -52,31 +57,29 @@ module Tooling
       unless result.success?
         return Result.new(
           status: 'validation_error',
-          message: result.message,
+          code: result.code,
           data: {},
-          error_code: result.error_code
+          fallback_message: result.fallback_message
         )
       end
 
       query = result.query
       Result.new(
         status: 'executed',
-        message: I18n.t('app.workspaces.chat.query_library.renamed', name: query.name),
-        data: {
-          'query' => serialize_query(query:)
-        },
-        error_code: nil
+        code: result.code,
+        data: { 'query' => serialize_query(query:) },
+        fallback_message: "Renamed the saved query to #{query.name}."
       )
     end
 
-    def update(arguments:)
+    def update(arguments:) # rubocop:disable Metrics/AbcSize
       result = Queries::UpdateService.new(workspace:, actor:, attributes: arguments).call
       unless result.success?
         return Result.new(
           status: 'validation_error',
-          message: result.message,
+          code: result.code,
           data: update_failure_data(result:),
-          error_code: result.error_code
+          fallback_message: result.fallback_message
         )
       end
 
@@ -84,12 +87,12 @@ module Tooling
       query_run_data = query_result_data_for_update(query:, arguments:)
       Result.new(
         status: 'executed',
-        message: query_update_message(result:),
+        code: result.code,
         data: {
           'query' => serialize_query(query:),
           'update_outcome' => result.update_outcome
         }.merge(query_run_data),
-        error_code: nil
+        fallback_message: query_update_fallback(result:)
       )
     end
 
@@ -98,19 +101,17 @@ module Tooling
       unless result.success?
         return Result.new(
           status: 'validation_error',
-          message: result.message,
+          code: result.code,
           data: {},
-          error_code: result.error_code
+          fallback_message: result.fallback_message
         )
       end
 
       Result.new(
         status: 'executed',
-        message: I18n.t('app.workspaces.chat.query_library.deleted', name: result.deleted_query['name']),
-        data: {
-          'deleted_query' => result.deleted_query
-        },
-        error_code: nil
+        code: result.code,
+        data: { 'deleted_query' => result.deleted_query },
+        fallback_message: "Deleted the saved query #{result.deleted_query['name']}."
       )
     end
 
@@ -118,21 +119,15 @@ module Tooling
 
     attr_reader :workspace, :actor
 
-    def list_message(payload:)
-      return I18n.t('app.workspaces.chat.query_library.none') if payload.empty?
+    def list_fallback(payload:)
+      return 'There are no saved queries in this workspace yet.' if payload.empty?
 
-      [
-        I18n.t('app.workspaces.chat.query_library.found', count: payload.size),
-        payload.map { |query| query_library_item_text(query:) }.join("\n")
-      ].join("\n\n")
-    end
+      lines = payload.map do |query|
+        source_name = query.dig('data_source', 'name')
+        source_name.present? ? "#{query['name']} (#{source_name})" : query['name']
+      end
 
-    def query_library_item_text(query:)
-      I18n.t(
-        'app.workspaces.chat.query_library.item',
-        name: query_link(query:),
-        data_source: query.dig('data_source', 'name')
-      )
+      ["Found #{payload.size} saved quer#{payload.size == 1 ? 'y' : 'ies'}.", lines.join("\n")].join("\n\n")
     end
 
     def serialize_query(query:)
@@ -168,32 +163,27 @@ module Tooling
       Queries::ChatSourceResolver.new(query:, viewer: actor, workspace:).call
     end
 
-    def query_link(query:)
-      Queries::ChatLinkFormatter.new(workspace:).markdown_link(query:)
-    end
-
-    def query_save_message(result:)
+    def query_save_fallback(result:)
       name = result.query.name
-      return I18n.t('app.workspaces.chat.query_library.already_saved', name:) if result.save_outcome == 'already_saved'
+      return "That SQL is already saved as #{name}." if result.save_outcome == 'already_saved'
 
-      I18n.t('app.workspaces.chat.query_library.saved', name:)
+      "Saved the query as #{name}."
     end
 
-    def query_update_message(result:)
+    def query_update_fallback(result:)
       query = result.query
-      if result.update_outcome == 'already_saved'
-        return I18n.t('app.workspaces.chat.query_library.already_saved', name: query.name)
+      case result.update_outcome
+      when 'already_saved'
+        "That SQL is already saved as #{query.name}."
+      when 'unchanged'
+        "#{query.name} is already up to date."
+      else
+        "Updated the saved query #{query.name}."
       end
-
-      if result.update_outcome == 'unchanged'
-        return I18n.t('app.workspaces.chat.query_library.updated_unchanged', name: query.name)
-      end
-
-      I18n.t('app.workspaces.chat.query_library.updated', name: query.name)
     end
 
     def update_failure_data(result:)
-      return {} unless result.error_code == 'duplicate_saved_query' && result.conflicting_query.present?
+      return {} unless result.code == 'query.duplicate_saved_query' && result.conflicting_query.present?
 
       {
         'conflicting_query' => serialize_query(query: result.conflicting_query)
@@ -201,7 +191,7 @@ module Tooling
     end
 
     def save_failure_data(result:)
-      return {} unless result.error_code == 'generated_name_conflict' && result.conflicting_query.present?
+      return {} unless result.code == 'query.generated_name_conflict' && result.conflicting_query.present?
 
       {
         'proposed_name' => result.proposed_name,
@@ -224,7 +214,8 @@ module Tooling
 
     def execute_query_update_result(query:)
       query.data_source.connector.execute_readonly(sql: query.query)
-    rescue DataSources::Connectors::BaseConnector::QueryError => e
+    rescue DataSources::Connectors::BaseConnector::ConnectionError,
+           DataSources::Connectors::BaseConnector::QueryError => e
       log_update_query_result_failure(query:, error: e)
       nil
     end

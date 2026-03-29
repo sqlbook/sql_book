@@ -74,6 +74,19 @@ module Chat
       ALLOWED_ROLES_KEYS.fetch(action_type, 'admin_or_owner')
     end
 
+    def self.allowed_roles_for(action_type)
+      case allowed_roles_key_for(action_type)
+      when 'owner'
+        [Member::Roles::OWNER]
+      when 'workspace_member'
+        [Member::Roles::READ_ONLY, Member::Roles::USER, Member::Roles::ADMIN, Member::Roles::OWNER]
+      when 'user_admin_or_owner'
+        [Member::Roles::USER, Member::Roles::ADMIN, Member::Roles::OWNER]
+      else
+        [Member::Roles::ADMIN, Member::Roles::OWNER]
+      end
+    end
+
     def initialize(workspace:, actor:)
       @workspace = workspace
       @actor = actor

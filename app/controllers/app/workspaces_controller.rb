@@ -5,8 +5,9 @@ module App
     before_action :require_authentication!
 
     def index
+      return redirect_to new_app_workspace_path if current_user.workspaces.empty?
+
       @workspaces = workspaces
-      redirect_to new_app_workspace_path if workspaces.empty?
     end
 
     def show
@@ -55,7 +56,18 @@ module App
     private
 
     def workspaces
-      @workspaces ||= current_user.workspaces
+      @workspaces ||= begin
+        scope = current_user.workspaces
+        if workspace_search.blank?
+          scope
+        else
+          scope.where('workspaces.name ILIKE ?', "%#{ActiveRecord::Base.sanitize_sql_like(workspace_search)}%")
+        end
+      end
+    end
+
+    def workspace_search
+      params[:search].to_s.strip
     end
 
     def workspace

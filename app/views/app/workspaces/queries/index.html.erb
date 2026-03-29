@@ -21,7 +21,13 @@
       </div>
       <div class="controls" data-controller="search">
         <%= form_with url: app_workspace_queries_path(@workspace), method: :get, html: { "data-search-target": "form" } do |form| %>
-          <%= form.text_field :search, type: "search", placeholder: I18n.t('app.workspaces.queries.index.search_placeholder'), value: params[:search], class: "input block search", "data-action": "search#change" %>
+          <%= form.text_field :search,
+                              type: "search",
+                              placeholder: I18n.t('app.workspaces.queries.index.search_placeholder'),
+                              value: params[:search],
+                              class: "input block search",
+                              "data-search-target": "input",
+                              "data-action": "input->search#queueSearch focus->search#rememberFocus blur->search#rememberBlur" %>
         <% end %>
       </div>
     </div>

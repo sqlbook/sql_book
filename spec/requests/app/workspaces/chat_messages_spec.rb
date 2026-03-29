@@ -216,7 +216,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('executed')
 
       assistant_message = response.parsed_body.dig('messages', -1)
-      expect(assistant_message['content']).to include('Staging App DB')
+      expect(assistant_message['content']).to include('Updated results')
       expect(assistant_message['content']).not_to include('not as a general-purpose assistant')
       expect(assistant_message.dig('metadata', 'query_card', 'sql')).to include("ILIKE '%i%'")
     end
@@ -2781,7 +2781,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('forbidden')
       message = response.parsed_body.dig('messages', -1, 'content')
-      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
+      expect(message).to include('Admin, or Workspace owner can do that.')
       expect(message).to include('remove')
     end
 
@@ -2811,8 +2811,8 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('forbidden')
       message = response.parsed_body.dig('messages', -1, 'content')
-      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.owner'))
-      expect(message).not_to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
+      expect(message).to include('A Workspace owner can do that.')
+      expect(message).not_to include('Admin, or Workspace owner can do that.')
       expect(message).not_to include('his role')
       expect(message).not_to include('her role')
     end
@@ -2835,7 +2835,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body['status']).to eq('forbidden')
       message = response.parsed_body.dig('messages', -1, 'content')
-      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.admin_or_owner'))
+      expect(message).to include('Admin, or Workspace owner can do that.')
       expect(message).to include('team')
     end
 
@@ -2861,7 +2861,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body['status']).to eq('ok')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('workspace team members')
       expect(response.parsed_body.dig('messages', -1, 'content')).to include(
-        I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner')
+        'User, Admin, or Workspace owner can run the database query.'
       )
       expect(response.parsed_body.dig('messages', -1, 'content')).not_to include('I can query')
 
@@ -2895,9 +2895,9 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       message = response.parsed_body.dig('messages', -1, 'content')
       expect(message).not_to start_with('[')
-      expect(message).to include(I18n.t('app.workspaces.chat.executor.forbidden_actions.query_run'))
-      expect(message).to include(I18n.t('app.workspaces.chat.executor.allowed_roles.user_admin_or_owner'))
-      expect(message).not_to include(I18n.t('app.workspaces.chat.executor.forbidden_actions.datasource_create'))
+      expect(message).to include('run a query')
+      expect(message).to include('Admin, or Workspace owner can do that.')
+      expect(message).not_to include('create a data source')
     end
 
     it 'allows written confirmation for a pending high-risk action' do

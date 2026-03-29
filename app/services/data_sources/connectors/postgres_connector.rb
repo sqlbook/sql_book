@@ -48,6 +48,8 @@ module DataSources
           rollback_transaction(connection)
           raise QueryError.new(I18n.t('app.workspaces.data_sources.query_guard.query_failed'), code: 'query_failed')
         end
+      rescue PG::Error
+        raise ConnectionError, I18n.t('app.workspaces.data_sources.validation.connection_failed')
       end
 
       private

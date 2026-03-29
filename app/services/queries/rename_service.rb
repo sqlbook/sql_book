@@ -2,7 +2,18 @@
 
 module Queries
   class RenameService
-    Result = Struct.new(:success?, :query, :message, :error_code, keyword_init: true)
+    Result = Struct.new(:success?, :query, :code, :fallback_message, keyword_init: true) do
+      def message
+        fallback_message
+      end
+
+      def error_code
+        return code unless code.to_s.include?('.')
+
+        _namespace, remainder = code.to_s.split('.', 2)
+        remainder.to_s.tr('.', '_')
+      end
+    end
 
     def initialize(workspace:, actor:, attributes:)
       @workspace = workspace
@@ -15,10 +26,13 @@ module Queries
       return query if query.is_a?(Result)
 
       new_name = attributes['name'].to_s.strip
-      return failure(message: I18n.t('app.workspaces.chat.query_library.rename_name_required')) if new_name.blank?
+      if new_name.blank?
+        return failure(code: 'query.rename_name_required',
+                       fallback_message: 'Please provide a new query name.')
+      end
 
       query.update!(name: new_name, saved: true, last_updated_by: actor)
-      Result.new(success?: true, query:, message: nil, error_code: nil)
+      Result.new(success?: true, query:, code: 'query.renamed', fallback_message: nil)
     end
 
     private
@@ -27,9 +41,13 @@ module Queries
 
     def resolve_query
       query_id = attributes['query_id'].to_i
-      return failure(message: I18n.t('app.workspaces.chat.query_library.rename_query_required')) if query_id.zero?
+      if query_id.zero?
+        return failure(code: 'query.rename_query_required',
+                       fallback_message: 'Please specify which saved query to rename.')
+      end
 
-      query_scope.find_by(id: query_id) || failure(message: I18n.t('app.workspaces.chat.query_library.query_not_found'))
+      query_scope.find_by(id: query_id) || failure(code: 'query.not_found',
+                                                   fallback_message: 'I could not find that saved query.')
     end
 
     def query_scope
@@ -38,8 +56,8 @@ module Queries
         .where(saved: true)
     end
 
-    def failure(message:, code: 'validation_error')
-      Result.new(success?: false, query: nil, message:, error_code: code)
+    def failure(code:, fallback_message: nil)
+      Result.new(success?: false, query: nil, code:, fallback_message:)
     end
   end
 end

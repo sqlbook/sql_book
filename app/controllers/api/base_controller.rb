@@ -30,6 +30,8 @@ module Api
 
       render json: {
         status: execution.status,
+        code: execution.code,
+        fallback_message: execution.fallback_message,
         message: execution.user_message,
         data: execution.data,
         error_code: execution.error_code

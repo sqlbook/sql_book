@@ -38,6 +38,23 @@ RSpec.describe 'App::Workspaces', type: :request do
         expect(response.body).to have_selector('button[aria-label="Toggle account menu"]')
       end
 
+      it 'filters workspaces by name when search is present' do
+        workspace_2.update!(name: 'Banana HQ')
+
+        get '/app/workspaces', params: { search: 'banana' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to have_selector('.workspace-card h3 a', text: 'Banana HQ')
+        expect(response.body).not_to have_selector('.workspace-card h3 a', text: workspace_1.name)
+      end
+
+      it 'renders an empty-state message when search returns no workspaces' do
+        get '/app/workspaces', params: { search: 'not-a-match' }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(I18n.t('app.workspaces.index.search_empty'))
+      end
+
       context 'when the user has a pending invitation' do
         let(:invited_workspace) { create(:workspace, name: 'Invited Workspace') }
         let!(:pending_member) do

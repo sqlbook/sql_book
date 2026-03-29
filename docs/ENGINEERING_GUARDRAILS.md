@@ -33,7 +33,9 @@
 - Reserve absolute URLs for genuinely external destinations (for example docs/help center).
 - Toast locale copy is plain text; do not use HTML entities like `&apos;` in toast translation strings.
 - See `docs/TOASTS_MASTER_REF.md` for toast-specific copy/encoding/interpolation rules.
-- For workspace chat, all deterministic system copy (UI labels, validation text, status rows, fixed executor/planner text) must use locale keys and ship with `en` + `es` entries.
+- For workspace chat, locale keys are for product UI chrome, deterministic non-LLM fallback, confirmations, and client-side validation only.
+- Do not introduce new chat-localized business prose when a structured result code plus typed data can carry the truth.
+- Normal assistant acknowledgements, summaries, and tool-result phrasing should be model-authored from structured execution truth.
 
 ## Chat Context Guardrails
 - Keep chat continuity server-owned and provider-agnostic.
@@ -54,6 +56,16 @@
   - confirmations
   - lifecycle state
 - If continuity work touches prompting, runtime, planner, or context builders, update `docs/CHAT_MASTER_REF.md` in the same change.
+
+## Chat Translation Guardrails
+- The app owns structured truth; the model owns ordinary wording.
+- New chat-supported domains must define structured result codes and typed payloads before adding conversational copy.
+- Keep API/tool result codes English-first and provider-agnostic.
+- Rails locales are not the primary content system for assistant prose.
+- If a chat change adds or changes locale-backed copy, run:
+  - `bundle exec rake chat:audit_copy_surface`
+  - `bundle exec rake chat:enforce_copy_contract`
+- Do not reintroduce deprecated chat locale namespaces such as executor/response-variant trees for business outcomes.
 
 ## API Docs Contract Safety
 - Treat `config/openapi/v1.json` as a maintained contract, not optional documentation.
