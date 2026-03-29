@@ -61,8 +61,9 @@ Current query API scope:
 - query update/rename is available to `OWNER`, `ADMIN`, and `USER`
 - query delete is available to `OWNER`, `ADMIN`, and `USER` when that role can delete the specific saved query
 - callers can send either a plain-language question or direct read-only SQL to the run endpoint
-- save requests require SQL plus datasource identity; query name can be server-generated when omitted
+- save requests require SQL plus datasource identity; in chat flows the server may ask the model to generate the saved-query name when omitted
 - exact duplicate saves are prevented by a server-owned query fingerprint (`data_source_id + normalized_sql`)
+- if model-based query-name generation is unavailable, callers should ask the user to provide an explicit name rather than inventing a heuristic fallback
 - `POST /queries` returns `save_outcome: "created"` for a new saved query or `save_outcome: "already_saved"` when the exact same saved query already exists
 - when `POST /queries` is relying on an auto-generated name and that generated name collides with a different saved query in the workspace, it must fail validation with `error_code: "generated_name_conflict"` plus `proposed_name` and `conflicting_query` data so callers can ask whether to keep that generated name or choose another
 - `PATCH /queries/:id` can update `name`, `sql`, or both atomically and returns `update_outcome: "updated"` or `update_outcome: "unchanged"`

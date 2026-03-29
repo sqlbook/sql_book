@@ -62,6 +62,8 @@
 - New chat-supported domains must define structured result codes and typed payloads before adding conversational copy.
 - Keep API/tool result codes English-first and provider-agnostic.
 - Rails locales are not the primary content system for assistant prose.
+- Do not build heuristic SQL naming/parsing layers into the primary saved-query naming path for chat when the model can name the query from full context.
+- If model-based saved-query naming is unavailable, ask the user for a name instead of expanding heuristic fallback logic to cover more query-intent cases.
 - If a chat change adds or changes locale-backed copy, run:
   - `bundle exec rake chat:audit_copy_surface`
   - `bundle exec rake chat:enforce_copy_contract`

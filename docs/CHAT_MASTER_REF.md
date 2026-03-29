@@ -286,8 +286,9 @@ High-risk writes (inline confirmation required):
 - `query.update`: `query_id`, `sql` or `name` (or both)
 - `query.rename`: `query_id`, `name`
 - `query.delete`: `query_id`
-- When `query.save` has no explicit name, chat should generate a concise title from the SQL/current query context instead of reusing a long conversational prompt or a generic analytic question like "How many users do I have?".
-- Generated saved-query names should incorporate meaningful filters when they materially define the query (for example letter/name filters) rather than collapsing to a generic title like `User count` or `User names and email addresses`.
+- When `query.save` has no explicit name, chat should ask the model to generate a saved-query name from the SQL plus recent conversational context instead of reusing a long conversational prompt.
+- Generated saved-query names should incorporate the real purpose of the query, including meaningful filters, ranking, ordering, grouping, or status semantics when they materially define what the query is for.
+- If model-based saved-query naming is unavailable, chat should ask the user what name to use rather than inventing a heuristic fallback title.
 - `query.save` should not create an exact duplicate saved query in the same datasource; the app should return the existing saved query instead.
 - If an auto-generated `query.save` name collides with a different saved query in the workspace, chat should pause and ask whether to keep that generated name or choose another, rather than silently saving with the colliding name.
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.

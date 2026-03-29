@@ -10,6 +10,20 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
     sign_in(user)
     allow(ENV).to receive(:fetch).and_call_original
     allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return(nil)
+    generated_name_for = lambda do |sql:|
+      if sql.match?(/\bcount\s*\(/i) && sql.match?(/\bfrom\s+public\.users\b/i)
+        'User count'
+      elsif sql.match?(/select\s+first_name,\s*last_name,\s*email\s+from\s+public\.users/i)
+        'User directory'
+      else
+        'Generated query name'
+      end
+    end
+
+    allow(Queries::GeneratedNameService).to receive(:generate) do |**kwargs|
+      generated_name_for.call(sql: kwargs.fetch(:sql))
+    end
+    allow(Queries::GeneratedNameService).to receive(:generate_alternative).and_return('Total users')
   end
 
   describe 'GET /app/workspaces/:workspace_id/chat/messages' do
@@ -537,7 +551,7 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
       expect(response.parsed_body.dig('messages', -1, 'content')).to include('already saved')
     end
 
-    it 'generates a concise saved query name from the SQL shape instead of reusing the full prompt' do
+    it 'generates a saved query name from the query purpose instead of reusing the full prompt' do
       create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
       schema_groups = [
         {
@@ -580,8 +594,8 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
 
       expect(response).to have_http_status(:ok)
       saved_query = Query.order(:id).last
-      expect(saved_query.name).to eq('User names and email addresses')
-      expect(response.parsed_body.dig('messages', -1, 'content')).to include('User names and email addresses')
+      expect(saved_query.name).to eq('User directory')
+      expect(response.parsed_body.dig('messages', -1, 'content')).to include('User directory')
     end
 
     it 'saves the most recent query when the user says save that for me' do

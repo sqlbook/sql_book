@@ -1173,11 +1173,12 @@ module Chat
     def handle_query_save_name_conflict_resolution(resolution)
       return cancel_query_save_name_conflict if resolution[:type] == :cancel
 
-      resolved_name = if resolution[:type] == :choose_another_name
-                        alternative_query_save_name
-                      else
-                        resolution[:name] || active_query_save_name_conflict['proposed_name']
-                      end
+      resolved_name = resolution[:name] || active_query_save_name_conflict['proposed_name']
+      if resolution[:type] == :choose_another_name
+        resolved_name = alternative_query_save_name
+        return render_non_action(query_save_name_generation_failure_message) if resolved_name.blank?
+      end
+
       execute_query_save_name_conflict_resolution(name: resolved_name)
     end
 
@@ -1194,13 +1195,25 @@ module Chat
     end
 
     def alternative_query_save_name
-      data_source = workspace.data_sources.find_by(id: active_query_save_name_conflict['data_source_id'])
-      return active_query_save_name_conflict['proposed_name'] if data_source.blank?
+      data_source = active_query_save_name_data_source
+      return nil if data_source.blank?
 
-      Queries::NameGenerator.generate_alternative(
+      generate_alternative_query_save_name(data_source:)
+    rescue Queries::GeneratedNameService::ConfigurationError, Queries::GeneratedNameService::RequestError => e
+      Rails.logger.warn("Alternative query name generation failed: #{e.class} #{e.message}")
+      nil
+    end
+
+    def active_query_save_name_data_source
+      workspace.data_sources.find_by(id: active_query_save_name_conflict['data_source_id'])
+    end
+
+    def generate_alternative_query_save_name(data_source:)
+      Queries::GeneratedNameService.generate_alternative(
         question: active_query_save_name_conflict['question'],
         sql: active_query_save_name_conflict['sql'],
         data_source:,
+        actor:,
         existing_names: workspace_saved_query_names
       )
     end
@@ -1241,6 +1254,10 @@ module Chat
         ].join(' '),
         'Do you want to keep that name or choose another?'
       ].join(' ')
+    end
+
+    def query_save_name_generation_failure_message
+      'I could not generate an alternative saved query name just now. Please tell me the name you want to use.'
     end
 
     def clear_query_save_name_conflict_state_for(intent:, execution:)

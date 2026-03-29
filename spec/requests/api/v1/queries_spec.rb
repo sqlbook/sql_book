@@ -20,6 +20,18 @@ RSpec.describe 'API v1 queries', type: :request do
     before do
       sign_in(owner)
       data_source
+      generated_name_for = lambda do |sql:|
+        if sql.match?(/\bcount\s*\(/i) && sql.match?(/\bfrom\s+public\.users\b/i)
+          'User count'
+        else
+          'Generated query name'
+        end
+      end
+
+      allow(Queries::GeneratedNameService).to receive(:generate) do |**kwargs|
+        generated_name_for.call(sql: kwargs.fetch(:sql))
+      end
+      allow(Queries::GeneratedNameService).to receive(:generate_alternative).and_return('Total users')
     end
 
     it 'lists saved workspace queries' do

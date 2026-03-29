@@ -57,10 +57,17 @@ module Queries
     def query_name_for(data_source:)
       return explicit_name if explicit_name.present?
 
-      Queries::NameGenerator.generate(
+      Queries::GeneratedNameService.generate(
         question: attributes['question'],
         sql:,
-        data_source:
+        data_source:,
+        actor:
+      )
+    rescue Queries::GeneratedNameService::ConfigurationError, Queries::GeneratedNameService::RequestError => e
+      Rails.logger.warn("Query name generation failed: #{e.class} #{e.message}")
+      failure(
+        code: 'query.name_generation_failed',
+        fallback_message: 'I could not generate a saved query name just now. Please tell me what name you want to use.'
       )
     end
 
@@ -108,6 +115,8 @@ module Queries
       return success(query: existing_query, save_outcome: 'already_saved') if existing_query
 
       generated_name = query_name_for(data_source:)
+      return generated_name if generated_name.is_a?(Result)
+
       conflicting_query = generated_name_conflict_for(name: generated_name)
       return generated_name_conflict_failure(conflicting_query:, proposed_name: generated_name) if conflicting_query
 

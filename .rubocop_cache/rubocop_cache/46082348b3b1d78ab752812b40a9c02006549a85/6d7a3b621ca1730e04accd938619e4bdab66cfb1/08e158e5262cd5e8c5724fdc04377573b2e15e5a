@@ -1,0 +1,1 @@
+[{"severity":"warning","location":{"begin_pos":10089,"end_pos":10127},"message":"Lint/RedundantCopDisableDirective: Unnecessary disabling of `Metrics/MethodLength`.","cop_name":"Lint/RedundantCopDisableDirective","status":"uncorrected"}]

@@ -1,0 +1,1 @@
+[{"severity":"convention","location":{"begin_pos":42781,"end_pos":43452},"message":"Metrics/AbcSize: Assignment Branch Condition size for alternative_query_save_name is too high. [<2, 17, 2> 17.23/17]","cop_name":"Metrics/AbcSize","status":"unsupported"}]

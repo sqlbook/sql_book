@@ -663,7 +663,7 @@
       "post": {
         "operationId": "querySave",
         "summary": "Save query",
-        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will generate one. Exact duplicates are prevented by a server-owned query fingerprint based on datasource plus normalized SQL: saving the same query again returns the existing saved query with `save_outcome: \"already_saved\"` instead of creating a duplicate. If that auto-generated name would collide with a different saved query in the same workspace, the server returns a validation error with `error_code: \"generated_name_conflict\"` plus the proposed name and conflicting query so callers can ask whether to keep that name or choose another. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
+        "description": "Saves a read-only query into the current workspace query library. Callers must provide SQL and identify the datasource by id or name. If `name` is omitted, the server will ask the model to generate one from the query purpose and recent chat context. Exact duplicates are prevented by a server-owned query fingerprint based on datasource plus normalized SQL: saving the same query again returns the existing saved query with `save_outcome: \"already_saved\"` instead of creating a duplicate. If that auto-generated name would collide with a different saved query in the same workspace, the server returns a validation error with `error_code: \"generated_name_conflict\"` plus the proposed name and conflicting query so callers can ask whether to keep that name or choose another. If model-based naming is unavailable, the server returns a validation error with `error_code: \"name_generation_failed\"` so callers can ask the user what name to use. When a save originated from workspace chat, the saved query may later expose optional `chat_source` provenance to users who can still access that private thread.",
         "tags": [
           "Queries"
         ],
@@ -1456,6 +1456,14 @@
                   "status": "validation_error",
                   "error_code": "validation_error",
                   "message": "Run a query here first, or provide SQL and a data source so I can save it.",
+                  "data": {}
+                }
+              },
+              "nameGenerationFailed": {
+                "value": {
+                  "status": "validation_error",
+                  "error_code": "name_generation_failed",
+                  "message": "I could not generate a saved query name just now. Please tell me what name you want to use.",
                   "data": {}
                 }
               },
