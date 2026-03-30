@@ -135,6 +135,7 @@ Step 2:
   - optional flags carried in config (for example `extract_category_values`)
 - clicking next validates the connection server-side
 - chat-assisted setup should collect the same required information in stages rather than demanding every field in one message
+- chat-assisted setup detection must yield to obvious query-like requests; mentioning `database` or `connected database` alone is not enough to start datasource setup
 
 Step 3:
 - select tables to allow for the datasource
@@ -208,12 +209,12 @@ UI fidelity notes:
   - OpenAPI-documented `/api/v1`
   - chat tool execution
 - Chat/tool execution uses the same server-authoritative handlers and policy layer as the API-facing surface.
-- Datasource chat fallbacks and product-owned validation copy are locale-key backed under `app.workspaces.chat.datasource.*`.
+- Datasource chat fallbacks and product-owned validation/setup copy are locale-key backed under `app.workspaces.chat.datasource_setup.*`.
 
 ## Localization rules
 - Datasource UI copy lives under `app.workspaces.data_sources.*`.
 - Shared repeated labels should prefer `common.*`.
-- Datasource deterministic API validation/errors and chat fallback copy live under `app.workspaces.chat.datasource.*`.
+- Datasource deterministic API validation/errors and chat fallback/setup copy live under `app.workspaces.chat.datasource_setup.*`.
 - New datasource copy is incomplete unless both `en` and `es` ship in the same change.
 
 ## Mixed-source stats semantics

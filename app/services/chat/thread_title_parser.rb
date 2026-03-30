@@ -4,6 +4,8 @@ module Chat
   module ThreadTitleParser
     module_function
 
+    PLACEHOLDER_TITLE_REGEX = /\Amatch(?:\b.*)?\z/i
+
     PATTERNS = [
       /
         \b(?:rename|retitle|change|update)\b.*\b(?:thread|chat|conversation)(?:\s+title)?\b
@@ -24,7 +26,12 @@ module Chat
 
       PATTERNS.each do |pattern|
         match = source.match(pattern)
-        return cleaned(match[1]) if match
+        next unless match
+
+        parsed_title = cleaned(match[1])
+        return nil if placeholder_title?(parsed_title)
+
+        return parsed_title
       end
 
       nil
@@ -39,7 +46,7 @@ module Chat
         next unless match
 
         parsed_title = cleaned(match[1])
-        return nil if parsed_title.to_s.casecmp('match').zero?
+        return nil if placeholder_title?(parsed_title)
 
         return parsed_title
       end
@@ -49,6 +56,10 @@ module Chat
 
     def cleaned(value)
       value.to_s.strip.sub(/[.!?]+\z/, '').presence
+    end
+
+    def placeholder_title?(value)
+      value.to_s.strip.match?(PLACEHOLDER_TITLE_REGEX)
     end
   end
 end

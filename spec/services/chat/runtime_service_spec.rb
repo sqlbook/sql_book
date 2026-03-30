@@ -299,6 +299,11 @@ RSpec.describe Chat::RuntimeService do
 
       context_snapshot = instance_double(
         Chat::ContextSnapshot,
+        pending_follow_up: {
+          'kind' => 'thread_rename_target',
+          'domain' => 'thread',
+          'proposed_value' => '10 longest standing users'
+        },
         recent_query_state: {
           'saved_query_id' => 14,
           'saved_query_name' => '10 longest standing users'
@@ -439,6 +444,117 @@ RSpec.describe Chat::RuntimeService do
         'query_id' => saved_query.id,
         'query_name' => saved_query.name,
         'name' => 'DB User Count'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'uses the recent suggested query name for explicit rename requests without a spelled-out title' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: '5 longest-standing users by earliest account creation date',
+        query: 'SELECT * FROM public.users ORDER BY created_at ASC NULLS LAST LIMIT 10',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'What would you like to rename the saved query to?',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = instance_double(
+        Chat::ContextSnapshot,
+        recent_query_state: {
+          'saved_query_id' => saved_query.id,
+          'saved_query_name' => saved_query.name,
+          'suggested_name' => '10 longest-standing users by earliest account creation date'
+        },
+        recent_saved_query_reference: {
+          'saved_query_id' => saved_query.id,
+          'saved_query_name' => saved_query.name
+        },
+        query_references: [],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: 'Thanks, we should probably rename it now too then?',
+        workspace:,
+        actor:,
+        tool_metadata: Tooling::WorkspaceRegistry.tool_metadata,
+        context: {
+          context_snapshot:,
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('query.rename')
+      expect(decision.tool_calls.first.arguments).to include(
+        'query_id' => saved_query.id,
+        'name' => '10 longest-standing users by earliest account creation date'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'uses the recent query name when asked to rename the thread to match' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: '',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = instance_double(
+        Chat::ContextSnapshot,
+        recent_query_state: {
+          'saved_query_id' => 14,
+          'saved_query_name' => '10 longest-standing users by earliest account creation date'
+        },
+        recent_saved_query_reference: {
+          'saved_query_id' => 14,
+          'saved_query_name' => '10 longest-standing users by earliest account creation date'
+        },
+        query_references: [],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: 'Can you rename the thread to match?',
+        workspace:,
+        actor:,
+        tool_metadata: Tooling::WorkspaceRegistry.tool_metadata,
+        context: {
+          chat_thread_id: 19,
+          context_snapshot:,
+          conversation_messages: []
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('thread.rename')
+      expect(decision.tool_calls.first.arguments).to eq(
+        'thread_id' => 19,
+        'title' => '10 longest-standing users by earliest account creation date'
       )
       expect(decision.finalize_without_tools).to be(false)
     end
@@ -1258,7 +1374,18 @@ RSpec.describe Chat::RuntimeService do
       allow(http_client).to receive(:request).and_return(response)
       allow(Net::HTTP).to receive(:start).and_yield(http_client)
 
-      execution = Struct.new(:status, :data, :user_message).new('executed', {}, 'fallback')
+      execution = Struct.new(:status, :data, :user_message).new(
+        'executed',
+        {
+          'next_actions' => [
+            {
+              'action_type' => 'thread.rename',
+              'arguments' => { 'title' => '10 longest standing users' }
+            }
+          ]
+        },
+        'fallback'
+      )
       rendered = described_class.new(
         message: 'Rename that query',
         workspace:,
@@ -1290,7 +1417,18 @@ RSpec.describe Chat::RuntimeService do
       allow(http_client).to receive(:request).and_return(response)
       allow(Net::HTTP).to receive(:start).and_yield(http_client)
 
-      execution = Struct.new(:status, :data, :user_message).new('executed', {}, 'fallback')
+      execution = Struct.new(:status, :data, :user_message).new(
+        'executed',
+        {
+          'next_actions' => [
+            {
+              'action_type' => 'thread.rename',
+              'arguments' => { 'title' => '10 longest standing users' }
+            }
+          ]
+        },
+        'fallback'
+      )
       rendered = described_class.new(
         message: 'Rename that query',
         workspace:,
@@ -1303,6 +1441,52 @@ RSpec.describe Chat::RuntimeService do
       )
 
       expect(rendered).to include('If you want, I can also help update the thread title to match.')
+    end
+
+    it 'adds a query rename suggestion after query updates when the model omits it' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      response = double(
+        'response',
+        body: {
+          output_text: 'Updated results (10 row(s)):'
+        }.to_json
+      )
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      execution = Struct.new(:status, :data, :user_message).new(
+        'executed',
+        {
+          'suggested_name' => '10 longest-standing users by earliest account creation date',
+          'next_actions' => [
+            {
+              'action_type' => 'query.rename',
+              'arguments' => {
+                'query_id' => 12,
+                'name' => '10 longest-standing users by earliest account creation date'
+              }
+            }
+          ]
+        },
+        'fallback'
+      )
+      rendered = described_class.new(
+        message: 'show 10 users instead',
+        workspace:,
+        actor:,
+        tool_metadata: [{ name: 'query.update' }, { name: 'query.rename' }]
+      ).compose_tool_result_message(
+        tool_name: 'query.update',
+        tool_arguments: {},
+        execution:
+      )
+
+      expect(rendered).to include(
+        'If you want, I can also rename the saved query to 10 longest-standing users by earliest account creation date.'
+      )
     end
   end
 end

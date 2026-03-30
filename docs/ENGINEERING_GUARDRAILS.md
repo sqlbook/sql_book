@@ -41,6 +41,8 @@
 - Keep chat continuity server-owned and provider-agnostic.
 - Prefer structured app context over longer transcript when improving follow-up continuity.
 - Do not introduce domain-specific ad hoc chat memory/state if the behavior can be represented by the shared continuity contract.
+- Do not introduce new persisted follow-up stores outside `ChatPendingFollowUp` without updating the chat architecture docs in the same change.
+- Do not re-parse assistant prose as the primary source of unresolved-next-step truth when a structured `follow_up` payload or persisted pending follow-up can carry the state.
 - The shared contract is:
   - `active_focus`: the single most relevant current object/flow
   - `pending_follow_up`: the single unresolved next step most likely being answered
@@ -56,6 +58,7 @@
   - confirmations
   - lifecycle state
 - If continuity work touches prompting, runtime, planner, or context builders, update `docs/CHAT_MASTER_REF.md` in the same change.
+- The normal LLM-enabled runtime should have one canonical interpreter path. Do not add a second semantic router in `TurnOrchestrator`, `PlannerService`, or reconciliation code for the same turn.
 
 ## Chat Translation Guardrails
 - The app owns structured truth; the model owns ordinary wording.
@@ -68,6 +71,7 @@
   - `bundle exec rake chat:audit_copy_surface`
   - `bundle exec rake chat:enforce_copy_contract`
 - Do not reintroduce deprecated chat locale namespaces such as executor/response-variant trees for business outcomes.
+- Keep optional assistant suggestions grounded in structured `next_actions`; do not add prose-only side suggestions with no executable contract behind them.
 
 ## API Docs Contract Safety
 - Treat `config/openapi/v1.json` as a maintained contract, not optional documentation.

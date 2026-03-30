@@ -45,6 +45,61 @@ RSpec.describe Chat::PlannerService do
       expect(plan.payload).to include('title' => '10 longest standing users')
     end
 
+    it 'uses the recent suggested query name for explicit rename requests without a spelled-out title' do
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: '5 longest-standing users by earliest account creation date',
+        query: 'SELECT * FROM public.users ORDER BY created_at ASC NULLS LAST LIMIT 10',
+        author: actor,
+        last_updated_by: actor
+      )
+
+      plan = described_class.new(
+        message: 'Thanks, we should probably rename it now too then?',
+        workspace:,
+        actor:,
+        context_snapshot: Chat::ContextSnapshot.new(
+          recent_query_state: {
+            'saved_query_id' => saved_query.id,
+            'saved_query_name' => saved_query.name,
+            'suggested_name' => '10 longest-standing users by earliest account creation date'
+          },
+          query_references: [],
+          conversation_messages: [],
+          structured_context_lines: []
+        )
+      ).call
+
+      expect(plan.action_type).to eq('query.rename')
+      expect(plan.payload).to include(
+        'query_id' => saved_query.id,
+        'name' => '10 longest-standing users by earliest account creation date'
+      )
+    end
+
+    it 'uses the recent query name when asked to rename the thread to match' do
+      plan = described_class.new(
+        message: 'Can you rename the thread to match?',
+        workspace:,
+        actor:,
+        context_snapshot: Chat::ContextSnapshot.new(
+          recent_query_state: {
+            'saved_query_id' => 14,
+            'saved_query_name' => '10 longest-standing users by earliest account creation date'
+          },
+          query_references: [],
+          conversation_messages: [],
+          structured_context_lines: []
+        )
+      ).call
+
+      expect(plan.action_type).to eq('thread.rename')
+      expect(plan.payload).to include('title' => '10 longest-standing users by earliest account creation date')
+    end
+
     it 'asks for required invite fields when invite intent is missing recipient details' do
       plan = described_class.new(message: 'invite my team', workspace:, actor:).call
 

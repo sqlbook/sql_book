@@ -1,6 +1,6 @@
 # API Master Reference
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
 ## Purpose
 Single source of truth for sqlbook's documented API surface, OpenAPI authoring rules, Scalar setup, and the maintenance workflow that keeps the docs useful for both humans and LLM/tool consumers.
@@ -31,6 +31,7 @@ The API reference should be treated as the documented surface for the app as it 
 Some expensive or abuse-prone endpoints are rate limited and may return `429 Too Many Requests`. See [RATE_LIMITING_MASTER_REF.md](/Users/chrispattison/sql_book/docs/RATE_LIMITING_MASTER_REF.md) for the currently shipped scope and the deferred phases.
 
 Current OpenAPI coverage includes the workspace, team-management, datasource, and query contracts that are already exposed through product and chat flows:
+- `PATCH /api/v1/workspaces/:workspace_id/chat-threads/:id`
 - `PATCH /api/v1/workspaces/:workspace_id`
 - `DELETE /api/v1/workspaces/:workspace_id`
 - `GET /api/v1/workspaces/:workspace_id/members`
@@ -142,6 +143,10 @@ For docs to stay human and LLM friendly:
 - Chat does not call `/api/v1` over HTTP today; it uses the same underlying server-side execution contracts through the shared tool registries and action executor.
 - The API docs still matter for chat because they define the public-facing contract language we want tools and future consumers to follow.
 - API/tool outcomes consumed by chat should be documented and implemented as English-first structured truth (`status`, `code`, `data`, optional `fallback_message`), not localized chat sentences.
+- Chat-adjacent structured outcomes may also include:
+  - `presentation` for app-rendered UI blocks
+  - `next_actions` for executable optional follow-up suggestions
+  - `follow_up` for persisted unresolved-next-step state
 - Datasource and query contracts should stay semantically aligned across:
   - standalone UI flows
   - `/api/v1`
@@ -152,6 +157,7 @@ For docs to stay human and LLM friendly:
 - Query mutation semantics should also stay aligned across those surfaces:
   - exact duplicate saves should no-op to the existing saved query
   - in-place saved-query edits should use the same update contract whether they originate from product UI or chat
+  - SQL-changing saved-query updates may also carry name-review state (`aligned`, `stale`, `uncertain`) plus rename follow-up metadata
 
 ## Maintenance workflow
 When changing any documented workspace/team/datasource/query API behavior:

@@ -206,6 +206,48 @@ ALTER SEQUENCE public.chat_messages_id_seq OWNED BY public.chat_messages.id;
 
 
 --
+-- Name: chat_pending_follow_ups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.chat_pending_follow_ups (
+    id bigint NOT NULL,
+    workspace_id bigint NOT NULL,
+    chat_thread_id bigint NOT NULL,
+    created_by_id bigint NOT NULL,
+    source_message_id bigint,
+    status integer DEFAULT 1 NOT NULL,
+    kind character varying NOT NULL,
+    domain character varying NOT NULL,
+    target_type character varying,
+    target_id bigint,
+    payload json DEFAULT '{}'::json NOT NULL,
+    resolved_at timestamp(6) without time zone,
+    superseded_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: chat_pending_follow_ups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.chat_pending_follow_ups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: chat_pending_follow_ups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.chat_pending_follow_ups_id_seq OWNED BY public.chat_pending_follow_ups.id;
+
+
+--
 -- Name: chat_query_references; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -688,6 +730,13 @@ ALTER TABLE ONLY public.chat_messages ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: chat_pending_follow_ups id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_pending_follow_ups ALTER COLUMN id SET DEFAULT nextval('public.chat_pending_follow_ups_id_seq'::regclass);
+
+
+--
 -- Name: chat_query_references id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -817,6 +866,14 @@ ALTER TABLE ONLY public.chat_action_requests
 
 ALTER TABLE ONLY public.chat_messages
     ADD CONSTRAINT chat_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: chat_pending_follow_ups chat_pending_follow_ups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_pending_follow_ups
+    ADD CONSTRAINT chat_pending_follow_ups_pkey PRIMARY KEY (id);
 
 
 --
@@ -1012,6 +1069,48 @@ CREATE INDEX index_chat_messages_on_chat_thread_id ON public.chat_messages USING
 --
 
 CREATE INDEX index_chat_messages_on_user_id ON public.chat_messages USING btree (user_id);
+
+
+--
+-- Name: index_chat_pending_follow_ups_on_active_thread_actor; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_chat_pending_follow_ups_on_active_thread_actor ON public.chat_pending_follow_ups USING btree (chat_thread_id, created_by_id) WHERE ((status = 1) AND (superseded_at IS NULL));
+
+
+--
+-- Name: index_chat_pending_follow_ups_on_chat_thread_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_pending_follow_ups_on_chat_thread_id ON public.chat_pending_follow_ups USING btree (chat_thread_id);
+
+
+--
+-- Name: index_chat_pending_follow_ups_on_created_by_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_pending_follow_ups_on_created_by_id ON public.chat_pending_follow_ups USING btree (created_by_id);
+
+
+--
+-- Name: index_chat_pending_follow_ups_on_source_message_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_pending_follow_ups_on_source_message_id ON public.chat_pending_follow_ups USING btree (source_message_id);
+
+
+--
+-- Name: index_chat_pending_follow_ups_on_thread_kind_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_pending_follow_ups_on_thread_kind_status ON public.chat_pending_follow_ups USING btree (chat_thread_id, kind, status);
+
+
+--
+-- Name: index_chat_pending_follow_ups_on_workspace_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_chat_pending_follow_ups_on_workspace_id ON public.chat_pending_follow_ups USING btree (workspace_id);
 
 
 --
@@ -1247,6 +1346,14 @@ ALTER TABLE ONLY public.chat_query_references
 
 
 --
+-- Name: chat_pending_follow_ups fk_rails_3b588cfbf4; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_pending_follow_ups
+    ADD CONSTRAINT fk_rails_3b588cfbf4 FOREIGN KEY (chat_thread_id) REFERENCES public.chat_threads(id);
+
+
+--
 -- Name: chat_messages fk_rails_43b6215c4f; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1295,6 +1402,14 @@ ALTER TABLE ONLY public.chat_query_references
 
 
 --
+-- Name: chat_pending_follow_ups fk_rails_88d3cce4f3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_pending_follow_ups
+    ADD CONSTRAINT fk_rails_88d3cce4f3 FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
 -- Name: chat_action_requests fk_rails_90dd8c1a9a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1332,6 +1447,14 @@ ALTER TABLE ONLY public.chat_query_references
 
 ALTER TABLE ONLY public.active_storage_variant_records
     ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: chat_pending_follow_ups fk_rails_a7931f28bb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_pending_follow_ups
+    ADD CONSTRAINT fk_rails_a7931f28bb FOREIGN KEY (source_message_id) REFERENCES public.chat_messages(id);
 
 
 --
@@ -1399,12 +1522,21 @@ ALTER TABLE ONLY public.chat_action_requests
 
 
 --
+-- Name: chat_pending_follow_ups fk_rails_f7f0ffd59d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_pending_follow_ups
+    ADD CONSTRAINT fk_rails_f7f0ffd59d FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260330100000'),
 ('20260322110000'),
 ('20260321170000'),
 ('20260321113000'),

@@ -14,8 +14,8 @@ module Chat
 
     def call # rubocop:disable Metrics/AbcSize
       active_data_source_setup = data_source_setup_state_store.load
-      active_query_clarification = query_clarification_state_store.load
-      query_save_name_conflict = query_save_name_conflict_state_store.load
+      active_query_clarification = pending_follow_up_payload_for(kind: 'query_scope_clarification')
+      query_save_name_conflict = pending_follow_up_payload_for(kind: 'query_save_name_conflict')
       legacy_recent_query_state = recent_query_state_store.load
       query_references = query_reference_store.load
       recent_query_state = derived_recent_query_state(
@@ -24,14 +24,13 @@ module Chat
       )
       recent_failure = recent_failure_snapshot
       active_pending_action = active_pending_action_snapshot
+      active_pending_follow_up = active_pending_follow_up_snapshot
       member_references = recent_member_references
       pending_follow_up = pending_follow_up_snapshot(
+        active_pending_follow_up:,
         query_save_name_conflict:,
         active_data_source_setup:,
-        active_query_clarification:,
-        query_references:,
-        recent_query_state:,
-        member_references:
+        active_query_clarification:
       )
       active_focus = active_focus_snapshot(
         pending_follow_up:,
@@ -67,7 +66,8 @@ module Chat
         query_references:,
         recent_query_state:,
         active_focus:,
-        pending_follow_up:
+        pending_follow_up:,
+        active_pending_follow_up:
       )
     end
 
@@ -141,22 +141,6 @@ module Chat
 
     def data_source_setup_state_store
       @data_source_setup_state_store ||= DataSourceSetupStateStore.new(
-        workspace:,
-        actor:,
-        chat_thread:
-      )
-    end
-
-    def query_clarification_state_store
-      @query_clarification_state_store ||= QueryClarificationStateStore.new(
-        workspace:,
-        actor:,
-        chat_thread:
-      )
-    end
-
-    def query_save_name_conflict_state_store
-      @query_save_name_conflict_state_store ||= QuerySaveNameConflictStateStore.new(
         workspace:,
         actor:,
         chat_thread:
@@ -331,22 +315,47 @@ module Chat
     end
 
     def pending_follow_up_snapshot(
+      active_pending_follow_up:,
       query_save_name_conflict:,
       active_data_source_setup:,
-      active_query_clarification:,
-      query_references:,
-      recent_query_state:,
-      member_references:
+      active_query_clarification:
     )
-      [
-        query_name_conflict_follow_up(state: query_save_name_conflict),
-        query_update_or_save_new_follow_up(query_references:, recent_query_state:),
-        query_rename_target_selection_follow_up,
-        schema_summary_grouping_follow_up,
-        query_clarification_follow_up(state: active_query_clarification),
-        data_source_setup_follow_up(state: active_data_source_setup),
-        member_follow_up_snapshot(member_references:)
-      ].find(&:present?) || {}
+      return active_pending_follow_up if active_pending_follow_up.present?
+
+      query_name_conflict_follow_up(state: query_save_name_conflict).presence ||
+        query_clarification_follow_up(state: active_query_clarification).presence ||
+        data_source_setup_follow_up(state: active_data_source_setup).presence ||
+        {}
+    end
+
+    def active_pending_follow_up_snapshot
+      snapshot = pending_follow_up_manager.active_payload
+      return {} if snapshot.blank?
+
+      payload = snapshot['payload'].to_h.deep_stringify_keys
+
+      case snapshot['kind']
+      when 'query_save_name_conflict'
+        query_name_conflict_follow_up(state: payload)
+      when 'query_scope_clarification'
+        query_clarification_follow_up(state: payload)
+      when 'datasource_setup'
+        data_source_setup_follow_up(state: payload)
+      when 'query_rename_suggestion'
+        query_rename_suggestion_follow_up(snapshot:, payload:)
+      when 'thread_rename_target'
+        thread_rename_target_follow_up(snapshot:, payload:)
+      else
+        payload
+      end
+    end
+
+    def pending_follow_up_payload_for(kind:)
+      snapshot = pending_follow_up_manager.active_payload
+      return {} if snapshot.blank?
+      return {} unless snapshot['kind'] == kind
+
+      snapshot['payload'].to_h.deep_stringify_keys
     end
 
     def focus_from_pending_follow_up(pending_follow_up:)
@@ -483,59 +492,36 @@ module Chat
       }.compact_blank
     end
 
-    def query_update_or_save_new_follow_up(query_references:, recent_query_state:)
-      return {} unless recent_assistant_content.match?(/looks more like a new query than an update/i)
-
-      refinement = QueryRefinementResolver.new(
-        workspace:,
-        context_snapshot: ContextSnapshot.new(query_references:, recent_query_state:, keyword_init: true)
-      ).resolve
-      return {} unless refinement.material_drift? && refinement.target_query.present?
-
+    def query_rename_suggestion_follow_up(snapshot:, payload:)
       {
         'domain' => 'query',
-        'kind' => 'query_update_or_save_new',
-        'prompt_summary' => %(Decide whether to update saved query "#{refinement.target_query.name}" or save the draft as a new query),
-        'expected_response_types' => %w[choose_existing choose_alternative cancel],
+        'kind' => 'query_rename_suggestion',
+        'prompt_summary' => payload['prompt_summary'].presence ||
+          %(Consider renaming "#{payload['current_name']}" to "#{payload['suggested_name']}"),
+        'expected_response_types' => %w[confirm cancel],
         'target_snapshot' => {
-          'target_type' => 'saved_query',
-          'target_id' => refinement.target_query.id,
-          'target_name' => refinement.target_query.name
-        },
-        'proposed_value' => refinement.generated_name
+          'target_type' => snapshot['target_type'].presence || 'saved_query',
+          'target_id' => snapshot['target_id'],
+          'target_name' => payload['current_name']
+        }.compact_blank,
+        'proposed_value' => payload['suggested_name'],
+        'current_value' => payload['current_name']
       }.compact_blank
     end
 
-    def query_rename_target_selection_follow_up
-      return {} unless recent_assistant_content.match?(/\b(saved\s+queries?|query\s+library)\b/i)
-
-      requested_name = recent_requested_query_name
-      return {} if requested_name.blank?
-
+    def thread_rename_target_follow_up(snapshot:, payload:)
       {
-        'domain' => 'query',
-        'kind' => 'rename_target_selection',
-        'prompt_summary' => %(Select which saved query should be renamed to "#{requested_name}"),
-        'expected_response_types' => %w[select_target cancel],
-        'target_snapshot' => { 'target_type' => 'saved_query' },
-        'proposed_value' => requested_name
-      }
-    end
-
-    def schema_summary_grouping_follow_up
-      summary = SchemaSummaryFollowUpResponder.pending_summary(conversation_messages:)
-      return {} if summary.blank?
-
-      {
-        'domain' => 'query',
-        'kind' => 'schema_summary_grouping',
-        'prompt_summary' => %(Assistant offered to group the recent schema summary for #{summary[:table_name]} into categories),
+        'domain' => 'thread',
+        'kind' => 'thread_rename_target',
+        'prompt_summary' => payload['prompt_summary'].presence ||
+          %(Rename the current chat to "#{payload['suggested_title']}"),
         'expected_response_types' => %w[confirm cancel],
         'target_snapshot' => {
-          'target_type' => 'table',
-          'target_name' => summary[:table_name]
+          'target_type' => snapshot['target_type'].presence || 'chat_thread',
+          'target_id' => snapshot['target_id'].presence || chat_thread.id,
+          'target_name' => payload['suggested_title']
         }.compact_blank,
-        'proposed_value' => 'group_into_categories'
+        'proposed_value' => payload['suggested_title']
       }.compact_blank
     end
 
@@ -567,35 +553,6 @@ module Chat
           'target_name' => state['name']
         }.compact_blank
       }.compact_blank
-    end
-
-    def member_follow_up_snapshot(member_references:)
-      member = Array(member_references).first.to_h.deep_stringify_keys
-      return {} if member.blank? || recent_assistant_content.blank?
-
-      if recent_assistant_content.match?(/\bwhat\s+(?:role|access)\b/i)
-        return {
-          'domain' => 'member',
-          'kind' => 'member_role_clarification',
-          'prompt_summary' => "Need a role decision for #{member['full_name']}",
-          'expected_response_types' => %w[provide_detail cancel],
-          'target_snapshot' => {
-            'target_type' => 'member',
-            'target_id' => member['member_id'],
-            'target_name' => member['full_name']
-          }.compact_blank
-        }
-      end
-
-      return {} unless recent_assistant_content.match?(/\b(which|what|who)\b.*\b(member|user|person)\b/i)
-
-      {
-        'domain' => 'member',
-        'kind' => 'member_target_selection',
-        'prompt_summary' => 'Need to know which workspace member the user means',
-        'expected_response_types' => %w[select_target provide_detail cancel],
-        'target_snapshot' => { 'target_type' => 'member' }
-      }
     end
 
     def pending_action_summary_line(snapshot:)
@@ -744,30 +701,12 @@ module Chat
       )
     end
 
-    def recent_assistant_content
-      return @recent_assistant_content if defined?(@recent_assistant_content)
-
-      entry = conversation_messages.reverse_each.find do |candidate|
-        candidate[:role].presence == 'assistant' || candidate['role'].presence == 'assistant'
-      end
-
-      @recent_assistant_content =
-        if entry
-          (entry[:content].presence || entry['content'].presence || '').to_s
-        else
-          ''
-        end
-    end
-
-    def recent_requested_query_name
-      conversation_messages.reverse_each do |entry|
-        next unless entry[:role].presence == 'user' || entry['role'].presence == 'user'
-
-        parsed_name = QueryNameParser.parse(text: entry[:content].presence || entry['content'].presence)
-        return parsed_name if parsed_name.present?
-      end
-
-      nil
+    def pending_follow_up_manager
+      @pending_follow_up_manager ||= PendingFollowUpManager.new(
+        workspace:,
+        chat_thread:,
+        actor:
+      )
     end
   end
 end

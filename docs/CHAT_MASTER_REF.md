@@ -1,6 +1,6 @@
 # Chat Master Reference
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
 ## Purpose
 Single source of truth for workspace chat architecture, scope, permissions, confirmation lifecycle, API contracts, and localization rules.
@@ -35,18 +35,25 @@ Related references:
 
 ## Core architecture
 - Turn orchestration entrypoint: `Chat::TurnOrchestrator`
-  - controller-thin boundary for each chat submission
-  - owns turn context assembly, intent reconciliation, preflight, confirmation policy, execution, and final outcome rendering
+  - thin boundary for each chat submission
+  - loads context, resolves pending confirmation/follow-up state, calls the interpreter, executes or persists follow-up work, and renders the final assistant turn
+  - may still apply a small number of bounded pre-interpreter guards for direct SQL, active confirmation replies, and persisted setup/follow-up flows
+- Canonical interpreter path:
+  - `Chat::Interpreter`
+  - wraps the normal LLM-enabled path
+  - `Chat::RuntimeService` produces the model decision
+  - `Chat::IntentReconciler` only normalizes payloads and explicit references before execution
 - LLM/runtime layer:
-  - `Chat::RuntimeService` handles structured intent classification and optional read-result phrasing
-  - single-model structured-output decision path
-  - planner fallback is used only when `OPENAI_API_KEY` is unavailable
-  - if model returns non-JSON text, runtime uses that assistant text instead of collapsing to generic capability copy
+  - `Chat::RuntimeService` handles structured intent classification and optional tool-result phrasing
+  - single-model structured-output decision path in the normal runtime
+  - planner fallback is used only when `OPENAI_API_KEY` is unavailable or runtime parsing fails
+  - if model returns non-JSON text, runtime can still use that assistant text instead of collapsing to generic capability copy
   - supports multimodal image context (bounded inline subset)
   - uses Responses API `json_schema` structured output; dynamic tool arguments/payloads are serialized as JSON strings and parsed server-side to satisfy strict schema validation
 - Context/state layer:
   - `Chat::ContextSnapshotBuilder`
   - `Chat::ContextSnapshot`
+  - `Chat::PendingFollowUpManager`
   - `Chat::ConversationContextResolver`
   - rebuilds each turn from recent transcript plus structured recent action context, rather than relying on parallel LLM-authored memory documents
   - continuity contract is domain-agnostic and server-owned:
@@ -56,7 +63,8 @@ Related references:
 - Intent reconciliation layer:
   - `Chat::IntentReconciler`
   - explicit current-turn instructions override stale or incorrect model payload fields before execution
-  - current DB/member resolution overrides stale conversational guesses
+  - resolves ids, names, emails, recent query references, and thread-title targets into canonical payloads
+  - must not become a second semantic router for the same turn
 - Shared tooling foundation:
   - `Tooling::Registry`
   - `Tooling::WorkspaceTeamRegistry`
@@ -95,9 +103,32 @@ Related references:
   - `idempotency_key`: per-attempt identity anchored to the source user message
   - `source_message_id`: the user turn that created the attempt
   - `superseded_at`: stale pending confirmations are marked superseded instead of remaining actionable
+- `ChatPendingFollowUp` (`chat_pending_follow_ups`)
+  - persisted server-owned unresolved-next-step state
+  - at most one active follow-up per `chat_thread + created_by`
+  - current kinds include:
+    - `datasource_setup`
+    - `query_scope_clarification`
+    - `query_save_name_conflict`
+    - `query_rename_suggestion`
+    - `thread_rename_target`
+  - stores:
+    - `workspace_id`
+    - `chat_thread_id`
+    - `created_by_id`
+    - `source_message_id`
+    - `kind`
+    - `domain`
+    - `target_type`
+    - `target_id`
+    - structured `payload`
+    - lifecycle status (`active`, `resolved`, `canceled`, `superseded`)
 
 ## Continuity contract
 - Chat continuity stays app-owned. The model receives a structured summary of the current thread state; it does not become the source of truth for object identity, permissions, or pending actions.
+- `ChatPendingFollowUp` is the canonical persisted source of unresolved-next-step truth for the normal runtime path.
+- Query save-name conflicts and query-scope clarifications now persist directly into `ChatPendingFollowUp`; do not reintroduce wrapper state stores for those flows.
+- Do not recover actionable pending state from assistant prose like `I can also...`, `rename it to match`, or stale confirmation wording.
 - `Chat::ContextSnapshot` should carry:
   - `active_focus`
     - one normalized focus object/flow for the turn
@@ -138,6 +169,7 @@ Related references:
     - `remove created_at`
     - `let's just focus on workspace name and creation date`
   - Generic capability/help fallback should be a last resort for these turns, not the default.
+- Short query follow-ups should be recoverable from persisted query references, recent query state, or the last assistant `query_card` in the thread. Do not require the assistant prose itself to carry continuity.
 
 ## HTTP interfaces
 App routes:
@@ -151,6 +183,7 @@ App routes:
 - `POST /app/workspaces/:workspace_id/chat/actions/:id/cancel`
 
 API v1 routes (internal-first, documented):
+- `PATCH /api/v1/workspaces/:workspace_id/chat-threads/:id`
 - `PATCH /api/v1/workspaces/:workspace_id`
 - `DELETE /api/v1/workspaces/:workspace_id`
 - `GET /api/v1/workspaces/:workspace_id/members`
@@ -200,15 +233,22 @@ Executor / tool result payload contract:
 - `code`
 - `data`
 - `fallback_message`
+- optional `presentation`
+- optional `next_actions`
+- optional `follow_up`
 
 Contract rules:
 - `status + code + data` are the app-owned source of truth.
 - `fallback_message` exists only for deterministic fallback/no-LLM rendering and should not be treated as the primary truth layer.
 - Result `code` values are English-first and domain-scoped (`workspace.*`, `member.*`, `query.*`, `datasource.*`), not chat-taxonomy prose keys.
 - Compatibility fields such as legacy `message` / `error_code` may exist temporarily during migration, but new chat logic should consume `status + code + data`.
+- `presentation` is the server-owned render contract for app-rendered UI blocks such as query cards.
+- `next_actions` is the only allowed source for optional assistant suggestions such as `rename the saved query`, `rename the chat`, or `open in query library`.
+- `follow_up` is the server-owned unresolved-next-step payload that may be persisted into `ChatPendingFollowUp`.
 
 ## Allowlist and blocked namespaces
 Allowed action types:
+- `thread.rename`
 - `workspace.update_name`
 - `workspace.delete`
 - `member.list`
@@ -249,6 +289,7 @@ Read actions (`confirmation_mode: none`):
 - `query.run`
 
 Auto-run writes (no confirmation):
+- `thread.rename`
 - `workspace.update_name`
 - `member.invite`
 - `member.resend_invite`
@@ -290,6 +331,10 @@ High-risk writes (inline confirmation required):
 - When `query.save` has no explicit name, chat should ask the model to generate a saved-query name from the SQL plus recent conversational context instead of reusing a long conversational prompt.
 - Generated saved-query names should incorporate the real purpose of the query, including meaningful filters, ranking, ordering, grouping, or status semantics when they materially define what the query is for.
 - If model-based saved-query naming is unavailable, chat should ask the user what name to use rather than inventing a heuristic fallback title.
+- SQL-changing `query.update` executions should run a query-name review against the saved query title:
+  - `aligned` = current title still fits; do not suggest rename
+  - `stale` = current title is misleading; emit `suggested_name`, `next_actions`, and persisted `query_rename_suggestion`
+  - `uncertain` = do not silently suggest; ask explicitly if the user wants to rename it
 - `query.save` should not create an exact duplicate saved query in the same datasource; the app should return the existing saved query instead.
 - If an auto-generated `query.save` name collides with a different saved query in the workspace, chat should pause and ask whether to keep that generated name or choose another, rather than silently saving with the colliding name.
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.
@@ -299,6 +344,7 @@ High-risk writes (inline confirmation required):
 - If that schema-grouping offer was missed on the previous turn, a reminder such as `you didn't do the summarising yet` should still recover the earlier offer from recent thread context.
 - Natural quoted rename phrasing such as `rename it 'User Count [Test]' please` should also stay in `query.rename`, even without the word `to`.
 - If the assistant offers to rename the current chat thread to match the current saved query, a natural confirmation such as `yes`, `sure`, or `let's do that` should resolve to `thread.rename` for the current thread.
+- If the user says `rename the thread/chat to match`, that should resolve against the current saved-query name or current rename suggestion from structured query context. The literal word `match` is never a valid final thread title.
 - Soft acknowledgements such as `ah okay, no worries` must not revive stale query-rename context or trigger any write action.
 - If chat has already inferred the target rename name and then shows a saved-query list, a follow-up like `the first one` should still complete the rename in query context.
 - Saved-query names rendered in chat list/save/rename responses should be internal links to the query page, using muted app link styling rather than bright external-link styling.
@@ -437,6 +483,7 @@ High-risk writes (inline confirmation required):
 - Structured result data is persisted on assistant messages for both:
   - auto-executed actions
   - confirmed high-risk actions
+- Optional side suggestions must be grounded in `execution.data.next_actions`; the assistant may phrase them naturally, but may not invent actions the runtime cannot execute.
 
 ## Responses API schema guardrail
 - Chat runtime and planner both use strict Responses API `json_schema` output.

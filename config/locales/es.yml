@@ -147,21 +147,6 @@ es:
             data_sources: Fuentes de datos
             queries: Consultas y biblioteca de consultas
             workspace: Configuración del espacio
-          capability_items:
-            member_list: Mostrar los miembros del equipo
-            member_invite: Invitar a un miembro del equipo
-            member_resend_invite: Reenviar una invitación pendiente
-            member_update_role: Cambiar el rol de un miembro del equipo
-            member_remove: Eliminar a un miembro del equipo
-            data_source_list: Mostrar las fuentes de datos conectadas
-            data_source_add: Añadir y gestionar fuentes de datos PostgreSQL
-            query_list: Mostrar las consultas guardadas
-            query_run: Consultar una fuente de datos conectada
-            query_save: Guardar una consulta en la biblioteca
-            query_rename: Renombrar una consulta guardada
-            query_delete: Eliminar una consulta guardada
-            workspace_update_name: Cambiar el nombre del espacio
-            workspace_delete: Eliminar el espacio
         datasource_setup:
           ask_name: Claro. ¿Cómo quieres llamar a esta fuente de datos PostgreSQL?
           only_postgres: Ahora mismo puedo ayudarte a añadir fuentes de datos PostgreSQL en el chat, pero no %{source_type}. Si quieres, puedo ayudarte a conectar una fuente PostgreSQL.

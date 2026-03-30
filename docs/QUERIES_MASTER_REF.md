@@ -1,6 +1,6 @@
 # Queries Master Reference
 
-Last updated: 2026-03-27
+Last updated: 2026-03-30
 
 ## Purpose
 Single source of truth for query editor behavior, query-library rules, saved-query identity, and chat/query interaction contracts.
@@ -53,7 +53,11 @@ Related references:
   - SQL and name together
 - `query.rename` is the name-only path.
 - `query.update` is the SQL-or-SQL+name path.
-- `query.update` may also return a structured rename hint (`suggested_name` plus `current_name`) when the SQL changed materially and the existing saved-query title likely no longer matches the query's purpose.
+- After a SQL-changing `query.update`, the server should run a query-title review for the saved query:
+  - `aligned` means the current title still fits and no rename hint should be emitted
+  - `stale` means the current title is misleading and the response may include `suggested_name`, `next_actions`, and a persisted `query_rename_suggestion`
+  - `uncertain` means the system should not assume the rename and should ask explicitly if the user wants to rename it
+- Rename hints should not be emitted for every SQL edit. They are only appropriate when the current saved-query name now reads as meaningfully stale or misleading relative to the updated query.
 - If an update would collide with another saved query fingerprint in the same datasource, it must fail validation rather than overwrite or duplicate the other query.
 
 ## Chat query cards
@@ -79,6 +83,10 @@ Related references:
   - `Open in query library`
 - Query cards produced from an in-place `query.update` of a saved query should render in saved-query mode for that updated query identity (not as an unsaved draft card).
 - Query adjustments should render as a new query card lower in the chat stream, not mutate prior result cards.
+- Query cards and action suggestions should be driven from structured execution data:
+  - `presentation` for the app-rendered card payload
+  - `next_actions` for optional follow-up actions the assistant is allowed to suggest
+  - `follow_up` for persisted unresolved-next-step state such as query rename suggestion
 
 ## Chat/editor/query-library interaction
 - `Open in query editor` from a chat query card should open in a new tab.
@@ -121,3 +129,7 @@ Related references:
 - If model-based name generation is unavailable, the app should ask the user to provide a name rather than inventing a heuristic fallback title.
 - Do not expand heuristic SQL title/name generators into the primary chat save-naming path; lightweight generic helpers are acceptable only for secondary internal surfaces.
 - When an auto-generated saved-query name collides with a different existing saved query, chat may pause to reconcile the name. If the user delegates the choice back with `choose another` or `you choose`, the system should generate a concrete alternative and save with that name rather than asking another vague naming question.
+- Saved-query title review after `query.update` is also model-first, but the app remains authoritative for:
+  - which saved query is under review
+  - whether the review result is `aligned`, `stale`, or `uncertain`
+  - whether a rename follow-up should be persisted for the current thread

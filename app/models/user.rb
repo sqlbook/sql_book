@@ -28,6 +28,11 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
            inverse_of: :requested_by,
            dependent: :nullify
 
+  has_many :chat_pending_follow_ups,
+           foreign_key: :created_by_id,
+           inverse_of: :created_by,
+           dependent: :nullify
+
   has_many :members,
            dependent: :destroy
 

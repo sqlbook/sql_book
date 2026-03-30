@@ -48,21 +48,6 @@ module Chat
     QUERY_UPDATE_EXISTING_REGEX = /
       \b(update|replace|overwrite)\b.*\b(existing|current|saved|old|that|this|one|query)\b
     /ix
-    QUERY_RENAME_CONTEXT_REGEX = /
-      \b(
-        which\s+saved\s+query\s+to\s+rename|
-        rename\s+it\b|
-        what\s+would\s+you\s+like\s+to\s+rename|
-        i\s+can\s+rename\s+it\s+to\b
-      )\b
-    /ix
-    THREAD_RENAME_CONTEXT_REGEX = /
-      \b(
-        rename\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
-        update\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
-        update\s+the\s+thread\s+title\s+to\s+match\b
-      )\b
-    /ix
     RENAME_FOLLOW_UP_CONFIRM_REGEX = /
       \A\s*
       (?:
@@ -181,7 +166,14 @@ module Chat
         execution:,
         fallback_message:
       )
-      sanitized = sanitize_optional_follow_up_suggestions(rendered)
+      sanitized = sanitize_optional_follow_up_suggestions(
+        rendered:,
+        execution:
+      )
+      sanitized = append_structured_optional_follow_up(
+        rendered: sanitized,
+        execution:
+      )
       sanitized.presence || fallback_message
     rescue StandardError => e
       Rails.logger.warn("Chat runtime result rendering failed: #{e.class} #{e.message}")
@@ -581,12 +573,12 @@ module Chat
         'Preserve meaningful paragraph breaks.',
         'When presenting collections, use real markdown bullet lists or tables instead of inline dash-separated text.',
         [
-          'When the result is successful and it helps, end with one short natural next step',
-          'such as offering to save, rename, filter, or extend the result.'
+          'When the result is successful and execution.data.next_actions is present,',
+          'you may end with one short natural next step drawn only from those provided next_actions.'
         ].join(' '),
         [
-          'When the result is query.update and execution.data.suggested_name is present,',
-          'briefly suggest renaming the saved query to that exact suggested name.'
+          'Do not invent optional follow-up actions.',
+          'Only mention optional next steps that exist in execution.data.next_actions.'
         ].join(' '),
         [
           'Keep that forward-looking line brief and relevant.',
@@ -1141,10 +1133,12 @@ module Chat
     end
 
     def rename_follow_up_context_active?
+      return true if query_target_selection_follow_up_active?
+
       return false if inferred_query_rename_name.blank?
       return false unless affirmative_rename_follow_up?
 
-      recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX) || rename_target_selection_active?
+      query_rename_suggestion_active?
     end
 
     def explicit_thread_rename_request?
@@ -1155,23 +1149,13 @@ module Chat
       return false if inferred_thread_title.blank?
       return false unless affirmative_rename_follow_up?
 
-      recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
+      thread_rename_target_active?
     end
 
     def inferred_query_rename_name
       QueryNameParser.parse(text: message) ||
         recent_requested_query_name ||
-        recent_proposed_query_rename_name
-    end
-
-    def inferred_query_update_name
-      QueryNameParser.parse(text: message)
-    end
-
-    def inferred_thread_title
-      ThreadTitleParser.parse(text: message) ||
-        recent_proposed_thread_title ||
-        recent_matching_thread_title
+        recent_suggested_query_name
     end
 
     def recent_requested_query_name
@@ -1183,18 +1167,38 @@ module Chat
       nil
     end
 
-    def recent_proposed_query_rename_name
-      QueryNameParser.parse_proposed_rename_name(text: recent_assistant_original_content)
+    def inferred_query_update_name
+      QueryNameParser.parse(text: message)
     end
 
-    def recent_proposed_thread_title
-      ThreadTitleParser.parse_proposed_title(text: recent_assistant_original_content)
+    def inferred_thread_title
+      ThreadTitleParser.parse(text: message) ||
+        recent_matching_thread_title
     end
 
     def recent_matching_thread_title
-      return nil unless recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
+      return nil unless matching_thread_title_reference?
 
-      recent_saved_query_reference_payload['query_name']
+      recent_suggested_query_name || recent_saved_query_reference_payload['query_name']
+    end
+
+    def recent_suggested_query_name
+      pending_follow_up = pending_follow_up_snapshot
+      return pending_follow_up['proposed_value'].to_s.presence if pending_follow_up['kind'] == 'query_rename_suggestion'
+
+      context_snapshot&.recent_query_state.to_h.deep_stringify_keys['suggested_name'].to_s.presence
+    end
+
+    def matching_thread_title_reference?
+      message.match?(/\bmatch\b/i) ||
+        thread_rename_target_active? ||
+        query_rename_suggestion_active?
+    end
+
+    def query_target_selection_follow_up_active?
+      return false if recent_requested_query_name.blank?
+
+      query_reference_resolver.reference_payload(text: message)['query_id'].present?
     end
 
     def resolved_query_reference_payload
@@ -1204,13 +1208,24 @@ module Chat
       recent_saved_query_reference_payload
     end
 
-    def rename_target_selection_active?
-      recent_assistant_content.to_s.match?(/\b(saved\s+queries?|query\s+library)\b/i) &&
-        query_reference_resolver.reference_payload(text: message)['query_id'].present?
-    end
-
     def affirmative_rename_follow_up?
       message.match?(RENAME_FOLLOW_UP_CONFIRM_REGEX)
+    end
+
+    def pending_follow_up_snapshot
+      @pending_follow_up_snapshot ||= if context_snapshot.blank? || !context_snapshot.respond_to?(:pending_follow_up)
+                                        {}
+                                      else
+                                        context_snapshot.pending_follow_up.to_h.deep_stringify_keys
+                                      end
+    end
+
+    def query_rename_suggestion_active?
+      pending_follow_up_snapshot['kind'] == 'query_rename_suggestion'
+    end
+
+    def thread_rename_target_active?
+      pending_follow_up_snapshot['kind'] == 'thread_rename_target'
     end
 
     def available_tool_names
@@ -1221,26 +1236,64 @@ module Chat
       @available_tool_name_set ||= tool_metadata.map { |tool| tool[:name] || tool['name'] }.compact.to_set
     end
 
-    def sanitize_optional_follow_up_suggestions(rendered)
+    def sanitize_optional_follow_up_suggestions(rendered:, execution:)
       paragraphs = rendered.to_s.split(/\n{2,}/).map(&:strip).reject(&:empty?)
       return rendered if paragraphs.empty?
 
       sanitized = paragraphs.reject do |paragraph|
-        optional_follow_up_paragraph?(paragraph) && !supported_optional_follow_up?(paragraph)
+        optional_follow_up_paragraph?(paragraph) && !supported_optional_follow_up?(paragraph, execution:)
       end
 
       sanitized.join("\n\n").strip
+    end
+
+    def append_structured_optional_follow_up(rendered:, execution:) # rubocop:disable Metrics/AbcSize
+      next_action = structured_next_actions(execution:).first
+      return rendered if next_action.blank?
+
+      action_type = next_action['action_type']
+      return rendered unless available_tool_name_set.include?(action_type)
+      return rendered unless role_allows_optional_follow_up?(action_type)
+
+      suggestion = optional_suggestion_for(next_action:)
+      return rendered if suggestion.blank? || rendered.to_s.include?(suggestion)
+
+      [rendered.to_s.strip.presence, suggestion].compact.join("\n\n")
+    end
+
+    def optional_suggestion_for(next_action:) # rubocop:disable Metrics/MethodLength
+      action = next_action.to_h.deep_stringify_keys
+      case action['action_type']
+      when 'query.rename'
+        suggested_name = action.dig('arguments', 'name').to_s.strip
+        return nil if suggested_name.blank?
+
+        "If you want, I can also rename the saved query to #{suggested_name}."
+      when 'thread.rename'
+        suggested_title = action.dig('arguments', 'title').to_s.strip
+        return nil if suggested_title.blank?
+
+        "If you want, I can also rename this chat to #{suggested_title}."
+      end
     end
 
     def optional_follow_up_paragraph?(paragraph)
       paragraph.match?(OPTIONAL_FOLLOW_UP_PREFIX_REGEX)
     end
 
-    def supported_optional_follow_up?(paragraph)
+    def supported_optional_follow_up?(paragraph, execution:)
       action_type = inferred_optional_follow_up_action(paragraph)
       return false if action_type.blank?
 
-      available_tool_name_set.include?(action_type) && role_allows_optional_follow_up?(action_type)
+      structured_next_actions(execution:).any? { |action| action['action_type'] == action_type } &&
+        available_tool_name_set.include?(action_type) &&
+        role_allows_optional_follow_up?(action_type)
+    end
+
+    def structured_next_actions(execution:)
+      Array(execution.data.to_h.deep_stringify_keys['next_actions']).map do |action|
+        action.to_h.deep_stringify_keys
+      end
     end
 
     def inferred_optional_follow_up_action(paragraph)
@@ -1288,7 +1341,17 @@ module Chat
       QueryFollowUpMatcher.contextual_follow_up?(
         text: message,
         recent_query_reference: recent_query_reference_payload
+      ) || (
+        active_focus_domain == 'query' &&
+          message.match?(QueryFollowUpMatcher::CONTEXTUAL_QUERY_FOLLOW_UP_REGEX)
       )
+    end
+
+    def active_focus_domain
+      return nil if context_snapshot.blank?
+      return nil unless context_snapshot.respond_to?(:active_focus)
+
+      context_snapshot.active_focus.to_h.deep_stringify_keys['domain']
     end
 
     def recent_draft_query_reference_payload

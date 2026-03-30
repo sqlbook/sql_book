@@ -222,7 +222,26 @@ module Chat
 
     def apply_explicit_thread_title!(payload:)
       explicit_title = ThreadTitleParser.parse(text: message_text)
+      explicit_title ||= matched_thread_title
       payload['title'] = explicit_title if explicit_title.present?
+    end
+
+    def matched_thread_title
+      return unless message_text.match?(/\bmatch\b/i)
+
+      proposed_title = pending_follow_up_proposed_title
+      return proposed_title if proposed_title.present?
+
+      recent_saved_query_title
+    end
+
+    def pending_follow_up_proposed_title
+      context_snapshot.pending_follow_up.to_h.deep_stringify_keys['proposed_value'].to_s.strip
+    end
+
+    def recent_saved_query_title
+      recent_saved_query = context_snapshot.recent_saved_query_reference.to_h.deep_stringify_keys
+      recent_saved_query['saved_query_name'].to_s.strip.presence || recent_saved_query['query_name'].to_s.strip.presence
     end
 
     def apply_explicit_query_reference!(payload:)

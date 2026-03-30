@@ -1015,6 +1015,21 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
         role: ChatMessage::Roles::ASSISTANT,
         content: "It’s currently called User count.\n\nIf you want, I can rename it to DB User Count now."
       )
+      create(
+        :chat_pending_follow_up,
+        workspace:,
+        chat_thread: thread,
+        created_by: user,
+        kind: 'query_rename_suggestion',
+        domain: 'query',
+        target_type: 'saved_query',
+        target_id: saved_query.id,
+        payload: {
+          'current_name' => 'User count',
+          'suggested_name' => 'DB User Count',
+          'prompt_summary' => 'Consider renaming the saved query'
+        }
+      )
 
       post app_workspace_chat_messages_path(workspace),
            params: { thread_id: thread.id, content: 'Yes please' },
@@ -1666,14 +1681,24 @@ RSpec.describe 'App::Workspaces chat messages', type: :request do
     it 'uses schema guidance during table clarification follow-ups instead of falling back to datasource listing' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
       thread = create(:chat_thread, workspace:, created_by: user, title: 'Users table clarification')
-      Chat::QueryClarificationStateStore.new(workspace:, actor: user, chat_thread: thread).save(
-        'question' => 'How many users do I have?',
-        'step' => 'table',
-        'data_source_id' => data_source.id,
-        'candidate_tables' => [
-          { 'qualified_name' => 'public.users', 'name' => 'users' },
-          { 'qualified_name' => 'public.accounts', 'name' => 'accounts' }
-        ]
+      create(
+        :chat_pending_follow_up,
+        workspace:,
+        chat_thread: thread,
+        created_by: user,
+        kind: 'query_scope_clarification',
+        domain: 'query',
+        target_type: 'table',
+        target_id: nil,
+        payload: {
+          'question' => 'How many users do I have?',
+          'step' => 'table',
+          'data_source_id' => data_source.id,
+          'candidate_tables' => [
+            { 'qualified_name' => 'public.users', 'name' => 'users' },
+            { 'qualified_name' => 'public.accounts', 'name' => 'accounts' }
+          ]
+        }
       )
 
       post app_workspace_chat_messages_path(workspace),

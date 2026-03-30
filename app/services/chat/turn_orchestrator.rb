@@ -98,6 +98,10 @@ module Chat
         return pending_action_command == :confirm ? confirm_pending_action : cancel_pending_action
       end
 
+      if (follow_up_outcome = active_pending_follow_up_outcome)
+        return follow_up_outcome
+      end
+
       if should_resume_query_clarification?
         return execute_direct_tool(action_type: 'query.run', payload: { 'question' => content })
       end
@@ -107,10 +111,6 @@ module Chat
       end
       if should_resume_recent_team_scope_clarification?
         return execute_direct_tool(action_type: 'member.list', payload: {})
-      end
-
-      if (save_name_conflict_resolution = query_save_name_conflict_resolution)
-        return handle_query_save_name_conflict_resolution(save_name_conflict_resolution)
       end
 
       if recent_query_follow_up_request?
@@ -130,8 +130,7 @@ module Chat
       return render_non_action(scope_limited_message) if off_scope_general_question?
       return render_non_action(query_scope_clarification_message) if initial_query_scope_clarification_needed?
 
-      decision = runtime_service.call
-      intent = intent_reconciler.reconcile(decision:)
+      intent = interpreter.call
       if intent.finalize_without_tools || intent.action_type.blank?
         return render_non_action(intent.assistant_message.presence || intent.missing_information.join(' '))
       end
@@ -163,11 +162,83 @@ module Chat
       @active_pending_action ||= action_request_lifecycle.active_pending_confirmation
     end
 
+    def active_pending_follow_up
+      @active_pending_follow_up ||= context_snapshot.active_pending_follow_up.to_h.deep_stringify_keys
+    end
+
     def pending_action_command
       return :confirm if content.match?(CONFIRM_MESSAGE_REGEX)
       return :cancel if content.match?(CANCEL_MESSAGE_REGEX)
 
       nil
+    end
+
+    def active_pending_follow_up_outcome
+      return nil if active_pending_follow_up.blank?
+
+      case active_pending_follow_up['kind']
+      when 'query_name_conflict'
+        resolution = query_save_name_conflict_resolution
+        resolution ? handle_query_save_name_conflict_resolution(resolution) : nil
+      when 'query_rename_suggestion'
+        resolve_query_rename_suggestion_follow_up
+      when 'thread_rename_target'
+        resolve_thread_rename_target_follow_up
+      end
+    end
+
+    def resolve_query_rename_suggestion_follow_up # rubocop:disable Metrics/AbcSize
+      return cancel_active_pending_follow_up if pending_action_command == :cancel
+
+      explicit_name = QueryNameParser.parse(text: content)
+      suggested_name = active_pending_follow_up.dig('payload', 'suggested_name').to_s.strip
+      name = explicit_name.presence || (affirmative_message? ? suggested_name : nil)
+      return nil if name.blank?
+
+      query_id = pending_follow_up_query_id
+      return nil if query_id.blank?
+
+      pending_follow_up_manager.resolve_active!
+      execute_direct_tool(
+        action_type: 'query.rename',
+        payload: {
+          'query_id' => query_id,
+          'name' => name
+        }
+      )
+    end
+
+    def pending_follow_up_query_id
+      active_pending_follow_up['target_id'].presence ||
+        active_pending_follow_up.dig('payload', 'query_id').presence
+    end
+
+    def resolve_thread_rename_target_follow_up # rubocop:disable Metrics/AbcSize
+      return cancel_active_pending_follow_up if pending_action_command == :cancel
+
+      explicit_title = ThreadTitleParser.parse(text: content)
+      suggested_title = active_pending_follow_up.dig('payload', 'suggested_title').to_s.strip
+      title = explicit_title.presence || (affirmative_message? ? suggested_title : nil)
+      return nil if title.blank?
+
+      pending_follow_up_manager.resolve_active!
+      execute_direct_tool(
+        action_type: 'thread.rename',
+        payload: {
+          'thread_id' => chat_thread.id,
+          'title' => title
+        }
+      )
+    end
+
+    def cancel_active_pending_follow_up
+      pending_follow_up_manager.cancel_active!
+      render_non_action(I18n.t('app.workspaces.chat.messages.action_canceled'))
+    end
+
+    def affirmative_message?
+      pending_action_command == :confirm ||
+        content.match?(/\A\s*(?:yes(?:\s+please)?|yeah|sure|go\s+for\s+it|please\s+do|do\s+it|go\s+ahead)\b/i)
     end
 
     def runtime_service
@@ -182,6 +253,13 @@ module Chat
           conversation_messages: context_snapshot.conversation_messages,
           context_snapshot:
         }
+      )
+    end
+
+    def interpreter
+      @interpreter ||= Interpreter.new(
+        runtime_service:,
+        intent_reconciler:
       )
     end
 
@@ -323,13 +401,23 @@ module Chat
       assistant_content = normalized_assistant_content(executed_assistant_content(intent:, execution:, query_card:))
       action_request = persist_executed_action_request(intent:, execution:, assistant_content:)
       outcome = render_execution(intent:, execution:, assistant_content:, action_request:, query_card:)
+      pending_follow_up_manager.resolve_active! if active_pending_follow_up.present?
       persist_recent_query_state_for(intent:, execution:)
       persist_query_reference_for(intent:, execution:, assistant_message: outcome.assistant_message)
+      persist_pending_follow_up_for(execution:)
       clear_transient_state_for(intent:, execution:)
       outcome
     end
 
-    def render_execution(intent:, execution:, assistant_content: nil, action_request: nil, query_card: nil)
+    def render_execution(intent:, execution:, assistant_content: nil, action_request: nil, query_card: nil) # rubocop:disable Metrics/AbcSize
+      result_data = execution.data.to_h.deep_stringify_keys
+      if query_card.present?
+        result_data['presentation'] ||= {
+          'type' => 'query_card',
+          'payload' => query_card
+        }
+      end
+
       assistant_content = execution_assistant_content(
         intent:,
         execution:,
@@ -341,7 +429,7 @@ module Chat
         metadata: {
           action_request_id: action_request&.id,
           action_state: execution.status,
-          result_data: execution.data,
+          result_data: result_data,
           action_type: intent.action_type,
           query_card:
         }.compact
@@ -355,7 +443,7 @@ module Chat
         action_type: intent.action_type,
         action_request:,
         execution:,
-        data: execution.data,
+        data: result_data,
         error_code: execution.error_code,
         redirect_path: execution.data[:redirect_path]
       )
@@ -522,11 +610,8 @@ module Chat
     end
 
     def off_scope_general_question?
-      return false if capability_question?
-      return false unless question_like? || product_topic_question?
-      return false if content.match?(IN_SCOPE_TOPIC_REGEX)
-      return false if query_like_request?
-      return false if recent_member_context_question?
+      return false unless general_question_needing_scope_check?
+      return false if in_scope_or_contextual_question?
 
       true
     end
@@ -541,6 +626,25 @@ module Chat
 
     def recent_member_context_question?
       conversation_context_resolver.member_follow_up_question?(text: content)
+    end
+
+    def recent_query_context_question?
+      return false unless content.match?(QueryFollowUpMatcher::CONTEXTUAL_QUERY_FOLLOW_UP_REGEX)
+
+      context_snapshot.recent_query_reference.to_h.present? ||
+        context_snapshot.recent_query_state.to_h.present? ||
+        context_snapshot.active_focus.to_h.deep_stringify_keys['domain'] == 'query'
+    end
+
+    def general_question_needing_scope_check?
+      !capability_question? && (question_like? || product_topic_question?)
+    end
+
+    def in_scope_or_contextual_question?
+      content.match?(IN_SCOPE_TOPIC_REGEX) ||
+        query_like_request? ||
+        recent_query_context_question? ||
+        recent_member_context_question?
     end
 
     def capability_summary_message
@@ -810,8 +914,26 @@ module Chat
     def recent_query_follow_up_request?
       QueryFollowUpMatcher.contextual_follow_up?(
         text: content,
-        recent_query_reference: context_snapshot.recent_query_reference
-      )
+        recent_query_reference: recent_query_follow_up_reference
+      ) || (
+        context_snapshot.active_focus.to_h.deep_stringify_keys['domain'] == 'query' &&
+          content.match?(QueryFollowUpMatcher::CONTEXTUAL_QUERY_FOLLOW_UP_REGEX)
+      ) || recent_query_card_follow_up_request?
+    end
+
+    def recent_query_card_follow_up_request?
+      recent_query_card_payload.present? &&
+        content.match?(QueryFollowUpMatcher::CONTEXTUAL_QUERY_FOLLOW_UP_REGEX)
+    end
+
+    def recent_query_card_payload
+      @recent_query_card_payload ||= chat_thread.chat_messages
+        .where(role: ChatMessage::Roles::ASSISTANT)
+        .order(id: :desc)
+        .filter_map do |message|
+          message.metadata.to_h.deep_stringify_keys['query_card'].to_h.presence
+        end
+        .first || {}
     end
 
     def recent_query_follow_up_payload
@@ -826,19 +948,37 @@ module Chat
     end
 
     def recent_query_follow_up_reference
-      @recent_query_follow_up_reference ||= context_snapshot.recent_query_reference.to_h.deep_stringify_keys
+      @recent_query_follow_up_reference ||= begin
+        reference = chat_thread.chat_query_references.recent_first.first
+        if reference
+          reference.serialized_payload.deep_stringify_keys
+        else
+          context_snapshot.recent_query_reference.to_h.deep_stringify_keys
+        end
+      end
     end
 
     def recent_query_follow_up_state
-      @recent_query_follow_up_state ||= context_snapshot.recent_query_state.to_h.deep_stringify_keys
+      @recent_query_follow_up_state ||= begin
+        stored_state = chat_thread.reload.metadata
+          .to_h
+          .deep_stringify_keys['recent_query_state']
+          .to_h
+          .deep_stringify_keys
+        stored_state.presence || context_snapshot.recent_query_state.to_h.deep_stringify_keys
+      end
     end
 
     def recent_query_follow_up_base_sql
-      recent_query_follow_up_reference['sql'].presence || recent_query_follow_up_state['sql']
+      recent_query_follow_up_reference['sql'].presence ||
+        recent_query_follow_up_state['sql'] ||
+        recent_query_card_payload['sql']
     end
 
     def recent_query_follow_up_base_question
-      recent_query_follow_up_reference['original_question'].presence || recent_query_follow_up_state['question']
+      recent_query_follow_up_reference['original_question'].presence ||
+        recent_query_follow_up_state['question'] ||
+        recent_query_card_payload['question']
     end
 
     def recent_query_follow_up_name
@@ -848,11 +988,15 @@ module Chat
     end
 
     def recent_query_follow_up_data_source_id
-      recent_query_follow_up_reference['data_source_id'].presence || recent_query_follow_up_state['data_source_id']
+      recent_query_follow_up_reference['data_source_id'].presence ||
+        recent_query_follow_up_state['data_source_id'] ||
+        recent_query_card_payload.dig('data_source', 'id')
     end
 
     def recent_query_follow_up_data_source_name
-      recent_query_follow_up_reference['data_source_name'].presence || recent_query_follow_up_state['data_source_name']
+      recent_query_follow_up_reference['data_source_name'].presence ||
+        recent_query_follow_up_state['data_source_name'] ||
+        recent_query_card_payload.dig('data_source', 'name')
     end
 
     def direct_intent(action_type:, payload:)
@@ -918,7 +1062,7 @@ module Chat
       return unless intent.action_type == 'query.run'
       return if execution.data.to_h['clarification_required'] || execution.data.to_h[:clarification_required]
 
-      query_clarification_state_store.clear!
+      pending_follow_up_manager.clear_kind!('query_scope_clarification')
     end
 
     def persist_recent_query_state_for(intent:, execution:)
@@ -1116,7 +1260,8 @@ module Chat
         'question' => query_payload['question'] || existing_state['question'],
         'sql' => query_payload['sql'] || existing_state['sql'],
         'data_source_id' => query_payload.dig('data_source', 'id') || existing_state['data_source_id'],
-        'data_source_name' => query_payload.dig('data_source', 'name') || existing_state['data_source_name']
+        'data_source_name' => query_payload.dig('data_source', 'name') || existing_state['data_source_name'],
+        'suggested_name' => data['suggested_name'].presence
       }
     end
 
@@ -1146,7 +1291,7 @@ module Chat
     end
 
     def active_query_save_name_conflict
-      @active_query_save_name_conflict ||= query_save_name_conflict_state_store.load
+      @active_query_save_name_conflict ||= pending_follow_up_payload_for(kind: 'query_save_name_conflict')
     end
 
     def query_save_name_conflict_resolution
@@ -1184,14 +1329,14 @@ module Chat
     end
 
     def cancel_query_save_name_conflict
-      query_save_name_conflict_state_store.clear!
+      pending_follow_up_manager.clear_kind!('query_save_name_conflict')
       render_non_action(I18n.t('app.workspaces.chat.messages.action_canceled'))
     end
 
     def execute_query_save_name_conflict_resolution(name:)
       payload = active_query_save_name_conflict.slice('sql', 'question', 'data_source_id', 'data_source_name')
       payload['name'] = name
-      query_save_name_conflict_state_store.clear!
+      pending_follow_up_manager.clear_kind!('query_save_name_conflict')
       execute_direct_tool(action_type: 'query.save', payload:)
     end
 
@@ -1235,7 +1380,11 @@ module Chat
       data = execution.data.to_h.deep_stringify_keys
       conflicting_query = data['conflicting_query'].to_h.deep_stringify_keys
 
-      query_save_name_conflict_state_store.save(
+      pending_follow_up_manager.replace!(
+        kind: 'query_save_name_conflict',
+        domain: 'query',
+        source_message: user_message,
+        payload:
         intent.payload.slice('sql', 'question', 'data_source_id', 'data_source_name').merge(
           'proposed_name' => data['proposed_name'],
           'conflicting_query_id' => conflicting_query['id'],
@@ -1265,14 +1414,28 @@ module Chat
       return unless execution.status == 'executed'
       return unless intent.action_type.start_with?('query.')
 
-      query_save_name_conflict_state_store.clear!
+      pending_follow_up_manager.clear_kind!('query_save_name_conflict')
     end
 
-    def query_clarification_state_store
-      @query_clarification_state_store ||= QueryClarificationStateStore.new(
-        workspace:,
-        actor:,
-        chat_thread:
+    def pending_follow_up_payload_for(kind:)
+      snapshot = pending_follow_up_manager.active_payload
+      return {} if snapshot.blank?
+      return {} unless snapshot['kind'] == kind
+
+      snapshot['payload'].to_h.deep_stringify_keys
+    end
+
+    def persist_pending_follow_up_for(execution:) # rubocop:disable Metrics/AbcSize
+      follow_up = execution.data.to_h.deep_stringify_keys['follow_up'].to_h.deep_stringify_keys
+      return if follow_up.blank?
+
+      pending_follow_up_manager.replace!(
+        kind: follow_up['kind'],
+        domain: follow_up['domain'],
+        source_message: user_message,
+        target_type: follow_up['target_type'],
+        target_id: follow_up['target_id'],
+        payload: follow_up['payload'].to_h.deep_stringify_keys
       )
     end
 
@@ -1292,11 +1455,11 @@ module Chat
       )
     end
 
-    def query_save_name_conflict_state_store
-      @query_save_name_conflict_state_store ||= QuerySaveNameConflictStateStore.new(
+    def pending_follow_up_manager
+      @pending_follow_up_manager ||= PendingFollowUpManager.new(
         workspace:,
-        actor:,
-        chat_thread:
+        chat_thread:,
+        actor:
       )
     end
   end

@@ -18,6 +18,7 @@ module Chat
     :recent_query_state,
     :active_focus,
     :pending_follow_up,
+    :active_pending_follow_up,
     keyword_init: true
   ) do
     def recent_query_reference

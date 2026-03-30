@@ -18,6 +18,7 @@ module Chat
     FIELD_KEYWORDS_REGEX = /
       \b(host|hostname|server|database|dbname|db|username|user|password|pass|port|ssl|table|tables)\b
     /ix
+    QUERY_LIKE_REGEX = /\b(how\ many|count|total|show|list|find|get|query|sql|select|with|who|rows?)\b/i
     QUESTION_LIKE_REGEX = /\A\s*(?:what|when|where|who|why|how|do|does|did|can|could|would|is|are|tell)\b/i
     CONNECTION_FIELDS = %w[host database_name username password].freeze
 
@@ -241,6 +242,7 @@ module Chat
     end
 
     def starting_setup_request?
+      return false if message_text.match?(QUERY_LIKE_REGEX)
       return true if message_text.match?(START_REGEX)
 
       message_text.match?(FIELD_KEYWORDS_REGEX) && message_text.match?(/\b(data\s+source|database|postgres(?:ql)?)\b/i)

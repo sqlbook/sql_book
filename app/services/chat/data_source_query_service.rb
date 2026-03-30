@@ -15,12 +15,6 @@ module Chat
         remainder.to_s.tr('.', '_')
       end
     end
-    NullClarificationStore = Struct.new(:_unused) do
-      def load = {}
-      def save(_state) = {}
-      def clear! = {}
-    end
-
     QUERY_INTENT_REGEX = /\b(how many|count|total|average|avg|sum|max|min|show|list|find|get|query|sql|who|rows?)\b/i
     NEW_QUERY_SIGNAL_REGEX = /
       \b(
@@ -63,7 +57,7 @@ module Chat
 
       return continue_from_clarification_state if active_clarification_state.present? && !new_query_request?
 
-      clarification_store.clear!
+      clear_clarification_state!
       data_source = resolve_data_source(current_question)
       return data_source if data_source.is_a?(Result)
 
@@ -83,7 +77,7 @@ module Chat
       return clarification_result(question: plan.clarification_question) if plan.sql.blank?
 
       query_result = data_source.connector.execute_readonly(sql: plan.sql)
-      clarification_store.clear!
+      clear_clarification_state!
       executed(
         message: formatted_query_result_message(data_source:, sql: plan.sql, query_result:),
         data: {
@@ -114,7 +108,7 @@ module Chat
     end
 
     def active_clarification_state
-      @active_clarification_state ||= clarification_store.load
+      @active_clarification_state ||= pending_follow_up_payload_for(kind: 'query_scope_clarification')
     end
 
     def continue_from_clarification_state
@@ -129,7 +123,7 @@ module Chat
         end
 
         state['data_source_id'] = data_source.id
-        clarification_store.save(state)
+        save_clarification_state(state)
         schema = schema_for(data_source)
         table_resolution = resolve_table_clarification(
           schema:,
@@ -138,7 +132,7 @@ module Chat
         )
         return table_resolution if table_resolution.is_a?(Result)
 
-        clarification_store.clear!
+        clear_clarification_state!
         return execute_original_question(data_source:, question: state['question'], preferred_table: table_resolution)
       when 'table'
         data_source = workspace.data_sources.find_by(id: state['data_source_id'])
@@ -160,11 +154,11 @@ module Chat
           )
         end
 
-        clarification_store.clear!
+        clear_clarification_state!
         return execute_original_question(data_source:, question: state['question'], preferred_table: table)
       end
 
-      clarification_store.clear!
+      clear_clarification_state!
       validation_error('I could not complete that query.', code: 'query.failed')
     end
 
@@ -261,7 +255,7 @@ module Chat
           'source_type' => data_source.source_type
         }
       end
-      clarification_store.save(
+      save_clarification_state(
         question: current_question,
         step: 'data_source',
         candidate_data_sources: candidates
@@ -289,7 +283,7 @@ module Chat
           'name' => table['name']
         }
       end
-      clarification_store.save(
+      save_clarification_state(
         question: question,
         step: 'table',
         data_source_id: clarification_data_source_id(data_source_id:),
@@ -471,16 +465,75 @@ module Chat
       /\b#{Regexp.escape(name)}\b/i
     end
 
-    def clarification_store
-      @clarification_store ||= if clarification_thread_id.present?
-                                 QueryClarificationStateStore.new(
-                                   workspace:,
-                                   actor:,
-                                   chat_thread_id: clarification_thread_id
-                                 )
-                               else
-                                 NullClarificationStore.new
-                               end
+    def save_clarification_state(state)
+      return {} if clarification_thread.blank?
+
+      normalized = normalize_clarification_state(state)
+      return clear_clarification_state! if normalized.blank?
+
+      clarification_follow_up_manager.replace!(
+        kind: 'query_scope_clarification',
+        domain: 'query',
+        payload: normalized
+      )
+      @active_clarification_state = normalized
+    end
+
+    def clear_clarification_state!
+      clarification_follow_up_manager&.clear_kind!('query_scope_clarification')
+      @active_clarification_state = {}
+    end
+
+    def pending_follow_up_payload_for(kind:)
+      snapshot = clarification_follow_up_manager&.active_payload
+      return {} if snapshot.blank?
+      return {} unless snapshot['kind'] == kind
+
+      snapshot['payload'].to_h.deep_stringify_keys
+    end
+
+    def normalize_clarification_state(state)
+      raw = state.to_h.deep_stringify_keys.slice(
+        'question',
+        'step',
+        'data_source_id',
+        'candidate_data_sources',
+        'candidate_tables'
+      )
+      raw['candidate_data_sources'] = Array(raw['candidate_data_sources']).map do |candidate|
+        {
+          'id' => candidate[:id] || candidate['id'],
+          'name' => candidate[:name] || candidate['name'],
+          'source_type' => candidate[:source_type] || candidate['source_type']
+        }.compact_blank
+      end
+      raw['candidate_tables'] = Array(raw['candidate_tables']).map do |candidate|
+        {
+          'qualified_name' => candidate[:qualified_name] || candidate['qualified_name'],
+          'name' => candidate[:name] || candidate['name']
+        }.compact_blank
+      end
+      raw.compact_blank!
+      raw
+    end
+
+    def clarification_follow_up_manager
+      return nil if clarification_thread.blank?
+
+      @clarification_follow_up_manager ||= PendingFollowUpManager.new(
+        workspace:,
+        actor:,
+        chat_thread: clarification_thread
+      )
+    end
+
+    def clarification_thread
+      return @clarification_thread if defined?(@clarification_thread)
+
+      @clarification_thread =
+        if clarification_thread_id.present?
+          workspace.chat_threads.active.for_user(actor).find_by(id: clarification_thread_id)
+        end
     end
 
     def clarification_thread_id

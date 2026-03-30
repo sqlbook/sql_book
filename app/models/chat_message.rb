@@ -26,6 +26,11 @@ class ChatMessage < ApplicationRecord
            foreign_key: :source_message_id,
            dependent: :nullify,
            inverse_of: :source_message
+  has_many :source_chat_pending_follow_ups,
+           class_name: 'ChatPendingFollowUp',
+           foreign_key: :source_message_id,
+           dependent: :nullify,
+           inverse_of: :source_message
   has_many :source_query_references,
            class_name: 'ChatQueryReference',
            foreign_key: :source_message_id,

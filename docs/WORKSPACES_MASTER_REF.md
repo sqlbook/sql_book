@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-22
+Last updated: 2026-03-30
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -46,6 +46,7 @@ Related references:
   - `PATCH /app/workspaces/:workspace_id/data_sources/:id` -> update datasource settings
   - `DELETE /app/workspaces/:workspace_id/data_sources/:id` -> destroy datasource
 - Workspace/team API v1 (auth-protected, documented via `/dev/api`):
+  - `PATCH /api/v1/workspaces/:workspace_id/chat-threads/:id`
   - `PATCH /api/v1/workspaces/:workspace_id`
   - `DELETE /api/v1/workspaces/:workspace_id`
   - `GET /api/v1/workspaces/:workspace_id/members`
@@ -124,6 +125,7 @@ Related references:
 - Workspace home surface is chat-first and workspace-scoped.
 - Chat threads/history are isolated per-user within a workspace.
 - v1 allowlist:
+  - `thread.rename`
   - `workspace.update_name`
   - `workspace.delete`
   - `member.list`
@@ -156,6 +158,8 @@ Related references:
 - Auto-run chat writes include `workspace.update_name`, `member.invite`, `member.resend_invite`, and `member.update_role`.
 - Auto-run datasource chat writes include `datasource.validate_connection` and `datasource.create`.
 - Auto-run query-library chat writes include `query.save`, `query.update`, and `query.rename`.
+- Auto-run chat writes also include `thread.rename` for the actor's own private workspace thread.
+- Chat continuity for unresolved next steps is now persisted server-side via `ChatPendingFollowUp`; thread/query rename follow-ups should not depend on recovering intent from assistant prose alone.
 - Read-only chat query execution (`query.run`) should return an inline assistant answer in the same conversation flow; it does not require confirmation.
 - Query-library chat actions should support:
   - `query.list` for browsing saved queries

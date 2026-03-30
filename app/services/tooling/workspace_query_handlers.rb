@@ -91,7 +91,7 @@ module Tooling
         data: {
           'query' => serialize_query(query:),
           'update_outcome' => result.update_outcome
-        }.merge(query_run_data).merge(query_update_suggestion_data(query:, arguments:)),
+        }.merge(query_run_data).merge(query_name_review_data(query:, arguments:)),
         fallback_message: query_update_fallback(result:)
       )
     end
@@ -208,21 +208,57 @@ module Tooling
       serialize_query_result(query:, query_result:)
     end
 
-    def query_update_suggestion_data(query:, arguments:)
+    def query_name_review_data(query:, arguments:) # rubocop:disable Metrics/AbcSize
       return {} unless sql_update_requested?(arguments:)
       return {} if arguments.to_h.deep_stringify_keys['name'].to_s.strip.present?
 
-      suggested_name = suggested_name_for_updated_query(query:)
-      return {} if suggested_name.blank? || suggested_name == query.name
+      review = name_review_for_updated_query(query:, arguments:)
+      return {} if review.blank?
 
-      {
-        'suggested_name' => suggested_name,
-        'current_name' => query.name
+      payload = {
+        'name_review' => {
+          'status' => review.status,
+          'current_name' => query.name
+        }
       }
+
+      return payload if review.status != 'stale' || review.suggested_name.blank?
+
+      payload['name_review']['suggested_name'] = review.suggested_name
+      payload.merge(
+        'name_status' => review.status,
+        'current_name' => query.name,
+        'suggested_name' => review.suggested_name,
+        'next_actions' => [
+          {
+            'action_type' => 'query.rename',
+            'label' => 'rename the saved query',
+            'arguments' => {
+              'query_id' => query.id,
+              'name' => review.suggested_name
+            }
+          }
+        ],
+        'follow_up' => {
+          'kind' => 'query_rename_suggestion',
+          'domain' => 'query',
+          'target_type' => 'saved_query',
+          'target_id' => query.id,
+          'payload' => {
+            'current_name' => query.name,
+            'suggested_name' => review.suggested_name,
+            'prompt_summary' => %(Consider renaming "#{query.name}" to "#{review.suggested_name}")
+          }
+        }
+      )
     end
 
-    def suggested_name_for_updated_query(query:)
-      Queries::GeneratedNameService.generate(
+    def name_review_for_updated_query(query:, arguments:)
+      payload = arguments.to_h.deep_stringify_keys
+
+      Queries::NameReviewService.review(
+        current_name: query.name,
+        question: payload['question'],
         sql: query.query,
         data_source: query.data_source,
         actor:
@@ -230,10 +266,10 @@ module Tooling
     rescue Queries::GeneratedNameService::ConfigurationError,
            Queries::GeneratedNameService::RequestError => e
       Rails.logger.warn(
-        "WorkspaceQueryHandlers#update suggested name generation failed for Query##{query.id}: " \
+        "WorkspaceQueryHandlers#update name review failed for Query##{query.id}: " \
         "#{e.class} #{e.message}"
       )
-      nil
+      Queries::NameReviewResponseParser::Result.new(status: 'uncertain', suggested_name: nil, reason: e.message)
     end
 
     def sql_update_requested?(arguments:)

@@ -1,6 +1,6 @@
 # Translations Master Reference
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
 ## Service and goal
 - Service: database-backed internationalization for the signed-in and email experiences.
@@ -104,6 +104,7 @@ For every feature/change before merge:
 - API/tool result codes and typed payloads may remain English-only; the model is expected to translate ordinary assistant responses on the fly.
 - Do not use Rails locales as the primary management layer for chat business outcomes.
 - For product-owned chat copy changes, add/update both `en.yml` and `es.yml` in the same PR.
+- Current retained `app.workspaces.chat.*` locale surface is intentionally narrower than the old business-prose layer and is tracked by `docs/CHAT_COPY_AUDIT.yml`.
 
 ## Data source copy rule
 - All datasource UI copy must be locale-key backed under `app.workspaces.data_sources.*` or `common.*`.
@@ -115,6 +116,7 @@ For every feature/change before merge:
   - datasource settings/management copy
   - deterministic UI validation and app-owned fallback for datasource setup collection
 - New datasource copy is not considered complete unless `en.yml` and `es.yml` are updated in the same change.
+- Do not create a new `app.workspaces.chat.datasource.*` prose subtree for ordinary assistant responses; use `datasource_setup.*` only for app-owned setup/fallback prompts.
 
 ## Data model
 - `translation_keys`

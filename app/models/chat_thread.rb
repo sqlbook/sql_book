@@ -23,6 +23,11 @@ class ChatThread < ApplicationRecord
            dependent: :destroy,
            inverse_of: :chat_thread
 
+  has_many :chat_pending_follow_ups,
+           -> { order(updated_at: :desc, id: :desc) },
+           dependent: :destroy,
+           inverse_of: :chat_thread
+
   scope :active, -> { where(archived_at: nil) }
   scope :with_messages, -> { joins(:chat_messages).distinct }
   scope :for_user, ->(user) { where(created_by: user) }

@@ -178,21 +178,6 @@ en:
             data_sources: Data sources
             queries: Queries and query library
             workspace: Workspace settings
-          capability_items:
-            member_list: List team members
-            member_invite: Invite a team member
-            member_resend_invite: Resend a pending invite
-            member_update_role: Change a team member's role
-            member_remove: Remove a team member
-            data_source_list: List connected data sources
-            data_source_add: Add and manage PostgreSQL data sources
-            query_list: List saved queries
-            query_run: Query a connected data source
-            query_save: Save a query to the query library
-            query_rename: Rename a saved query
-            query_delete: Delete a saved query
-            workspace_update_name: Rename the workspace
-            workspace_delete: Delete the workspace
         datasource_setup:
           ask_name: Sure. What should I call this PostgreSQL data source?
           only_postgres: I can help add PostgreSQL data sources in chat right now, but not %{source_type}. If you want, I can help you connect a PostgreSQL source instead.

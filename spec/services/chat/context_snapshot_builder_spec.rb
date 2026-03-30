@@ -14,18 +14,24 @@ RSpec.describe Chat::ContextSnapshotBuilder, type: :service do
 
   describe '#call' do
     it 'builds query active focus and pending follow-up from a saved-name conflict state' do
-      Chat::QuerySaveNameConflictStateStore.new(
+      create(
+        :chat_pending_follow_up,
         workspace:,
-        actor:,
-        chat_thread:
-      ).save(
-        'sql' => 'SELECT first_name, email FROM public.users',
-        'question' => 'List user names and emails',
-        'data_source_id' => data_source.id,
-        'data_source_name' => data_source.display_name,
-        'proposed_name' => 'User names and email addresses',
-        'conflicting_query_id' => 99,
-        'conflicting_query_name' => 'User names and email addresses'
+        chat_thread:,
+        created_by: actor,
+        kind: 'query_save_name_conflict',
+        domain: 'query',
+        target_type: 'draft_query',
+        target_id: nil,
+        payload: {
+          'sql' => 'SELECT first_name, email FROM public.users',
+          'question' => 'List user names and emails',
+          'data_source_id' => data_source.id,
+          'data_source_name' => data_source.display_name,
+          'proposed_name' => 'User names and email addresses',
+          'conflicting_query_id' => 99,
+          'conflicting_query_name' => 'User names and email addresses'
+        }
       )
 
       snapshot = described_class.new(
@@ -68,9 +74,6 @@ RSpec.describe Chat::ContextSnapshotBuilder, type: :service do
           }
         }
       )
-      allow_any_instance_of(Chat::DataSourceSetupStateStore).to receive(:load).and_return({})
-      allow_any_instance_of(Chat::QueryClarificationStateStore).to receive(:load).and_return({})
-      allow_any_instance_of(Chat::QuerySaveNameConflictStateStore).to receive(:load).and_return({})
 
       snapshot = described_class.new(
         chat_thread:,
@@ -99,9 +102,6 @@ RSpec.describe Chat::ContextSnapshotBuilder, type: :service do
         status: ChatActionRequest::Statuses::EXECUTED,
         result_payload: { 'user_message' => 'Workspace renamed to Orange Inc.' }
       )
-      allow_any_instance_of(Chat::DataSourceSetupStateStore).to receive(:load).and_return({})
-      allow_any_instance_of(Chat::QueryClarificationStateStore).to receive(:load).and_return({})
-      allow_any_instance_of(Chat::QuerySaveNameConflictStateStore).to receive(:load).and_return({})
 
       snapshot = described_class.new(
         chat_thread:,
@@ -145,6 +145,85 @@ RSpec.describe Chat::ContextSnapshotBuilder, type: :service do
         'domain' => 'datasource',
         'kind' => 'datasource_setup_step'
       )
+    end
+
+    it 'uses the persisted pending follow-up as the source of truth for rename suggestions' do
+      saved_query = create(
+        :query,
+        data_source: data_source,
+        saved: true,
+        name: '5 longest standing users',
+        query: 'SELECT * FROM public.users ORDER BY created_at ASC LIMIT 10',
+        author: actor,
+        last_updated_by: actor
+      )
+      create(
+        :chat_pending_follow_up,
+        workspace:,
+        chat_thread:,
+        created_by: actor,
+        kind: 'query_rename_suggestion',
+        domain: 'query',
+        target_type: 'saved_query',
+        target_id: saved_query.id,
+        payload: {
+          'current_name' => '5 longest standing users',
+          'suggested_name' => '10 longest standing users',
+          'prompt_summary' => 'Consider renaming'
+        }
+      )
+
+      snapshot = described_class.new(
+        chat_thread:,
+        workspace:,
+        actor:,
+        current_message_text: 'yes please'
+      ).call
+
+      expect(snapshot.pending_follow_up).to include(
+        'kind' => 'query_rename_suggestion',
+        'proposed_value' => '10 longest standing users'
+      )
+      expect(snapshot.active_focus).to include(
+        'domain' => 'query',
+        'follow_up_expected' => true
+      )
+    end
+
+    it 'does not infer a pending follow-up from assistant prose alone' do
+      create(
+        :chat_message,
+        chat_thread:,
+        role: ChatMessage::Roles::ASSISTANT,
+        content: 'This now looks more like a new query than an update.'
+      )
+      data_source = create(:data_source, :postgres, workspace:, name: 'Warehouse DB')
+      create(
+        :chat_query_reference,
+        chat_thread:,
+        data_source:,
+        saved_query: create(
+          :query,
+          data_source:,
+          saved: true,
+          name: 'Workspace count',
+          query: 'SELECT COUNT(*) AS workspace_count FROM public.workspaces',
+          author: actor,
+          last_updated_by: actor
+        ),
+        original_question: 'How many workspaces are there?',
+        sql: 'SELECT COUNT(*) AS workspace_count FROM public.workspaces',
+        current_name: 'Workspace count'
+      )
+
+      snapshot = described_class.new(
+        chat_thread:,
+        workspace:,
+        actor:,
+        current_message_text: 'okay'
+      ).call
+
+      expect(snapshot.pending_follow_up).to eq({})
     end
   end
 end

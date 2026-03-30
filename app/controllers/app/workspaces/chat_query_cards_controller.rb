@@ -78,15 +78,26 @@ module App
       end
 
       def persist_query_save_name_conflict_for(execution:)
+        pending_follow_up_manager.replace!(
+          kind: 'query_save_name_conflict',
+          domain: 'query',
+          source_message: source_message,
+          payload: query_save_name_conflict_payload(execution:)
+        )
+      end
+
+      def query_save_name_conflict_payload(execution:)
         data = execution.data.to_h.deep_stringify_keys
-        query_save_name_conflict_state_store.save(
+
+        {
           'sql' => query_card['sql'],
           'question' => query_card['question'],
           'data_source_id' => query_card.dig('data_source', 'id'),
           'data_source_name' => query_card.dig('data_source', 'name'),
           'proposed_name' => data['proposed_name'],
-          'conflicting_query' => data['conflicting_query']
-        )
+          'conflicting_query_id' => data.dig('conflicting_query', 'id'),
+          'conflicting_query_name' => data.dig('conflicting_query', 'name')
+        }
       end
 
       def update_source_message_query_card!(action_type:, execution:)
@@ -241,8 +252,8 @@ module App
         )
       end
 
-      def query_save_name_conflict_state_store
-        @query_save_name_conflict_state_store ||= Chat::QuerySaveNameConflictStateStore.new(
+      def pending_follow_up_manager
+        @pending_follow_up_manager ||= Chat::PendingFollowUpManager.new(
           workspace:,
           actor: current_user,
           chat_thread:

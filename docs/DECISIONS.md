@@ -205,6 +205,22 @@ Use this file to record major choices and why they were made.
 - Revisit when:
   - we add new locales and identify specific chat flows where model-authored phrasing is too unstable for the required UX/compliance bar
 
+## 2026-03-30
+### Decision: Reset chat reliability around one interpreter and one persisted follow-up model
+- Status: Accepted
+- Why:
+  - repeated chat regressions were coming from overlapping semantic layers trying to interpret the same turn and recover state from assistant prose
+  - unresolved-next-step state needs one durable server-owned home instead of a mix of transient stores, regex follow-ups, and conversational inference
+  - optional side suggestions and app-rendered blocks need a structured execution contract, not ad hoc assistant wording
+- Consequences:
+  - `Chat::Interpreter` is now the canonical LLM-enabled interpreter path used by `Chat::TurnOrchestrator`
+  - `ChatPendingFollowUp` is the canonical persisted unresolved-next-step store for the normal runtime path
+  - structured execution payloads can carry `presentation`, `next_actions`, and `follow_up`
+  - SQL-changing `query.update` now runs a saved-query title review and only emits rename follow-up state when the existing title is actually stale
+  - chat docs and copy audit now explicitly guard against reintroducing duplicate interpreters, ad hoc follow-up stores, and chat-localized business prose
+- Revisit when:
+  - chat expands into materially broader multi-domain workflows that need a second abstraction on top of the same interpreter/follow-up model
+
 ## Template
 ### Decision: <title>
 - Status: Proposed | Accepted | Rejected | Superseded

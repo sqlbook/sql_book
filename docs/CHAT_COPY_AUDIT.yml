@@ -1,7 +1,7 @@
 ---
-generated_at: '2026-03-29T08:04:32Z'
+generated_at: '2026-03-30T11:28:15Z'
 summary:
-  locale_leaf_count: 139
+  locale_leaf_count: 125
   retained_namespaces:
   - action_labels
   - cards
@@ -24,7 +24,7 @@ summary:
   - responses
   unclassified_key_count: 0
   deprecated_consumer_count: 0
-  hardcoded_string_count: 73
+  hardcoded_string_count: 78
 locale_keys:
 - key: action_labels.member_invite
   namespace: action_labels
@@ -143,7 +143,7 @@ locale_keys:
   app_consumers:
   - app/services/chat/data_source_setup_coordinator.rb:46
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:232
+  - spec/requests/app/workspaces/chat_messages_spec.rb:246
 - key: datasource_setup.ask_tables
   namespace: datasource_setup
   classification: model_phrase
@@ -206,7 +206,7 @@ locale_keys:
   classification: ui_or_fallback_keep
   app_consumers:
   - app/controllers/app/workspaces/chat_actions_controller.rb:89
-  - app/services/chat/turn_orchestrator.rb:366
+  - app/services/chat/turn_orchestrator.rb:453
   spec_consumers: []
 - key: errors.delete_thread_failed
   namespace: errors
@@ -273,8 +273,9 @@ locale_keys:
   classification: ui_or_fallback_keep
   app_consumers:
   - app/controllers/app/workspaces/chat_actions_controller.rb:57
-  - app/services/chat/turn_orchestrator.rb:423
-  - app/services/chat/turn_orchestrator.rb:1186
+  - app/services/chat/turn_orchestrator.rb:234
+  - app/services/chat/turn_orchestrator.rb:510
+  - app/services/chat/turn_orchestrator.rb:1275
   spec_consumers: []
 - key: messages.capability_categories.data_sources
   namespace: messages
@@ -296,93 +297,23 @@ locale_keys:
   classification: ui_or_fallback_keep
   app_consumers: []
   spec_consumers: []
-- key: messages.capability_items.data_source_add
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.data_source_list
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.member_invite
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.member_list
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.member_remove
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.member_resend_invite
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.member_update_role
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.query_delete
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.query_list
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.query_rename
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.query_run
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.query_save
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.workspace_delete
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
-- key: messages.capability_items.workspace_update_name
-  namespace: messages
-  classification: ui_or_fallback_keep
-  app_consumers: []
-  spec_consumers: []
 - key: messages.capability_summary_footer
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:552
+  - app/services/chat/turn_orchestrator.rb:639
   spec_consumers: []
 - key: messages.capability_summary_intro
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:550
+  - app/services/chat/turn_orchestrator.rb:637
   spec_consumers: []
 - key: messages.capability_summary_restricted
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:570
+  - app/services/chat/turn_orchestrator.rb:657
   spec_consumers: []
 - key: messages.confirmation_default
   namespace: messages
@@ -393,63 +324,63 @@ locale_keys:
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/runtime_service.rb:194
-  - app/services/chat/turn_orchestrator.rb:516
+  - app/services/chat/runtime_service.rb:263
+  - app/services/chat/turn_orchestrator.rb:603
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:82
+  - spec/requests/app/workspaces/chat_messages_spec.rb:96
 - key: messages.scope_limited_footer
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:564
+  - app/services/chat/turn_orchestrator.rb:651
   spec_consumers: []
 - key: messages.scope_limited_intro
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:561
+  - app/services/chat/turn_orchestrator.rb:648
   spec_consumers: []
 - key: messages.scope_limited_restricted
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:577
+  - app/services/chat/turn_orchestrator.rb:664
   spec_consumers: []
 - key: messages.scope_limited_supported_intro
   namespace: messages
   classification: ui_or_fallback_keep
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:562
+  - app/services/chat/turn_orchestrator.rb:649
   spec_consumers: []
 - key: planner.attachments_context
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:443
+  - app/services/chat/planner_service.rb:487
   spec_consumers: []
 - key: planner.datasource_list
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:615
+  - app/services/chat/planner_service.rb:661
   spec_consumers: []
 - key: planner.default_help
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:574
+  - app/services/chat/planner_service.rb:620
   spec_consumers: []
 - key: planner.fallback_with_action
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:1205
+  - app/services/chat/planner_service.rb:1335
   spec_consumers: []
 - key: planner.fallback_without_action
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:1207
+  - app/services/chat/planner_service.rb:1337
   spec_consumers: []
 - key: planner.member_invite
   namespace: planner
@@ -462,42 +393,42 @@ locale_keys:
   - app/services/chat/invite_prompt_resolver.rb:10
   - app/services/chat/invite_prompt_resolver.rb:11
   - app/services/chat/invite_prompt_resolver.rb:12
-  - app/services/chat/planner_service.rb:640
-  - app/services/chat/planner_service.rb:937
-  - app/services/chat/runtime_service.rb:1281
-  - app/services/chat/runtime_service.rb:1400
+  - app/services/chat/planner_service.rb:686
+  - app/services/chat/planner_service.rb:1040
+  - app/services/chat/runtime_service.rb:1560
+  - app/services/chat/runtime_service.rb:1679
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2158
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2181
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2172
   - spec/requests/app/workspaces/chat_messages_spec.rb:2195
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2261
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2295
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2329
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2362
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2571
-  - spec/services/chat/planner_service_spec.rb:42
-  - spec/services/chat/planner_service_spec.rb:94
-  - spec/services/chat/planner_service_spec.rb:99
-  - spec/services/chat/planner_service_spec.rb:111
-  - spec/services/chat/planner_service_spec.rb:133
-  - spec/services/chat/planner_service_spec.rb:138
-  - spec/services/chat/planner_service_spec.rb:240
-  - spec/services/chat/planner_service_spec.rb:268
-  - spec/services/chat/planner_service_spec.rb:319
-  - spec/services/chat/planner_service_spec.rb:329
-  - spec/services/chat/runtime_service_spec.rb:710
-  - spec/services/chat/runtime_service_spec.rb:717
-  - spec/services/chat/runtime_service_spec.rb:720
-  - spec/services/chat/runtime_service_spec.rb:748
-  - spec/services/chat/runtime_service_spec.rb:755
-  - spec/services/chat/runtime_service_spec.rb:756
-  - spec/services/chat/runtime_service_spec.rb:820
-  - spec/services/chat/runtime_service_spec.rb:859
-  - spec/services/chat/runtime_service_spec.rb:865
-  - spec/services/chat/runtime_service_spec.rb:893
-  - spec/services/chat/runtime_service_spec.rb:896
-  - spec/services/chat/runtime_service_spec.rb:971
-  - spec/services/chat/runtime_service_spec.rb:998
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2209
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2275
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2309
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2343
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2376
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2585
+  - spec/services/chat/planner_service_spec.rb:108
+  - spec/services/chat/planner_service_spec.rb:160
+  - spec/services/chat/planner_service_spec.rb:165
+  - spec/services/chat/planner_service_spec.rb:177
+  - spec/services/chat/planner_service_spec.rb:199
+  - spec/services/chat/planner_service_spec.rb:204
+  - spec/services/chat/planner_service_spec.rb:306
+  - spec/services/chat/planner_service_spec.rb:334
+  - spec/services/chat/planner_service_spec.rb:385
+  - spec/services/chat/planner_service_spec.rb:395
+  - spec/services/chat/runtime_service_spec.rb:922
+  - spec/services/chat/runtime_service_spec.rb:929
+  - spec/services/chat/runtime_service_spec.rb:932
+  - spec/services/chat/runtime_service_spec.rb:960
+  - spec/services/chat/runtime_service_spec.rb:967
+  - spec/services/chat/runtime_service_spec.rb:968
+  - spec/services/chat/runtime_service_spec.rb:1032
+  - spec/services/chat/runtime_service_spec.rb:1071
+  - spec/services/chat/runtime_service_spec.rb:1077
+  - spec/services/chat/runtime_service_spec.rb:1105
+  - spec/services/chat/runtime_service_spec.rb:1108
+  - spec/services/chat/runtime_service_spec.rb:1183
+  - spec/services/chat/runtime_service_spec.rb:1210
 - key: planner.member_invite_needs_email
   namespace: planner
   classification: model_phrase
@@ -507,29 +438,29 @@ locale_keys:
   - app/services/chat/invite_prompt_resolver.rb:9
   - app/services/chat/invite_prompt_resolver.rb:11
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2158
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2571
-  - spec/services/chat/planner_service_spec.rb:42
-  - spec/services/chat/planner_service_spec.rb:94
-  - spec/services/chat/planner_service_spec.rb:111
-  - spec/services/chat/planner_service_spec.rb:133
-  - spec/services/chat/runtime_service_spec.rb:710
-  - spec/services/chat/runtime_service_spec.rb:748
-  - spec/services/chat/runtime_service_spec.rb:820
-  - spec/services/chat/runtime_service_spec.rb:859
-  - spec/services/chat/runtime_service_spec.rb:893
-  - spec/services/chat/runtime_service_spec.rb:896
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2172
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2585
+  - spec/services/chat/planner_service_spec.rb:108
+  - spec/services/chat/planner_service_spec.rb:160
+  - spec/services/chat/planner_service_spec.rb:177
+  - spec/services/chat/planner_service_spec.rb:199
+  - spec/services/chat/runtime_service_spec.rb:922
+  - spec/services/chat/runtime_service_spec.rb:960
+  - spec/services/chat/runtime_service_spec.rb:1032
+  - spec/services/chat/runtime_service_spec.rb:1071
+  - spec/services/chat/runtime_service_spec.rb:1105
+  - spec/services/chat/runtime_service_spec.rb:1108
 - key: planner.member_invite_needs_email_and_name
   namespace: planner
   classification: model_phrase
   app_consumers:
   - app/services/chat/invite_prompt_resolver.rb:9
   spec_consumers:
-  - spec/services/chat/planner_service_spec.rb:94
-  - spec/services/chat/planner_service_spec.rb:133
-  - spec/services/chat/runtime_service_spec.rb:710
-  - spec/services/chat/runtime_service_spec.rb:748
-  - spec/services/chat/runtime_service_spec.rb:859
+  - spec/services/chat/planner_service_spec.rb:160
+  - spec/services/chat/planner_service_spec.rb:199
+  - spec/services/chat/runtime_service_spec.rb:922
+  - spec/services/chat/runtime_service_spec.rb:960
+  - spec/services/chat/runtime_service_spec.rb:1071
 - key: planner.member_invite_needs_email_and_role
   namespace: planner
   classification: model_phrase
@@ -542,13 +473,13 @@ locale_keys:
   app_consumers:
   - app/services/chat/invite_prompt_resolver.rb:6
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2158
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2571
-  - spec/services/chat/planner_service_spec.rb:42
-  - spec/services/chat/planner_service_spec.rb:111
-  - spec/services/chat/runtime_service_spec.rb:820
-  - spec/services/chat/runtime_service_spec.rb:893
-  - spec/services/chat/runtime_service_spec.rb:896
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2172
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2585
+  - spec/services/chat/planner_service_spec.rb:108
+  - spec/services/chat/planner_service_spec.rb:177
+  - spec/services/chat/runtime_service_spec.rb:1032
+  - spec/services/chat/runtime_service_spec.rb:1105
+  - spec/services/chat/runtime_service_spec.rb:1108
 - key: planner.member_invite_needs_name
   namespace: planner
   classification: model_phrase
@@ -556,284 +487,284 @@ locale_keys:
   - app/services/chat/invite_prompt_resolver.rb:7
   - app/services/chat/invite_prompt_resolver.rb:12
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2195
-  - spec/services/chat/planner_service_spec.rb:319
-  - spec/services/chat/planner_service_spec.rb:329
-  - spec/services/chat/runtime_service_spec.rb:717
-  - spec/services/chat/runtime_service_spec.rb:720
-  - spec/services/chat/runtime_service_spec.rb:971
-  - spec/services/chat/runtime_service_spec.rb:998
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2209
+  - spec/services/chat/planner_service_spec.rb:385
+  - spec/services/chat/planner_service_spec.rb:395
+  - spec/services/chat/runtime_service_spec.rb:929
+  - spec/services/chat/runtime_service_spec.rb:932
+  - spec/services/chat/runtime_service_spec.rb:1183
+  - spec/services/chat/runtime_service_spec.rb:1210
 - key: planner.member_invite_needs_name_and_role
   namespace: planner
   classification: model_phrase
   app_consumers:
   - app/services/chat/invite_prompt_resolver.rb:7
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2195
-  - spec/services/chat/planner_service_spec.rb:319
-  - spec/services/chat/planner_service_spec.rb:329
-  - spec/services/chat/runtime_service_spec.rb:717
-  - spec/services/chat/runtime_service_spec.rb:720
-  - spec/services/chat/runtime_service_spec.rb:971
-  - spec/services/chat/runtime_service_spec.rb:998
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2209
+  - spec/services/chat/planner_service_spec.rb:385
+  - spec/services/chat/planner_service_spec.rb:395
+  - spec/services/chat/runtime_service_spec.rb:929
+  - spec/services/chat/runtime_service_spec.rb:932
+  - spec/services/chat/runtime_service_spec.rb:1183
+  - spec/services/chat/runtime_service_spec.rb:1210
 - key: planner.member_invite_needs_role
   namespace: planner
   classification: model_phrase
   app_consumers:
   - app/services/chat/invite_prompt_resolver.rb:10
   spec_consumers:
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2181
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2261
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2295
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2329
-  - spec/requests/app/workspaces/chat_messages_spec.rb:2362
-  - spec/services/chat/planner_service_spec.rb:99
-  - spec/services/chat/planner_service_spec.rb:138
-  - spec/services/chat/planner_service_spec.rb:240
-  - spec/services/chat/planner_service_spec.rb:268
-  - spec/services/chat/runtime_service_spec.rb:755
-  - spec/services/chat/runtime_service_spec.rb:756
-  - spec/services/chat/runtime_service_spec.rb:865
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2195
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2275
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2309
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2343
+  - spec/requests/app/workspaces/chat_messages_spec.rb:2376
+  - spec/services/chat/planner_service_spec.rb:165
+  - spec/services/chat/planner_service_spec.rb:204
+  - spec/services/chat/planner_service_spec.rb:306
+  - spec/services/chat/planner_service_spec.rb:334
+  - spec/services/chat/runtime_service_spec.rb:967
+  - spec/services/chat/runtime_service_spec.rb:968
+  - spec/services/chat/runtime_service_spec.rb:1077
 - key: planner.member_invite_role_answer
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:937
-  - app/services/chat/runtime_service.rb:1400
+  - app/services/chat/planner_service.rb:1040
+  - app/services/chat/runtime_service.rb:1679
   spec_consumers: []
 - key: planner.member_list
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:607
+  - app/services/chat/planner_service.rb:653
   spec_consumers: []
 - key: planner.member_recent_reference_answer
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:955
-  - app/services/chat/runtime_service.rb:1418
+  - app/services/chat/planner_service.rb:1058
+  - app/services/chat/runtime_service.rb:1697
   spec_consumers: []
 - key: planner.member_remove
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:309
-  - app/services/chat/planner_service.rb:700
-  - app/services/chat/planner_service.rb:707
-  - app/services/chat/runtime_service.rb:952
+  - app/services/chat/intent_reconciler.rb:331
+  - app/services/chat/planner_service.rb:746
+  - app/services/chat/planner_service.rb:753
+  - app/services/chat/runtime_service.rb:1065
   spec_consumers: []
 - key: planner.member_remove_needs_member
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:309
-  - app/services/chat/planner_service.rb:700
+  - app/services/chat/intent_reconciler.rb:331
+  - app/services/chat/planner_service.rb:746
   spec_consumers: []
 - key: planner.member_resend
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:299
-  - app/services/chat/planner_service.rb:650
-  - app/services/chat/planner_service.rb:657
+  - app/services/chat/intent_reconciler.rb:321
+  - app/services/chat/planner_service.rb:696
+  - app/services/chat/planner_service.rb:703
   spec_consumers: []
 - key: planner.member_resend_needs_member
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:299
-  - app/services/chat/planner_service.rb:650
+  - app/services/chat/intent_reconciler.rb:321
+  - app/services/chat/planner_service.rb:696
   spec_consumers: []
 - key: planner.member_role_update
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:302
-  - app/services/chat/intent_reconciler.rb:305
-  - app/services/chat/intent_reconciler.rb:307
-  - app/services/chat/planner_service.rb:669
-  - app/services/chat/planner_service.rb:676
-  - app/services/chat/planner_service.rb:683
-  - app/services/chat/planner_service.rb:690
-  - app/services/chat/runtime_service.rb:969
+  - app/services/chat/intent_reconciler.rb:324
+  - app/services/chat/intent_reconciler.rb:327
+  - app/services/chat/intent_reconciler.rb:329
+  - app/services/chat/planner_service.rb:715
+  - app/services/chat/planner_service.rb:722
+  - app/services/chat/planner_service.rb:729
+  - app/services/chat/planner_service.rb:736
+  - app/services/chat/runtime_service.rb:1082
   spec_consumers: []
 - key: planner.member_role_update_needs_member
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:302
-  - app/services/chat/intent_reconciler.rb:305
-  - app/services/chat/planner_service.rb:669
-  - app/services/chat/planner_service.rb:676
+  - app/services/chat/intent_reconciler.rb:324
+  - app/services/chat/intent_reconciler.rb:327
+  - app/services/chat/planner_service.rb:715
+  - app/services/chat/planner_service.rb:722
   spec_consumers: []
 - key: planner.member_role_update_needs_member_and_role
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:302
-  - app/services/chat/planner_service.rb:669
+  - app/services/chat/intent_reconciler.rb:324
+  - app/services/chat/planner_service.rb:715
   spec_consumers: []
 - key: planner.member_role_update_needs_role
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:307
-  - app/services/chat/planner_service.rb:683
+  - app/services/chat/intent_reconciler.rb:329
+  - app/services/chat/planner_service.rb:729
   spec_consumers: []
 - key: planner.query_delete
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:337
-  - app/services/chat/planner_service.rb:799
-  - app/services/chat/planner_service.rb:806
-  - app/services/chat/runtime_service.rb:872
-  - app/services/chat/runtime_service.rb:888
+  - app/services/chat/intent_reconciler.rb:359
+  - app/services/chat/planner_service.rb:845
+  - app/services/chat/planner_service.rb:852
+  - app/services/chat/runtime_service.rb:965
+  - app/services/chat/runtime_service.rb:981
   spec_consumers: []
 - key: planner.query_delete_mistake_follow_up
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/runtime_service.rb:872
+  - app/services/chat/runtime_service.rb:965
   spec_consumers: []
 - key: planner.query_delete_needs_query
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:337
-  - app/services/chat/planner_service.rb:799
+  - app/services/chat/intent_reconciler.rb:359
+  - app/services/chat/planner_service.rb:845
   spec_consumers: []
 - key: planner.query_list
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:723
+  - app/services/chat/planner_service.rb:769
   spec_consumers: []
 - key: planner.query_rename
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:320
-  - app/services/chat/intent_reconciler.rb:321
-  - app/services/chat/intent_reconciler.rb:325
-  - app/services/chat/planner_service.rb:789
-  - app/services/chat/planner_service.rb:875
-  - app/services/chat/planner_service.rb:883
-  - app/services/chat/planner_service.rb:892
-  - app/services/chat/runtime_service.rb:923
+  - app/services/chat/intent_reconciler.rb:342
+  - app/services/chat/intent_reconciler.rb:343
+  - app/services/chat/intent_reconciler.rb:347
+  - app/services/chat/planner_service.rb:835
+  - app/services/chat/planner_service.rb:956
+  - app/services/chat/planner_service.rb:964
+  - app/services/chat/planner_service.rb:973
+  - app/services/chat/runtime_service.rb:1016
   spec_consumers: []
 - key: planner.query_rename_needs_name
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:325
-  - app/services/chat/planner_service.rb:892
+  - app/services/chat/intent_reconciler.rb:347
+  - app/services/chat/planner_service.rb:973
   spec_consumers: []
 - key: planner.query_rename_needs_query
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:320
-  - app/services/chat/intent_reconciler.rb:321
-  - app/services/chat/planner_service.rb:875
-  - app/services/chat/planner_service.rb:883
+  - app/services/chat/intent_reconciler.rb:342
+  - app/services/chat/intent_reconciler.rb:343
+  - app/services/chat/planner_service.rb:956
+  - app/services/chat/planner_service.rb:964
   spec_consumers: []
 - key: planner.query_rename_needs_query_and_name
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:320
-  - app/services/chat/planner_service.rb:875
+  - app/services/chat/intent_reconciler.rb:342
+  - app/services/chat/planner_service.rb:956
   spec_consumers: []
 - key: planner.query_run
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:715
-  - app/services/chat/runtime_service.rb:759
+  - app/services/chat/planner_service.rb:761
+  - app/services/chat/runtime_service.rb:846
   spec_consumers: []
 - key: planner.query_save
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:311
-  - app/services/chat/planner_service.rb:734
-  - app/services/chat/planner_service.rb:760
-  - app/services/chat/runtime_service.rb:808
-  - app/services/chat/runtime_service.rb:832
-  - app/services/chat/runtime_service.rb:1139
+  - app/services/chat/intent_reconciler.rb:333
+  - app/services/chat/planner_service.rb:780
+  - app/services/chat/planner_service.rb:806
+  - app/services/chat/runtime_service.rb:901
+  - app/services/chat/runtime_service.rb:925
+  - app/services/chat/runtime_service.rb:1418
   spec_consumers: []
 - key: planner.query_save_needs_query
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:311
+  - app/services/chat/intent_reconciler.rb:333
   spec_consumers: []
 - key: planner.query_save_update_or_new
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:734
-  - app/services/chat/runtime_service.rb:808
+  - app/services/chat/planner_service.rb:780
+  - app/services/chat/runtime_service.rb:901
   spec_consumers: []
 - key: planner.query_update
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:333
-  - app/services/chat/intent_reconciler.rb:334
-  - app/services/chat/intent_reconciler.rb:335
-  - app/services/chat/planner_service.rb:745
-  - app/services/chat/planner_service.rb:775
-  - app/services/chat/planner_service.rb:848
-  - app/services/chat/planner_service.rb:856
-  - app/services/chat/planner_service.rb:864
-  - app/services/chat/runtime_service.rb:1155
+  - app/services/chat/intent_reconciler.rb:355
+  - app/services/chat/intent_reconciler.rb:356
+  - app/services/chat/intent_reconciler.rb:357
+  - app/services/chat/planner_service.rb:791
+  - app/services/chat/planner_service.rb:821
+  - app/services/chat/planner_service.rb:929
+  - app/services/chat/planner_service.rb:937
+  - app/services/chat/planner_service.rb:945
+  - app/services/chat/runtime_service.rb:1434
   spec_consumers: []
 - key: planner.query_update_needs_query
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:333
-  - app/services/chat/intent_reconciler.rb:334
-  - app/services/chat/planner_service.rb:848
-  - app/services/chat/planner_service.rb:856
+  - app/services/chat/intent_reconciler.rb:355
+  - app/services/chat/intent_reconciler.rb:356
+  - app/services/chat/planner_service.rb:929
+  - app/services/chat/planner_service.rb:937
   spec_consumers: []
 - key: planner.query_update_needs_query_and_sql
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:333
-  - app/services/chat/planner_service.rb:848
+  - app/services/chat/intent_reconciler.rb:355
+  - app/services/chat/planner_service.rb:929
   spec_consumers: []
 - key: planner.query_update_needs_sql
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:335
-  - app/services/chat/planner_service.rb:864
+  - app/services/chat/intent_reconciler.rb:357
+  - app/services/chat/planner_service.rb:945
   spec_consumers: []
 - key: planner.workspace_delete
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/planner_service.rb:582
+  - app/services/chat/planner_service.rb:628
   spec_consumers: []
 - key: planner.workspace_rename
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:288
-  - app/services/chat/planner_service.rb:592
-  - app/services/chat/planner_service.rb:599
+  - app/services/chat/intent_reconciler.rb:308
+  - app/services/chat/planner_service.rb:638
+  - app/services/chat/planner_service.rb:645
   spec_consumers: []
 - key: planner.workspace_rename_needs_name
   namespace: planner
   classification: model_phrase
   app_consumers:
-  - app/services/chat/intent_reconciler.rb:288
-  - app/services/chat/planner_service.rb:592
+  - app/services/chat/intent_reconciler.rb:308
+  - app/services/chat/planner_service.rb:638
   spec_consumers: []
 - key: query.ask_for_table_or_metric
   namespace: query
@@ -845,14 +776,14 @@ locale_keys:
   namespace: query
   classification: model_phrase
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:726
-  - app/services/chat/turn_orchestrator.rb:729
+  - app/services/chat/turn_orchestrator.rb:813
+  - app/services/chat/turn_orchestrator.rb:816
   spec_consumers: []
 - key: query.ask_scope_read_only
   namespace: query
   classification: model_phrase
   app_consumers:
-  - app/services/chat/turn_orchestrator.rb:729
+  - app/services/chat/turn_orchestrator.rb:816
   spec_consumers: []
 - key: query.no_rows
   namespace: query
@@ -1035,39 +966,43 @@ hardcoded_strings:
   text: query.rename
   classification: ui_or_fallback_keep
 - file: app/services/chat/action_executor.rb
-  line: 181
+  line: 210
   text: This action is not available in this workspace chat.
   classification: structured_domain_result
 - file: app/services/chat/action_executor.rb
-  line: 182
+  line: 211
   text: This action is not available in this workspace chat.
   classification: structured_domain_result
 - file: app/services/chat/action_executor.rb
-  line: 185
+  line: 213
+  text: You can only rename your own chat thread in this workspace.
+  classification: structured_domain_result
+- file: app/services/chat/action_executor.rb
+  line: 217
   text: You do not have permission to do that in this workspace.
   classification: structured_domain_result
 - file: app/services/chat/action_executor.rb
-  line: 252
+  line: 270
   text: A Workspace owner can do that.
   classification: structured_domain_result
 - file: app/services/chat/context_snapshot_builder.rb
-  line: 656
+  line: 621
   text: grouped_count
   classification: model_phrase
 - file: app/services/chat/context_snapshot_builder.rb
-  line: 657
+  line: 622
   text: scalar_count
   classification: model_phrase
 - file: app/services/chat/context_snapshot_builder.rb
-  line: 658
+  line: 623
   text: user_list
   classification: model_phrase
 - file: app/services/chat/context_snapshot_builder.rb
-  line: 659
+  line: 624
   text: table
   classification: model_phrase
 - file: app/services/chat/context_snapshot_builder.rb
-  line: 703
+  line: 668
   text: datasource_list
   classification: model_phrase
 - file: app/services/chat/copy_audit.rb
@@ -1083,7 +1018,7 @@ hardcoded_strings:
   text: model_phrase
   classification: model_phrase
 - file: app/services/chat/data_source_query_service.rb
-  line: 490
+  line: 499
   text: query.validation_error
   classification: model_phrase
 - file: app/services/chat/data_source_setup_coordinator.rb
@@ -1103,12 +1038,24 @@ hardcoded_strings:
   text: postgres
   classification: model_phrase
 - file: app/services/chat/intent_reconciler.rb
-  line: 314
+  line: 310
+  text: What should I rename this chat to?
+  classification: model_phrase
+- file: app/services/chat/intent_reconciler.rb
+  line: 336
   text: I could not tell which data source to use for that query.
   classification: model_phrase
 - file: app/services/chat/planner_service.rb
-  line: 358
+  line: 401
   text: 'Image attachments count: 0'
+  classification: model_phrase
+- file: app/services/chat/planner_service.rb
+  line: 869
+  text: What should I rename this chat to?
+  classification: model_phrase
+- file: app/services/chat/planner_service.rb
+  line: 876
+  text: I can rename this chat.
   classification: model_phrase
 - file: app/services/chat/prompt_context_formatter.rb
   line: 16
@@ -1127,28 +1074,32 @@ hardcoded_strings:
   text: 'SELECT COUNT(*) AS count FROM #{table}'
   classification: model_phrase
 - file: app/services/chat/response_composer.rb
-  line: 118
+  line: 140
   text: No workspace members were found.
   classification: model_phrase
 - file: app/services/chat/response_composer.rb
-  line: 152
+  line: 174
   text: No data sources are connected to this workspace.
   classification: model_phrase
 - file: app/services/chat/response_composer.rb
-  line: 179
+  line: 201
   text: There are no saved queries in this workspace yet.
   classification: model_phrase
 - file: app/services/chat/response_composer.rb
-  line: 194
+  line: 216
   text: 'That SQL is already saved in the query library as #{query_link}.'
   classification: model_phrase
 - file: app/services/chat/response_composer.rb
-  line: 232
+  line: 272
   text: A Workspace owner can do that.
   classification: model_phrase
 - file: app/services/chat/runtime_service.rb
-  line: 570
+  line: 652
   text: 'Image attachments count: 0'
+  classification: model_phrase
+- file: app/services/chat/runtime_service.rb
+  line: 1036
+  text: I can rename this chat.
   classification: model_phrase
 - file: app/services/chat/schema_summary_follow_up_responder.rb
   line: 81
@@ -1167,39 +1118,27 @@ hardcoded_strings:
   text: identity
   classification: model_phrase
 - file: app/services/queries/delete_service.rb
-  line: 48
+  line: 50
   text: Please specify which saved query to delete.
   classification: structured_domain_result
 - file: app/services/queries/delete_service.rb
-  line: 50
+  line: 54
   text: I could not find that saved query.
   classification: structured_domain_result
 - file: app/services/queries/name_generator.rb
-  line: 130
-  text: "#{prefix} with"
-  classification: structured_domain_result
-- file: app/services/queries/name_generator.rb
-  line: 133
-  text: "#{human_table_name(table_name)} grouped by #{human_group_columns(group_columns)}"
-  classification: structured_domain_result
-- file: app/services/queries/name_generator.rb
-  line: 197
-  text: "#{base} with"
-  classification: structured_domain_result
-- file: app/services/queries/name_generator.rb
-  line: 217
-  text: "#{humanized} status"
+  line: 27
+  text: "#{human_table_name(table_name).singularize} count"
   classification: structured_domain_result
 - file: app/services/queries/rename_service.rb
-  line: 29
+  line: 31
   text: Please provide a new query name.
   classification: structured_domain_result
 - file: app/services/queries/rename_service.rb
-  line: 41
+  line: 46
   text: Please specify which saved query to rename.
   classification: structured_domain_result
 - file: app/services/queries/rename_service.rb
-  line: 43
+  line: 50
   text: I could not find that saved query.
   classification: structured_domain_result
 - file: app/services/queries/save_service.rb
@@ -1208,14 +1147,15 @@ hardcoded_strings:
   classification: structured_domain_result
 - file: app/services/queries/save_service.rb
   line: 70
+  text: I could not generate a saved query name just now. Please tell me what name
+    you want to use.
+  classification: structured_domain_result
+- file: app/services/queries/save_service.rb
+  line: 77
   text: I could not find that data source.
   classification: structured_domain_result
 - file: app/services/queries/save_service.rb
-  line: 150
-  text: I can save this as \
-  classification: structured_domain_result
-- file: app/services/queries/save_service.rb
-  line: 170
+  line: 182
   text: query.validation_error
   classification: structured_domain_result
 - file: app/services/queries/update_service.rb
@@ -1223,31 +1163,43 @@ hardcoded_strings:
   text: Please provide changes for the saved query.
   classification: structured_domain_result
 - file: app/services/queries/update_service.rb
-  line: 61
+  line: 63
   text: Please specify which saved query to update.
   classification: structured_domain_result
 - file: app/services/queries/update_service.rb
-  line: 63
+  line: 67
   text: I could not find that saved query.
   classification: structured_domain_result
 - file: app/services/queries/update_service.rb
-  line: 180
+  line: 184
   text: That SQL already matches the saved query \
   classification: structured_domain_result
 - file: app/services/queries/update_service.rb
-  line: 207
+  line: 211
   text: query.validation_error
   classification: structured_domain_result
-- file: app/services/tooling/workspace_data_source_handlers.rb
-  line: 48
-  text: 'Connection validated. Found #{table_count(tables)} table#{'
+- file: app/services/tooling/workspace_chat_thread_handlers.rb
+  line: 13
+  text: I could not find that chat thread.
+  classification: structured_domain_result
+- file: app/services/tooling/workspace_chat_thread_handlers.rb
+  line: 18
+  text: Please enter a chat name.
+  classification: structured_domain_result
+- file: app/services/tooling/workspace_chat_thread_handlers.rb
+  line: 27
+  text: 'Renamed this chat to #{thread.title}.'
   classification: structured_domain_result
 - file: app/services/tooling/workspace_data_source_handlers.rb
-  line: 140
+  line: 49
+  text: 'Connection validated. Found #{count} #{table_label(count)}.'
+  classification: structured_domain_result
+- file: app/services/tooling/workspace_data_source_handlers.rb
+  line: 141
   text: 'Created data source #{data_source.display_name}.'
   classification: structured_domain_result
 - file: app/services/tooling/workspace_data_source_handlers.rb
-  line: 172
+  line: 174
   text: No data sources are connected to this workspace.
   classification: structured_domain_result
 - file: app/services/tooling/workspace_query_handlers.rb
@@ -1271,54 +1223,54 @@ hardcoded_strings:
   text: 'Workspace name updated to #{workspace.name}.'
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 23
+  line: 25
   text: Workspace deletion failed.
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 76
+  line: 79
   text: 'Invitation sent to #{email} as #{payload['
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 98
+  line: 103
   text: 'Invitation resent to #{payload['
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 115
+  line: 120
   text: "#{payload["
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 136
+  line: 141
   text: "#{removed_member_payload["
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 145
+  line: 150
   text: "#{removed_member_payload["
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 180
+  line: 185
   text: No workspace members were found.
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 196
+  line: 201
   text: member.invite.first_name_required
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 197
+  line: 202
   text: member.invite.last_name_required
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 198
+  line: 203
   text: member.invite.email_required
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 199
+  line: 204
   text: member.invite.role_required
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 200
+  line: 205
   text: member.invite.already_member
   classification: structured_domain_result
 - file: app/services/tooling/workspace_team_handlers.rb
-  line: 201
+  line: 206
   text: member.role.invalid
   classification: structured_domain_result

@@ -121,6 +121,26 @@ FactoryBot.define do
     columns { ['user_count'] }
   end
 
+  factory :chat_pending_follow_up do
+    workspace { create(:workspace) }
+    chat_thread { create(:chat_thread, workspace:) }
+    created_by { create(:user) }
+    source_message { nil }
+    status { ChatPendingFollowUp::Statuses::ACTIVE }
+    kind { 'query_rename_suggestion' }
+    domain { 'query' }
+    target_type { 'saved_query' }
+    target_id { 123 }
+    payload do
+      {
+        'current_name' => '5 longest standing users',
+        'suggested_name' => '10 longest standing users'
+      }
+    end
+    resolved_at { nil }
+    superseded_at { nil }
+  end
+
   factory :click do
     data_source_uuid { SecureRandom.uuid }
     session_uuid { SecureRandom.uuid }

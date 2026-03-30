@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/AbcSize, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 module Chat
   class DataSourceSetupStateStore
-    TTL = 2.hours
-    METADATA_KEY = 'datasource_setup_state'
     STATE_KEYS = %w[
       name
       source_type
@@ -28,19 +26,26 @@ module Chat
     end
 
     def load
-      normalize_state(read_raw_state)
+      raw_state = read_raw_state
+      return {} if raw_state.blank?
+
+      normalize_state(raw_state)
     end
 
     def save(state)
       normalized = normalize_state(state)
       return clear! if normalized.except('next_step').blank?
 
-      persist_state(normalized)
+      pending_follow_up_manager.replace!(
+        kind: 'datasource_setup',
+        domain: 'datasource',
+        payload: normalized
+      )
       normalized
     end
 
     def clear!
-      clear_persisted_state
+      pending_follow_up_manager.clear_kind!('datasource_setup')
       {}
     end
 
@@ -48,18 +53,10 @@ module Chat
 
     attr_reader :workspace, :actor, :chat_thread
 
-    def cache_key
-      [
-        'chat',
-        'datasource_setup',
-        workspace.id,
-        actor.id,
-        chat_thread.id
-      ].join(':')
-    end
-
     def normalize_state(state)
       raw = state.to_h.deep_stringify_keys.slice(*STATE_KEYS)
+      return {} if raw.blank?
+
       raw['port'] = normalize_port(raw['port'])
       raw['available_tables'] = normalize_available_tables(raw['available_tables'])
       raw['selected_tables'] = Array(raw['selected_tables']).map(&:to_s).map(&:strip).compact_blank.uniq
@@ -108,42 +105,19 @@ module Chat
     end
 
     def read_raw_state
-      if metadata_supported?
-        chat_thread.reload.metadata.to_h.deep_stringify_keys[METADATA_KEY] || {}
-      else
-        Rails.cache.read(cache_key) || {}
-      end
+      follow_up = pending_follow_up_manager.active_payload
+      return {} unless follow_up['kind'] == 'datasource_setup'
+
+      follow_up['payload'].to_h.deep_stringify_keys
     end
 
-    def persist_state(normalized)
-      if metadata_supported?
-        update_thread_metadata do |metadata|
-          metadata[METADATA_KEY] = normalized
-        end
-      else
-        Rails.cache.write(cache_key, normalized, expires_in: TTL)
-      end
-    end
-
-    def clear_persisted_state
-      if metadata_supported?
-        update_thread_metadata do |metadata|
-          metadata.delete(METADATA_KEY)
-        end
-      else
-        Rails.cache.delete(cache_key)
-      end
-    end
-
-    def metadata_supported?
-      chat_thread.has_attribute?(:metadata)
-    end
-
-    def update_thread_metadata
-      metadata = chat_thread.reload.metadata.to_h.deep_stringify_keys
-      yield metadata
-      chat_thread.update!(metadata:)
+    def pending_follow_up_manager
+      @pending_follow_up_manager ||= PendingFollowUpManager.new(
+        workspace:,
+        chat_thread:,
+        actor:
+      )
     end
   end
 end
-# rubocop:enable Metrics/AbcSize, Metrics/ClassLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+# rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity

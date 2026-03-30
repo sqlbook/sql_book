@@ -227,14 +227,16 @@ module Chat
       query = (data['query'] || data[:query] || {}).to_h
       outcome = data['update_outcome'] || data[:update_outcome]
       query_link = query_link_formatter.markdown_link(query:)
-      case outcome
-      when 'already_saved'
-        "That SQL is already saved in the query library as #{query_link}."
-      when 'unchanged'
-        "#{query_link} is already up to date."
-      else
-        "I updated the saved query in the query library: #{query_link}."
-      end
+      base_message = case outcome
+                     when 'already_saved'
+                       "That SQL is already saved in the query library as #{query_link}."
+                     when 'unchanged'
+                       "#{query_link} is already up to date."
+                     else
+                       "I updated the saved query in the query library: #{query_link}."
+                     end
+      suggestion = query_update_rename_suggestion(data:)
+      [base_message, suggestion].compact.join("\n\n")
     end
 
     def query_delete_fallback(data:)
@@ -245,6 +247,19 @@ module Chat
     def thread_rename_fallback(data:)
       thread = (data['thread'] || data[:thread] || {}).to_h
       "I renamed this chat to #{thread['title'] || thread[:title]}."
+    end
+
+    def query_update_rename_suggestion(data:)
+      rename_action = Array(data['next_actions'] || data[:next_actions]).find do |action|
+        action.to_h.deep_stringify_keys['action_type'] == 'query.rename'
+      end
+      suggested_name =
+        rename_action.to_h.deep_stringify_keys.dig('arguments', 'name') ||
+        data['suggested_name'] ||
+        data[:suggested_name]
+      return nil if suggested_name.to_s.strip.blank?
+
+      "If you want, I can also rename the saved query to #{suggested_name}."
     end
 
     def query_link_formatter

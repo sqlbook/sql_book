@@ -60,21 +60,6 @@ module Chat
         update|replace|overwrite|edit|modify
       )\b
     /ix
-    QUERY_RENAME_CONTEXT_REGEX = /
-      \b(
-        which\s+saved\s+query\s+to\s+rename|
-        rename\s+it\b|
-        what\s+would\s+you\s+like\s+to\s+rename|
-        i\s+can\s+rename\s+it\s+to\b
-      )\b
-    /ix
-    THREAD_RENAME_CONTEXT_REGEX = /
-      \b(
-        rename\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
-        update\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
-        update\s+the\s+thread\s+title\s+to\s+match\b
-      )\b
-    /ix
     RENAME_FOLLOW_UP_CONFIRM_REGEX = /
       \A\s*
       (?:
@@ -539,6 +524,7 @@ module Chat
     def query_rename_intent?(lowered_message)
       return false if thread_rename_intent?(lowered_message)
       return true if lowered_message.match?(QUERY_RENAME_REGEX)
+      return true if implicit_saved_query_rename_intent?(lowered_message)
       return true if rename_follow_up_context_active?
 
       parsed_query_name.present? && resolved_query_reference_payload['query_id'].present?
@@ -570,6 +556,9 @@ module Chat
       QueryFollowUpMatcher.contextual_follow_up?(
         text: message,
         recent_query_reference:
+      ) || (
+        active_focus_domain == 'query' &&
+          message.match?(QueryFollowUpMatcher::CONTEXTUAL_QUERY_FOLLOW_UP_REGEX)
       )
     end
 
@@ -854,6 +843,11 @@ module Chat
       )
     end
 
+    def implicit_saved_query_rename_intent?(lowered_message)
+      lowered_message.match?(/\b(rename|retitle|change)\b/) &&
+        resolved_query_reference_payload['query_id'].present?
+    end
+
     def thread_rename_plan
       payload = {}
       payload['title'] = inferred_thread_title if inferred_thread_title.present?
@@ -899,11 +893,13 @@ module Chat
     end
 
     def inferred_query_rename_name
-      parsed_query_name || recent_requested_query_name || recent_proposed_query_rename_name
+      parsed_query_name ||
+        recent_requested_query_name ||
+        recent_suggested_query_name
     end
 
     def inferred_thread_title
-      parsed_thread_title || recent_proposed_thread_title || recent_matching_thread_title
+      parsed_thread_title || recent_matching_thread_title
     end
 
     def query_rename_missing_plan(payload:)
@@ -974,10 +970,12 @@ module Chat
     end
 
     def rename_follow_up_context_active?
+      return true if query_target_selection_follow_up_active?
+
       return false if inferred_query_rename_name.blank?
       return false unless affirmative_rename_follow_up?
 
-      recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX) || rename_target_selection_active?
+      query_rename_suggestion_active?
     end
 
     def thread_rename_intent?(lowered_message)
@@ -992,7 +990,7 @@ module Chat
       return false if inferred_thread_title.blank?
       return false unless affirmative_rename_follow_up?
 
-      recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
+      thread_rename_target_active?
     end
 
     def affirmative_rename_follow_up?
@@ -1120,11 +1118,6 @@ module Chat
       recent_saved_query_reference_payload
     end
 
-    def rename_target_selection_active?
-      recent_assistant_content.to_s.match?(/\b(saved\s+queries?|query\s+library)\b/i) &&
-        query_reference_resolver.reference_payload(text: message)['query_id'].present?
-    end
-
     def recent_saved_query_reference_payload
       recent_saved_query_reference = context_snapshot&.recent_saved_query_reference.to_h.deep_stringify_keys
       return {} if recent_saved_query_reference.blank?
@@ -1247,6 +1240,19 @@ module Chat
       end
     end
 
+    def recent_matching_thread_title
+      return nil unless matching_thread_title_reference?
+
+      recent_suggested_query_name || recent_saved_query_reference_payload['query_name']
+    end
+
+    def recent_suggested_query_name
+      pending_follow_up = pending_follow_up_snapshot
+      return pending_follow_up['proposed_value'].to_s.presence if pending_follow_up['kind'] == 'query_rename_suggestion'
+
+      recent_query_state.deep_stringify_keys['suggested_name'].to_s.presence
+    end
+
     def recent_requested_query_name
       recent_user_conversation_texts.each do |text|
         parsed_name = QueryNameParser.parse(text:)
@@ -1256,18 +1262,16 @@ module Chat
       nil
     end
 
-    def recent_proposed_query_rename_name
-      QueryNameParser.parse_proposed_rename_name(text: recent_assistant_original_content)
+    def matching_thread_title_reference?
+      message.match?(/\bmatch\b/i) ||
+        thread_rename_target_active? ||
+        query_rename_suggestion_active?
     end
 
-    def recent_proposed_thread_title
-      ThreadTitleParser.parse_proposed_title(text: recent_assistant_original_content)
-    end
+    def query_target_selection_follow_up_active?
+      return false if recent_requested_query_name.blank?
 
-    def recent_matching_thread_title
-      return nil unless recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
-
-      recent_saved_query_reference_payload['query_name']
+      query_reference_resolver.reference_payload(text: message)['query_id'].present?
     end
 
     def merge_recent_invite_details!(details:, text:)
@@ -1307,6 +1311,29 @@ module Chat
       return I18n.t('app.workspaces.chat.planner.fallback_with_action') if action_type.present?
 
       I18n.t('app.workspaces.chat.planner.fallback_without_action')
+    end
+
+    def pending_follow_up_snapshot
+      @pending_follow_up_snapshot ||= if context_snapshot.blank? || !context_snapshot.respond_to?(:pending_follow_up)
+                                        {}
+                                      else
+                                        context_snapshot.pending_follow_up.to_h.deep_stringify_keys
+                                      end
+    end
+
+    def active_focus_domain
+      return nil if context_snapshot.blank?
+      return nil unless context_snapshot.respond_to?(:active_focus)
+
+      context_snapshot.active_focus.to_h.deep_stringify_keys['domain']
+    end
+
+    def query_rename_suggestion_active?
+      pending_follow_up_snapshot['kind'] == 'query_rename_suggestion'
+    end
+
+    def thread_rename_target_active?
+      pending_follow_up_snapshot['kind'] == 'thread_rename_target'
     end
 
     def plan_format
