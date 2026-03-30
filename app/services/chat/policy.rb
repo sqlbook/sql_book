@@ -7,6 +7,7 @@ module Chat
     ALLOWED_ACTIONS = %w[
       workspace.update_name
       workspace.delete
+      thread.rename
       member.list
       member.invite
       member.resend_invite
@@ -39,6 +40,7 @@ module Chat
     EDITABLE_ROLES = [Member::Roles::ADMIN, Member::Roles::USER, Member::Roles::READ_ONLY].freeze
     ALLOWED_ROLES_KEYS = {
       'workspace.delete' => 'owner',
+      'thread.rename' => 'workspace_member',
       'datasource.list' => 'user_admin_or_owner',
       'query.list' => 'workspace_member',
       'query.run' => 'user_admin_or_owner',
@@ -50,6 +52,7 @@ module Chat
     ACTION_HANDLERS = {
       'workspace.update_name' => :authorize_workspace_update_name,
       'workspace.delete' => :authorize_workspace_delete,
+      'thread.rename' => :authorize_thread_rename,
       'member.list' => :authorize_member_list,
       'member.invite' => :authorize_member_invite,
       'member.resend_invite' => :authorize_member_resend,
@@ -121,6 +124,14 @@ module Chat
 
     def authorize_workspace_delete(**)
       return allow if current_role == Member::Roles::OWNER
+
+      deny(reason_code: 'forbidden_role')
+    end
+
+    def authorize_thread_rename(payload:)
+      return deny(reason_code: 'validation_error') if payload['thread_id'].to_i.zero?
+      return deny(reason_code: 'validation_error') if payload['title'].to_s.strip.blank?
+      return allow if current_role.present?
 
       deny(reason_code: 'forbidden_role')
     end

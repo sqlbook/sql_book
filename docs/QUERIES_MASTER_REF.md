@@ -53,6 +53,7 @@ Related references:
   - SQL and name together
 - `query.rename` is the name-only path.
 - `query.update` is the SQL-or-SQL+name path.
+- `query.update` may also return a structured rename hint (`suggested_name` plus `current_name`) when the SQL changed materially and the existing saved-query title likely no longer matches the query's purpose.
 - If an update would collide with another saved query fingerprint in the same datasource, it must fail validation rather than overwrite or duplicate the other query.
 
 ## Chat query cards

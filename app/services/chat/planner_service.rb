@@ -48,6 +48,13 @@ module Chat
         rename|retitle
       )\b.*\bquery\b
     /ix
+    THREAD_RENAME_REGEX = /
+      \b(
+        rename|retitle|change|update
+      )\b.*\b(
+        thread|chat|conversation
+      )\b
+    /ix
     QUERY_UPDATE_REGEX = /
       \b(
         update|replace|overwrite|edit|modify
@@ -59,6 +66,31 @@ module Chat
         rename\s+it\b|
         what\s+would\s+you\s+like\s+to\s+rename|
         i\s+can\s+rename\s+it\s+to\b
+      )\b
+    /ix
+    THREAD_RENAME_CONTEXT_REGEX = /
+      \b(
+        rename\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
+        update\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
+        update\s+the\s+thread\s+title\s+to\s+match\b
+      )\b
+    /ix
+    RENAME_FOLLOW_UP_CONFIRM_REGEX = /
+      \A\s*
+      (?:
+        oh\s+yeah\s+|
+        yeah,\s*
+      )?
+      (?:
+        yes(?:\s+please)?|
+        yeah|
+        sure|
+        go\s+for\s+it|
+        please\s+do|
+        do\s+it|
+        go\s+ahead|
+        let'?s\s+do\s+that|
+        sounds\s+good
       )\b
     /ix
     QUERY_DELETE_REGEX = /
@@ -108,13 +140,22 @@ module Chat
     }.freeze
 
     # rubocop:disable Metrics/ParameterLists
-    def initialize(message:, workspace:, actor:, attachments: [], conversation_messages: [], context_snapshot: nil)
+    def initialize(
+      message:,
+      workspace:,
+      actor:,
+      attachments: [],
+      conversation_messages: [],
+      context_snapshot: nil,
+      chat_thread_id: nil
+    )
       @message = message.to_s.strip
       @workspace = workspace
       @actor = actor
       @attachments = Array(attachments).compact
       @conversation_messages = Array(conversation_messages).compact
       @context_snapshot = context_snapshot
+      @chat_thread_id = chat_thread_id.to_i
     end
     # rubocop:enable Metrics/ParameterLists
 
@@ -127,7 +168,7 @@ module Chat
 
     private
 
-    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :context_snapshot
+    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :context_snapshot, :chat_thread_id
 
     def attachment_count
       attachments.size
@@ -239,7 +280,7 @@ module Chat
                   'Classify user intent into an action contract when possible.',
                   [
                     'Allowed actions: workspace.update_name, workspace.delete, member.list, member.invite,',
-                    'member.resend_invite, member.update_role, member.remove, datasource.list,',
+                    'thread.rename, member.resend_invite, member.update_role, member.remove, datasource.list,',
                     'datasource.validate_connection, datasource.create, query.list, query.run, query.save,',
                     'query.rename, query.update, query.delete.'
                   ].join(' '),
@@ -257,7 +298,8 @@ module Chat
                       'If required fields are missing, set action_type to null',
                       'and ask for all currently missing fields in one concise follow-up message.'
                     ].join(' '),
-                    'Required fields: workspace.update_name(name), member.invite(first_name,last_name,email,role),',
+                    'Required fields: workspace.update_name(name), thread.rename(thread_id,title),',
+                    'member.invite(first_name,last_name,email,role),',
                     'member.resend_invite(email or member_id or full_name),',
                     'member.update_role(email or member_id or full_name, role),',
                     'member.remove(email or member_id or full_name),',
@@ -278,6 +320,7 @@ module Chat
                     'For query-library requests, prefer query.list.',
                     'For "save this query" follow-ups, prefer query.save and reuse the recent executed query context.',
                     'For updating a saved query to match a refined SQL draft, prefer query.update.',
+                    'If the user asks to rename the current chat thread, prefer thread.rename.',
                     [
                       'If the user explicitly asks to refine or change the current saved query itself,',
                       'default to updating that query rather than asking update-versus-new',
@@ -424,6 +467,7 @@ module Chat
 
       return workspace_delete_plan if lower.match?(/\b(delete|remove)\b.*\bworkspace\b/)
       return workspace_rename_plan if lower.match?(/\b(rename|change)\b.*\bworkspace\b/)
+      return thread_rename_plan if thread_rename_intent?(lower)
       return datasource_list_plan if datasource_list_intent?(lower)
       return query_list_plan if query_list_intent?(lower)
       return query_update_plan if query_update_intent?(lower)
@@ -493,6 +537,7 @@ module Chat
     end
 
     def query_rename_intent?(lowered_message)
+      return false if thread_rename_intent?(lowered_message)
       return true if lowered_message.match?(QUERY_RENAME_REGEX)
       return true if rename_follow_up_context_active?
 
@@ -809,6 +854,25 @@ module Chat
       )
     end
 
+    def thread_rename_plan
+      payload = {}
+      payload['title'] = inferred_thread_title if inferred_thread_title.present?
+
+      if payload['title'].to_s.strip.blank?
+        return Plan.new(
+          assistant_message: 'What should I rename this chat to?',
+          action_type: nil,
+          payload: {}
+        )
+      end
+
+      Plan.new(
+        assistant_message: 'I can rename this chat.',
+        action_type: 'thread.rename',
+        payload:
+      )
+    end
+
     def parsed_role
       parsed_role_from(text: message)
     end
@@ -830,8 +894,16 @@ module Chat
       QueryNameParser.parse(text: message)
     end
 
+    def parsed_thread_title
+      ThreadTitleParser.parse(text: message)
+    end
+
     def inferred_query_rename_name
       parsed_query_name || recent_requested_query_name || recent_proposed_query_rename_name
+    end
+
+    def inferred_thread_title
+      parsed_thread_title || recent_proposed_thread_title || recent_matching_thread_title
     end
 
     def query_rename_missing_plan(payload:)
@@ -903,8 +975,28 @@ module Chat
 
     def rename_follow_up_context_active?
       return false if inferred_query_rename_name.blank?
+      return false unless affirmative_rename_follow_up?
 
       recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX) || rename_target_selection_active?
+    end
+
+    def thread_rename_intent?(lowered_message)
+      lowered_message.match?(THREAD_RENAME_REGEX) || thread_rename_follow_up_context_active?
+    end
+
+    def explicit_thread_rename_request?
+      message.match?(THREAD_RENAME_REGEX)
+    end
+
+    def thread_rename_follow_up_context_active?
+      return false if inferred_thread_title.blank?
+      return false unless affirmative_rename_follow_up?
+
+      recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
+    end
+
+    def affirmative_rename_follow_up?
+      message.match?(RENAME_FOLLOW_UP_CONFIRM_REGEX)
     end
 
     def recent_query_state
@@ -1166,6 +1258,16 @@ module Chat
 
     def recent_proposed_query_rename_name
       QueryNameParser.parse_proposed_rename_name(text: recent_assistant_original_content)
+    end
+
+    def recent_proposed_thread_title
+      ThreadTitleParser.parse_proposed_title(text: recent_assistant_original_content)
+    end
+
+    def recent_matching_thread_title
+      return nil unless recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
+
+      recent_saved_query_reference_payload['query_name']
     end
 
     def merge_recent_invite_details!(details:, text:)

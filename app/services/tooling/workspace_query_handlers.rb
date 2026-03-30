@@ -91,7 +91,7 @@ module Tooling
         data: {
           'query' => serialize_query(query:),
           'update_outcome' => result.update_outcome
-        }.merge(query_run_data),
+        }.merge(query_run_data).merge(query_update_suggestion_data(query:, arguments:)),
         fallback_message: query_update_fallback(result:)
       )
     end
@@ -206,6 +206,34 @@ module Tooling
       return {} unless query_result
 
       serialize_query_result(query:, query_result:)
+    end
+
+    def query_update_suggestion_data(query:, arguments:)
+      return {} unless sql_update_requested?(arguments:)
+      return {} if arguments.to_h.deep_stringify_keys['name'].to_s.strip.present?
+
+      suggested_name = suggested_name_for_updated_query(query:)
+      return {} if suggested_name.blank? || suggested_name == query.name
+
+      {
+        'suggested_name' => suggested_name,
+        'current_name' => query.name
+      }
+    end
+
+    def suggested_name_for_updated_query(query:)
+      Queries::GeneratedNameService.generate(
+        sql: query.query,
+        data_source: query.data_source,
+        actor:
+      )
+    rescue Queries::GeneratedNameService::ConfigurationError,
+           Queries::GeneratedNameService::RequestError => e
+      Rails.logger.warn(
+        "WorkspaceQueryHandlers#update suggested name generation failed for Query##{query.id}: " \
+        "#{e.class} #{e.message}"
+      )
+      nil
     end
 
     def sql_update_requested?(arguments:)

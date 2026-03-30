@@ -73,6 +73,12 @@ Current query API scope:
 - chat continuity for queries is thread-local and server-owned via persisted query references; unsaved thread-only queries are not promoted into the shared query library unless they are explicitly saved
 - saved query identity is authoritative at the app layer, not the LLM layer; the model may suggest names or conversational next steps, but duplicate prevention and in-place updates are server-owned behaviors
 - if a saved query is deleted, any linked thread reference remains as thread-only chat history; if the source chat thread is deleted, saved queries simply lose their `chat_source`
+- successful query updates may include `suggested_name` plus `current_name` when the SQL changed meaningfully and the app thinks the saved query title may now be misleading; callers may surface that as a rename suggestion, but should not silently rename the query without an explicit follow-up action
+
+Current chat-thread API scope:
+- chat thread rename is available to all accepted workspace members, but only for the actor's own private thread in the current workspace
+- `PATCH /chat-threads/:id` is server-authoritative for scope; callers must not assume a visible thread id is renameable unless the API confirms it
+- thread rename payloads stay English-first and structured; the LLM can phrase or translate the final user-facing response naturally
 
 Meta-level docs rule:
 - whenever new API areas are added, review the top-level OpenAPI `info.description`, tag descriptions, and this reference so the docs still describe the app's current API surface accurately

@@ -36,6 +36,24 @@ RSpec.describe Chat::Policy, type: :service do
       expect(decision.allowed).to be(true)
     end
 
+    it 'allows workspace members to rename their own chat thread' do
+      read_only = create(:user)
+      create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)
+      thread = create(:chat_thread, workspace:, created_by: read_only, title: 'Old title')
+      create(:chat_message, chat_thread: thread, user: read_only, content: 'Hello')
+      policy = described_class.new(workspace:, actor: read_only)
+
+      decision = policy.authorize(
+        action_type: 'thread.rename',
+        payload: {
+          'thread_id' => thread.id,
+          'title' => 'New title'
+        }
+      )
+
+      expect(decision.allowed).to be(true)
+    end
+
     it 'blocks read-only members from running data-source queries' do
       read_only = create(:user)
       create(:member, workspace:, user: read_only, role: Member::Roles::READ_ONLY)

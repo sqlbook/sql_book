@@ -1,0 +1,1 @@
+[{"severity":"warning","location":{"begin_pos":82,"end_pos":95},"message":"Lint/RedundantRequireStatement: Remove unnecessary `require` statement.","cop_name":"Lint/RedundantRequireStatement","status":"uncorrected"}]

@@ -285,6 +285,7 @@ High-risk writes (inline confirmation required):
 - `query.save`: `sql` + (`data_source_id` or `data_source_name`); `name` optional
 - `query.update`: `query_id`, `sql` or `name` (or both)
 - `query.rename`: `query_id`, `name`
+- `thread.rename`: `thread_id`, `title`
 - `query.delete`: `query_id`
 - When `query.save` has no explicit name, chat should ask the model to generate a saved-query name from the SQL plus recent conversational context instead of reusing a long conversational prompt.
 - Generated saved-query names should incorporate the real purpose of the query, including meaningful filters, ranking, ordering, grouping, or status semantics when they materially define what the query is for.
@@ -297,6 +298,8 @@ High-risk writes (inline confirmation required):
 - If the assistant offers to group a recent schema summary into categories, a natural confirmation such as `Sure :)` should complete that schema follow-up instead of falling back to generic help or pivoting to a different suggested next step.
 - If that schema-grouping offer was missed on the previous turn, a reminder such as `you didn't do the summarising yet` should still recover the earlier offer from recent thread context.
 - Natural quoted rename phrasing such as `rename it 'User Count [Test]' please` should also stay in `query.rename`, even without the word `to`.
+- If the assistant offers to rename the current chat thread to match the current saved query, a natural confirmation such as `yes`, `sure`, or `let's do that` should resolve to `thread.rename` for the current thread.
+- Soft acknowledgements such as `ah okay, no worries` must not revive stale query-rename context or trigger any write action.
 - If chat has already inferred the target rename name and then shows a saved-query list, a follow-up like `the first one` should still complete the rename in query context.
 - Saved-query names rendered in chat list/save/rename responses should be internal links to the query page, using muted app link styling rather than bright external-link styling.
 - Query continuity should resolve against persisted thread-local query references first, then legacy fallback state, rather than assuming only one recent query exists in the thread.

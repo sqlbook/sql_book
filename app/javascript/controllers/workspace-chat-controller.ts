@@ -763,6 +763,7 @@ export default class extends Controller<HTMLDivElement> {
 
     this.removeOptimisticMessages();
     this.appendServerMessages(this.payloadMessages(data));
+    this.updateCurrentThreadFromPayload(data);
     this.updateThreadUrl(threadId);
     this.scrollConversationToBottom(true);
     this.restoreComposerFocus();
@@ -791,6 +792,21 @@ export default class extends Controller<HTMLDivElement> {
     if (!('id' in message) || !('role' in message)) return null;
 
     return message as ChatMessagePayload;
+  }
+
+  private updateCurrentThreadFromPayload(data: JsonPayload): void {
+    const thread = data.thread;
+    if (!thread || typeof thread !== 'object') return;
+    if (!('id' in thread) || !('title' in thread)) return;
+
+    const threadId = this.numberValue(thread.id);
+    const title = this.stringValue(thread.title).trim();
+    if (threadId <= 0 || !title) return;
+
+    const row = this.threadRowTargets.find((candidate) => Number(candidate.dataset.threadId) === threadId);
+    if (!(row instanceof HTMLElement)) return;
+
+    this.finishRename(row, title);
   }
 
   private appendServerMessages(messages: ChatMessagePayload[]): void {

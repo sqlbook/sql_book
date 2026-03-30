@@ -34,6 +34,7 @@ module Chat
     MEMBER_REMOVE_INTENT_REGEX = /\b(remove|delete)\b.*\b(member|teammate|team mate|user)\b/i
     QUERY_SAVE_INTENT_REGEX = /\bsave\b/i
     QUERY_RENAME_INTENT_REGEX = /\b(rename|retitle|change)\b/i
+    THREAD_RENAME_INTENT_REGEX = /\b(rename|retitle|change|update)\b.*\b(thread|chat|conversation)\b/i
     QUERY_UPDATE_INTENT_REGEX = /\b(update|replace|overwrite|edit|modify)\b/i
     QUERY_DELETE_INTENT_REGEX = /\b(delete|remove)\b.*\bquery\b/i
     QUERY_SAVE_AS_NEW_REGEX = /
@@ -55,11 +56,69 @@ module Chat
         i\s+can\s+rename\s+it\s+to\b
       )\b
     /ix
+    THREAD_RENAME_CONTEXT_REGEX = /
+      \b(
+        rename\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
+        update\s+the\s+(?:thread|chat|conversation)(?:\s+title)?\s+to\b|
+        update\s+the\s+thread\s+title\s+to\s+match\b
+      )\b
+    /ix
+    RENAME_FOLLOW_UP_CONFIRM_REGEX = /
+      \A\s*
+      (?:
+        oh\s+yeah\s+|
+        yeah,\s*
+      )?
+      (?:
+        yes(?:\s+please)?|
+        yeah|
+        sure|
+        go\s+for\s+it|
+        please\s+do|
+        do\s+it|
+        go\s+ahead|
+        let'?s\s+do\s+that|
+        sounds\s+good
+      )\b
+    /ix
     QUERY_DELETE_MISTAKE_REGEX = /\b(wrong|mistake|different|not\s+the\s+right)\b/i
     PLACEHOLDER_NAME_PARTS = %w[
       someone somebody anyone anybody person people team teammate teammates mate mates
       member members user users my our else another one this that
     ].freeze
+    OPTIONAL_FOLLOW_UP_PREFIX_REGEX = /
+      \A\s*
+      (?:
+        if\s+you\s+want(?:,\s*)?|
+        if\s+you'?d\s+like(?:,\s*)?|
+        i\s+can\s+also\b|
+        want\s+me\s+to\b
+      )
+    /ix
+    OPTIONAL_FOLLOW_UP_ACTION_PATTERNS = {
+      'thread.rename' => [
+        /\b(rename|retitle|change|update)\b.*\b(thread|chat|conversation)\b/i
+      ],
+      'query.rename' => [
+        /\b(rename|retitle|change)\b.*\b(saved\s+query|query)\b/i
+      ],
+      'query.update' => [
+        /\b(update|modify|edit|adjust|refine)\b.*\b(saved\s+query|query)\b/i,
+        /\btrim\b.*\b(query|result|results)\b/i
+      ],
+      'query.save' => [
+        /\bsave\b.*\b(query|sql)\b/i
+      ],
+      'query.delete' => [
+        /\b(delete|remove)\b.*\b(saved\s+query|query)\b/i
+      ],
+      'query.run' => [
+        /\b(run|rerun|execute)\b.*\b(query|sql)\b/i
+      ],
+      'query.list' => [
+        /\b(open|show|view)\b.*\b(query\s+library|saved\s+queries)\b/i
+      ]
+    }.freeze
     DECISION_SCHEMA = {
       'type' => 'object',
       'required' => %w[assistant_message tool_calls missing_information finalize_without_tools],
@@ -93,6 +152,7 @@ module Chat
       @attachments = Array(context[:attachments]).compact
       @conversation_messages = Array(context[:conversation_messages]).compact
       @context_snapshot = context[:context_snapshot]
+      @chat_thread_id = context[:chat_thread_id].to_i
       @tool_metadata = Array(tool_metadata).compact
     end
 
@@ -121,7 +181,8 @@ module Chat
         execution:,
         fallback_message:
       )
-      rendered.presence || fallback_message
+      sanitized = sanitize_optional_follow_up_suggestions(rendered)
+      sanitized.presence || fallback_message
     rescue StandardError => e
       Rails.logger.warn("Chat runtime result rendering failed: #{e.class} #{e.message}")
       fallback_message
@@ -129,7 +190,8 @@ module Chat
 
     private
 
-    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages, :context_snapshot, :tool_metadata
+    attr_reader :message, :workspace, :actor, :attachments, :conversation_messages,
+                :context_snapshot, :chat_thread_id, :tool_metadata
 
     def llm_decision
       return nil if api_key.blank?
@@ -205,7 +267,8 @@ module Chat
         actor:,
         attachments:,
         conversation_messages:,
-        context_snapshot:
+        context_snapshot:,
+        chat_thread_id:
       ).call
 
       return fallback_message_decision if plan.nil?
@@ -343,6 +406,7 @@ module Chat
                   "User locale: #{actor_locale}",
                   "Workspace: #{workspace.id} (#{workspace.name})",
                   "Original user message: #{message}",
+                  "Available tool names: #{available_tool_names}",
                   "Tool called: #{tool_name}",
                   "Tool arguments: #{tool_arguments.to_json}",
                   "Execution status: #{execution.status}",
@@ -403,7 +467,8 @@ module Chat
         [
           'Owners and Admins can manage data sources in chat.',
           'Owners, Admins, and Users can view saved queries, run read-only data-source queries,',
-          'save queries to the query library, rename saved queries, and update saved queries in chat.',
+          'rename their own private chat thread, save queries to the query library,',
+          'rename saved queries, and update saved queries in chat.',
           'Deleting a saved query is destructive and requires confirmation.'
         ].join(' '),
         'If the user asks about saved queries or the query library, use query.list.',
@@ -429,6 +494,7 @@ module Chat
           'Do not ask update-versus-new unless the requested change clearly turns it into a materially different query'
         ].join(' '),
         'If the user asks to rename a saved query, use query.rename.',
+        'If the user asks to rename the current chat thread or chat title, use thread.rename.',
         'If the user asks to update a saved query to match the latest draft SQL, use query.update.',
         'If the user asks to delete a saved query, use query.delete.',
         'When user intent is specific, select a concrete tool call or ask one targeted follow-up.',
@@ -464,6 +530,7 @@ module Chat
         ].join(' '),
         'For query.run, pass the user request as the question field.',
         'For query.save, include an explicit name only when the user provided one; otherwise let the app generate one.',
+        'For thread.rename, include thread_id and the new title.',
         'For query.rename, include query_id and the new name.',
         'For query.update, include query_id, sql, and name only when the user explicitly supplied a new name.',
         'For query.delete, include query_id and let the app render the confirmation step.',
@@ -518,9 +585,14 @@ module Chat
           'such as offering to save, rename, filter, or extend the result.'
         ].join(' '),
         [
+          'When the result is query.update and execution.data.suggested_name is present,',
+          'briefly suggest renaming the saved query to that exact suggested name.'
+        ].join(' '),
+        [
           'Keep that forward-looking line brief and relevant.',
           'Do not add it to every answer, and do not use repetitive stock closers.'
         ].join(' '),
+        'Never suggest an optional follow-up action unless it can be executed with the provided tool metadata.',
         'For member list results, put each member on its own bullet or row.',
         'If an action is forbidden, say who can perform it in natural language instead of repeating a flat refusal.',
         'If execution status is not executed, explain what failed and what the user can provide next.',
@@ -720,8 +792,9 @@ module Chat
       guarded
     end
 
-    def deterministic_follow_up_decision
+    def deterministic_follow_up_decision # rubocop:disable Metrics/CyclomaticComplexity
       schema_summary_follow_up_decision ||
+        thread_follow_up_decision ||
         query_follow_up_decision ||
         recent_invited_member_role_answer_decision ||
         recent_member_context_answer_decision ||
@@ -755,6 +828,10 @@ module Chat
         query_rename_follow_up_decision
     end
 
+    def thread_follow_up_decision
+      thread_rename_follow_up_decision
+    end
+
     def query_run_follow_up_decision
       return nil unless contextual_query_run_follow_up?
 
@@ -782,6 +859,7 @@ module Chat
     end
 
     def query_guard_override?(selected_tool_name:, guarded_tool_name:, guarded:)
+      return true if thread_guard_override?(selected_tool_name:, guarded_tool_name:)
       return true if query_save_guard_override?(selected_tool_name:, guarded_tool_name:)
       return true if query_mutation_guard_override?(selected_tool_name:, guarded_tool_name:)
 
@@ -789,6 +867,11 @@ module Chat
       return true if %w[query.rename query.update query.delete].include?(guarded_tool_name)
 
       guarded.finalize_without_tools
+    end
+
+    def thread_guard_override?(selected_tool_name:, guarded_tool_name:)
+      guarded_tool_name == 'thread.rename' &&
+        [nil, 'query.list', 'query.run', 'query.rename'].include?(selected_tool_name)
     end
 
     def query_save_guard_override?(selected_tool_name:, guarded_tool_name:)
@@ -935,6 +1018,26 @@ module Chat
       )
     end
 
+    def thread_rename_follow_up_decision
+      return nil unless thread_rename_follow_up?
+
+      title = inferred_thread_title
+      return nil if title.blank?
+      return nil if context_thread_id.zero?
+
+      Decision.new(
+        assistant_message: 'I can rename this chat.',
+        tool_calls: [
+          ToolCall.new(
+            tool_name: 'thread.rename',
+            arguments: { 'thread_id' => context_thread_id, 'title' => title }
+          )
+        ],
+        missing_information: [],
+        finalize_without_tools: false
+      )
+    end
+
     def invite_follow_up_guard_decision
       return nil unless invite_context_active?
 
@@ -991,6 +1094,10 @@ module Chat
       explicit_query_rename_request? || rename_follow_up_context_active?
     end
 
+    def thread_rename_follow_up?
+      explicit_thread_rename_request? || thread_rename_follow_up_context_active?
+    end
+
     def query_update_follow_up?
       explicit_query_update_request?
     end
@@ -1028,14 +1135,27 @@ module Chat
     def explicit_query_rename_request?
       return false unless message.match?(QUERY_RENAME_INTENT_REGEX)
       return false if message.match?(QUERY_UPDATE_INTENT_REGEX)
+      return false if explicit_thread_rename_request?
 
       message.match?(/\bquery\b/i) || inferred_query_rename_name.present?
     end
 
     def rename_follow_up_context_active?
       return false if inferred_query_rename_name.blank?
+      return false unless affirmative_rename_follow_up?
 
       recent_assistant_content.to_s.match?(QUERY_RENAME_CONTEXT_REGEX) || rename_target_selection_active?
+    end
+
+    def explicit_thread_rename_request?
+      message.match?(THREAD_RENAME_INTENT_REGEX)
+    end
+
+    def thread_rename_follow_up_context_active?
+      return false if inferred_thread_title.blank?
+      return false unless affirmative_rename_follow_up?
+
+      recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
     end
 
     def inferred_query_rename_name
@@ -1046,6 +1166,12 @@ module Chat
 
     def inferred_query_update_name
       QueryNameParser.parse(text: message)
+    end
+
+    def inferred_thread_title
+      ThreadTitleParser.parse(text: message) ||
+        recent_proposed_thread_title ||
+        recent_matching_thread_title
     end
 
     def recent_requested_query_name
@@ -1061,6 +1187,16 @@ module Chat
       QueryNameParser.parse_proposed_rename_name(text: recent_assistant_original_content)
     end
 
+    def recent_proposed_thread_title
+      ThreadTitleParser.parse_proposed_title(text: recent_assistant_original_content)
+    end
+
+    def recent_matching_thread_title
+      return nil unless recent_assistant_content.to_s.match?(THREAD_RENAME_CONTEXT_REGEX)
+
+      recent_saved_query_reference_payload['query_name']
+    end
+
     def resolved_query_reference_payload
       explicit_reference = query_reference_resolver.reference_payload(text: message)
       return explicit_reference if explicit_reference['query_id'].present?
@@ -1071,6 +1207,59 @@ module Chat
     def rename_target_selection_active?
       recent_assistant_content.to_s.match?(/\b(saved\s+queries?|query\s+library)\b/i) &&
         query_reference_resolver.reference_payload(text: message)['query_id'].present?
+    end
+
+    def affirmative_rename_follow_up?
+      message.match?(RENAME_FOLLOW_UP_CONFIRM_REGEX)
+    end
+
+    def available_tool_names
+      tool_metadata.map { |tool| tool[:name] || tool['name'] }.compact.join(', ')
+    end
+
+    def available_tool_name_set
+      @available_tool_name_set ||= tool_metadata.map { |tool| tool[:name] || tool['name'] }.compact.to_set
+    end
+
+    def sanitize_optional_follow_up_suggestions(rendered)
+      paragraphs = rendered.to_s.split(/\n{2,}/).map(&:strip).reject(&:empty?)
+      return rendered if paragraphs.empty?
+
+      sanitized = paragraphs.reject do |paragraph|
+        optional_follow_up_paragraph?(paragraph) && !supported_optional_follow_up?(paragraph)
+      end
+
+      sanitized.join("\n\n").strip
+    end
+
+    def optional_follow_up_paragraph?(paragraph)
+      paragraph.match?(OPTIONAL_FOLLOW_UP_PREFIX_REGEX)
+    end
+
+    def supported_optional_follow_up?(paragraph)
+      action_type = inferred_optional_follow_up_action(paragraph)
+      return false if action_type.blank?
+
+      available_tool_name_set.include?(action_type) && role_allows_optional_follow_up?(action_type)
+    end
+
+    def inferred_optional_follow_up_action(paragraph)
+      OPTIONAL_FOLLOW_UP_ACTION_PATTERNS.each do |action_type, patterns|
+        return action_type if patterns.any? { |pattern| paragraph.match?(pattern) }
+      end
+
+      nil
+    end
+
+    def role_allows_optional_follow_up?(action_type)
+      allowed_roles = Chat::Policy.allowed_roles_for(action_type)
+      allowed_roles.include?(current_workspace_role)
+    rescue StandardError
+      false
+    end
+
+    def current_workspace_role
+      @current_workspace_role ||= workspace.members.find_by(user: actor)&.role
     end
 
     def recent_saved_query_reference_payload
@@ -1105,6 +1294,12 @@ module Chat
     def recent_draft_query_reference_payload
       context_snapshot_reference_payload(method_name: :recent_draft_query_reference) ||
         context_snapshot&.recent_query_state.to_h.deep_stringify_keys
+    end
+
+    def context_thread_id
+      return chat_thread_id if chat_thread_id.positive?
+
+      0
     end
 
     def context_snapshot_reference_payload(method_name:)

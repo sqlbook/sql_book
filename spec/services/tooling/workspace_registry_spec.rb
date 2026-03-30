@@ -9,6 +9,7 @@ RSpec.describe Tooling::WorkspaceRegistry do
 
       expect(tool_names).to include(
         'workspace.update_name',
+        'thread.rename',
         'member.list',
         'datasource.list',
         'datasource.validate_connection',
@@ -26,6 +27,7 @@ RSpec.describe Tooling::WorkspaceRegistry do
     it 'combines workspace team and data source tool definitions' do
       handlers = {
         team: instance_double(Tooling::WorkspaceTeamHandlers),
+        chat_threads: instance_double(Tooling::WorkspaceChatThreadHandlers),
         data_sources: instance_double(Tooling::WorkspaceDataSourceHandlers),
         queries: instance_double(Tooling::WorkspaceQueryHandlers)
       }
@@ -43,6 +45,7 @@ RSpec.describe Tooling::WorkspaceRegistry do
       allow(handlers[:team]).to receive(:member_resend_invite).and_return(success_result)
       allow(handlers[:team]).to receive(:member_update_role).and_return(success_result)
       allow(handlers[:team]).to receive(:member_remove).and_return(success_result)
+      allow(handlers[:chat_threads]).to receive(:rename).and_return(success_result)
       allow(handlers[:data_sources]).to receive(:list).and_return(success_result)
       allow(handlers[:data_sources]).to receive(:validate_connection).and_return(success_result)
       allow(handlers[:data_sources]).to receive(:create).and_return(success_result)
@@ -54,6 +57,7 @@ RSpec.describe Tooling::WorkspaceRegistry do
 
       registry = Tooling::Registry.new(definitions: described_class.definitions(handlers:))
       expect(registry.definition('datasource.list')).to be_present
+      expect(registry.definition('thread.rename')).to be_present
       expect(registry.definition('datasource.validate_connection')).to be_present
       expect(registry.definition('datasource.create')).to be_present
       expect(registry.definition('query.list')).to be_present

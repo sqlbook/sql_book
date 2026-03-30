@@ -178,6 +178,7 @@ module Chat
         tool_metadata:,
         context: {
           attachments: user_message.images.attachments,
+          chat_thread_id: chat_thread.id,
           conversation_messages: context_snapshot.conversation_messages,
           context_snapshot:
         }

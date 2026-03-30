@@ -282,6 +282,107 @@ RSpec.describe Chat::RuntimeService do
       expect(decision.finalize_without_tools).to be(false)
     end
 
+    it 'turns thread-title follow-up confirmations into thread.rename' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: '',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = instance_double(
+        Chat::ContextSnapshot,
+        recent_query_state: {
+          'saved_query_id' => 14,
+          'saved_query_name' => '10 longest standing users'
+        },
+        recent_saved_query_reference: {
+          'saved_query_id' => 14,
+          'saved_query_name' => '10 longest standing users'
+        },
+        query_references: [],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: "Oh yeah sure, let's do that :)",
+        workspace:,
+        actor:,
+        tool_metadata: Tooling::WorkspaceRegistry.tool_metadata,
+        context: {
+          chat_thread_id: 19,
+          context_snapshot:,
+          conversation_messages: [
+            { role: 'assistant', content: 'If you want, I can also help update the thread title to match.' }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls.first.tool_name).to eq('thread.rename')
+      expect(decision.tool_calls.first.arguments).to eq(
+        'thread_id' => 19,
+        'title' => '10 longest standing users'
+      )
+      expect(decision.finalize_without_tools).to be(false)
+    end
+
+    it 'does not revive a stale query rename from a soft acknowledgement' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      llm_payload = {
+        assistant_message: 'No problem.',
+        tool_calls: [],
+        missing_information: [],
+        finalize_without_tools: true
+      }
+      response = double('response', body: { output_text: llm_payload.to_json }.to_json)
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      context_snapshot = instance_double(
+        Chat::ContextSnapshot,
+        recent_query_state: {
+          'saved_query_id' => 14,
+          'saved_query_name' => '5 longest standing users'
+        },
+        recent_saved_query_reference: {
+          'saved_query_id' => 14,
+          'saved_query_name' => '5 longest standing users'
+        },
+        query_references: [],
+        conversation_messages: [],
+        structured_context_lines: []
+      )
+
+      decision = described_class.new(
+        message: 'ah okay, no worries, it was a nice idea though!',
+        workspace:,
+        actor:,
+        tool_metadata: Tooling::WorkspaceRegistry.tool_metadata,
+        context: {
+          chat_thread_id: 19,
+          context_snapshot:,
+          conversation_messages: [
+            { role: 'user', content: 'Yes, rename it "10 longest standing users"' },
+            { role: 'assistant', content: 'I can’t change the thread title from here.' }
+          ]
+        }
+      ).call
+
+      expect(decision.tool_calls).to be_empty
+      expect(decision.finalize_without_tools).to be(true)
+    end
+
     it 'overrides a query.run misclassification for explicit saved-query rename requests' do
       data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
       saved_query = create(
@@ -1138,6 +1239,70 @@ RSpec.describe Chat::RuntimeService do
       )
 
       expect(rendered).to include("\n\n- **Chris Smith**")
+    end
+
+    it 'strips optional follow-up suggestions that cannot be executed with current tools' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      response = double(
+        'response',
+        body: {
+          output_text: [
+            'I renamed the saved query to 10 longest standing users.',
+            'If you want, I can also help update the thread title to match.'
+          ].join("\n\n")
+        }.to_json
+      )
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      execution = Struct.new(:status, :data, :user_message).new('executed', {}, 'fallback')
+      rendered = described_class.new(
+        message: 'Rename that query',
+        workspace:,
+        actor:,
+        tool_metadata: [{ name: 'query.rename' }]
+      ).compose_tool_result_message(
+        tool_name: 'query.rename',
+        tool_arguments: {},
+        execution:
+      )
+
+      expect(rendered).to eq('I renamed the saved query to 10 longest standing users.')
+    end
+
+    it 'keeps optional follow-up suggestions that are executable with current tools' do
+      allow(ENV).to receive(:fetch).with('OPENAI_API_KEY', nil).and_return('test-key')
+      response = double(
+        'response',
+        body: {
+          output_text: [
+            'I renamed the saved query to 10 longest standing users.',
+            'If you want, I can also help update the thread title to match.'
+          ].join("\n\n")
+        }.to_json
+      )
+      allow(response).to receive(:is_a?) { |klass| klass == Net::HTTPSuccess }
+
+      http_client = double('http_client')
+      allow(http_client).to receive(:request).and_return(response)
+      allow(Net::HTTP).to receive(:start).and_yield(http_client)
+
+      execution = Struct.new(:status, :data, :user_message).new('executed', {}, 'fallback')
+      rendered = described_class.new(
+        message: 'Rename that query',
+        workspace:,
+        actor:,
+        tool_metadata: [{ name: 'query.rename' }, { name: 'thread.rename' }]
+      ).compose_tool_result_message(
+        tool_name: 'query.rename',
+        tool_arguments: {},
+        execution:
+      )
+
+      expect(rendered).to include('If you want, I can also help update the thread title to match.')
     end
   end
 end

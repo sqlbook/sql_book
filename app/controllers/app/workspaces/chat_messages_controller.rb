@@ -203,6 +203,7 @@ module App
         payload = {
           status: outcome.status,
           thread_id: chat_thread.id,
+          thread: serialized_thread(chat_thread:),
           messages: outcome.messages.map { |message| serialize_message(message:) },
           data: outcome.data || {}
         }
@@ -221,6 +222,14 @@ module App
 
       def runtime_tool_metadata
         @runtime_tool_metadata ||= Tooling::WorkspaceRegistry.tool_metadata
+      end
+
+      def serialized_thread(chat_thread:)
+        {
+          id: chat_thread.id,
+          title: chat_thread.title.to_s,
+          updated_at: chat_thread.updated_at.iso8601
+        }
       end
 
       def set_workspace_delete_toast(outcome:)

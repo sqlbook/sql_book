@@ -5,6 +5,7 @@ module Chat
     ACTION_LABELS = {
       'workspace.update_name' => 'rename the workspace',
       'workspace.delete' => 'delete the workspace',
+      'thread.rename' => 'rename this chat',
       'member.list' => 'view the team members list',
       'member.invite' => 'invite workspace members',
       'member.resend_invite' => 'resend workspace invitations',
@@ -101,6 +102,8 @@ module Chat
         "Workspace name updated to #{data['workspace_name'] || data[:workspace_name]}."
       when 'workspace.delete'
         'Workspace deleted.'
+      when 'thread.rename'
+        thread_rename_fallback(data:)
       when 'member.list'
         member_list_fallback(data:)
       when 'member.invite'
@@ -237,6 +240,11 @@ module Chat
     def query_delete_fallback(data:)
       query = (data['deleted_query'] || data[:deleted_query] || {}).to_h
       "Deleted the saved query #{query['name'] || query[:name]}."
+    end
+
+    def thread_rename_fallback(data:)
+      thread = (data['thread'] || data[:thread] || {}).to_h
+      "I renamed this chat to #{thread['title'] || thread[:title]}."
     end
 
     def query_link_formatter

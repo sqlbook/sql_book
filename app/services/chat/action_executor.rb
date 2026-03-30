@@ -5,6 +5,7 @@ module Chat
     ACTION_LABELS = {
       'workspace.update_name' => 'rename the workspace',
       'workspace.delete' => 'delete the workspace',
+      'thread.rename' => 'rename this chat',
       'member.list' => 'view the team members list',
       'member.invite' => 'invite workspace members',
       'member.resend_invite' => 'resend workspace invitations',
@@ -55,6 +56,7 @@ module Chat
       @actor = actor
       @handlers = {
         team: Tooling::WorkspaceTeamHandlers.new(workspace:, actor:),
+        chat_threads: Tooling::WorkspaceChatThreadHandlers.new(workspace:, actor:),
         data_sources: Tooling::WorkspaceDataSourceHandlers.new(workspace:, actor:),
         queries: Tooling::WorkspaceQueryHandlers.new(workspace:, actor:)
       }
@@ -136,8 +138,10 @@ module Chat
     end
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-    def validation_result(action_type:, payload:)
+    def validation_result(action_type:, payload:) # rubocop:disable Metrics/MethodLength
       case action_type
+      when 'thread.rename'
+        thread_rename_validation_result(payload:)
       when 'member.resend_invite'
         member_resend_validation_result(payload:)
       when 'member.update_role'
@@ -186,11 +190,18 @@ module Chat
       Chat::Policy::EDITABLE_ROLES.include?(role)
     end
 
+    def thread_rename_validation_result(payload:)
+      return validation_error_result(code: 'thread.not_found') if payload['thread_id'].to_i.zero?
+      return validation_error_result(code: 'thread.title_required') if payload['title'].to_s.strip.blank?
+
+      validation_error_result(code: 'thread.validation_error')
+    end
+
     def forbidden_result(action_type:, reason_code:, payload:)
       Result.new(
         status: 'forbidden',
         code: forbidden_code(reason_code:),
-        data: forbidden_data(action_type:, payload:),
+        data: forbidden_data(action_type:, reason_code:, payload:),
         fallback_message: forbidden_message(action_type:, reason_code:, payload:)
       )
     end
@@ -198,6 +209,9 @@ module Chat
     def forbidden_message(action_type:, reason_code:, payload:)
       return 'This action is not available in this workspace chat.' if action_type.blank?
       return 'This action is not available in this workspace chat.' if reason_code == 'forbidden_action'
+      if action_type == 'thread.rename' && reason_code == 'forbidden_scope'
+        return 'You can only rename your own chat thread in this workspace.'
+      end
 
       allowed_roles = allowed_roles_for(action_type:, payload:)
       return 'You do not have permission to do that in this workspace.' if allowed_roles.blank?
@@ -212,11 +226,13 @@ module Chat
       "policy.#{reason_code.presence || 'forbidden'}"
     end
 
-    def forbidden_data(action_type:, payload:)
+    def forbidden_data(action_type:, reason_code:, payload:)
       data = {
         'action_type' => action_type,
         'action_label' => human_action_label(action_type)
       }
+      return data if reason_code == 'forbidden_scope'
+
       allowed_roles = allowed_roles_for(action_type:, payload:)
       data['allowed_roles'] = allowed_roles if allowed_roles.present?
       data

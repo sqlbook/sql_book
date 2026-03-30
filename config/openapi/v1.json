@@ -23,6 +23,11 @@
       "x-displayName": "Workspace"
     },
     {
+      "name": "Chat Threads",
+      "description": "Operations for renaming the current user's private chat threads inside a workspace. Thread actions are still workspace-scoped and may only affect the actor's own threads.",
+      "x-displayName": "Chat Threads"
+    },
+    {
       "name": "Members",
       "description": "Operations for listing, inviting, updating, and removing workspace members. These mirror the team-management surface in the app.",
       "x-displayName": "Members"
@@ -43,6 +48,12 @@
       "name": "Workspace management",
       "tags": [
         "Workspace"
+      ]
+    },
+    {
+      "name": "Chat",
+      "tags": [
+        "Chat Threads"
       ]
     },
     {
@@ -84,6 +95,10 @@
         "queryId": {
           "description": "Example saved query id used in code samples.",
           "default": "14"
+        },
+        "threadId": {
+          "description": "Example chat thread id used in code samples.",
+          "default": "19"
         }
       }
     }
@@ -179,6 +194,66 @@
             "lang": "Shell",
             "label": "curl",
             "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/chat-threads/{id}": {
+      "patch": {
+        "operationId": "chatThreadRename",
+        "summary": "Rename chat thread",
+        "description": "Renames the current user's active private chat thread in the current workspace. This endpoint can only affect the authenticated user's own thread, even if another thread id is guessed or supplied.",
+        "tags": [
+          "Chat Threads"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/threadId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatThreadRenameRequest"
+              },
+              "examples": {
+                "renameChatThread": {
+                  "summary": "Rename the current chat thread",
+                  "value": {
+                    "title": "10 longest standing users"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ChatThreadRenamed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/ToolValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ToolExecutionError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/chat-threads/{{threadId}}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"title\":\"10 longest standing users\"}'"
           }
         ]
       }
@@ -937,6 +1012,16 @@
           "type": "integer",
           "example": 14
         }
+      },
+      "threadId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "The current user's chat thread id in the current workspace.",
+        "schema": {
+          "type": "integer",
+          "example": 19
+        }
       }
     },
     "responses": {
@@ -954,6 +1039,32 @@
                   "message": "Workspace name updated to Bumanarama.",
                   "data": {
                     "workspace_name": "Bumanarama"
+                  },
+                  "error_code": null
+                }
+              }
+            }
+          }
+        }
+      },
+      "ChatThreadRenamed": {
+        "description": "Chat thread title updated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChatThreadRenamedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "message": "I renamed this chat to 10 longest standing users.",
+                  "data": {
+                    "thread": {
+                      "id": 19,
+                      "title": "10 longest standing users",
+                      "updated_at": "2026-03-30T11:22:00Z"
+                    }
                   },
                   "error_code": null
                 }
@@ -1563,6 +1674,35 @@
                       "id": 14,
                       "name": "User count by super admin status",
                       "sql": "SELECT super_admin, COUNT(*) AS user_count FROM public.users GROUP BY super_admin ORDER BY super_admin",
+                      "saved": true,
+                      "chart_type": null,
+                      "data_source": {
+                        "id": 31,
+                        "name": "Warehouse DB"
+                      },
+                      "author": {
+                        "id": 7,
+                        "name": "Christopher Pattison",
+                        "email": "chris@example.com"
+                      },
+                      "updated_at": "2026-03-21T12:31:00Z"
+                    }
+                  },
+                  "error_code": null
+                }
+              },
+              "sqlOnlySuggestRename": {
+                "value": {
+                  "status": "executed",
+                  "message": "I updated the saved query in the query library: 5 longest standing users.",
+                  "data": {
+                    "update_outcome": "updated",
+                    "suggested_name": "10 longest standing users",
+                    "current_name": "5 longest standing users",
+                    "query": {
+                      "id": 14,
+                      "name": "5 longest standing users",
+                      "sql": "SELECT id, first_name, last_name, email, created_at FROM public.users ORDER BY created_at ASC NULLS LAST LIMIT 10",
                       "saved": true,
                       "chart_type": null,
                       "data_source": {
@@ -2371,6 +2511,88 @@
           },
           "query": {
             "$ref": "#/components/schemas/QuerySummary"
+          },
+          "suggested_name": {
+            "type": "string",
+            "description": "Optional model-generated suggestion for a clearer saved-query name after a substantive SQL update."
+          },
+          "current_name": {
+            "type": "string",
+            "description": "Current saved query name when a rename suggestion is present."
+          }
+        }
+      },
+      "ChatThreadRenameRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The new chat thread title.",
+            "minLength": 1
+          }
+        }
+      },
+      "ChatThreadSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ChatThreadRenameData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "thread"
+        ],
+        "properties": {
+          "thread": {
+            "$ref": "#/components/schemas/ChatThreadSummary"
+          }
+        }
+      },
+      "ChatThreadRenamedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "message",
+          "data",
+          "error_code"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ChatThreadRenameData"
+          },
+          "error_code": {
+            "type": "null"
           }
         }
       },

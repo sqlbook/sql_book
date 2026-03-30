@@ -109,8 +109,9 @@ module Chat
 
       invite_steps = action_type == 'member.invite' ? [:apply_invite_seed_details!] : []
       query_steps = query_payload_steps_for(action_type:)
+      thread_steps = action_type == 'thread.rename' ? [:apply_explicit_thread_title!] : []
 
-      member_steps + invite_steps + query_steps
+      member_steps + invite_steps + query_steps + thread_steps
     end
 
     def query_payload_steps_for(action_type:)
@@ -219,6 +220,11 @@ module Chat
       payload['name'] = explicit_name if explicit_name.present?
     end
 
+    def apply_explicit_thread_title!(payload:)
+      explicit_title = ThreadTitleParser.parse(text: message_text)
+      payload['title'] = explicit_title if explicit_title.present?
+    end
+
     def apply_explicit_query_reference!(payload:)
       explicit_reference = query_reference_resolver.reference_payload(text: message_text)
       payload.merge!(explicit_reference) if explicit_reference.present?
@@ -287,6 +293,8 @@ module Chat
       case action_type
       when 'workspace.update_name'
         return I18n.t('app.workspaces.chat.planner.workspace_rename_needs_name') if payload['name'].to_s.strip.blank?
+      when 'thread.rename'
+        return 'What should I rename this chat to?' if payload['title'].to_s.strip.blank?
       when 'member.invite'
         missing_fields = []
         missing_fields << 'email' if payload['email'].to_s.strip.blank?

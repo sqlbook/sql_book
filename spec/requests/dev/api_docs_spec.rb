@@ -24,6 +24,7 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
       expect(payload['openapi']).to start_with('3.')
       expect(payload.fetch('tags', []).map { |tag| tag['name'] }).to include(
         'Workspace',
+        'Chat Threads',
         'Members',
         'Data Sources',
         'Queries'
@@ -38,6 +39,7 @@ RSpec.describe 'Dev::ApiDocs', type: :request do
         '/api/v1/workspaces/{workspace_id}/members/{id}',
         '/api/v1/workspaces/{workspace_id}/data-sources',
         '/api/v1/workspaces/{workspace_id}/data-sources/validate-connection',
+        '/api/v1/workspaces/{workspace_id}/chat-threads/{id}',
         '/api/v1/workspaces/{workspace_id}/queries',
         '/api/v1/workspaces/{workspace_id}/queries/run'
       )

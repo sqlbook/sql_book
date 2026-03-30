@@ -34,6 +34,17 @@ RSpec.describe Chat::PlannerService do
       expect(plan.assistant_message).to eq('Sure. What should the new workspace name be?')
     end
 
+    it 'extracts chat-thread rename titles from explicit requests' do
+      plan = described_class.new(
+        message: 'Could you rename this chat to "10 longest standing users"?',
+        workspace:,
+        actor:
+      ).call
+
+      expect(plan.action_type).to eq('thread.rename')
+      expect(plan.payload).to include('title' => '10 longest standing users')
+    end
+
     it 'asks for required invite fields when invite intent is missing recipient details' do
       plan = described_class.new(message: 'invite my team', workspace:, actor:).call
 
