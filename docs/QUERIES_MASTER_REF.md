@@ -95,6 +95,10 @@ Related references:
   - exact duplicate => no new row
   - obvious refinement of a saved query => update in place
   - material drift => ask whether to update+rename or save as new
+- Refinement continuity is intentionally narrower than full saved-query drift review:
+  - keep refinement linkage for same-source, same-order edits such as adding/removing columns or changing the `LIMIT`
+  - break refinement linkage for source/order flips that materially change the meaning of the query, for example `oldest users` -> `newest users`, even if the table stays the same
+  - when refinement linkage breaks, the next result should render as a fresh unsaved query card rather than a saved-query edit card
 - If an unsaved chat query is opened in the query editor and then saved there, the originating chat query card should reconcile into saved mode as well:
   - remove `Save Query`
   - link to the saved query/library object instead of continuing to present as an unsaved draft
@@ -133,3 +137,4 @@ Related references:
   - which saved query is under review
   - whether the review result is `aligned`, `stale`, or `uncertain`
   - whether a rename follow-up should be persisted for the current thread
+- Query-title review should include the latest natural-language refinement request so the model can sanity-check whether a quantity, ranking direction, timeframe, or status named in the title has become stale after the edit.

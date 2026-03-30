@@ -36,7 +36,11 @@ module Chat
       return if ActiveModel::Type::Boolean.new.cast(data['clarification_required'])
 
       data_source = data_source_for(id: data.dig('data_source', 'id'))
-      refined_from_reference = refinement_base_reference_for(question: data['question'].presence || fallback_question)
+      refined_from_reference = refinement_base_reference_for(
+        question: data['question'].presence || fallback_question,
+        sql: data['sql'],
+        data_source:
+      )
       chat_thread.chat_query_references.create!(
         source_message:,
         result_message:,
@@ -191,10 +195,26 @@ module Chat
       )
     end
 
-    def refinement_base_reference_for(question:)
+    def refinement_base_reference_for(question:, sql:, data_source:)
       return unless refinement_follow_up?(question)
 
-      references.first
+      candidate = references.first
+      return unless candidate
+      return candidate if refinement_link_preserved?(reference: candidate, sql:, data_source:)
+
+      nil
+    end
+
+    def refinement_link_preserved?(reference:, sql:, data_source:)
+      saved_query = reference.saved_query || reference.refined_from_reference&.saved_query
+      return true if saved_query.blank?
+      return true if sql.to_s.strip.blank? || data_source.blank?
+
+      !Queries::DriftClassifier.new(
+        saved_query:,
+        draft_sql: sql,
+        generated_name: nil
+      ).source_or_order_changed?
     end
 
     def refinement_follow_up?(question)

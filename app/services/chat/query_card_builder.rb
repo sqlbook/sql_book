@@ -67,6 +67,8 @@ module Chat
     end
 
     def refined_or_updated_query?
+      return false if material_drift_from_base_saved_query?
+
       intent_payload['base_sql'].to_s.strip.present? || intent_payload['query_id'].to_s.strip.present?
     end
 
@@ -80,6 +82,7 @@ module Chat
 
     def card_state
       return 'saved' if saved_query.present?
+      return 'unsaved' if material_drift_from_base_saved_query?
       return 'refinement' if base_saved_query.present?
 
       'unsaved'
@@ -131,8 +134,25 @@ module Chat
         'suggested_name' => suggested_name(data_source:),
         'saved_query' => saved_query,
         'data_source' => serialized_data_source(data_source),
-        'base_saved_query' => serialized_query(base_saved_query)
+        'base_saved_query' => serialized_base_saved_query
       }
+    end
+
+    def serialized_base_saved_query
+      return if material_drift_from_base_saved_query?
+
+      serialized_query(base_saved_query)
+    end
+
+    def material_drift_from_base_saved_query?
+      return false if saved_query.present?
+      return false if base_saved_query.blank?
+
+      Queries::DriftClassifier.new(
+        saved_query: base_saved_query,
+        draft_sql: sql,
+        generated_name: nil
+      ).source_or_order_changed?
     end
 
     def schema_payload(data_source:)

@@ -26,10 +26,15 @@ module Queries
       return Result.new(classification: 'exact_duplicate', generated_name:) if exact_duplicate?
       return Result.new(classification: 'material_drift', generated_name:) if primary_table_changed?
       return Result.new(classification: 'material_drift', generated_name:) if grouping_changed?
+      return Result.new(classification: 'material_drift', generated_name:) if ordering_changed?
       return Result.new(classification: 'material_drift', generated_name:) if output_shape_changed?
       return Result.new(classification: 'material_drift', generated_name:) if name_purpose_changed?
 
       Result.new(classification: 'minor_refinement', generated_name:)
+    end
+
+    def source_or_order_changed?
+      primary_table_changed? || ordering_changed?
     end
 
     private
@@ -54,67 +59,64 @@ module Queries
         saved_summary[:selected_columns] != draft_summary[:selected_columns]
     end
 
+    def ordering_changed?
+      saved_summary[:order_by] != draft_summary[:order_by]
+    end
+
     def name_purpose_changed?
       return false if generated_name.blank?
+      return false if limit_only_refinement?
 
       normalized_saved_name = normalize_name(saved_query.name)
       normalized_generated_name = normalize_name(generated_name)
+      return false unless comparable_names?(normalized_saved_name, normalized_generated_name)
+
+      true
+    end
+
+    def saved_summary
+      @saved_summary ||= Queries::SqlSummary.build(sql: saved_query.query)
+    end
+
+    def draft_summary
+      @draft_summary ||= Queries::SqlSummary.build(sql: draft_sql)
+    end
+
+    def limit_only_refinement?
+      primary_table_unchanged? &&
+        grouping_unchanged? &&
+        ordering_unchanged? &&
+        output_shape_unchanged? &&
+        limit_changed?
+    end
+
+    def primary_table_unchanged?
+      !primary_table_changed?
+    end
+
+    def grouping_unchanged?
+      !grouping_changed?
+    end
+
+    def ordering_unchanged?
+      !ordering_changed?
+    end
+
+    def output_shape_unchanged?
+      !output_shape_changed?
+    end
+
+    def limit_changed?
+      saved_summary[:limit] != draft_summary[:limit]
+    end
+
+    def comparable_names?(normalized_saved_name, normalized_generated_name)
       return false if normalized_saved_name.blank? || normalized_generated_name.blank?
       return false if normalized_saved_name == normalized_generated_name
       return false if normalized_saved_name.include?(normalized_generated_name)
       return false if normalized_generated_name.include?(normalized_saved_name)
 
       true
-    end
-
-    def saved_summary
-      @saved_summary ||= summarize(sql: saved_query.query)
-    end
-
-    def draft_summary
-      @draft_summary ||= summarize(sql: draft_sql)
-    end
-
-    def summarize(sql:)
-      normalized_sql = Queries::Fingerprint.normalize_sql(sql).to_s
-      {
-        table_name: table_name_from(sql: normalized_sql),
-        group_by: group_by_columns_from(sql: normalized_sql),
-        selected_columns: selected_columns_from(sql: normalized_sql),
-        aggregate_signature: aggregate_signature_from(sql: normalized_sql)
-      }
-    end
-
-    def table_name_from(sql:)
-      sql.match(/\bfrom\s+("?[\w.]+"?)/i)&.captures&.first.to_s.delete('"').presence
-    end
-
-    def group_by_columns_from(sql:)
-      group_by_clause = sql.match(/\bgroup\s+by\s+(.*?)(?:\border\s+by\b|\blimit\b|\z)/im)&.captures&.first.to_s
-      split_sql_list(group_by_clause).map { |expression| normalize_identifier(expression) }
-    end
-
-    def selected_columns_from(sql:)
-      select_clause = sql.match(/\A\s*select\s+(.*?)\s+from\s+/im)&.captures&.first.to_s
-      split_sql_list(select_clause).map { |expression| normalize_identifier(expression) }
-    end
-
-    def aggregate_signature_from(sql:)
-      select_clause = sql.match(/\A\s*select\s+(.*?)\s+from\s+/im)&.captures&.first.to_s
-      split_sql_list(select_clause).filter_map do |expression|
-        expression.to_s.downcase[/\b(count|sum|avg|min|max)\s*\(/, 1]
-      end.sort
-    end
-
-    def split_sql_list(clause)
-      clause.to_s.split(',').map(&:strip).compact_blank
-    end
-
-    def normalize_identifier(expression)
-      cleaned = expression.to_s.downcase.strip
-      cleaned = cleaned.split(/\s+as\s+/i).last.to_s
-      cleaned = cleaned.split('.').last.to_s
-      cleaned.delete('"').gsub(/\s+/, ' ').strip
     end
 
     def normalize_name(value)

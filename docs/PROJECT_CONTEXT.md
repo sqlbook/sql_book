@@ -48,6 +48,7 @@ sqlbook lets users:
 - Datasource setup detection must not hijack clear query requests that merely mention a connected database or datasource in passing.
 - Query chat is single-source in phase 1; it can list saved queries, run read-only queries, save the most recent executed query into the query library, rename saved queries, and delete saved queries with confirmation. If multiple datasources or tables plausibly match the question, chat should ask a clarifying follow-up before execution.
 - Query chat can now also update an existing saved query in place when the latest thread draft is clearly a refinement of that saved query; exact duplicate saves are blocked by a server-owned fingerprint rather than the LLM guessing about duplicates.
+- Query continuity for card state/save affordances is narrower than full query-title drift review: same-query edits such as column or `LIMIT` changes stay attached, while source/order flips such as `oldest users` -> `newest users` should break back out into a fresh unsaved query result.
 - Datasource viewing is allowed for workspace `OWNER`, `ADMIN`, and `USER`; datasource creation, validation, update, and deletion remain owner/admin-only.
 - Chat context is assembled from recent transcript + structured recent action results, not shadow LLM-maintained memory records.
 - Unresolved-next-step state is now persisted via `ChatPendingFollowUp`, not only inferred from recent assistant wording.
@@ -58,6 +59,7 @@ sqlbook lets users:
   - `next_actions` for executable optional suggestions
   - `follow_up` for persisted unresolved-next-step state
 - SQL-changing `query.update` now performs a saved-query title review so rename suggestions are only emitted when the old title is actually stale.
+- That title review remains model-first and now includes the user's latest refinement request as context, so the model can sanity-check titles after edits without falling back to heuristic naming rules.
 - Saved queries can optionally expose chat provenance (`Chat source`) when they originated from chat and the current viewer can still access that private source thread.
 - Chat write lifecycle now separates semantic identity from attempt identity so old-thread retries create fresh attempts without replaying stale results.
 - Rate limiting is now in a targeted first-pass rollout for auth, chat, query execution, and data source validation/create. Later expansion phases are tracked in [RATE_LIMITING_MASTER_REF.md](/Users/chrispattison/sql_book/docs/RATE_LIMITING_MASTER_REF.md).

@@ -898,7 +898,8 @@ module Chat
           query_id: refinement.target_query.id,
           query_name: refinement.target_query.name,
           sql: refinement.draft_reference['sql'],
-          name: QueryNameParser.parse(text: message)
+          name: QueryNameParser.parse(text: message),
+          question: message
         )
       end
 
@@ -935,7 +936,8 @@ module Chat
         query_id: refinement.target_query.id,
         query_name: refinement.target_query.name,
         sql: refinement.draft_reference['sql'],
-        name: QueryNameParser.parse(text: message) || refinement.generated_name
+        name: QueryNameParser.parse(text: message) || refinement.generated_name,
+        question: message
       )
     end
 
@@ -986,7 +988,8 @@ module Chat
         query_id: query_reference['query_id'],
         query_name: query_reference['query_name'],
         sql: draft_reference['sql'],
-        name: inferred_query_update_name
+        name: inferred_query_update_name,
+        question: message
       )
     end
 
@@ -1404,13 +1407,14 @@ module Chat
       )
     end
 
-    def build_query_update_decision(query_id:, query_name:, sql:, name: nil)
+    def build_query_update_decision(query_id:, query_name:, sql:, name: nil, question: nil)
       payload = {
         'query_id' => query_id,
         'query_name' => query_name,
         'sql' => sql
       }
       payload['name'] = name if name.present?
+      payload['question'] = question if question.present?
 
       Decision.new(
         assistant_message: I18n.t('app.workspaces.chat.planner.query_update'),

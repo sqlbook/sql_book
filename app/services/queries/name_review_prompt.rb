@@ -22,6 +22,9 @@ module Queries
         'When status is aligned or uncertain, suggested_name should be null.',
         'The name should help a user find the query later in an application query library.',
         'Base the decision on the purpose of the query, not just visible columns.',
+        'If the updated request changes an obvious quantity, ranking direction,',
+        'timeframe, or status named in the title, treat that as strong evidence',
+        'that the current title may be stale.',
         'Use the same language as the user when the user language is clear.',
         'Do not return markdown or commentary outside the JSON object.'
       ].join(' ')

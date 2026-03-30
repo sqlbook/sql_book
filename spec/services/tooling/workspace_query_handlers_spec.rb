@@ -158,5 +158,65 @@ RSpec.describe Tooling::WorkspaceQueryHandlers do
       expect(result.data).not_to have_key('follow_up')
       expect(result.data).not_to have_key('next_actions')
     end
+
+    it 'passes the triggering refinement request through to the name review step' do
+      actor = create(:user)
+      workspace = create(:workspace_with_owner, owner: actor)
+      data_source = create(:data_source, :postgres, workspace:, name: 'Staging App DB')
+      query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Top 5 longest-standing users by earliest signup date',
+        query: [
+          'SELECT id, first_name, last_name, email, created_at',
+          'FROM public.users',
+          'ORDER BY created_at ASC NULLS LAST',
+          'LIMIT 5;'
+        ].join(' '),
+        author: actor,
+        last_updated_by: actor
+      )
+
+      updated_sql = [
+        'SELECT id, first_name, last_name, email, created_at',
+        'FROM public.users',
+        'ORDER BY created_at ASC NULLS LAST',
+        'LIMIT 10;'
+      ].join(' ')
+      query_result = ActiveRecord::Result.new(
+        %w[id first_name last_name email created_at],
+        [[8, 'Bob', 'Smith', 'hello@sitelabs.ai', '2026-02-25 16:55:12.700164']]
+      )
+
+      allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+        .to receive(:execute_readonly)
+        .and_return(query_result)
+      allow(Queries::NameReviewService)
+        .to receive(:review)
+        .and_return(
+          Queries::NameReviewResponseParser::Result.new(
+            status: 'stale',
+            suggested_name: 'Top 10 longest-standing users by earliest signup date',
+            reason: 'The limit changed from 5 to 10.'
+          )
+        )
+
+      described_class.new(workspace:, actor:).update(
+        arguments: {
+          'query_id' => query.id,
+          'sql' => updated_sql,
+          'question' => 'Thanks, could we maybe show the 10 longest standing actually?'
+        }
+      )
+
+      expect(Queries::NameReviewService).to have_received(:review).with(
+        hash_including(
+          current_name: 'Top 5 longest-standing users by earliest signup date',
+          question: 'Thanks, could we maybe show the 10 longest standing actually?',
+          sql: updated_sql
+        )
+      )
+    end
   end
 end

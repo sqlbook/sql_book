@@ -782,6 +782,7 @@ module Chat
             'query_id' => refinement.target_query.id,
             'query_name' => refinement.target_query.name,
             'sql' => refinement.draft_reference['sql'],
+            'question' => message,
             'name' => parsed_query_name
           }.compact
         )
@@ -800,6 +801,7 @@ module Chat
     def query_update_plan
       payload = resolved_query_reference_payload
       payload['sql'] = recent_draft_query_reference['sql']
+      payload['question'] = message
       payload['name'] = inferred_query_rename_name if inferred_query_rename_name.present?
 
       missing_plan = query_update_missing_plan(payload:)

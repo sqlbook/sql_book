@@ -170,6 +170,9 @@ Related references:
     - `let's just focus on workspace name and creation date`
   - Generic capability/help fallback should be a last resort for these turns, not the default.
 - Short query follow-ups should be recoverable from persisted query references, recent query state, or the last assistant `query_card` in the thread. Do not require the assistant prose itself to carry continuity.
+- Query continuity is not infinite:
+  - same-query edits such as adding/removing columns or adjusting a `LIMIT` should stay attached to the active query
+  - source/order flips that materially change what the query means, such as `longest-standing users` -> `newest users`, should stop being treated as the same saved-query refinement for card state and save/update affordances
 
 ## HTTP interfaces
 App routes:
@@ -335,6 +338,7 @@ High-risk writes (inline confirmation required):
   - `aligned` = current title still fits; do not suggest rename
   - `stale` = current title is misleading; emit `suggested_name`, `next_actions`, and persisted `query_rename_suggestion`
   - `uncertain` = do not silently suggest; ask explicitly if the user wants to rename it
+- The query-name review context should include the triggering refinement request so the model is checking the edited query against what the user actually changed, not just against the resulting SQL in isolation.
 - `query.save` should not create an exact duplicate saved query in the same datasource; the app should return the existing saved query instead.
 - If an auto-generated `query.save` name collides with a different saved query in the workspace, chat should pause and ask whether to keep that generated name or choose another, rather than silently saving with the colliding name.
 - SQL-first chat threads should also get a human-readable generated title derived from the query intent instead of using the raw SQL statement as the thread title.

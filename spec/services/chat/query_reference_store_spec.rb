@@ -218,6 +218,46 @@ RSpec.describe Chat::QueryReferenceStore, type: :service do
       draft_reference = chat_thread.chat_query_references.recent_first.first
       expect(draft_reference.refined_from_reference_id).to eq(saved_reference.id)
     end
+
+    it 'does not keep saved-query linkage when the new run reverses the ranking direction' do
+      saved_query = create(
+        :query,
+        data_source:,
+        saved: true,
+        name: 'Top 10 longest-standing users by earliest signup date',
+        query: 'SELECT id, first_name, created_at FROM public.users ORDER BY created_at ASC NULLS LAST LIMIT 10;',
+        author: user,
+        last_updated_by: user
+      )
+      create(
+        :chat_query_reference,
+        chat_thread:,
+        data_source:,
+        saved_query: saved_query,
+        sql: saved_query.query,
+        current_name: saved_query.name
+      )
+
+      execution = Struct.new(:data).new(
+        {
+          'question' => 'What about the 10 newest users?',
+          'sql' => 'SELECT id, first_name, created_at FROM public.users ORDER BY created_at DESC NULLS LAST LIMIT 10;',
+          'data_source' => { 'id' => data_source.id, 'name' => data_source.display_name },
+          'row_count' => 10,
+          'columns' => %w[id first_name created_at]
+        }
+      )
+
+      store.record_query_run!(
+        source_message: create(:chat_message, chat_thread:, user:, content: 'What about the 10 newest users?'),
+        result_message: create(:chat_message, chat_thread:, role: ChatMessage::Roles::ASSISTANT, content: 'Updated.'),
+        execution:,
+        fallback_question: 'What about the 10 newest users?'
+      )
+
+      draft_reference = chat_thread.chat_query_references.recent_first.first
+      expect(draft_reference.refined_from_reference_id).to be_nil
+    end
   end
 
   describe '#record_query_update!' do
