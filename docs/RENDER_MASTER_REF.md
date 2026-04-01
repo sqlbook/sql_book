@@ -151,12 +151,13 @@ If any frontend assets changed (SCSS/JS/views that reference assets), precompile
 Run in Web service shell:
 
 ```bash
+bundle exec rails dartsass:build
 RAILS_ENV=production bundle exec rails assets:clobber assets:precompile
 ```
 
 Why:
 - Production has `config.assets.compile = false`.
-- If precompile is skipped, the app can request digested assets that do not exist and render unstyled pages (`/assets/application-*.css` 404).
+- If the Sass build or precompile step is skipped, the app can request digested assets that do not exist and render unstyled pages (`/assets/application-*.css` 404).
 
 ## Chat release verification (staging shell)
 Use this check after chat UI/runtime deploys to prove exactly what staging is running.

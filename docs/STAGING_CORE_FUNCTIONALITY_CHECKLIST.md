@@ -57,7 +57,7 @@ Define the minimum stable functionality that must pass before any production cut
 - [ ] `bin/predeploy-check staging` passes in staging env.
 - [ ] `bin/check-no-staging-hardcodes` passes on current commit.
 - [ ] Error logs show no unresolved critical exceptions for core paths.
-- [ ] If frontend assets changed in this deploy, run `RAILS_ENV=production bundle exec rails assets:clobber assets:precompile`.
+- [ ] If frontend assets changed in this deploy, run `bundle exec rails dartsass:build` and then `RAILS_ENV=production bundle exec rails assets:clobber assets:precompile`.
 
 ## Run notes
 - Keep evidence links/log snippets in PR description or deploy notes.

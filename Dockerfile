@@ -46,7 +46,9 @@ RUN yarn install
 # Copy application code
 COPY . .
 
-# Build assets and public script
+# Build CSS, JS, and the public script before Rails asset precompile so
+# digested assets are always present in the runtime image.
+RUN bundle exec rails dartsass:build
 RUN yarn build --minify
 RUN yarn build_script --minify
 
