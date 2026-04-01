@@ -125,6 +125,8 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       it 'renders the query form' do
         get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}"
         expect(response.body).to include('data-source-query')
+        expect(response.body).to include(query.name)
+        expect(response.body).to include(I18n.t('app.workspaces.queries.editor.open_details_aria'))
       end
 
       it 'sets the last_run_at timestamp' do

@@ -4,7 +4,9 @@ class QueryVisualization < ApplicationRecord
   belongs_to :query, inverse_of: :visualization
 
   normalizes :chart_type, with: ->(value) { value.to_s.strip.presence }
-  normalizes :theme_reference, with: ->(value) { value.to_s.strip.presence || Visualizations::SystemTheme::REFERENCE_KEY }
+  normalizes :theme_reference, with: lambda { |value|
+    value.to_s.strip.presence || Visualizations::SystemTheme::REFERENCE_KEY
+  }
 
   validates :chart_type, presence: true, inclusion: { in: Visualizations::ChartRegistry.types }
   validates :theme_reference, presence: true

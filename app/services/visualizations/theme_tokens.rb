@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Visualizations
-  module ThemeTokens
+  module ThemeTokens # rubocop:disable Metrics/ModuleLength
     module_function
 
     DEFAULT_THEME = {
@@ -116,18 +116,17 @@ module Visualizations
     end
 
     def resolve_value(value, palette:)
-      case value
-      when Hash
-        value.to_h.transform_values { |nested| resolve_value(nested, palette:) }
-      when Array
-        value.map { |nested| resolve_value(nested, palette:) }
-      when String
-        return value unless token?(value)
+      return value.to_h.transform_values { |nested| resolve_value(nested, palette:) } if value.is_a?(Hash)
+      return value.map { |nested| resolve_value(nested, palette:) } if value.is_a?(Array)
+      return resolve_token(value, palette:) if value.is_a?(String)
 
-        palette.fetch(value.delete_prefix('token:'), value)
-      else
-        value
-      end
+      value
+    end
+
+    def resolve_token(value, palette:)
+      return value unless token?(value)
+
+      palette.fetch(value.delete_prefix('token:'), value)
     end
   end
 end

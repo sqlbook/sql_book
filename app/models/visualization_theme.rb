@@ -42,6 +42,8 @@ class VisualizationTheme < ApplicationRecord
   end
 
   def unset_other_defaults!
-    workspace.visualization_themes.where.not(id:).update_all(default: false)
+    workspace.visualization_themes.where.not(id:).find_each do |visualization_theme|
+      visualization_theme.update!(default: false)
+    end
   end
 end

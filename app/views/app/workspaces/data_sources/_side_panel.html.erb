@@ -1,96 +1,99 @@
-<aside class="data-source-panel">
+<aside class="data-source-panel tabbed-side-panel">
   <% can_manage_data_source = can_manage_data_sources?(workspace: workspace) %>
   <% default_tab_selected = params[:tab].blank? || (!can_manage_data_source && params[:tab] == 'source_deletion') %>
-
-  <div class="data-source-panel__header">
-    <h3><%= data_source.display_name %></h3>
-    <%= link_to "[#{I18n.t('common.actions.close')}]", add_params(data_source_id: nil, tab: nil, confirm_delete: nil), class: "link secondary" %>
-  </div>
-
-  <div class="tabs">
-    <% if data_source.capture_source? %>
-      <%= render "shared/tabs/nav_item", tab: "source_url", name: I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), icon_class: "ri-global-line", default_selected: default_tab_selected %>
-      <%= render "shared/tabs/nav_item", tab: "tracking_code", name: I18n.t('app.workspaces.data_sources.management.tracking_code_title'), icon_class: "ri-fire-line" %>
-    <% else %>
-      <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line", default_selected: default_tab_selected %>
-    <% end %>
-    <% if can_manage_data_source %>
-      <%= render "shared/tabs/nav_item", tab: "source_deletion", name: I18n.t('app.workspaces.data_sources.management.deletion_title'), icon_class: "ri-delete-bin-line" %>
-    <% end %>
-  </div>
-
-  <% unless can_manage_data_source %>
-    <div class="message">
-      <i class="ri-information-line ri-lg gray-300"></i>
-      <div class="body">
-        <p class="title cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.read_only_title') %></b></p>
-        <p><%= I18n.t('app.workspaces.data_sources.management.read_only_body') %></p>
-      </div>
-    </div>
-  <% end %>
-
-  <% if data_source.capture_source? && active_tab?(tab: "source_url", default_selected: default_tab_selected) %>
-    <div data-controller="form">
-      <%= form_with url: app_workspace_data_source_path(workspace, data_source), method: :put, class: "update-data-source-form", html: { "data-form-target": "form" } do |form| %>
-        <%= form.label :url, I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), class: "label block" %>
-        <%= form.text_field :url, type: "url", placeholder: "https://", class: "input block fluid", required: true, pattern: "https://.*", value: data_source.url, disabled: !can_manage_data_source %>
-
-        <%= render "shared/flash" %>
-
-        <% if can_manage_data_source %>
-          <%= form.submit I18n.t('common.actions.save_changes'), class: "link primary", "data-form-target": "submit" %>
-        <% end %>
+  <% data_source_tabs = capture do %>
+    <div class="tabs">
+      <% if data_source.capture_source? %>
+        <%= render "shared/tabs/nav_item", tab: "source_url", name: I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), icon_class: "ri-global-line", default_selected: default_tab_selected %>
+        <%= render "shared/tabs/nav_item", tab: "tracking_code", name: I18n.t('app.workspaces.data_sources.management.tracking_code_title'), icon_class: "ri-fire-line" %>
+      <% else %>
+        <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line", default_selected: default_tab_selected %>
+      <% end %>
+      <% if can_manage_data_source %>
+        <%= render "shared/tabs/nav_item", tab: "source_deletion", name: I18n.t('app.workspaces.data_sources.management.deletion_title'), icon_class: "ri-delete-bin-line" %>
       <% end %>
     </div>
   <% end %>
 
-  <% if data_source.capture_source? && active_tab?(tab: "tracking_code") %>
-    <%= render "shared/tracking_code", data_source: data_source %>
-  <% end %>
+  <%= render "shared/tabbed_side_panel_header",
+             title: data_source.display_name,
+             close_path: add_params(data_source_id: nil, tab: nil, confirm_delete: nil),
+             close_aria_label: I18n.t('common.actions.close'),
+             tabs_content: data_source_tabs %>
 
-  <% if data_source.external_database? && active_tab?(tab: "settings", default_selected: default_tab_selected) %>
-    <% form_state = @selected_data_source_form_state || {} %>
-    <% form_errors = @selected_data_source_errors || {} %>
-    <% available_tables = @selected_data_source_available_tables || [] %>
-    <div class="data-source-management">
-      <%= form_with url: app_workspace_data_source_path(workspace, data_source), method: :put, class: "data-source-management__form" do %>
-        <% if @selected_data_source_connection_error.present? %>
-          <div class="message data-source-management__error-dialogue">
-            <i class="ri-error-warning-line ri-lg red-500"></i>
-            <div class="body">
-              <p><%= @selected_data_source_connection_error %></p>
+  <div class="tabbed-side-panel__body">
+    <% unless can_manage_data_source %>
+      <div class="message">
+        <i class="ri-information-line ri-lg gray-300"></i>
+        <div class="body">
+          <p class="title cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.read_only_title') %></b></p>
+          <p><%= I18n.t('app.workspaces.data_sources.management.read_only_body') %></p>
+        </div>
+      </div>
+    <% end %>
+
+    <% if data_source.capture_source? && active_tab?(tab: "source_url", default_selected: default_tab_selected) %>
+      <div data-controller="form">
+        <%= form_with url: app_workspace_data_source_path(workspace, data_source), method: :put, class: "update-data-source-form", html: { "data-form-target": "form" } do |form| %>
+          <%= form.label :url, I18n.t('app.workspaces.data_sources.management.fields.tracking_url'), class: "label block" %>
+          <%= form.text_field :url, type: "url", placeholder: "https://", class: "input block fluid", required: true, pattern: "https://.*", value: data_source.url, disabled: !can_manage_data_source %>
+
+          <%= render "shared/flash" %>
+
+          <% if can_manage_data_source %>
+            <%= form.submit I18n.t('common.actions.save_changes'), class: "link primary", "data-form-target": "submit" %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if data_source.capture_source? && active_tab?(tab: "tracking_code") %>
+      <%= render "shared/tracking_code", data_source: data_source %>
+    <% end %>
+
+    <% if data_source.external_database? && active_tab?(tab: "settings", default_selected: default_tab_selected) %>
+      <% form_state = @selected_data_source_form_state || {} %>
+      <% form_errors = @selected_data_source_errors || {} %>
+      <% available_tables = @selected_data_source_available_tables || [] %>
+      <div class="data-source-management">
+        <%= form_with url: app_workspace_data_source_path(workspace, data_source), method: :put, class: "data-source-management__form" do %>
+          <% if @selected_data_source_connection_error.present? %>
+            <div class="message data-source-management__error-dialogue">
+              <i class="ri-error-warning-line ri-lg red-500"></i>
+              <div class="body">
+                <p><%= @selected_data_source_connection_error %></p>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="data-source-management__fields">
+            <div class="field">
+              <%= label_tag :display_name, I18n.t('app.workspaces.data_sources.new.fields.name'), class: "label block" %>
+              <%= text_field_tag :display_name, data_source.display_name, class: "input block fluid", disabled: true %>
+            </div>
+
+            <div class="field">
+              <%= label_tag :source_type, I18n.t('app.workspaces.data_sources.management.fields.type'), class: "label block" %>
+              <%= text_field_tag :source_type, data_source_index_type_label(data_source), class: "input block fluid", disabled: true %>
             </div>
           </div>
-        <% end %>
+ 
+          <div class="data-source-management__section">
+            <h3><%= I18n.t('app.workspaces.data_sources.management.connection_title') %></h3>
 
-        <div class="data-source-management__fields">
-          <div class="field">
-            <%= label_tag :display_name, I18n.t('app.workspaces.data_sources.new.fields.name'), class: "label block" %>
-            <%= text_field_tag :display_name, data_source.display_name, class: "input block fluid", disabled: true %>
-          </div>
-
-          <div class="field">
-            <%= label_tag :source_type, I18n.t('app.workspaces.data_sources.management.fields.type'), class: "label block" %>
-            <%= text_field_tag :source_type, data_source_index_type_label(data_source), class: "input block fluid", disabled: true %>
-          </div>
-        </div>
-
-        <div class="data-source-management__section">
-          <h3><%= I18n.t('app.workspaces.data_sources.management.connection_title') %></h3>
-
-          <div class="data-source-management__connection-box">
-            <div class="data-source-management__grid">
-              <div class="field">
-                <%= label_tag :host, I18n.t('app.workspaces.data_sources.management.fields.host'), class: "label block" %>
-                <%= text_field_tag :host,
-                                   form_state['host'],
-                                   class: class_names("input block fluid", invalid: form_errors['host'].present?),
-                                   required: true,
-                                   disabled: !can_manage_data_source %>
-                <% if form_errors['host'].present? %>
-                  <p class="field-error"><%= form_errors['host'].first %></p>
-                <% end %>
-              </div>
+            <div class="data-source-management__connection-box">
+              <div class="data-source-management__grid">
+                <div class="field">
+                  <%= label_tag :host, I18n.t('app.workspaces.data_sources.management.fields.host'), class: "label block" %>
+                  <%= text_field_tag :host,
+                                     form_state['host'],
+                                     class: class_names("input block fluid", invalid: form_errors['host'].present?),
+                                     required: true,
+                                     disabled: !can_manage_data_source %>
+                  <% if form_errors['host'].present? %>
+                    <p class="field-error"><%= form_errors['host'].first %></p>
+                  <% end %>
+                </div>
 
               <div class="field field--narrow">
                 <%= label_tag :port, I18n.t('app.workspaces.data_sources.management.fields.port'), class: "label block" %>
@@ -197,39 +200,40 @@
           </div>
         </div>
 
-        <% if can_manage_data_source %>
-          <%= submit_tag I18n.t('common.actions.save_changes'), class: "link primary" %>
+          <% if can_manage_data_source %>
+            <%= submit_tag I18n.t('common.actions.save_changes'), class: "link primary" %>
+          <% end %>
         <% end %>
-      <% end %>
-    </div>
-  <% end %>
+      </div>
+    <% end %>
 
-  <% if can_manage_data_source && active_tab?(tab: "source_deletion") %>
-    <p class="cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_intro') %></b></p>
-    <ul class="gray-250">
-      <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.one') %></li>
-      <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.two') %></li>
-      <li>
-        <%= data_source.capture_source? ?
-              I18n.t('app.workspaces.data_sources.management.deletion_points.three_capture', name: data_source.display_name) :
-              I18n.t('app.workspaces.data_sources.management.deletion_points.three_external') %>
-      </li>
-    </ul>
+    <% if can_manage_data_source && active_tab?(tab: "source_deletion") %>
+      <p class="cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_intro') %></b></p>
+      <ul class="gray-250">
+        <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.one') %></li>
+        <li><%= I18n.t('app.workspaces.data_sources.management.deletion_points.two') %></li>
+        <li>
+          <%= data_source.capture_source? ?
+                I18n.t('app.workspaces.data_sources.management.deletion_points.three_capture', name: data_source.display_name) :
+                I18n.t('app.workspaces.data_sources.management.deletion_points.three_external') %>
+        </li>
+      </ul>
 
-    <% if params[:confirm_delete] %>
-      <div class="message">
-        <i class="ri-error-warning-line ri-lg red-500"></i>
-        <div class="body">
-          <p class="title cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_confirm_title') %></b></p>
-          <p><%= I18n.t('app.workspaces.data_sources.management.deletion_confirm_body') %></p>
-          <div class="actions">
-            <%= link_to I18n.t('app.workspaces.data_sources.management.actions.delete'), app_workspace_data_source_path(workspace, data_source), class: "link primary", data: { turbo_method: :delete }, "aria-label": I18n.t('app.workspaces.data_sources.management.aria.confirm_delete') %>
-            <%= link_to I18n.t('common.actions.cancel'), add_params(confirm_delete: nil), class: "link secondary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.cancel_delete') %>
+      <% if params[:confirm_delete] %>
+        <div class="message">
+          <i class="ri-error-warning-line ri-lg red-500"></i>
+          <div class="body">
+            <p class="title cream-250"><b><%= I18n.t('app.workspaces.data_sources.management.deletion_confirm_title') %></b></p>
+            <p><%= I18n.t('app.workspaces.data_sources.management.deletion_confirm_body') %></p>
+            <div class="actions">
+              <%= link_to I18n.t('app.workspaces.data_sources.management.actions.delete'), app_workspace_data_source_path(workspace, data_source), class: "link primary", data: { turbo_method: :delete }, "aria-label": I18n.t('app.workspaces.data_sources.management.aria.confirm_delete') %>
+              <%= link_to I18n.t('common.actions.cancel'), add_params(confirm_delete: nil), class: "link secondary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.cancel_delete') %>
+            </div>
           </div>
         </div>
-      </div>
-    <% else %>
-      <%= link_to I18n.t('app.workspaces.data_sources.management.actions.delete'), add_params(confirm_delete: 1), class: "link primary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.delete') %>
+      <% else %>
+        <%= link_to I18n.t('app.workspaces.data_sources.management.actions.delete'), add_params(confirm_delete: 1), class: "link primary", "aria-label": I18n.t('app.workspaces.data_sources.management.aria.delete') %>
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 </aside>

@@ -25,15 +25,13 @@ module Visualizations
 
     def resolved_theme
       theme = ThemeLibraryService.find_entry(workspace:, reference: theme_reference)
+      return {} if theme.blank?
 
-      case theme
-      when SystemTheme
-        mode == 'light' ? theme.theme_json_light : theme.theme_json_dark
-      when VisualizationTheme
-        mode == 'light' ? theme.theme_json_light : theme.theme_json_dark
-      else
-        {}
-      end.to_h.deep_stringify_keys
+      theme_payload(theme).to_h.deep_stringify_keys
+    end
+
+    def theme_payload(theme)
+      mode == 'light' ? theme.theme_json_light : theme.theme_json_dark
     end
   end
 end

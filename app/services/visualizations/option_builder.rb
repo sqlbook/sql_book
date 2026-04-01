@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Visualizations
-  class OptionBuilder
+  class OptionBuilder # rubocop:disable Metrics/ClassLength
     def initialize(query:, visualization:, mode:)
       @query = query
       @visualization = visualization
@@ -59,13 +59,15 @@ module Visualizations
         'title' => title_option
       }
 
-      option['grid'] = {
-        'left' => 24,
-        'right' => 24,
-        'top' => title_spacing,
-        'bottom' => 36,
-        'containLabel' => true
-      } if cartesian_chart?
+      if cartesian_chart?
+        option['grid'] = {
+          'left' => 24,
+          'right' => 24,
+          'top' => title_spacing,
+          'bottom' => 36,
+          'containLabel' => true
+        }
+      end
 
       option
     end
@@ -88,14 +90,10 @@ module Visualizations
     end
 
     def title_option
-      title = other_config['title'].to_s.strip
-      subtitle = other_config['subtitle'].to_s.strip
-
       {
-        'show' => ActiveModel::Type::Boolean.new.cast(other_config['title_enabled']) || \
-          ActiveModel::Type::Boolean.new.cast(other_config['subtitle_enabled']),
-        'text' => ActiveModel::Type::Boolean.new.cast(other_config['title_enabled']) ? title : '',
-        'subtext' => ActiveModel::Type::Boolean.new.cast(other_config['subtitle_enabled']) ? subtitle : '',
+        'show' => title_enabled? || subtitle_enabled?,
+        'text' => title_enabled? ? title_text : '',
+        'subtext' => subtitle_enabled? ? subtitle_text : '',
         'left' => 'center',
         'textStyle' => theme.dig('title', 'textStyle'),
         'subtextStyle' => theme.dig('title', 'subtextStyle')
@@ -208,11 +206,27 @@ module Visualizations
     end
 
     def title_visible?
-      ActiveModel::Type::Boolean.new.cast(other_config['title_enabled']) || other_config['title'].to_s.strip.present?
+      title_enabled? || title_text.present?
     end
 
     def subtitle_visible?
-      ActiveModel::Type::Boolean.new.cast(other_config['subtitle_enabled']) || other_config['subtitle'].to_s.strip.present?
+      subtitle_enabled? || subtitle_text.present?
+    end
+
+    def title_enabled?
+      ActiveModel::Type::Boolean.new.cast(other_config['title_enabled'])
+    end
+
+    def subtitle_enabled?
+      ActiveModel::Type::Boolean.new.cast(other_config['subtitle_enabled'])
+    end
+
+    def title_text
+      other_config['title'].to_s.strip
+    end
+
+    def subtitle_text
+      other_config['subtitle'].to_s.strip
     end
   end
 end

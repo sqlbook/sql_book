@@ -16,8 +16,8 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
   get 'dev/api', to: 'dev/api_docs#show'
   get 'dev/api/openapi.json', to: 'dev/api_docs#openapi'
 
-  namespace :api do
-    namespace :v1 do
+  namespace :api do # rubocop:disable Metrics/BlockLength
+    namespace :v1 do # rubocop:disable Metrics/BlockLength
       patch 'workspaces/:workspace_id', to: 'workspaces#update'
       delete 'workspaces/:workspace_id', to: 'workspaces#destroy'
       get 'workspaces/:workspace_id/members', to: 'members#index'
@@ -45,8 +45,8 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       post 'workspaces/:workspace_id/visualization-themes/duplicate', to: 'visualization_themes#duplicate'
       patch 'workspaces/:workspace_id/visualization-themes/:id/default', to: 'visualization_themes#set_default'
       patch 'workspaces/:workspace_id/chat-threads/:id', to: 'chat_threads#update'
-    end
-  end
+    end # rubocop:enable Metrics/BlockLength
+  end # rubocop:enable Metrics/BlockLength
 
   namespace :auth do
     resources :invitation, only: %i[show] do

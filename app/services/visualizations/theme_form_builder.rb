@@ -3,46 +3,39 @@
 module Visualizations
   class ThemeFormBuilder
     FIELD_MAP = {
-      colors_csv: [['color']],
-      background_color: [['backgroundColor']],
-      text_color: [['textStyle', 'color']],
-      title_color: [['title', 'textStyle', 'color']],
-      subtitle_color: [['title', 'subtextStyle', 'color']],
-      legend_text_color: [['legend', 'textStyle', 'color']],
+      colors_csv: [%w[color]],
+      background_color: [%w[backgroundColor]],
+      text_color: [%w[textStyle color]],
+      title_color: [%w[title textStyle color]],
+      subtitle_color: [%w[title subtextStyle color]],
+      legend_text_color: [%w[legend textStyle color]],
       axis_line_color: [
-        ['categoryAxis', 'axisLine', 'lineStyle', 'color'],
-        ['valueAxis', 'axisLine', 'lineStyle', 'color']
+        %w[categoryAxis axisLine lineStyle color],
+        %w[valueAxis axisLine lineStyle color]
       ],
       axis_label_color: [
-        ['categoryAxis', 'axisLabel', 'color'],
-        ['valueAxis', 'axisLabel', 'color']
+        %w[categoryAxis axisLabel color],
+        %w[valueAxis axisLabel color]
       ],
       split_line_color: [
-        ['categoryAxis', 'splitLine', 'lineStyle', 'color'],
-        ['valueAxis', 'splitLine', 'lineStyle', 'color']
+        %w[categoryAxis splitLine lineStyle color],
+        %w[valueAxis splitLine lineStyle color]
       ],
-      tooltip_background_color: [['tooltip', 'backgroundColor']],
-      tooltip_text_color: [['tooltip', 'textStyle', 'color']]
+      tooltip_background_color: [%w[tooltip backgroundColor]],
+      tooltip_text_color: [%w[tooltip textStyle color]]
     }.freeze
 
     class << self
       def editor_attributes(theme_json:)
         theme_json = theme_json.to_h.deep_stringify_keys
 
-        {
-          colors_csv: Array(theme_json['color']).join(', '),
-          background_color: dig_first_value(theme_json, FIELD_MAP[:background_color]),
-          text_color: dig_first_value(theme_json, FIELD_MAP[:text_color]),
-          title_color: dig_first_value(theme_json, FIELD_MAP[:title_color]),
-          subtitle_color: dig_first_value(theme_json, FIELD_MAP[:subtitle_color]),
-          legend_text_color: dig_first_value(theme_json, FIELD_MAP[:legend_text_color]),
-          axis_line_color: dig_first_value(theme_json, FIELD_MAP[:axis_line_color]),
-          axis_label_color: dig_first_value(theme_json, FIELD_MAP[:axis_label_color]),
-          split_line_color: dig_first_value(theme_json, FIELD_MAP[:split_line_color]),
-          tooltip_background_color: dig_first_value(theme_json, FIELD_MAP[:tooltip_background_color]),
-          tooltip_text_color: dig_first_value(theme_json, FIELD_MAP[:tooltip_text_color]),
-          raw_json: JSON.pretty_generate(theme_json)
-        }
+        FIELD_MAP.each_with_object(raw_json: JSON.pretty_generate(theme_json)) do |(field, paths), memo|
+          memo[field] = if field == :colors_csv
+                          Array(theme_json['color']).join(', ')
+                        else
+                          dig_first_value(theme_json, paths)
+                        end
+        end
       end
 
       def build(theme_json:, editor_params:, raw_json:)

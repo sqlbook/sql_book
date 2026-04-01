@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Visualizations
-  class ThemePreviewBuilder
+  class ThemePreviewBuilder # rubocop:disable Metrics/ClassLength
     class << self
       def call(theme_json:)
         new(theme_json:).call
@@ -165,18 +165,18 @@ module Visualizations
     end
 
     def deep_compact(value)
-      case value
-      when Hash
-        value.each_with_object({}) do |(key, nested), memo|
-          compacted = deep_compact(nested)
-          next if compacted.nil? || compacted == {} || compacted == []
+      return compact_hash(value) if value.is_a?(Hash)
+      return value.map { |nested| deep_compact(nested) }.compact if value.is_a?(Array)
 
-          memo[key] = compacted
-        end
-      when Array
-        value.map { |nested| deep_compact(nested) }.compact
-      else
-        value
+      value
+    end
+
+    def compact_hash(value)
+      value.each_with_object({}) do |(key, nested), memo|
+        compacted = deep_compact(nested)
+        next if compacted.nil? || compacted == {} || compacted == []
+
+        memo[key] = compacted
       end
     end
   end

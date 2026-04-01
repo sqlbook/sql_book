@@ -1,4 +1,26 @@
 .app-workspaces-data_sources-queries-show {
+  .responsive-side-panel-layout {
+    display: contents;
+
+    &.side-panel-layout--closed {
+      > main {
+        grid-column: 1 / -1;
+      }
+
+      > aside {
+        display: none;
+      }
+
+      .query-panel-toggle {
+        display: inline-flex;
+      }
+    }
+  }
+
+  .query-details-panel {
+    width: 100%;
+  }
+
   .new-query-form {
     margin: 2rem 0 0 0;
 
@@ -7,9 +29,33 @@
     }
   }
 
-  aside {
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 2rem;
+  .drag-handle {
+    z-index: 2;
+  }
+
+  @media (max-width: 1023px) {
+    .app-content-layout.split {
+      display: block;
+      position: relative;
+    }
+
+    .responsive-side-panel-layout {
+      > aside {
+        inset: 0;
+        position: absolute;
+        z-index: 8;
+      }
+
+      &.side-panel-layout--open {
+        > main {
+          pointer-events: none;
+          user-select: none;
+        }
+      }
+    }
+
+    .drag-handle {
+      display: none;
+    }
   }
 }

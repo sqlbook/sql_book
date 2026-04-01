@@ -48,8 +48,14 @@ module App
 
         Visualizations::ThemeLibraryService.find_entry(
           workspace:,
-          reference: selected_theme_reference.presence || workspace.default_visualization_theme&.reference_key || Visualizations::SystemTheme::REFERENCE_KEY
+          reference: selected_theme_library_reference
         )
+      end
+
+      def selected_theme_library_reference
+        selected_theme_reference.presence ||
+          workspace.default_visualization_theme&.reference_key ||
+          Visualizations::SystemTheme::REFERENCE_KEY
       end
 
       def theme_seed_for_new_record

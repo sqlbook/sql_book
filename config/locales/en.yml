@@ -113,7 +113,11 @@ en:
             last_run: Last run
         editor:
           data_source_label: Data source
+          untitled_title: Untitled Query
           view_data_source_aria: View datasource
+          open_details_aria: Open query details
+          close_details_aria: Close query details
+          toggle_schema_aria: Show or hide table schema
           schema_label: Table schema
           schema_columns:
             name: Name

@@ -17,18 +17,7 @@ module Visualizations
     def call
       return nil unless visualization
 
-      payload = {
-        'query_id' => query.id,
-        'chart_type' => visualization.chart_type,
-        'theme_reference' => visualization.theme_reference,
-        'theme' => serialized_theme,
-        'data_config' => visualization.resolved_data_config(query_result: query.query_result),
-        'appearance_config_dark' => visualization.appearance_config_dark,
-        'appearance_config_light' => visualization.appearance_config_light,
-        'other_config' => visualization.resolved_other_config(query_result: query.query_result),
-        'renderer' => Visualizations::ChartRegistry.fetch(visualization.chart_type)[:renderer]
-      }
-
+      payload = base_payload
       payload['preview'] = preview_payload if include_preview
       payload
     end
@@ -36,6 +25,20 @@ module Visualizations
     private
 
     attr_reader :query, :visualization, :include_preview
+
+    def base_payload
+      {
+        'query_id' => query.id,
+        'chart_type' => visualization.chart_type,
+        'theme_reference' => visualization.theme_reference,
+        'theme' => serialized_theme,
+        'data_config' => resolved_data_config,
+        'appearance_config_dark' => visualization.appearance_config_dark,
+        'appearance_config_light' => visualization.appearance_config_light,
+        'other_config' => resolved_other_config,
+        'renderer' => renderer
+      }
+    end
 
     def preview_payload
       {
@@ -55,6 +58,18 @@ module Visualizations
         'system_theme' => theme.system_theme?,
         'default' => theme.default?
       }
+    end
+
+    def resolved_data_config
+      visualization.resolved_data_config(query_result: query.query_result)
+    end
+
+    def resolved_other_config
+      visualization.resolved_other_config(query_result: query.query_result)
+    end
+
+    def renderer
+      Visualizations::ChartRegistry.fetch(visualization.chart_type)[:renderer]
     end
   end
 end

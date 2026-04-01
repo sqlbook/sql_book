@@ -82,7 +82,11 @@ es:
             last_run: Última ejecución
         editor:
           data_source_label: Fuente de datos
+          untitled_title: Consulta sin título
           view_data_source_aria: Ver fuente de datos
+          open_details_aria: Abrir detalles de la consulta
+          close_details_aria: Cerrar detalles de la consulta
+          toggle_schema_aria: Mostrar u ocultar el esquema de la tabla
           schema_label: Esquema de tabla
           schema_columns:
             name: Nombre

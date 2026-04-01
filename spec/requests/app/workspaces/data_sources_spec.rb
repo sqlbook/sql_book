@@ -58,6 +58,7 @@ RSpec.describe 'App::Workspaces::DataSources', type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to have_selector('.app-content-layout.split')
+        expect(response.body).to have_selector('.tabbed-side-panel__title', text: 'Warehouse DB')
         expect(response.body).to include(I18n.t('common.actions.settings'))
         expect(response.body).to include(I18n.t('app.workspaces.data_sources.management.deletion_title'))
         expect(response.body).to include('Warehouse DB')

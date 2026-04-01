@@ -12,7 +12,12 @@ module Visualizations
       theme.update!(default: true)
       Result.new(success?: true, theme:, code: 'visualization_theme.default_set', message: nil)
     rescue ActiveRecord::RecordInvalid
-      Result.new(success?: false, theme:, code: 'visualization_theme.invalid', message: theme.errors.full_messages.to_sentence)
+      Result.new(
+        success?: false,
+        theme:,
+        code: 'visualization_theme.invalid',
+        message: theme.errors.full_messages.to_sentence
+      )
     end
 
     private

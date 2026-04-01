@@ -24,14 +24,16 @@ class CreateQueryVisualizationsAndVisualizationThemes < ActiveRecord::Migration[
       t.timestamps
     end
 
-    add_index :visualization_themes, [:workspace_id, :name], unique: true
+    add_index :visualization_themes, %i[workspace_id name], unique: true
     add_index :visualization_themes,
               :workspace_id,
               unique: true,
               where: '"default" = true',
-              name: "index_visualization_themes_on_workspace_id_where_default"
+              name: 'index_visualization_themes_on_workspace_id_where_default'
 
-    remove_column :queries, :chart_type, :string
-    remove_column :queries, :chart_config, :jsonb, default: {}, null: false
+    change_table :queries, bulk: true do |t|
+      t.remove :chart_type, type: :string
+      t.remove :chart_config, type: :jsonb, default: {}, null: false
+    end
   end
 end

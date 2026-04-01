@@ -1,62 +1,82 @@
 <% content_for :app_content_layout_class, "split" %>
 
-<main>
-  <%= render "shared/data_source_query" %>
-</main>
-
-<aside data-controller="resizeable-page">
-  <div class="tabs">
-    <%= render "shared/tabs/nav_item", tab: "query_results", name: I18n.t('app.workspaces.visualizations.tabs.query_results'), icon_class: "ri-table-2", default_selected: true %>
-    <%= render "shared/tabs/nav_item", tab: "visualization", name: I18n.t('app.workspaces.visualizations.tabs.visualization'), icon_class: "ri-bar-chart-box-line" %>
-    <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line" %>
-  </div>
-
-  <% if active_tab?(tab: "query_results", default_selected: true) %>
-    <% if @query.query_result.error %>
-      <p class="red-500"><%= @query.query_result.error_message %></p>
-    <% else %>
-      <%= render "shared/query_results_table", query: @query %>
-    <% end %>
+<div class="responsive-side-panel-layout responsive-side-panel-layout--query side-panel-layout--open"
+     data-controller="query-side-panel"
+     data-query-side-panel-storage-key-value="query-side-panel:<%= @workspace.id %>:<%= @query.id %>"
+     data-query-side-panel-default-open-value="true"
+     data-query-side-panel-mobile-breakpoint-value="1023"
+     data-query-side-panel-open-aria-value="<%= I18n.t('app.workspaces.queries.editor.open_details_aria') %>"
+     data-query-side-panel-close-aria-value="<%= I18n.t('app.workspaces.queries.editor.close_details_aria') %>">
+  <% query_tabs = capture do %>
+    <div class="tabs">
+      <%= render "shared/tabs/nav_item", tab: "query_results", name: I18n.t('app.workspaces.visualizations.tabs.query_results'), icon_class: "ri-table-2", default_selected: true %>
+      <%= render "shared/tabs/nav_item", tab: "visualization", name: I18n.t('app.workspaces.visualizations.tabs.visualization'), icon_class: "ri-bar-chart-box-line" %>
+      <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line" %>
+    </div>
   <% end %>
 
-  <% if active_tab?(tab: "visualization") %>
-    <% if @query.visualization.present? %>
-      <%= render "shared/query_visualization_editor", query: @query, workspace: @workspace, data_source: @data_source %>
-    <% else %>
-      <%= render "shared/query_visualization_gallery", query: @query, workspace: @workspace, data_source: @data_source %>
-    <% end %>
-  <% end %>
+  <main>
+    <%= render "shared/data_source_query", panel_toggle_enabled: true %>
+  </main>
 
-  <% if active_tab?(tab: "settings") %>
-    <% if can_write_queries?(workspace: @workspace) %>
-      <% unless @query.saved %>
-        <%= render "shared/notice", message: I18n.t('app.workspaces.queries.settings.notice') %>
+  <aside class="tabbed-side-panel query-details-panel"
+         data-controller="resizeable-page"
+         data-query-side-panel-target="panel">
+    <%= render "shared/tabbed_side_panel_header",
+               title: query_panel_title(query: @query),
+               close_action: "query-side-panel#closePanel",
+               close_aria_label: I18n.t('app.workspaces.queries.editor.close_details_aria'),
+               tabs_content: query_tabs %>
+
+    <div class="tabbed-side-panel__body">
+      <% if active_tab?(tab: "query_results", default_selected: true) %>
+        <% if @query.query_result.error %>
+          <p class="red-500"><%= @query.query_result.error_message %></p>
+        <% else %>
+          <%= render "shared/query_results_table", query: @query %>
+        <% end %>
       <% end %>
 
-      <div data-controller="form">
-        <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
-          <%= form.label :name, I18n.t('app.workspaces.queries.settings.name_label'), class: "label block" %>
-          <%= form.text_field :name, type: "text", placeholder: I18n.t('app.workspaces.queries.settings.name_placeholder'), class: "input block fluid", required: true, value: @query.name %>
-
-          <%= form.submit I18n.t('app.workspaces.queries.settings.save'), class: "link primary", "data-form-target": "submit" %>
+      <% if active_tab?(tab: "visualization") %>
+        <% if @query.visualization.present? %>
+          <%= render "shared/query_visualization_editor", query: @query, workspace: @workspace, data_source: @data_source %>
+        <% else %>
+          <%= render "shared/query_visualization_gallery", query: @query, workspace: @workspace, data_source: @data_source %>
         <% end %>
-      </div>
+      <% end %>
 
-    <% else %>
-      <p><%= I18n.t('app.workspaces.queries.settings.read_only') %></p>
-    <% end %>
+      <% if active_tab?(tab: "settings") %>
+        <% if can_write_queries?(workspace: @workspace) %>
+          <% unless @query.saved %>
+            <%= render "shared/notice", message: I18n.t('app.workspaces.queries.settings.notice') %>
+          <% end %>
 
-    <% if @query_chat_source.present? %>
-      <p class="small gray-300 mt24">
-        <strong><%= I18n.t('app.workspaces.queries.settings.chat_source_label') %>:</strong>
-        <%= link_to I18n.t('app.workspaces.queries.settings.chat_source_link'),
-                    @query_chat_source['path'],
-                    class: 'link secondary',
-                    target: '_blank',
-                    rel: 'noopener noreferrer' %>
-      </p>
-    <% end %>
-  <% end %>
+          <div data-controller="form">
+            <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
+              <%= form.label :name, I18n.t('app.workspaces.queries.settings.name_label'), class: "label block" %>
+              <%= form.text_field :name, type: "text", placeholder: I18n.t('app.workspaces.queries.settings.name_placeholder'), class: "input block fluid", required: true, value: @query.name %>
 
-  <%= render "shared/grab_handle" %>
-</aside>
+              <%= form.submit I18n.t('app.workspaces.queries.settings.save'), class: "link primary", "data-form-target": "submit" %>
+            <% end %>
+          </div>
+
+        <% else %>
+          <p><%= I18n.t('app.workspaces.queries.settings.read_only') %></p>
+        <% end %>
+
+        <% if @query_chat_source.present? %>
+          <p class="small gray-300 mt24">
+            <strong><%= I18n.t('app.workspaces.queries.settings.chat_source_label') %>:</strong>
+            <%= link_to I18n.t('app.workspaces.queries.settings.chat_source_link'),
+                        @query_chat_source['path'],
+                        class: 'link secondary',
+                        target: '_blank',
+                        rel: 'noopener noreferrer' %>
+          </p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%= render "shared/grab_handle" %>
+  </aside>
+</div>

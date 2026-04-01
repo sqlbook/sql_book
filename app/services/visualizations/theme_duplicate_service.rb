@@ -19,7 +19,12 @@ module Visualizations
 
       Result.new(success?: true, theme: duplicated, code: 'visualization_theme.duplicated', message: nil)
     rescue ActiveRecord::RecordInvalid => e
-      Result.new(success?: false, theme: nil, code: 'visualization_theme.invalid', message: e.record.errors.full_messages.to_sentence)
+      Result.new(
+        success?: false,
+        theme: nil,
+        code: 'visualization_theme.invalid',
+        message: e.record.errors.full_messages.to_sentence
+      )
     end
 
     private

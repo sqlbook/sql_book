@@ -76,16 +76,18 @@ module Api
       end
 
       def theme_entry
-        @theme_entry ||= begin
-          reference = if params[:id].to_s == Visualizations::SystemTheme::REFERENCE_KEY
-                        params[:id]
-                      elsif params[:id].to_s.start_with?('workspace_theme:')
-                        params[:id]
-                      else
-                        params[:reference] || "workspace_theme:#{params[:id]}"
-                      end
-          Visualizations::ThemeLibraryService.find_entry(workspace:, reference:)
-        end
+        @theme_entry ||= Visualizations::ThemeLibraryService.find_entry(
+          workspace:,
+          reference: theme_reference_param
+        )
+      end
+
+      def theme_reference_param
+        reference = params[:reference].presence || params[:id].to_s
+        return reference if reference == Visualizations::SystemTheme::REFERENCE_KEY
+        return reference if reference.start_with?('workspace_theme:')
+
+        "workspace_theme:#{reference}"
       end
 
       def theme_params

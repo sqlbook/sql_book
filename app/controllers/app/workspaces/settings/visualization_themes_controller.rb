@@ -23,7 +23,11 @@ module App
             attributes: theme_params
           ).call
 
-          redirect_with_result(result:, theme_reference: theme.reference_key, success_key: 'app.workspaces.settings.branding.toasts.theme_saved')
+          redirect_with_result(
+            result:,
+            success_key: 'app.workspaces.settings.branding.toasts.theme_saved',
+            theme_reference: theme.reference_key
+          )
         end
 
         def destroy
@@ -38,12 +42,20 @@ module App
           )
           result = Visualizations::ThemeDuplicateService.new(workspace:, source_theme:).call
 
-          redirect_with_result(result:, theme_reference: result.theme&.reference_key, success_key: 'app.workspaces.settings.branding.toasts.theme_duplicated')
+          redirect_with_result(
+            result:,
+            success_key: 'app.workspaces.settings.branding.toasts.theme_duplicated',
+            theme_reference: result.theme&.reference_key
+          )
         end
 
         def set_default
           result = Visualizations::ThemeDefaultService.new(theme:).call
-          redirect_with_result(result:, theme_reference: theme.reference_key, success_key: 'app.workspaces.settings.branding.toasts.theme_defaulted')
+          redirect_with_result(
+            result:,
+            success_key: 'app.workspaces.settings.branding.toasts.theme_defaulted',
+            theme_reference: theme.reference_key
+          )
         end
 
         private
@@ -75,7 +87,7 @@ module App
           deny_workspace_access!(workspace:, fallback_path: app_workspace_path(workspace))
         end
 
-        def redirect_with_result(result:, theme_reference: nil, success_key:)
+        def redirect_with_result(result:, success_key:, theme_reference: nil)
           flash[:toast] = toast_for(result:, success_key:)
 
           redirect_to app_workspace_settings_path(

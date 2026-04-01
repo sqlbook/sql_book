@@ -1,0 +1,26 @@
+<% close_aria_label = local_assigns.fetch(:close_aria_label, I18n.t('common.actions.close')) %>
+
+<header class="tabbed-side-panel__header">
+  <div class="tabbed-side-panel__title-row">
+    <h2 class="tabbed-side-panel__title gray-250"><%= title %></h2>
+
+    <% if local_assigns[:close_path].present? %>
+      <%= link_to close_path,
+                  class: 'tabbed-side-panel__close',
+                  'aria-label': close_aria_label do %>
+        <i class="ri-close-line" aria-hidden="true"></i>
+      <% end %>
+    <% else %>
+      <%= button_tag type: 'button',
+                     class: 'tabbed-side-panel__close',
+                     data: { action: close_action },
+                     'aria-label': close_aria_label do %>
+        <i class="ri-close-line" aria-hidden="true"></i>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="tabbed-side-panel__tabs">
+    <%= tabs_content if local_assigns[:tabs_content].present? %>
+  </div>
+</header>

@@ -12,12 +12,7 @@ module Visualizations
 
     def call
       record = theme || workspace.visualization_themes.build
-      record.assign_attributes(
-        name: attributes['name'],
-        default: ActiveModel::Type::Boolean.new.cast(attributes['default']),
-        theme_json_dark: resolved_theme_json(mode: :dark, current: record.theme_json_dark),
-        theme_json_light: resolved_theme_json(mode: :light, current: record.theme_json_light)
-      )
+      assign_theme_attributes(record)
       record.save!
 
       Result.new(success?: true, theme: record, code: 'visualization_theme.saved', message: nil)
@@ -33,6 +28,15 @@ module Visualizations
     private
 
     attr_reader :workspace, :attributes, :theme
+
+    def assign_theme_attributes(record)
+      record.assign_attributes(
+        name: attributes['name'],
+        default: ActiveModel::Type::Boolean.new.cast(attributes['default']),
+        theme_json_dark: resolved_theme_json(mode: :dark, current: record.theme_json_dark),
+        theme_json_light: resolved_theme_json(mode: :light, current: record.theme_json_light)
+      )
+    end
 
     def resolved_theme_json(mode:, current:)
       direct_value = attributes["theme_json_#{mode}"]
