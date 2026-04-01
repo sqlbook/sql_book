@@ -1,0 +1,24 @@
+<div class="visualization-gallery">
+  <div class="visualization-gallery__header">
+    <h4 class="cream-250"><%= I18n.t('app.workspaces.visualizations.gallery.title') %></h4>
+    <p class="gray-300"><%= I18n.t('app.workspaces.visualizations.gallery.description') %></p>
+  </div>
+
+  <% if can_write_queries?(workspace: workspace) %>
+    <%= form_with url: app_workspace_data_source_query_visualization_path(workspace, data_source, query), method: :put, class: "visualization-gallery__grid" do %>
+      <% @available_visualization_types.each do |visualization_type| %>
+        <button
+          type="submit"
+          name="chart_type"
+          value="<%= visualization_type[:chart_type] %>"
+          class="visualization-gallery__card">
+          <i class="<%= visualization_type[:icon] %>"></i>
+          <span class="visualization-gallery__label"><%= visualization_label(chart_type: visualization_type[:chart_type]) %></span>
+          <span class="visualization-gallery__description"><%= visualization_description(chart_type: visualization_type[:chart_type]) %></span>
+        </button>
+      <% end %>
+    <% end %>
+  <% else %>
+    <p class="gray-300"><%= I18n.t('app.workspaces.visualizations.gallery.read_only') %></p>
+  <% end %>
+</div>

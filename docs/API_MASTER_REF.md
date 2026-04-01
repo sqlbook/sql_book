@@ -1,6 +1,6 @@
 # API Master Reference
 
-Last updated: 2026-03-30
+Last updated: 2026-04-01
 
 ## Purpose
 Single source of truth for sqlbook's documented API surface, OpenAPI authoring rules, Scalar setup, and the maintenance workflow that keeps the docs useful for both humans and LLM/tool consumers.
@@ -47,6 +47,16 @@ Current OpenAPI coverage includes the workspace, team-management, datasource, an
 - `POST /api/v1/workspaces/:workspace_id/queries`
 - `PATCH /api/v1/workspaces/:workspace_id/queries/:id`
 - `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
+- `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+- `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+- `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+- `GET /api/v1/workspaces/:workspace_id/visualization-themes`
+- `POST /api/v1/workspaces/:workspace_id/visualization-themes`
+- `GET /api/v1/workspaces/:workspace_id/visualization-themes/:id`
+- `PATCH /api/v1/workspaces/:workspace_id/visualization-themes/:id`
+- `DELETE /api/v1/workspaces/:workspace_id/visualization-themes/:id`
+- `POST /api/v1/workspaces/:workspace_id/visualization-themes/duplicate`
+- `PATCH /api/v1/workspaces/:workspace_id/visualization-themes/:id/default`
 
 Current datasource API scope:
 - phase 1 is PostgreSQL-only for external database creation/validation
@@ -75,6 +85,22 @@ Current query API scope:
 - saved query identity is authoritative at the app layer, not the LLM layer; the model may suggest names or conversational next steps, but duplicate prevention and in-place updates are server-owned behaviors
 - if a saved query is deleted, any linked thread reference remains as thread-only chat history; if the source chat thread is deleted, saved queries simply lose their `chat_source`
 - successful query updates may include `suggested_name` plus `current_name` when the SQL changed meaningfully and the app thinks the saved query title may now be misleading; callers may surface that as a rename suggestion, but should not silently rename the query without an explicit follow-up action
+
+Current visualization and theming API scope:
+- query visualizations are query-owned and one-to-one in this phase
+- visualization persistence is domain-shaped and server-authored:
+  - `chart_type`
+  - `theme_reference`
+  - `data_config`
+  - `appearance_config_dark`
+  - `appearance_config_light`
+  - `other_config`
+- callers should not submit or persist raw full ECharts option blobs as the primary chart contract
+- visualization theme APIs expose workspace-owned themes plus the built-in system theme
+- the built-in `Default Theming` theme is visible in every workspace but remains read-only and undeletable
+- workspace theme management is owner/admin-only because it is part of workspace settings
+- query visualization reads are allowed to accepted workspace members who can already view the query, but visualization writes remain aligned with query-write permissions
+- the current API deliberately reserves the query visualization `Sharing` concept without exposing public URLs, embed code, or audience toggles yet
 
 Current chat-thread API scope:
 - chat thread rename is available to all accepted workspace members, but only for the actor's own private thread in the current workspace
@@ -158,6 +184,10 @@ For docs to stay human and LLM friendly:
   - exact duplicate saves should no-op to the existing saved query
   - in-place saved-query edits should use the same update contract whether they originate from product UI or chat
   - SQL-changing saved-query updates may also carry name-review state (`aligned`, `stale`, `uncertain`) plus rename follow-up metadata
+- Visualization semantics should also stay aligned across those surfaces:
+  - the same server-owned validation and option-building logic should back UI and API behavior
+  - future chat/tool callers should be able to request or mutate visualizations through the same structured contracts without scraping browser UI state
+  - future expansion to chat- or MCP-assisted chart generation should extend these contracts rather than introducing a second renderer-shaped persistence format
 
 ## Maintenance workflow
 When changing any documented workspace/team/datasource/query API behavior:

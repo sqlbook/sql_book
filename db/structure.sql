@@ -481,8 +481,6 @@ CREATE TABLE public.queries (
     data_source_id bigint,
     created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    chart_type character varying,
-    chart_config jsonb DEFAULT '{}'::jsonb NOT NULL,
     query_fingerprint character varying
 );
 
@@ -504,6 +502,43 @@ CREATE SEQUENCE public.queries_id_seq
 --
 
 ALTER SEQUENCE public.queries_id_seq OWNED BY public.queries.id;
+
+
+--
+-- Name: query_visualizations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.query_visualizations (
+    id bigint NOT NULL,
+    query_id bigint NOT NULL,
+    chart_type character varying NOT NULL,
+    theme_reference character varying DEFAULT 'system.default_theming'::character varying NOT NULL,
+    data_config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    appearance_config_dark jsonb DEFAULT '{}'::jsonb NOT NULL,
+    appearance_config_light jsonb DEFAULT '{}'::jsonb NOT NULL,
+    other_config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: query_visualizations_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.query_visualizations_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: query_visualizations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.query_visualizations_id_seq OWNED BY public.query_visualizations.id;
 
 
 --
@@ -664,6 +699,41 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: visualization_themes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.visualization_themes (
+    id bigint NOT NULL,
+    workspace_id bigint NOT NULL,
+    name character varying NOT NULL,
+    theme_json_dark jsonb DEFAULT '{}'::jsonb NOT NULL,
+    theme_json_light jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "default" boolean DEFAULT false NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: visualization_themes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.visualization_themes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: visualization_themes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.visualization_themes_id_seq OWNED BY public.visualization_themes.id;
+
+
+--
 -- Name: workspaces; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -786,6 +856,13 @@ ALTER TABLE ONLY public.queries ALTER COLUMN id SET DEFAULT nextval('public.quer
 
 
 --
+-- Name: query_visualizations id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_visualizations ALTER COLUMN id SET DEFAULT nextval('public.query_visualizations_id_seq'::regclass);
+
+
+--
 -- Name: translation_keys id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -811,6 +888,13 @@ ALTER TABLE ONLY public.translation_values ALTER COLUMN id SET DEFAULT nextval('
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: visualization_themes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.visualization_themes ALTER COLUMN id SET DEFAULT nextval('public.visualization_themes_id_seq'::regclass);
 
 
 --
@@ -933,6 +1017,14 @@ ALTER TABLE ONLY public.queries
 
 
 --
+-- Name: query_visualizations query_visualizations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_visualizations
+    ADD CONSTRAINT query_visualizations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -970,6 +1062,14 @@ ALTER TABLE ONLY public.translation_values
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: visualization_themes visualization_themes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.visualization_themes
+    ADD CONSTRAINT visualization_themes_pkey PRIMARY KEY (id);
 
 
 --
@@ -1261,6 +1361,13 @@ CREATE INDEX index_queries_on_data_source_id ON public.queries USING btree (data
 
 
 --
+-- Name: index_query_visualizations_on_query_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_query_visualizations_on_query_id ON public.query_visualizations USING btree (query_id);
+
+
+--
 -- Name: index_translation_keys_on_key; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1338,6 +1445,27 @@ CREATE INDEX index_users_on_last_active_at ON public.users USING btree (last_act
 
 
 --
+-- Name: index_visualization_themes_on_workspace_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_visualization_themes_on_workspace_id ON public.visualization_themes USING btree (workspace_id);
+
+
+--
+-- Name: index_visualization_themes_on_workspace_id_and_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_visualization_themes_on_workspace_id_and_name ON public.visualization_themes USING btree (workspace_id, name);
+
+
+--
+-- Name: index_visualization_themes_on_workspace_id_where_default; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_visualization_themes_on_workspace_id_where_default ON public.visualization_themes USING btree (workspace_id) WHERE ("default" = true);
+
+
+--
 -- Name: chat_query_references fk_rails_1c34be061a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1375,6 +1503,14 @@ ALTER TABLE ONLY public.chat_threads
 
 ALTER TABLE ONLY public.translation_value_revisions
     ADD CONSTRAINT fk_rails_6dd91d72ee FOREIGN KEY (translation_value_id) REFERENCES public.translation_values(id);
+
+
+--
+-- Name: query_visualizations fk_rails_6e64eccc7f; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_visualizations
+    ADD CONSTRAINT fk_rails_6e64eccc7f FOREIGN KEY (query_id) REFERENCES public.queries(id);
 
 
 --
@@ -1447,6 +1583,14 @@ ALTER TABLE ONLY public.chat_query_references
 
 ALTER TABLE ONLY public.active_storage_variant_records
     ADD CONSTRAINT fk_rails_993965df05 FOREIGN KEY (blob_id) REFERENCES public.active_storage_blobs(id);
+
+
+--
+-- Name: visualization_themes fk_rails_9e6252ec09; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.visualization_themes
+    ADD CONSTRAINT fk_rails_9e6252ec09 FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id);
 
 
 --
@@ -1536,6 +1680,7 @@ ALTER TABLE ONLY public.chat_pending_follow_ups
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260401120000'),
 ('20260330100000'),
 ('20260322110000'),
 ('20260321170000'),

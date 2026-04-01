@@ -42,6 +42,7 @@ module App
         {
           'sql' => query_card['sql'],
           'question' => query_card['question'],
+          'name' => query_card['suggested_name'],
           'data_source_id' => query_card.dig('data_source', 'id')
         }.compact
       end

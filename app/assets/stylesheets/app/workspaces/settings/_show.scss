@@ -71,6 +71,38 @@
     }
   }
 
+  .workspace-branding {
+    &__header {
+      align-items: center;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      margin: 0 0 1.5rem 0;
+    }
+
+    &__mode-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+      margin: 1.5rem 0 0 0;
+    }
+
+    &__mode-card {
+      background: var(--gray-800);
+      border: 1px solid var(--gray-700);
+      padding: 1rem;
+    }
+
+    &__json {
+      font-family: monospace;
+      min-height: 14rem;
+    }
+
+    &__actions {
+      margin: 1.5rem 0 0 0;
+    }
+  }
+
   .invite-team-member-form {
     display: none;
     margin: 2rem 0 0 0;

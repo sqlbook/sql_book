@@ -1,18 +1,17 @@
 import { Controller } from '@hotwired/stimulus';
 import { QueryResult } from '../types/query-result';
-import { ChartConfig } from '../types/chart-config';
 
 export default class extends Controller<HTMLDivElement> {
   static targets = ['start', 'prev', 'next', 'end', 'currentPage', 'totalPages'];
 
   static values = {
-    config: {},
+    pageSize: Number,
     result: [],
   };
 
   private page: number = 0;
 
-  declare readonly configValue: ChartConfig;
+  declare readonly pageSizeValue: number;
   declare readonly resultValue: QueryResult;
 
   declare readonly startTarget: HTMLButtonElement;
@@ -77,9 +76,9 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private setVisibleRows = (): void => {
-    if (this.configValue.pagination_enabled) {
-      const start = (this.page * this.configValue.pagination_rows);
-      const end = start + Number(this.configValue.pagination_rows) - 1;
+    if (this.pageSizeValue > 0) {
+      const start = this.page * this.pageSizeValue;
+      const end = start + this.pageSizeValue - 1;
 
       this.element.querySelectorAll<HTMLTableRowElement>('tr:not(:first-of-type)').forEach((row, index) => {
         row.style.display = 'none';
@@ -92,6 +91,6 @@ export default class extends Controller<HTMLDivElement> {
   };
 
   private get pages(): number {
-    return Math.ceil(this.resultValue.length / this.configValue.pagination_rows);
+    return Math.max(1, Math.ceil(this.resultValue.length / this.pageSizeValue));
   }
 }

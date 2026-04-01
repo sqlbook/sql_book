@@ -334,7 +334,7 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       it 'updates the last updated by' do
         expect do
           put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
-              params: { query: 'Query 2' }
+              params: { name: 'Query 2' }
         end
           .to change { query.reload.last_updated_by }
           .from(nil)
@@ -487,21 +487,21 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       end
     end
 
-    context 'when updating the chart type' do
+    context 'when creating or updating a visualization' do
       let(:query) { create(:query, data_source:) }
 
-      it 'updates the query' do
+      it 'creates a query-owned visualization' do
         expect do
-          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
+          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/visualization",
               params: { chart_type: 'line' }
         end
-          .to change { query.reload.chart_type }
+          .to change { query.reload.visualization&.chart_type }
           .from(nil)
           .to('line')
       end
 
       it 'redirects to the query show page' do
-        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/visualization",
             params: { chart_type: 'line' }
 
         expect(response).to redirect_to(
@@ -509,58 +509,31 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
         )
       end
 
-      context 'when discarding the chart type' do
-        let(:query) { create(:query, data_source:, chart_type: 'line') }
+      it 'updates the visualization configuration' do
+        create(:query_visualization, query:, chart_type: 'line')
 
-        it 'sets it to nil when the chart type is empty' do
-          expect do
-            put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
-                params: { chart_type: '' }
-          end
-            .to change { query.reload.chart_type }
-            .from('line')
-            .to(nil)
-        end
-
-        it 'redirects to the query show page' do
-          put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}",
-              params: { chart_type: 'line' }
-
-          expect(response).to redirect_to(
-            app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
-          )
-        end
-      end
-    end
-
-    context 'when updating the chart config' do
-      let(:query) { create(:query, data_source:) }
-
-      let(:params) do
-        {
-          **query.chart_config,
-          title: 'My chart'
-        }
-      end
-
-      it 'updates the query' do
-        expect do
-          put(
-            "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/chart_config",
-            params:
-          )
-        end
-          .to change { query.reload.chart_config[:title] }
-          .from('Title')
-          .to('My chart')
-      end
-
-      it 'redirects to the query show page' do
-        put("/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/chart_config", params:)
+        put "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/visualization",
+            params: {
+              chart_type: 'line',
+              other_config: { title: 'Revenue by month' },
+              data_config: { dimension_key: 'month', value_key: 'revenue' }
+            }
 
         expect(response).to redirect_to(
           app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
         )
+        expect(query.reload.visualization.other_config['title']).to eq('Revenue by month')
+        expect(query.visualization.data_config['dimension_key']).to eq('month')
+      end
+
+      it 'removes the visualization' do
+        create(:query_visualization, query:, chart_type: 'line')
+        expect do
+          delete "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}/visualization"
+        end
+          .to change { query.reload.visualization.present? }
+          .from(true)
+          .to(false)
       end
     end
   end

@@ -1,0 +1,239 @@
+<% visualization = query.visualization %>
+<% data_config = visualization.resolved_data_config(query_result: query.query_result) %>
+<% other_config = visualization.resolved_other_config(query_result: query.query_result) %>
+<% selected_theme_reference = visualization.theme_reference %>
+<% columns = query.query_result.columns %>
+<div class="visualization-editor">
+  <section class="visualization-editor__section">
+    <div class="visualization-editor__section-heading">
+      <h4 class="cream-250"><%= I18n.t('app.workspaces.visualizations.sections.preview') %></h4>
+      <% if can_write_queries?(workspace: workspace) %>
+        <%= button_to I18n.t('app.workspaces.visualizations.actions.remove'),
+                      app_workspace_data_source_query_visualization_path(workspace, data_source, query),
+                      method: :delete,
+                      class: 'link secondary' %>
+      <% end %>
+    </div>
+    <%= render "shared/query_visualization_preview", query:, visualization:, workspace: %>
+  </section>
+
+  <% if can_write_queries?(workspace: workspace) %>
+    <%= form_with url: app_workspace_data_source_query_visualization_path(workspace, data_source, query), method: :put, class: "visualization-editor__form" do %>
+      <section class="visualization-editor__section">
+        <h4 class="cream-250"><%= I18n.t('app.workspaces.visualizations.sections.data') %></h4>
+        <div class="split">
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.chart_type') %></label>
+            <div class="select">
+              <%= select_tag :chart_type,
+                             options_for_select(@available_visualization_types.map { |item| [visualization_label(chart_type: item[:chart_type]), item[:chart_type]] }, visualization.chart_type) %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.theme') %></label>
+            <div class="select">
+              <%= select_tag :theme_reference,
+                             options_for_select(@visualization_theme_library.map { |theme_entry| ["#{theme_entry.name}#{theme_entry.default? ? " · #{I18n.t('app.workspaces.settings.branding.table.default_badge')}" : ''}", theme_entry.reference_key] }, selected_theme_reference) %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+        </div>
+
+        <% if Visualizations::ChartRegistry.cartesian?(visualization.chart_type) %>
+          <div class="split">
+            <div>
+              <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.dimension_key') %></label>
+              <div class="select">
+                <%= select_tag 'data_config[dimension_key]', options_for_select(columns, data_config['dimension_key']) %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+            </div>
+            <div>
+              <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.value_key') %></label>
+              <div class="select">
+                <%= select_tag 'data_config[value_key]', options_for_select(columns, data_config['value_key']) %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+            </div>
+          </div>
+        <% elsif %w[pie donut total].include?(visualization.chart_type) %>
+          <div class="split">
+            <% if %w[pie donut].include?(visualization.chart_type) %>
+              <div>
+                <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.dimension_key') %></label>
+                <div class="select">
+                  <%= select_tag 'data_config[dimension_key]', options_for_select(columns, data_config['dimension_key']) %>
+                  <i class="ri-arrow-drop-down-line"></i>
+                </div>
+              </div>
+            <% end %>
+            <div>
+              <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.value_key') %></label>
+              <div class="select">
+                <%= select_tag 'data_config[value_key]', options_for_select(columns, data_config['value_key']) %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <% if visualization.chart_type == 'table' %>
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.table_page_size') %></label>
+            <div class="select">
+              <%= select_tag 'data_config[table_page_size]', options_for_select([10, 25, 50, 100], data_config['table_page_size']) %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="visualization-editor__section">
+        <h4 class="cream-250"><%= I18n.t('app.workspaces.visualizations.sections.appearance') %></h4>
+        <div class="split">
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.title') %></label>
+            <%= text_field_tag 'other_config[title]', other_config['title'], class: 'input block fluid' %>
+          </div>
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.subtitle') %></label>
+            <%= text_field_tag 'other_config[subtitle]', other_config['subtitle'], class: 'input block fluid' %>
+          </div>
+        </div>
+
+        <% if Visualizations::ChartRegistry.cartesian?(visualization.chart_type) %>
+          <div class="split">
+            <div>
+              <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.x_axis_label') %></label>
+              <%= text_field_tag 'other_config[x_axis_label]', other_config['x_axis_label'], class: 'input block fluid' %>
+            </div>
+            <div>
+              <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.y_axis_label') %></label>
+              <%= text_field_tag 'other_config[y_axis_label]', other_config['y_axis_label'], class: 'input block fluid' %>
+            </div>
+          </div>
+        <% end %>
+
+        <% if visualization.chart_type == 'donut' %>
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.donut_inner_radius') %></label>
+            <%= text_field_tag 'other_config[donut_inner_radius]', other_config['donut_inner_radius'], class: 'input block fluid', placeholder: '58%' %>
+          </div>
+        <% end %>
+
+        <% if visualization.chart_type == 'total' %>
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.total_label') %></label>
+            <%= text_field_tag 'other_config[total_label]', other_config['total_label'], class: 'input block fluid' %>
+          </div>
+        <% end %>
+
+        <div class="split">
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.legend_enabled') %></label>
+            <div class="select">
+              <%= select_tag 'other_config[legend_enabled]', options_for_select([[I18n.t('common.states.enabled'), true], [I18n.t('common.states.disabled'), false]], other_config['legend_enabled']) %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+          <div>
+            <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.tooltip_enabled') %></label>
+            <div class="select">
+              <%= select_tag 'other_config[tooltip_enabled]', options_for_select([[I18n.t('common.states.enabled'), true], [I18n.t('common.states.disabled'), false]], other_config['tooltip_enabled']) %>
+              <i class="ri-arrow-drop-down-line"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="visualization-editor__mode-grid">
+          <% { dark: 'app.workspaces.visualizations.form.dark_mode', light: 'app.workspaces.visualizations.form.light_mode' }.each do |mode, translation_key| %>
+            <% override_attributes = Visualizations::ThemeFormBuilder.editor_attributes(theme_json: visualization.appearance_config_for(mode:)) %>
+            <div class="visualization-editor__mode-card">
+              <h5 class="cream-250"><%= I18n.t(translation_key) %></h5>
+              <div class="split">
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.palette') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[colors_csv]", override_attributes[:colors_csv], class: 'input block fluid', placeholder: '#F5807B, #5CA1F2, #F8BD77' %>
+                </div>
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.background_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[background_color]", override_attributes[:background_color], class: 'input block fluid', placeholder: '#1C1C1C' %>
+                </div>
+              </div>
+              <div class="split">
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.text_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[text_color]", override_attributes[:text_color], class: 'input block fluid', placeholder: '#ECEAE6' %>
+                </div>
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.legend_text_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[legend_text_color]", override_attributes[:legend_text_color], class: 'input block fluid', placeholder: '#BBBBBB' %>
+                </div>
+              </div>
+              <div class="split">
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.title_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[title_color]", override_attributes[:title_color], class: 'input block fluid' %>
+                </div>
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.subtitle_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[subtitle_color]", override_attributes[:subtitle_color], class: 'input block fluid' %>
+                </div>
+              </div>
+              <div class="split">
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.axis_line_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[axis_line_color]", override_attributes[:axis_line_color], class: 'input block fluid', placeholder: '#505050' %>
+                </div>
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.axis_label_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[axis_label_color]", override_attributes[:axis_label_color], class: 'input block fluid' %>
+                </div>
+              </div>
+              <div class="split">
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.split_line_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[split_line_color]", override_attributes[:split_line_color], class: 'input block fluid', placeholder: '#333333' %>
+                </div>
+                <div>
+                  <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.tooltip_background_color') %></label>
+                  <%= text_field_tag "appearance_editor_#{mode}[tooltip_background_color]", override_attributes[:tooltip_background_color], class: 'input block fluid' %>
+                </div>
+              </div>
+              <div>
+                <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.tooltip_text_color') %></label>
+                <%= text_field_tag "appearance_editor_#{mode}[tooltip_text_color]", override_attributes[:tooltip_text_color], class: 'input block fluid' %>
+              </div>
+              <label class="label block"><%= I18n.t('app.workspaces.visualizations.form.raw_json') %></label>
+              <%= text_area_tag "appearance_raw_json_#{mode}", override_attributes[:raw_json], class: 'input block fluid visualization-editor__json', rows: 10 %>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="visualization-editor__section">
+        <h4 class="cream-250"><%= I18n.t('app.workspaces.visualizations.sections.sharing') %></h4>
+        <div class="message">
+          <i class="ri-information-line ri-lg red-500"></i>
+          <div class="body">
+            <p class="title cream-250"><%= I18n.t('app.workspaces.visualizations.sharing.title') %></p>
+            <p><%= I18n.t('app.workspaces.visualizations.sharing.body') %></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="visualization-editor__section">
+        <h4 class="cream-250"><%= I18n.t('app.workspaces.visualizations.sections.other') %></h4>
+        <p class="gray-300"><%= I18n.t('app.workspaces.visualizations.other.description') %></p>
+      </section>
+
+      <div class="visualization-editor__actions">
+        <%= submit_tag I18n.t('app.workspaces.visualizations.actions.save'), class: 'link primary' %>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="gray-300"><%= I18n.t('app.workspaces.visualizations.gallery.read_only') %></p>
+  <% end %>
+</div>

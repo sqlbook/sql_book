@@ -38,9 +38,6 @@
 @use "shared/tabs/tabs";
 @use "shared/accordion";
 @use "shared/breadcrumbs";
-@use "shared/chart-config";
-@use "shared/chart-gallery";
-@use "shared/chart";
 @use "shared/data-source-card";
 @use "shared/data-source-query";
 @use "shared/flash";
@@ -50,6 +47,7 @@
 @use "shared/header";
 @use "shared/notice";
 @use "shared/query-results-table";
+@use "shared/query-visualization";
 @use "shared/step-indicator";
 @use "shared/toast";
 @use "shared/workspace-card";

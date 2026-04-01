@@ -33,6 +33,17 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       post 'workspaces/:workspace_id/queries', to: 'queries#create'
       patch 'workspaces/:workspace_id/queries/:id', to: 'queries#update'
       delete 'workspaces/:workspace_id/queries/:id', to: 'queries#destroy'
+      get 'workspaces/:workspace_id/queries/:query_id/visualization', to: 'query_visualizations#show'
+      patch 'workspaces/:workspace_id/queries/:query_id/visualization', to: 'query_visualizations#update'
+      put 'workspaces/:workspace_id/queries/:query_id/visualization', to: 'query_visualizations#update'
+      delete 'workspaces/:workspace_id/queries/:query_id/visualization', to: 'query_visualizations#destroy'
+      get 'workspaces/:workspace_id/visualization-themes', to: 'visualization_themes#index'
+      post 'workspaces/:workspace_id/visualization-themes', to: 'visualization_themes#create'
+      get 'workspaces/:workspace_id/visualization-themes/:id', to: 'visualization_themes#show'
+      patch 'workspaces/:workspace_id/visualization-themes/:id', to: 'visualization_themes#update'
+      delete 'workspaces/:workspace_id/visualization-themes/:id', to: 'visualization_themes#destroy'
+      post 'workspaces/:workspace_id/visualization-themes/duplicate', to: 'visualization_themes#duplicate'
+      patch 'workspaces/:workspace_id/visualization-themes/:id/default', to: 'visualization_themes#set_default'
       patch 'workspaces/:workspace_id/chat-threads/:id', to: 'chat_threads#update'
     end
   end
@@ -85,6 +96,21 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
 
     get 'workspaces/:id/workspace-settings', to: 'workspaces/settings#show', as: :workspace_settings
     patch 'workspaces/:id/workspace-settings', to: 'workspaces/settings#update', as: nil
+    post 'workspaces/:id/workspace-settings/branding/themes',
+         to: 'workspaces/settings/visualization_themes#create',
+         as: :workspace_visualization_themes
+    patch 'workspaces/:id/workspace-settings/branding/themes/:theme_id',
+          to: 'workspaces/settings/visualization_themes#update',
+          as: :workspace_visualization_theme
+    delete 'workspaces/:id/workspace-settings/branding/themes/:theme_id',
+           to: 'workspaces/settings/visualization_themes#destroy',
+           as: :delete_workspace_visualization_theme
+    post 'workspaces/:id/workspace-settings/branding/themes/duplicate',
+         to: 'workspaces/settings/visualization_themes#duplicate',
+         as: :duplicate_workspace_visualization_theme
+    patch 'workspaces/:id/workspace-settings/branding/themes/:theme_id/default',
+          to: 'workspaces/settings/visualization_themes#set_default',
+          as: :default_workspace_visualization_theme
 
     resources :workspaces, except: %i[edit update] do # rubocop:disable Metrics/BlockLength
       resources :chat_threads,
@@ -115,7 +141,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
         end
         resources :set_up, only: %i[index], controller: 'workspaces/data_sources/set_up'
         resources :queries, controller: 'workspaces/data_sources/queries' do
-          member { put 'chart_config' }
+          resource :visualization,
+                   only: %i[update destroy],
+                   controller: 'workspaces/data_sources/query_visualizations'
         end
       end
     end # rubocop:enable Metrics/BlockLength

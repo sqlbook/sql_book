@@ -1,0 +1,30 @@
+<% if query.query_result.error %>
+  <p class="red-500"><%= query.query_result.error_message %></p>
+<% elsif visualization.chart_type == 'table' %>
+  <%= render "shared/query_results_table", query:, page_size: visualization.resolved_data_config(query_result: query.query_result)['table_page_size'] %>
+<% elsif visualization.chart_type == 'total' %>
+  <% total_config = visualization.resolved_data_config(query_result: query.query_result) %>
+  <% total_options = visualization.resolved_other_config(query_result: query.query_result) %>
+  <% column_name = total_config['value_key'] %>
+  <% column_index = query.query_result.columns.index(column_name) %>
+  <% total_value = column_index ? query.query_result.rows.first&.[](column_index) : nil %>
+  <div class="visualization-preview-total">
+    <div class="visualization-preview-total__value"><%= number_to_delimited(total_value) %></div>
+    <% if total_options['total_label'].to_s.strip.present? %>
+      <div class="visualization-preview-total__label"><%= total_options['total_label'] %></div>
+    <% end %>
+  </div>
+<% else %>
+  <% dark_option = Visualizations::OptionBuilder.new(query:, visualization:, mode: :dark).call %>
+  <% light_option = Visualizations::OptionBuilder.new(query:, visualization:, mode: :light).call %>
+  <% dark_theme = Visualizations::ThemeResolver.resolve(workspace: workspace, theme_reference: visualization.theme_reference, mode: :dark, appearance_overrides: visualization.appearance_config_for(mode: :dark)) %>
+  <% light_theme = Visualizations::ThemeResolver.resolve(workspace: workspace, theme_reference: visualization.theme_reference, mode: :light, appearance_overrides: visualization.appearance_config_for(mode: :light)) %>
+
+  <div
+    class="visualization-preview-chart"
+    data-controller="echarts-visualization"
+    data-echarts-visualization-dark-option-value="<%= dark_option.to_json %>"
+    data-echarts-visualization-light-option-value="<%= light_option.to_json %>"
+    data-echarts-visualization-dark-theme-value="<%= dark_theme.to_json %>"
+    data-echarts-visualization-light-theme-value="<%= light_theme.to_json %>"></div>
+<% end %>

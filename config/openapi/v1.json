@@ -3,7 +3,7 @@
   "info": {
     "title": "sqlbook API",
     "version": "v1",
-    "description": "API reference for the current sqlbook app surface.\n\nThe documented scope is still growing, but the API already covers the workspace, team-management, datasource, and query contracts that are currently exposed through the product, chat runtime, and related app flows.\n\nThis API is session-authenticated, strictly workspace-scoped, and server-authoritative: every request is checked against the current user, the current workspace, and the same role/scope rules used by the product UI and chat runtime.\n\nFor LLM and tool consumers, treat each operation as an executable contract. Do not infer permissions from docs alone: always rely on response status and error_code. Mutating actions may still be blocked by role or workspace scope even when the payload is structurally valid."
+    "description": "API reference for the current sqlbook app surface.\n\nThe documented scope is still growing, but the API already covers the workspace, team-management, datasource, query, visualization, and visualization-theme contracts that are currently exposed through the product, chat runtime, and related app flows.\n\nThis API is session-authenticated, strictly workspace-scoped, and server-authoritative: every request is checked against the current user, the current workspace, and the same role/scope rules used by the product UI and chat runtime.\n\nFor LLM and tool consumers, treat each operation as an executable contract. Do not infer permissions from docs alone: always rely on response status plus the operation-specific `code` or `error_code`. Mutating actions may still be blocked by role or workspace scope even when the payload is structurally valid."
   },
   "servers": [
     {
@@ -41,6 +41,16 @@
       "name": "Queries",
       "description": "Operations for browsing, running, saving, renaming, and deleting workspace queries. Query execution is read-only against connected data sources, while query-library mutations remain workspace-scoped and session-authenticated.",
       "x-displayName": "Queries"
+    },
+    {
+      "name": "Visualizations",
+      "description": "Operations for reading, creating, updating, and removing query-owned visualizations. Visualization state is stored as structured domain data and rendered server-side into ECharts options when needed.",
+      "x-displayName": "Visualizations"
+    },
+    {
+      "name": "Visualization Themes",
+      "description": "Operations for listing and managing workspace visualization themes plus the built-in system theme. Theme-management writes stay aligned with workspace settings permissions.",
+      "x-displayName": "Visualization Themes"
     }
   ],
   "x-tagGroups": [
@@ -73,6 +83,13 @@
       "tags": [
         "Queries"
       ]
+    },
+    {
+      "name": "Visualization",
+      "tags": [
+        "Visualizations",
+        "Visualization Themes"
+      ]
     }
   ],
   "x-scalar-active-environment": "current-origin",
@@ -95,6 +112,10 @@
         "queryId": {
           "description": "Example saved query id used in code samples.",
           "default": "14"
+        },
+        "themeId": {
+          "description": "Example visualization theme id used in code samples.",
+          "default": "31"
         },
         "threadId": {
           "description": "Example chat thread id used in code samples.",
@@ -971,6 +992,534 @@
           }
         ]
       }
+    },
+    "/api/v1/workspaces/{workspace_id}/queries/{query_id}/visualization": {
+      "get": {
+        "operationId": "queryVisualizationShow",
+        "summary": "Get query visualization",
+        "description": "Returns the current query-owned visualization for the saved query, including the structured visualization payload and preview option payloads for dark and light mode when a visualization exists.",
+        "tags": [
+          "Visualizations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "description": "The saved query id that owns this visualization.",
+            "schema": {
+              "type": "integer",
+              "example": 14
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationLoaded"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualization' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "queryVisualizationUpsert",
+        "summary": "Create or update query visualization",
+        "description": "Creates or updates the one-to-one visualization owned by the saved query. Callers send structured visualization state, not raw full ECharts option blobs.",
+        "tags": [
+          "Visualizations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "description": "The saved query id that owns this visualization.",
+            "schema": {
+              "type": "integer",
+              "example": 14
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisualizationUpdateRequest"
+              },
+              "examples": {
+                "lineVisualization": {
+                  "summary": "Save a line chart visualization",
+                  "value": {
+                    "chart_type": "line",
+                    "theme_reference": "system.default_theming",
+                    "data_config": {
+                      "dimension_key": "month",
+                      "value_key": "revenue"
+                    },
+                    "appearance_config_dark": {
+                      "color": [
+                        "#F5807B"
+                      ]
+                    },
+                    "appearance_config_light": {},
+                    "other_config": {
+                      "title": "Revenue by month",
+                      "legend_enabled": false,
+                      "tooltip_enabled": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationSaved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/VisualizationValidationError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualization' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"chart_type\":\"line\",\"theme_reference\":\"system.default_theming\",\"data_config\":{\"dimension_key\":\"month\",\"value_key\":\"revenue\"},\"appearance_config_dark\":{},\"appearance_config_light\":{},\"other_config\":{\"title\":\"Revenue by month\",\"legend_enabled\":false,\"tooltip_enabled\":true}}'"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "queryVisualizationDelete",
+        "summary": "Delete query visualization",
+        "description": "Deletes the query-owned visualization for the saved query without deleting the query itself.",
+        "tags": [
+          "Visualizations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "description": "The saved query id that owns this visualization.",
+            "schema": {
+              "type": "integer",
+              "example": 14
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationDeleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualization' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/visualization-themes": {
+      "get": {
+        "operationId": "visualizationThemeList",
+        "summary": "List visualization themes",
+        "description": "Returns the built-in system theme plus the current workspace's visualization themes.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemesListed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      },
+      "post": {
+        "operationId": "visualizationThemeCreate",
+        "summary": "Create visualization theme",
+        "description": "Creates a workspace-owned visualization theme with explicit dark and light ECharts theme JSON variants.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisualizationThemeCreateRequest"
+              },
+              "examples": {
+                "createTheme": {
+                  "summary": "Create a workspace theme",
+                  "value": {
+                    "name": "Board Room",
+                    "default": true,
+                    "theme_json_dark": {
+                      "color": [
+                        "#F5807B",
+                        "#5CA1F2"
+                      ],
+                      "backgroundColor": "#1C1C1C"
+                    },
+                    "theme_json_light": {
+                      "color": [
+                        "#FF6A64",
+                        "#3E86D9"
+                      ],
+                      "backgroundColor": "#F4F2EE"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemeSaved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/VisualizationThemeValidationError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"Board Room\",\"default\":true,\"theme_json_dark\":{\"color\":[\"#F5807B\",\"#5CA1F2\"],\"backgroundColor\":\"#1C1C1C\"},\"theme_json_light\":{\"color\":[\"#FF6A64\",\"#3E86D9\"],\"backgroundColor\":\"#F4F2EE\"}}'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/visualization-themes/{id}": {
+      "get": {
+        "operationId": "visualizationThemeShow",
+        "summary": "Get visualization theme",
+        "description": "Returns a single visualization theme. The `id` may be a workspace theme id or the system theme reference key `system.default_theming`.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Workspace theme id or the system theme reference key.",
+            "schema": {
+              "type": "string",
+              "example": "31"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemeLoaded"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes/{{themeId}}' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "visualizationThemeUpdate",
+        "summary": "Update visualization theme",
+        "description": "Updates a workspace-owned visualization theme. The system theme is read-only and cannot be updated through this route.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The workspace visualization theme id.",
+            "schema": {
+              "type": "integer",
+              "example": 31
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisualizationThemeUpdateRequest"
+              },
+              "examples": {
+                "updateTheme": {
+                  "summary": "Update a workspace theme",
+                  "value": {
+                    "name": "Board Room Refined",
+                    "default": false,
+                    "theme_json_dark": {
+                      "color": [
+                        "#F5807B",
+                        "#5CA1F2",
+                        "#F8BD77"
+                      ],
+                      "backgroundColor": "#1C1C1C"
+                    },
+                    "theme_json_light": {
+                      "color": [
+                        "#FF6A64",
+                        "#3E86D9",
+                        "#D88B39"
+                      ],
+                      "backgroundColor": "#F4F2EE"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemeSaved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/VisualizationThemeValidationError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes/{{themeId}}' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"name\":\"Board Room Refined\",\"default\":false,\"theme_json_dark\":{\"color\":[\"#F5807B\",\"#5CA1F2\",\"#F8BD77\"],\"backgroundColor\":\"#1C1C1C\"},\"theme_json_light\":{\"color\":[\"#FF6A64\",\"#3E86D9\",\"#D88B39\"],\"backgroundColor\":\"#F4F2EE\"}}'"
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "visualizationThemeDelete",
+        "summary": "Delete visualization theme",
+        "description": "Deletes a workspace-owned visualization theme. Default workspace themes must be changed before deletion.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The workspace visualization theme id.",
+            "schema": {
+              "type": "integer",
+              "example": 31
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemeDeleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/VisualizationThemeValidationError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes/{{themeId}}' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/visualization-themes/duplicate": {
+      "post": {
+        "operationId": "visualizationThemeDuplicate",
+        "summary": "Duplicate visualization theme",
+        "description": "Duplicates either the built-in system theme or an existing workspace theme into a new editable workspace-owned theme.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VisualizationThemeDuplicateRequest"
+              },
+              "examples": {
+                "duplicateSystemTheme": {
+                  "summary": "Duplicate the system theme",
+                  "value": {
+                    "reference": "system.default_theming"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemeSaved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/VisualizationThemeValidationError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X POST '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes/duplicate' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"reference\":\"system.default_theming\"}'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/visualization-themes/{id}/default": {
+      "patch": {
+        "operationId": "visualizationThemeSetDefault",
+        "summary": "Set default visualization theme",
+        "description": "Marks a workspace-owned visualization theme as the workspace default for new visualizations.",
+        "tags": [
+          "Visualization Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The workspace visualization theme id.",
+            "schema": {
+              "type": "integer",
+              "example": 31
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationThemeSaved"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/VisualizationThemeValidationError"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/visualization-themes/{{themeId}}/default' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1753,6 +2302,315 @@
           }
         }
       },
+      "VisualizationLoaded": {
+        "description": "Query visualization returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationLoadedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization.loaded",
+                  "data": {
+                    "visualization": {
+                      "query_id": 14,
+                      "chart_type": "line",
+                      "theme_reference": "system.default_theming",
+                      "theme": {
+                        "reference": "system.default_theming",
+                        "name": "Default Theming",
+                        "read_only": true,
+                        "system_theme": true,
+                        "default": true
+                      },
+                      "data_config": {
+                        "dimension_key": "month",
+                        "value_key": "revenue",
+                        "table_page_size": 10
+                      },
+                      "appearance_config_dark": {},
+                      "appearance_config_light": {},
+                      "other_config": {
+                        "title": "Revenue by month",
+                        "legend_enabled": false,
+                        "tooltip_enabled": true
+                      },
+                      "renderer": "echarts",
+                      "preview": {
+                        "dark_option": {
+                          "series": []
+                        },
+                        "light_option": {
+                          "series": []
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationSaved": {
+        "description": "Query visualization created or updated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationSavedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization.saved",
+                  "message": null,
+                  "data": {
+                    "visualization": {
+                      "query_id": 14,
+                      "chart_type": "line",
+                      "theme_reference": "system.default_theming",
+                      "theme": {
+                        "reference": "system.default_theming",
+                        "name": "Default Theming",
+                        "read_only": true,
+                        "system_theme": true,
+                        "default": true
+                      },
+                      "data_config": {
+                        "dimension_key": "month",
+                        "value_key": "revenue",
+                        "table_page_size": 10
+                      },
+                      "appearance_config_dark": {},
+                      "appearance_config_light": {},
+                      "other_config": {
+                        "title": "Revenue by month",
+                        "legend_enabled": false,
+                        "tooltip_enabled": true
+                      },
+                      "renderer": "echarts",
+                      "preview": {
+                        "dark_option": {
+                          "series": []
+                        },
+                        "light_option": {
+                          "series": []
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationDeleted": {
+        "description": "Query visualization deleted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationDeletedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization.deleted",
+                  "data": {
+                    "query_id": 14
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationThemesListed": {
+        "description": "Visualization theme library returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationThemesListedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization_theme.listed",
+                  "data": {
+                    "themes": [
+                      {
+                        "id": "system.default_theming",
+                        "reference": "system.default_theming",
+                        "name": "Default Theming",
+                        "default": true,
+                        "read_only": true,
+                        "system_theme": true,
+                        "theme_json_dark": {
+                          "backgroundColor": "#1C1C1C"
+                        },
+                        "theme_json_light": {
+                          "backgroundColor": "#F4F2EE"
+                        }
+                      },
+                      {
+                        "id": 31,
+                        "reference": "workspace_theme:31",
+                        "name": "Board Room",
+                        "default": false,
+                        "read_only": false,
+                        "system_theme": false,
+                        "theme_json_dark": {
+                          "backgroundColor": "#1C1C1C"
+                        },
+                        "theme_json_light": {
+                          "backgroundColor": "#F4F2EE"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationThemeLoaded": {
+        "description": "Visualization theme returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationThemeLoadedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization_theme.loaded",
+                  "data": {
+                    "theme": {
+                      "id": 31,
+                      "reference": "workspace_theme:31",
+                      "name": "Board Room",
+                      "default": false,
+                      "read_only": false,
+                      "system_theme": false,
+                      "theme_json_dark": {
+                        "backgroundColor": "#1C1C1C"
+                      },
+                      "theme_json_light": {
+                        "backgroundColor": "#F4F2EE"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationThemeSaved": {
+        "description": "Visualization theme created or updated",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationThemeSavedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization_theme.saved",
+                  "message": null,
+                  "data": {
+                    "theme": {
+                      "id": 31,
+                      "reference": "workspace_theme:31",
+                      "name": "Board Room",
+                      "default": true,
+                      "read_only": false,
+                      "system_theme": false,
+                      "theme_json_dark": {
+                        "backgroundColor": "#1C1C1C"
+                      },
+                      "theme_json_light": {
+                        "backgroundColor": "#F4F2EE"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationThemeDeleted": {
+        "description": "Visualization theme deleted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationThemeDeletedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization_theme.deleted",
+                  "message": null,
+                  "data": {
+                    "deleted_theme_id": 31
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationValidationError": {
+        "description": "Invalid payload for requested visualization operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationValidationErrorResponse"
+            },
+            "examples": {
+              "validationError": {
+                "value": {
+                  "status": "validation_error",
+                  "code": "visualization.invalid_chart_type",
+                  "message": "That visualization type is not available.",
+                  "data": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "VisualizationThemeValidationError": {
+        "description": "Invalid payload for requested visualization-theme operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationValidationErrorResponse"
+            },
+            "examples": {
+              "validationError": {
+                "value": {
+                  "status": "validation_error",
+                  "code": "visualization_theme.invalid",
+                  "message": "Name can't be blank",
+                  "data": {}
+                }
+              }
+            }
+          }
+        }
+      },
       "ToolRateLimited": {
         "description": "Too many requests. This endpoint is temporarily rate limited.",
         "content": {
@@ -2065,6 +2923,140 @@
           }
         ]
       },
+      "VisualizationUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "chart_type"
+        ],
+        "properties": {
+          "chart_type": {
+            "$ref": "#/components/schemas/VisualizationChartType"
+          },
+          "theme_reference": {
+            "type": "string",
+            "description": "Workspace theme reference or the built-in system theme reference."
+          },
+          "data_config": {
+            "$ref": "#/components/schemas/VisualizationDataConfig"
+          },
+          "appearance_config_dark": {
+            "$ref": "#/components/schemas/VisualizationAppearanceConfig"
+          },
+          "appearance_config_light": {
+            "$ref": "#/components/schemas/VisualizationAppearanceConfig"
+          },
+          "other_config": {
+            "$ref": "#/components/schemas/VisualizationOtherConfig"
+          }
+        }
+      },
+      "VisualizationThemeCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "theme_json_dark",
+          "theme_json_light"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "theme_json_dark": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "theme_json_light": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "VisualizationThemeUpdateRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/VisualizationThemeCreateRequest"
+          }
+        ]
+      },
+      "VisualizationThemeDuplicateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "Theme reference to duplicate, for example `system.default_theming` or `workspace_theme:31`."
+          }
+        }
+      },
+      "VisualizationData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "visualization": {
+            "$ref": "#/components/schemas/VisualizationSummary"
+          }
+        }
+      },
+      "VisualizationDeletedData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query_id"
+        ],
+        "properties": {
+          "query_id": {
+            "type": "integer"
+          }
+        }
+      },
+      "VisualizationThemeData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "theme"
+        ],
+        "properties": {
+          "theme": {
+            "$ref": "#/components/schemas/VisualizationThemeSummary"
+          }
+        }
+      },
+      "VisualizationThemesData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "themes"
+        ],
+        "properties": {
+          "themes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisualizationThemeSummary"
+            }
+          }
+        }
+      },
+      "VisualizationThemeDeletedData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "deleted_theme_id"
+        ],
+        "properties": {
+          "deleted_theme_id": {
+            "type": "integer"
+          }
+        }
+      },
       "WorkspaceNameData": {
         "type": "object",
         "additionalProperties": false,
@@ -2360,6 +3352,199 @@
           }
         }
       },
+      "VisualizationChartType": {
+        "type": "string",
+        "enum": [
+          "table",
+          "total",
+          "line",
+          "area",
+          "column",
+          "bar",
+          "pie",
+          "donut"
+        ]
+      },
+      "VisualizationSelectedTheme": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reference",
+          "name",
+          "read_only",
+          "system_theme",
+          "default"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "system_theme": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VisualizationDataConfig": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "dimension_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "table_page_size": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "VisualizationAppearanceConfig": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "VisualizationOtherConfig": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "VisualizationPreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dark_option",
+          "light_option"
+        ],
+        "properties": {
+          "dark_option": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          },
+          "light_option": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
+          }
+        }
+      },
+      "VisualizationSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query_id",
+          "chart_type",
+          "theme_reference",
+          "data_config",
+          "appearance_config_dark",
+          "appearance_config_light",
+          "other_config",
+          "renderer"
+        ],
+        "properties": {
+          "query_id": {
+            "type": "integer"
+          },
+          "chart_type": {
+            "$ref": "#/components/schemas/VisualizationChartType"
+          },
+          "theme_reference": {
+            "type": "string"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/VisualizationSelectedTheme"
+          },
+          "data_config": {
+            "$ref": "#/components/schemas/VisualizationDataConfig"
+          },
+          "appearance_config_dark": {
+            "$ref": "#/components/schemas/VisualizationAppearanceConfig"
+          },
+          "appearance_config_light": {
+            "$ref": "#/components/schemas/VisualizationAppearanceConfig"
+          },
+          "other_config": {
+            "$ref": "#/components/schemas/VisualizationOtherConfig"
+          },
+          "renderer": {
+            "type": "string",
+            "enum": [
+              "table",
+              "total",
+              "echarts"
+            ]
+          },
+          "preview": {
+            "$ref": "#/components/schemas/VisualizationPreview"
+          }
+        }
+      },
+      "VisualizationThemeSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "reference",
+          "name",
+          "default",
+          "read_only",
+          "system_theme",
+          "theme_json_dark",
+          "theme_json_light"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "reference": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "system_theme": {
+            "type": "boolean"
+          },
+          "theme_json_dark": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "theme_json_light": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
       "QuerySummary": {
         "type": "object",
         "additionalProperties": false,
@@ -2391,6 +3576,9 @@
               "string",
               "null"
             ]
+          },
+          "visualization": {
+            "$ref": "#/components/schemas/VisualizationSummary"
           },
           "data_source": {
             "$ref": "#/components/schemas/QueryDataSourceSummary"
@@ -3083,6 +4271,239 @@
           },
           "error_code": {
             "type": "null"
+          }
+        }
+      },
+      "VisualizationLoadedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization.loaded"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationData"
+          }
+        }
+      },
+      "VisualizationSavedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization.saved"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationData"
+          }
+        }
+      },
+      "VisualizationDeletedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization.deleted"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationDeletedData"
+          }
+        }
+      },
+      "VisualizationThemesListedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization_theme.listed"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationThemesData"
+          }
+        }
+      },
+      "VisualizationThemeLoadedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization_theme.loaded"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationThemeData"
+          }
+        }
+      },
+      "VisualizationThemeSavedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization_theme.saved",
+              "visualization_theme.duplicated",
+              "visualization_theme.default_set"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationThemeData"
+          }
+        }
+      },
+      "VisualizationThemeDeletedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization_theme.deleted"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationThemeDeletedData"
+          }
+        }
+      },
+      "VisualizationValidationErrorResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "validation_error"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },

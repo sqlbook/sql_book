@@ -1,6 +1,6 @@
 # Workspace Master Reference
 
-Last updated: 2026-03-30
+Last updated: 2026-04-01
 
 ## Service and goal
 - Service: workspace lifecycle, membership, permissions, and deletion behavior in sqlbook.
@@ -17,6 +17,7 @@ Related references:
 - `docs/API_MASTER_REF.md` for documented workspace/team API contracts and docs maintenance rules.
 - `docs/DATA_SOURCES_MASTER_REF.md` for datasource-specific routes, setup flow, and security semantics.
 - `docs/QUERIES_MASTER_REF.md` for query editor, query library, and chat-query interaction rules.
+- `docs/VISUALIZATIONS_THEMING_MASTER_REF.md` for query visualization and workspace theming behavior.
 
 ## Core routes
 - Workspaces:
@@ -27,6 +28,11 @@ Related references:
   - `GET /app/workspaces/:id/workspace-settings` -> workspace settings/details tabs
   - `PATCH /app/workspaces/:id/workspace-settings` -> update workspace name
   - `DELETE /app/workspaces/:id` -> delete workspace (owner only)
+  - `POST /app/workspaces/:id/workspace-settings/branding/themes` -> create workspace visualization theme
+  - `PATCH /app/workspaces/:id/workspace-settings/branding/themes/:theme_id` -> update workspace visualization theme
+  - `DELETE /app/workspaces/:id/workspace-settings/branding/themes/:theme_id` -> delete workspace visualization theme
+  - `POST /app/workspaces/:id/workspace-settings/branding/themes/duplicate` -> duplicate system or workspace theme
+  - `PATCH /app/workspaces/:id/workspace-settings/branding/themes/:theme_id/default` -> set workspace default visualization theme
 - Workspace team members:
   - `POST /app/workspaces/:workspace_id/members` -> invite member
   - `PATCH /app/workspaces/:workspace_id/members/:id` -> update member role (role constrained)
@@ -60,6 +66,16 @@ Related references:
   - `GET /api/v1/workspaces/:workspace_id/queries`
   - `POST /api/v1/workspaces/:workspace_id/queries/run`
   - `POST /api/v1/workspaces/:workspace_id/queries`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `GET /api/v1/workspaces/:workspace_id/visualization-themes`
+  - `POST /api/v1/workspaces/:workspace_id/visualization-themes`
+  - `GET /api/v1/workspaces/:workspace_id/visualization-themes/:id`
+  - `PATCH /api/v1/workspaces/:workspace_id/visualization-themes/:id`
+  - `DELETE /api/v1/workspaces/:workspace_id/visualization-themes/:id`
+  - `POST /api/v1/workspaces/:workspace_id/visualization-themes/duplicate`
+  - `PATCH /api/v1/workspaces/:workspace_id/visualization-themes/:id/default`
 - OpenAPI/Scalar governance for these routes lives in `docs/API_MASTER_REF.md`.
 
 ## Roles and authorization
@@ -85,11 +101,12 @@ Related references:
     - `data_sources#new|validate_connection|create|update|destroy` + `data_sources/set_up#index`: owner/admin only
     - read-only: forbidden
   - Query library (`GET /app/workspaces/:workspace_id/queries`): all roles
-  - Query write (`data_sources/queries#create|update|chart_config`): owner/admin/user
+  - Query write (`data_sources/queries#create|update|visualization#update|visualization#destroy`): owner/admin/user
   - Query destroy (`data_sources/queries#destroy`):
     - owner/admin: any query
     - user: own queries only
     - read-only: forbidden
+  - Workspace Branding / visualization themes (`workspace-settings/branding/themes*`): owner/admin only
   - Dashboard read (`dashboards#index|show`): all roles
   - Dashboard create (`dashboards#new|create`): owner/admin/user
   - Dashboard destroy (`dashboards#destroy`): owner/admin only
@@ -224,6 +241,21 @@ Related references:
   - error toast:
     - title: `Couldn't save workspace settings`
     - body: `Please check your workspace name and try again.`
+
+## Workspace Branding tab
+- Workspace settings now include a `Branding` tab between `Team` and `Subscription`.
+- Branding is owner/admin-only because it is part of workspace settings.
+- The Branding tab contains:
+  - a theme library table
+  - create/open/delete/default actions for workspace themes
+  - duplicate actions for both workspace themes and the built-in system theme
+  - a builder-style editor with explicit dark/light variants
+- The built-in `Default Theming` theme:
+  - is visible in every workspace
+  - is read-only
+  - cannot be deleted
+  - is used when the workspace has not chosen a workspace-owned default theme
+- Query writers can use workspace-visible themes in the query visualization editor, but only owner/admin can manage the theme library because those routes live in workspace settings.
 
 ## Workspace breadcrumbs
 - Breadcrumbs render on workspace-scoped app pages where workspace context exists (for example `/app/workspaces/:workspace_id/*`).

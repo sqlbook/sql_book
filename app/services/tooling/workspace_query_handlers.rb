@@ -136,7 +136,12 @@ module Tooling
         'name' => query.name,
         'sql' => query.query,
         'saved' => query.saved,
-        'chart_type' => query.chart_type,
+        'chart_type' => query.visualization&.chart_type,
+        'visualization' => query.visualization && Visualizations::Serializer.call(
+          query:,
+          visualization: query.visualization,
+          include_preview: false
+        ),
         'data_source' => serialize_data_source(query:),
         'author' => serialize_author(query:),
         'chat_source' => serialize_chat_source(query:),

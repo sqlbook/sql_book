@@ -1,7 +1,8 @@
+<% page_size = local_assigns.fetch(:page_size, 10).to_i %>
 <div
   class="query-results"
   data-controller="query-results-table" 
-  data-query-results-table-config-value="<%= query.chart_config.to_json %>"
+  data-query-results-table-page-size-value="<%= page_size %>"
   data-query-results-table-result-value="<%= query.query_result.to_json %>"
 >
   <div class="query-results-table">
@@ -27,7 +28,7 @@
     </table>
   </div>
 
-  <div class="pagination <%= 'hidden' unless query.chart_config[:pagination_enabled] %>">
+  <div class="pagination <%= 'hidden' if query.query_result.rows.size <= page_size %>">
     <button type="button" class="link disabled" data-query-results-table-target="start" data-action="query-results-table#start">
       <i class="ri-arrow-left-double-line gray-500"></i>
     </button>

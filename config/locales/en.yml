@@ -64,6 +64,11 @@ en:
       send: Send
       settings: Settings
       view: View
+    states:
+      disabled: Disabled
+      enabled: Enabled
+      "no": "No"
+      "yes": "Yes"
     toasts:
       workspace_successfully_deleted_title: Workspace successfully deleted
 
@@ -125,6 +130,93 @@ en:
         settings:
           chat_source_label: Chat source
           chat_source_link: Open source chat
+          notice: Save your query for future use by completing the form below.
+          name_label: Query name
+          name_placeholder: e.g. New Visitor Count
+          read_only: You have read-only access in this workspace.
+          save: "[Save Query]"
+      visualizations:
+        tabs:
+          query_results: Query Results
+          visualization: Visualization
+        sections:
+          preview: Preview
+          data: Data
+          appearance: Appearance
+          sharing: Sharing
+          other: Other
+        actions:
+          remove: Remove visualization
+          save: "[Save Visualization]"
+        gallery:
+          title: Create a visualization
+          description: Choose a visualization for this query. It stays owned by the query and updates with the query over time.
+          read_only: You can view existing visualizations in this workspace, but only editors can create or change them.
+        form:
+          axis_line_color: Axis line color
+          axis_label_color: Axis label color
+          background_color: Background color
+          chart_type: Visualization type
+          dark_mode: Dark mode overrides
+          dimension_key: Dimension column
+          donut_inner_radius: Donut inner radius
+          legend_enabled: Legend
+          legend_text_color: Legend text color
+          light_mode: Light mode overrides
+          palette: Series palette
+          raw_json: Advanced JSON override
+          split_line_color: Gridline color
+          subtitle: Subtitle
+          subtitle_color: Subtitle color
+          table_page_size: Table page size
+          text_color: Text color
+          theme: Theme
+          title: Title
+          title_color: Title color
+          tooltip_background_color: Tooltip background
+          tooltip_enabled: Tooltips
+          tooltip_text_color: Tooltip text color
+          total_label: Total label
+          value_key: Value column
+          x_axis_label: X axis label
+          y_axis_label: Y axis label
+        sharing:
+          title: Sharing will land in the next phase
+          body: Public URLs, embed code, and audience controls are planned next. This editor already reserves that section so the future sharing flow can attach cleanly to the same query-owned visualization object.
+        other:
+          description: Query visualizations remain owned by the query itself. The preview follows your device theme, and future dashboard or embed rendering modes will be handled by those surfaces separately.
+        errors:
+          chart_type_required: Choose a visualization type to continue.
+          invalid_chart_type: That visualization type is not available.
+        toasts:
+          save_failed:
+            title: Couldn't save visualization
+            body: Please review the visualization fields and try again.
+        types:
+          area:
+            label: Area
+            description: Show a filled trend line across a single dimension and metric.
+          bar:
+            label: Bar
+            description: Compare categories horizontally using a single dimension and metric.
+          column:
+            label: Column
+            description: Compare categories vertically using a single dimension and metric.
+          donut:
+            label: Donut
+            description: Show proportional contribution using a ring-style chart.
+          line:
+            label: Line
+            description: Show a simple trend across a single dimension and metric.
+          pie:
+            label: Pie
+            description: Show proportional contribution using a pie chart.
+          table:
+            label: Table
+            description: Save a formatted table view for this query.
+          total:
+            label: Total
+            description: Highlight a single value from the result set.
       chat:
         title: Where should we begin?
         suggestions:
@@ -411,17 +503,18 @@ en:
         tabs:
           general: General
           team: Team
+          branding: Branding
           subscription: Subscription
         general:
           workspace_name_label: Workspace name
         team:
           description: Use the settings below to view, invite and manage the roles of any team members associated with this workspace. Adding members is always free of charge, regardless of their role.
-        table:
-          name: Name
-          role: Role
-          status: Status
-          actions: Actions
-          you: "(you)"
+          table:
+            name: Name
+            role: Role
+            status: Status
+            actions: Actions
+            you: "(you)"
           actions:
             resend_invitation: Resend invitation
             invite_member: Invite team member
@@ -439,6 +532,76 @@ en:
             resend_invitation: Resend invitation to %{name}
             delete_invitation: Delete pending invitation for %{name}
             remove_member: Remove %{name} from the team
+        branding:
+          title: Branding
+          description: Manage reusable workspace chart themes and the built-in system theme used when a workspace theme has not been chosen yet.
+          system_theme_name: Default Theming
+          copy_suffix: Copy
+          actions:
+            create: "[Create Theme]"
+            duplicate: Duplicate
+            set_default: Set default
+          table:
+            access: Access
+            actions: Actions
+            default: Default
+            default_badge: Default
+            editable: Editable
+            name: Name
+            read_only: Read only
+            source: Source
+            system_source: System
+            workspace_source: Workspace
+          editor:
+            axis_line_color: Axis line color
+            background_color: Background color
+            dark_title: Dark theme JSON
+            default: Workspace default
+            edit_title: "Theme editor: %{name}"
+            legend_text_color: Legend text color
+            light_title: Light theme JSON
+            name: Theme name
+            palette: Series palette
+            preview_title: Theme preview
+            preview_description: Review the saved dark and light variants across a few common chart families before you publish changes.
+            raw_json: Raw ECharts theme JSON
+            split_line_color: Gridline color
+            text_color: Text color
+            title_color: Title color
+            subtitle_color: Subtitle color
+            axis_label_color: Axis label color
+            tooltip_background_color: Tooltip background
+            tooltip_text_color: Tooltip text color
+            view_title: "Read-only theme: %{name}"
+          errors:
+            default_delete_forbidden: Set a different workspace default before deleting this theme.
+          toasts:
+            theme_defaulted:
+              title: Workspace default updated
+              body: New visualizations will now use that workspace theme by default.
+            theme_deleted:
+              title: Theme deleted
+              body: The workspace theme has been removed.
+            theme_duplicated:
+              title: Theme duplicated
+              body: A new editable copy of that theme is ready.
+            theme_failed:
+              title: Couldn't save theme
+              body: Please review the theme fields and try again.
+            theme_saved:
+              title: Theme saved
+              body: Your workspace theme has been updated.
+        delete:
+          title: "You can delete your workspace at any time:"
+          guidance:
+            delete_data: The workspace, along with all related data sources, queries and dashboards, will be deleted immediately for all users in your workspace.
+            irreversible: Workspace deletion is irreversible.
+          confirmation:
+            title: Are you sure you wish to delete your workspace
+            body: If so, all data sources, data, queries and dashboards will be deleted permanently.
+            confirm_aria: Confirm deletion of workspace
+            cancel_aria: Cancel deleting the workspace
+          trigger_aria: Delete workspace
     account_settings:
       title: Account settings
       tabs:
@@ -618,6 +781,12 @@ en:
         body: All data has been deleted and affected users have been informed.
       deleted_partial:
         body: Workspace data was deleted, but some users could not be notified by email.
+
+  api:
+    v1:
+      visualizations:
+        errors:
+          forbidden: You do not have permission to manage workspace visualizations or themes.
       delete_forbidden:
         title: Workspace deletion not allowed
         body: Only the workspace owner can delete this workspace.

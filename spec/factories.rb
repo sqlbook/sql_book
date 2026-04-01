@@ -66,14 +66,63 @@ FactoryBot.define do
     workspace { create(:workspace) }
   end
 
+  factory :visualization_theme do
+    workspace { create(:workspace) }
+    name { 'Editorial Contrast' }
+    theme_json_dark do
+      {
+        'color' => %w[#F5807B #5CA1F2 #F8BD77],
+        'backgroundColor' => '#1C1C1C',
+        'textStyle' => { 'color' => '#ECEAE6' }
+      }
+    end
+    theme_json_light do
+      {
+        'color' => %w[#FF6A64 #3E86D9 #D88B39],
+        'backgroundColor' => '#F4F2EE',
+        'textStyle' => { 'color' => '#111111' }
+      }
+    end
+    default { false }
+  end
+
   factory :query do
     name { 'My Query' }
-    query { 'SELECT * FROM sessions;' }
+    sequence(:query) { |n| "SELECT * FROM sessions /* factory_query_#{n} */;" }
     saved { false }
     last_run_at { nil }
     data_source { create(:data_source) }
     author { create(:user) }
     last_updated_by { nil }
+  end
+
+  factory :query_visualization do
+    query { create(:query) }
+    chart_type { 'line' }
+    theme_reference { Visualizations::SystemTheme::REFERENCE_KEY }
+    data_config do
+      {
+        'dimension_key' => 'label',
+        'value_key' => 'value',
+        'table_page_size' => 10
+      }
+    end
+    appearance_config_dark { {} }
+    appearance_config_light { {} }
+    other_config do
+      {
+        'title' => nil,
+        'subtitle' => nil,
+        'title_enabled' => false,
+        'subtitle_enabled' => false,
+        'legend_enabled' => false,
+        'tooltip_enabled' => true,
+        'x_axis_label' => 'Label',
+        'x_axis_label_enabled' => true,
+        'y_axis_label' => 'Value',
+        'y_axis_label_enabled' => true
+      }
+    end
   end
 
   factory :chat_thread do

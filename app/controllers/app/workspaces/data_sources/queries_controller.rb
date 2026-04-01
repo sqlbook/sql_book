@@ -5,7 +5,7 @@ module App
     module DataSources
       class QueriesController < ApplicationController # rubocop:disable Metrics/ClassLength
         before_action :require_authentication!
-        before_action :authorize_query_write_access!, only: %i[create update chart_config]
+        before_action :authorize_query_write_access!, only: %i[create update]
         before_action :authorize_query_destroy_access!, only: %i[destroy]
         before_action :prepare_query_editor, only: %i[index show]
 
@@ -53,12 +53,6 @@ module App
           redirect_to app_workspace_queries_path(workspace)
         end
 
-        def chart_config
-          query.update(query_chart_config_params)
-
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
-        end
-
         private
 
         def workspace
@@ -80,6 +74,8 @@ module App
           @query_schema_groups = query_schema_groups_for(@data_source)
           @query_schema_options = query_schema_options(@query_schema_groups)
           @default_query_schema = @query_schema_options.first&.last
+          @available_visualization_types = Visualizations::ChartRegistry.available
+          @visualization_theme_library = Visualizations::ThemeLibraryService.call(workspace:)
         end
 
         def query_schema_groups_for(selected_data_source)
@@ -140,36 +136,7 @@ module App
         end
 
         def query_params
-          params.permit(:chart_type, :query, :name)
-        end
-
-        def chart_config_params # rubocop:disable Metrics/MethodLength
-          params.permit(
-            :x_axis_key,
-            :x_axis_label,
-            :x_axis_label_enabled,
-            :x_axis_gridlines_enabled,
-            :y_axis_key,
-            :y_axis_label,
-            :y_axis_label_enabled,
-            :y_axis_gridlines_enabled,
-            :title,
-            :title_enabled,
-            :subtitle,
-            :subtitle_enabled,
-            :legend_enabled,
-            :legend_position,
-            :legend_alignment,
-            :tooltips_enabled,
-            :data_column,
-            :post_text_label_enabled,
-            :post_text_label,
-            :post_text_label_position,
-            :pagination_rows,
-            :pagination_enabled,
-            :circumference,
-            colors: []
-          )
+          params.permit(:query, :name)
         end
 
         def query_update_payload
@@ -180,18 +147,8 @@ module App
           }.compact
         end
 
-        def query_chart_config_params
-          params = {}
-
-          params[:last_updated_by] = current_user
-          params[:chart_config] = chart_config_params
-
-          params
-        end
-
         def query_redirect_tab
           return 'settings' if query_params[:name]
-          return 'visualization' if query_params[:chart_type]
 
           nil
         end

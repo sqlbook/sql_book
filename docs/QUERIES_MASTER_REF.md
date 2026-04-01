@@ -1,6 +1,6 @@
 # Queries Master Reference
 
-Last updated: 2026-03-30
+Last updated: 2026-04-01
 
 ## Purpose
 Single source of truth for query editor behavior, query-library rules, saved-query identity, and chat/query interaction contracts.
@@ -9,6 +9,7 @@ Related references:
 - `docs/API_MASTER_REF.md`
 - `docs/CHAT_MASTER_REF.md`
 - `docs/DATA_SOURCES_MASTER_REF.md`
+- `docs/VISUALIZATIONS_THEMING_MASTER_REF.md`
 - `docs/WORKSPACES_MASTER_REF.md`
 - `docs/ROLES_RIGHTS_MASTER_REF.md`
 
@@ -25,6 +26,55 @@ Related references:
   - `PATCH /api/v1/workspaces/:workspace_id/queries/:id`
   - `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
   - `POST /api/v1/workspaces/:workspace_id/queries/run`
+- Query visualization app/editor routes:
+  - `PUT /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualization`
+  - `DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualization`
+- Query visualization API:
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+
+## Query-owned visualization model
+- Saved query visualizations are query-owned.
+- In phase 1, each query can have zero or one saved visualization.
+- Visualization persistence lives in `QueryVisualization`, not on the `queries` row itself.
+- Query summary payloads may still expose `chart_type` for compatibility/readability, but the canonical visualization state now lives in the visualization association.
+- Structured visualization state is intentionally domain-shaped for future API/chat generation:
+  - `chart_type`
+  - `theme_reference`
+  - `data_config`
+  - `appearance_config_dark`
+  - `appearance_config_light`
+  - `other_config`
+
+## Visualization behavior
+- The query editor visualization tab now follows this section order:
+  - `Preview`
+  - `Data`
+  - `Appearance`
+  - `Sharing`
+  - `Other`
+- Sharing is placeholder-only in this phase:
+  - no public URLs
+  - no embed code
+  - no visibility toggles
+- Query preview follows the current device/system dark-light mode.
+- Current parity chart scope:
+  - `table`
+  - `total`
+  - `line`
+  - `area`
+  - `column`
+  - `bar`
+  - `pie`
+  - `donut`
+- Chart rendering now uses ECharts for chart types and sqlbook-owned rendering for `table` / `total`.
+
+## Themes
+- Query visualizations select a workspace-visible theme by `theme_reference`.
+- A workspace may define reusable visualization themes in workspace settings under `Branding`.
+- The built-in `Default Theming` theme is visible in every workspace, is read-only, and becomes the effective default whenever the workspace has not chosen a workspace-owned default theme.
+- Per-chart appearance overrides are stored separately for dark and light mode and merge over the selected theme at render time.
 
 ## Draft vs saved behavior
 - Unsaved query drafts should not create a `queries` row just because the editor or chat displays them.
@@ -124,6 +174,7 @@ Related references:
 ## Permissions
 - `query.list` is allowed for all accepted workspace roles.
 - `query.run`, `query.save`, `query.update`, `query.rename`, and `query.delete` are allowed for `OWNER`, `ADMIN`, and `USER`.
+- Query visualization create/update/delete are allowed for `OWNER`, `ADMIN`, and `USER`.
 - `READ_ONLY` cannot execute or mutate queries.
 
 ## Naming

@@ -6,6 +6,7 @@ sqlbook lets users:
 - capture first-party events via sqlbook tracking code
 - connect external SQL databases and query them live (without ingesting full copies in v1)
 - query data with SQL and save queries/visualizations
+- apply reusable workspace visualization themes with dark/light variants
 - build dashboards from saved queries (MVP in progress)
 - expand over time to additional connectors (for example third-party SaaS and API-backed sources)
 
@@ -28,7 +29,8 @@ sqlbook lets users:
 5. Implement connector adapter architecture and strict query safety guardrails.
 6. Ship first external connector (PostgreSQL, live query mode).
 7. Update data source/query UX for connector catalog + connector-aware schema explorer, while keeping the query model structurally ready for later multi-source selection.
-8. Dashboard MVP on top of the new connector model.
+8. ECharts-based query-owned visualizations with workspace theming and documented API contracts.
+9. Dashboard MVP on top of the new connector model.
 
 ## Current Chat Runtime Snapshot
 - Chat execution scope now includes workspace/team actions plus the phase-1 datasource/query actions (`datasource.list`, `datasource.validate_connection`, `datasource.create`, `query.list`, `query.run`, `query.save`, `query.update`, `query.rename`, `query.delete`, `thread.rename`).

@@ -28,7 +28,8 @@ Build a reliable multi-source analytics/query SaaS that stays simple to operate 
   - SQL query editor
   - connector-aware schema explorer for the selected datasource
   - saved queries
-  - basic visualizations
+  - query-owned visualizations with ECharts-backed chart rendering
+  - workspace visualization themes with dark/light variants
   - keep query-editor datasource/schema contracts extensible so later multi-source selection and federation can land without replacing the editor surface again
 
 Exit criteria:

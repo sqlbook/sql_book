@@ -220,10 +220,24 @@ Super-admin is separate from workspace roles:
 - Route scope:
   - `POST /app/workspaces/:workspace_id/data_sources/:data_source_id/queries`
   - `PUT /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:id`
-  - `PUT /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:id/chart_config`
+  - `PUT /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualization`
+  - `DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualization`
 - Owner: allow
 - Admin: allow
 - User: allow
+- Read-only: deny
+
+### Workspace Branding / theme management
+- Route scope:
+  - `GET /app/workspaces/:workspace_id/workspace-settings?tab=branding`
+  - `POST /app/workspaces/:workspace_id/workspace-settings/branding/themes`
+  - `PATCH /app/workspaces/:workspace_id/workspace-settings/branding/themes/:theme_id`
+  - `DELETE /app/workspaces/:workspace_id/workspace-settings/branding/themes/:theme_id`
+  - `POST /app/workspaces/:workspace_id/workspace-settings/branding/themes/duplicate`
+  - `PATCH /app/workspaces/:workspace_id/workspace-settings/branding/themes/:theme_id/default`
+- Owner: allow
+- Admin: allow
+- User: deny
 - Read-only: deny
 
 ### Query deletion

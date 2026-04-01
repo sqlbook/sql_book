@@ -1,7 +1,8 @@
 <div class="tabs">
     <%= render "shared/tabs/nav_item", tab: "general", name: I18n.t('app.workspaces.settings.tabs.general'), icon_class: "ri-global-line", default_selected: true %>
     <%= render "shared/tabs/nav_item", tab: "team", name: I18n.t('app.workspaces.settings.tabs.team'), icon_class: "ri-fire-line" %>
-    <%= render "shared/tabs/nav_item", tab: "subscription", name: I18n.t('app.workspaces.settings.tabs.subscription'), icon_class: "ri-fire-lin" %>
+    <%= render "shared/tabs/nav_item", tab: "branding", name: I18n.t('app.workspaces.settings.tabs.branding'), icon_class: "ri-palette-line" %>
+    <%= render "shared/tabs/nav_item", tab: "subscription", name: I18n.t('app.workspaces.settings.tabs.subscription'), icon_class: "ri-fire-line" %>
   <% if can_delete_workspace %>
     <%= render "shared/tabs/nav_item", tab: "delete", name: I18n.t('common.actions.delete_workspace_label'), icon_class: "ri-delete-bin-line" %>
   <% end %>
@@ -128,32 +129,42 @@
   <% end %>
 <% end %>
 
+<% if active_tab?(tab: "branding") %>
+  <%= render "app/workspaces/settings/branding",
+             workspace: @workspace,
+             theme_library: @theme_library,
+             selected_theme_entry: @selected_theme_entry,
+             selected_theme_reference: @selected_theme_reference,
+             theme_editor_attributes_dark: @theme_editor_attributes_dark,
+             theme_editor_attributes_light: @theme_editor_attributes_light %>
+<% end %>
+
 <% if active_tab?(tab: "subscription") %>
   -
 <% end %>
 
 <% if can_delete_workspace && active_tab?(tab: "delete") %>
   <div class="delete-workspace">
-    <p class="cream-250">You can delete your workspace at any time:</p>
+    <p class="cream-250"><%= I18n.t('app.workspaces.settings.delete.title') %></p>
     <ul>
-      <li>The workspace, along with all related data sources, queries and dashboards, will be deleted immediately for all users in your workspace.</li>
-      <li>Workspace deletion is irreversible.</li>
+      <li><%= I18n.t('app.workspaces.settings.delete.guidance.delete_data') %></li>
+      <li><%= I18n.t('app.workspaces.settings.delete.guidance.irreversible') %></li>
     </ul>
 
     <% if params[:confirm_delete] %>
       <div class="message">
         <i class="ri-error-warning-line ri-lg red-500"></i>
         <div class="body">
-          <p class="title cream-250"><b>Are you sure you wish to delete your workspace</b></p>
-          <p>If so, all data sources, data, queries and dashboards will be deleted permanently.</p>
+          <p class="title cream-250"><b><%= I18n.t('app.workspaces.settings.delete.confirmation.title') %></b></p>
+          <p><%= I18n.t('app.workspaces.settings.delete.confirmation.body') %></p>
           <div class="actions">
-            <%= link_to I18n.t('common.actions.delete_workspace'), app_workspace_path(@workspace), class: "link primary", data: { turbo_method: :delete }, "aria-label": "Confirm deletion of workspace" %>
-            <%= link_to I18n.t('common.actions.cancel'), add_params(confirm_delete: nil), class: "link secondary", "aria-label": "Cancel deleting the workspace" %>
+            <%= link_to I18n.t('common.actions.delete_workspace'), app_workspace_path(@workspace), class: "link primary", data: { turbo_method: :delete }, "aria-label": I18n.t('app.workspaces.settings.delete.confirmation.confirm_aria') %>
+            <%= link_to I18n.t('common.actions.cancel'), add_params(confirm_delete: nil), class: "link secondary", "aria-label": I18n.t('app.workspaces.settings.delete.confirmation.cancel_aria') %>
           </div>
         </div>
       </div>
     <% else %>
-      <%= link_to I18n.t('common.actions.delete_workspace'), add_params(confirm_delete: 1), class: "link primary", "aria-label": "Delete workspace" %>
+      <%= link_to I18n.t('common.actions.delete_workspace'), add_params(confirm_delete: 1), class: "link primary", "aria-label": I18n.t('app.workspaces.settings.delete.trigger_aria') %>
     <% end %>
   </div>
 <% end %>

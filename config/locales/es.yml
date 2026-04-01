@@ -35,6 +35,11 @@ es:
       send: Enviar
       settings: Configuración
       view: Ver
+    states:
+      disabled: Desactivado
+      enabled: Activado
+      "no": "No"
+      "yes": "Sí"
 
   locales:
     en: Inglés
@@ -94,6 +99,93 @@ es:
         settings:
           chat_source_label: Origen del chat
           chat_source_link: Abrir chat de origen
+          notice: Guarda tu consulta para reutilizarla completando el siguiente formulario.
+          name_label: Nombre de la consulta
+          name_placeholder: p. ej. Nuevos visitantes
+          read_only: Tienes acceso de solo lectura en este espacio.
+          save: "[Guardar consulta]"
+      visualizations:
+        tabs:
+          query_results: Resultados
+          visualization: Visualización
+        sections:
+          preview: Vista previa
+          data: Datos
+          appearance: Apariencia
+          sharing: Compartir
+          other: Otro
+        actions:
+          remove: Quitar visualización
+          save: "[Guardar visualización]"
+        gallery:
+          title: Crear una visualización
+          description: Elige una visualización para esta consulta. Seguirá siendo propiedad de la consulta y se actualizará con ella con el tiempo.
+          read_only: Puedes ver las visualizaciones existentes en este espacio, pero solo las personas con permisos de edición pueden crearlas o modificarlas.
+        form:
+          axis_line_color: Color del eje
+          axis_label_color: Color de las etiquetas del eje
+          background_color: Color de fondo
+          chart_type: Tipo de visualización
+          dark_mode: Overrides del modo oscuro
+          dimension_key: Columna de dimensión
+          donut_inner_radius: Radio interior del donut
+          legend_enabled: Leyenda
+          legend_text_color: Color del texto de la leyenda
+          light_mode: Overrides del modo claro
+          palette: Paleta de series
+          raw_json: Override JSON avanzado
+          split_line_color: Color de la cuadrícula
+          subtitle: Subtítulo
+          subtitle_color: Color del subtítulo
+          table_page_size: Tamaño de página de la tabla
+          text_color: Color del texto
+          theme: Tema
+          title: Título
+          title_color: Color del título
+          tooltip_background_color: Fondo del tooltip
+          tooltip_enabled: Tooltips
+          tooltip_text_color: Texto del tooltip
+          total_label: Etiqueta del total
+          value_key: Columna de valor
+          x_axis_label: Etiqueta del eje X
+          y_axis_label: Etiqueta del eje Y
+        sharing:
+          title: Compartir llegará en la siguiente fase
+          body: Las URL públicas, el código de inserción y los controles de audiencia están planificados para la siguiente fase. Este editor ya reserva esa sección para que el futuro flujo de compartir se conecte limpiamente con el mismo objeto de visualización asociado a la consulta.
+        other:
+          description: Las visualizaciones siguen siendo propiedad de la propia consulta. La vista previa sigue el tema del dispositivo y los futuros modos de renderizado para paneles o embeds se resolverán en esas superficies.
+        errors:
+          chart_type_required: Elige un tipo de visualización para continuar.
+          invalid_chart_type: Ese tipo de visualización no está disponible.
+        toasts:
+          save_failed:
+            title: No se pudo guardar la visualización
+            body: Revisa los campos de la visualización y vuelve a intentarlo.
+        types:
+          area:
+            label: Área
+            description: Muestra una línea de tendencia rellena sobre una única dimensión y métrica.
+          bar:
+            label: Barras
+            description: Compara categorías horizontalmente usando una única dimensión y métrica.
+          column:
+            label: Columnas
+            description: Compara categorías verticalmente usando una única dimensión y métrica.
+          donut:
+            label: Donut
+            description: Muestra la contribución proporcional con un gráfico de anillo.
+          line:
+            label: Línea
+            description: Muestra una tendencia simple sobre una única dimensión y métrica.
+          pie:
+            label: Circular
+            description: Muestra la contribución proporcional con un gráfico circular.
+          table:
+            label: Tabla
+            description: Guarda una vista de tabla formateada para esta consulta.
+          total:
+            label: Total
+            description: Destaca un único valor del resultado.
       chat:
         title: "¿Por dónde empezamos?"
         suggestions:
@@ -380,17 +472,18 @@ es:
         tabs:
           general: General
           team: Equipo
+          branding: Branding
           subscription: Suscripción
         general:
           workspace_name_label: Nombre del espacio de trabajo
         team:
           description: Usa la configuración de abajo para ver, invitar y gestionar los roles de los miembros asociados a este espacio de trabajo. Añadir miembros siempre es gratuito, independientemente de su rol.
-        table:
-          name: Nombre
-          role: Rol
-          status: Estado
-          actions: Acciones
-          you: "(tú)"
+          table:
+            name: Nombre
+            role: Rol
+            status: Estado
+            actions: Acciones
+            you: "(tú)"
           actions:
             resend_invitation: Reenviar invitación
             invite_member: Invitar miembro del equipo
@@ -408,6 +501,76 @@ es:
             resend_invitation: Reenviar invitación a %{name}
             delete_invitation: Eliminar invitación pendiente de %{name}
             remove_member: Quitar a %{name} del equipo
+        branding:
+          title: Branding
+          description: Gestiona temas reutilizables para los gráficos del espacio y el tema del sistema que se usa cuando todavía no se ha elegido un tema propio.
+          system_theme_name: Default Theming
+          copy_suffix: Copia
+          actions:
+            create: "[Crear tema]"
+            duplicate: Duplicar
+            set_default: Establecer por defecto
+          table:
+            access: Acceso
+            actions: Acciones
+            default: Predeterminado
+            default_badge: Predeterminado
+            editable: Editable
+            name: Nombre
+            read_only: Solo lectura
+            source: Origen
+            system_source: Sistema
+            workspace_source: Espacio
+          editor:
+            axis_line_color: Color del eje
+            background_color: Color de fondo
+            dark_title: JSON del tema oscuro
+            default: Tema predeterminado del espacio
+            edit_title: "Editor de tema: %{name}"
+            legend_text_color: Color del texto de la leyenda
+            light_title: JSON del tema claro
+            name: Nombre del tema
+            palette: Paleta de series
+            preview_title: Vista previa del tema
+            preview_description: Revisa las variantes guardadas en modo oscuro y claro en varios tipos de gráfico antes de publicar cambios.
+            raw_json: JSON bruto del tema ECharts
+            split_line_color: Color de la cuadrícula
+            text_color: Color del texto
+            title_color: Color del título
+            subtitle_color: Color del subtítulo
+            axis_label_color: Color de las etiquetas del eje
+            tooltip_background_color: Fondo del tooltip
+            tooltip_text_color: Texto del tooltip
+            view_title: "Tema de solo lectura: %{name}"
+          errors:
+            default_delete_forbidden: Establece otro tema predeterminado del espacio antes de eliminar este.
+          toasts:
+            theme_defaulted:
+              title: Tema predeterminado actualizado
+              body: Las nuevas visualizaciones usarán ahora ese tema del espacio por defecto.
+            theme_deleted:
+              title: Tema eliminado
+              body: El tema del espacio ha sido eliminado.
+            theme_duplicated:
+              title: Tema duplicado
+              body: Ya tienes una copia editable de ese tema.
+            theme_failed:
+              title: No se pudo guardar el tema
+              body: Revisa los campos del tema y vuelve a intentarlo.
+            theme_saved:
+              title: Tema guardado
+              body: El tema del espacio se ha actualizado.
+        delete:
+          title: "Puedes eliminar tu espacio de trabajo en cualquier momento:"
+          guidance:
+            delete_data: El espacio de trabajo, junto con todas las fuentes de datos, consultas y paneles relacionados, se eliminará inmediatamente para todas las personas del espacio.
+            irreversible: La eliminación del espacio de trabajo es irreversible.
+          confirmation:
+            title: ¿Seguro que quieres eliminar tu espacio de trabajo?
+            body: Si continúas, todas las fuentes de datos, datos, consultas y paneles se eliminarán de forma permanente.
+            confirm_aria: Confirmar eliminación del espacio de trabajo
+            cancel_aria: Cancelar eliminación del espacio de trabajo
+          trigger_aria: Eliminar espacio de trabajo
     account_settings:
       title: Configuración de la cuenta
       tabs:
@@ -454,3 +617,9 @@ es:
       statuses:
         accepted: Aceptado
         pending: Pendiente
+
+  api:
+    v1:
+      visualizations:
+        errors:
+          forbidden: No tienes permisos para gestionar visualizaciones o temas del espacio.

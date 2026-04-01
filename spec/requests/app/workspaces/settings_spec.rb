@@ -35,5 +35,23 @@ RSpec.describe 'App::Workspaces::Settings', type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("#{owner.full_name} #{I18n.t('app.workspaces.settings.team.table.you')}")
     end
+
+    it 'renders the Branding tab between Team and Subscription' do
+      get app_workspace_settings_path(workspace)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t('app.workspaces.settings.tabs.team'))
+      expect(response.body).to include(I18n.t('app.workspaces.settings.tabs.branding'))
+      expect(response.body).to include(I18n.t('app.workspaces.settings.tabs.subscription'))
+    end
+
+    it 'shows the built-in Default Theming entry in the branding library' do
+      get app_workspace_settings_path(workspace, tab: 'branding')
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('Default Theming')
+      expect(response.body).to include(I18n.t('app.workspaces.settings.branding.table.read_only'))
+      expect(response.body).to include(I18n.t('app.workspaces.settings.branding.editor.preview_title'))
+    end
   end
 end

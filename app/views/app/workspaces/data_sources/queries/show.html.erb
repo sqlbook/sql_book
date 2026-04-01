@@ -6,8 +6,8 @@
 
 <aside data-controller="resizeable-page">
   <div class="tabs">
-    <%= render "shared/tabs/nav_item", tab: "query_results", name: "Query Results", icon_class: "ri-table-2", default_selected: true %>
-    <%= render "shared/tabs/nav_item", tab: "visualization", name: "Visualization", icon_class: "ri-bar-chart-box-line" %>
+    <%= render "shared/tabs/nav_item", tab: "query_results", name: I18n.t('app.workspaces.visualizations.tabs.query_results'), icon_class: "ri-table-2", default_selected: true %>
+    <%= render "shared/tabs/nav_item", tab: "visualization", name: I18n.t('app.workspaces.visualizations.tabs.visualization'), icon_class: "ri-bar-chart-box-line" %>
     <%= render "shared/tabs/nav_item", tab: "settings", name: I18n.t('common.actions.settings'), icon_class: "ri-settings-3-line" %>
   </div>
 
@@ -20,31 +20,30 @@
   <% end %>
 
   <% if active_tab?(tab: "visualization") %>
-    <% if @query.chart_type %>
-      <%= render "shared/chart_config" %>
+    <% if @query.visualization.present? %>
+      <%= render "shared/query_visualization_editor", query: @query, workspace: @workspace, data_source: @data_source %>
     <% else %>
-      <%= render "shared/chart_gallery" %>
+      <%= render "shared/query_visualization_gallery", query: @query, workspace: @workspace, data_source: @data_source %>
     <% end %>
-    
   <% end %>
 
   <% if active_tab?(tab: "settings") %>
     <% if can_write_queries?(workspace: @workspace) %>
       <% unless @query.saved %>
-        <%= render "shared/notice", message: "Save your query for future use by completing the form below." %>
+        <%= render "shared/notice", message: I18n.t('app.workspaces.queries.settings.notice') %>
       <% end %>
 
       <div data-controller="form">
         <%= form_with url: app_workspace_data_source_query_path(@workspace, @data_source, @query), method: :put, class: "new-query-form", html: { "data-form-target": "form" } do |form| %>
-          <%= form.label :name, "Query name", class: "label block" %>
-          <%= form.text_field :name, type: "text", placeholder: "e.g. New Visitor Count",class: "input block fluid", required: true, value: @query.name %>
+          <%= form.label :name, I18n.t('app.workspaces.queries.settings.name_label'), class: "label block" %>
+          <%= form.text_field :name, type: "text", placeholder: I18n.t('app.workspaces.queries.settings.name_placeholder'), class: "input block fluid", required: true, value: @query.name %>
 
-          <%= form.submit "[Save Query]", class: "link primary", "data-form-target": "submit" %>
+          <%= form.submit I18n.t('app.workspaces.queries.settings.save'), class: "link primary", "data-form-target": "submit" %>
         <% end %>
       </div>
 
     <% else %>
-      <p>You have read-only access in this workspace.</p>
+      <p><%= I18n.t('app.workspaces.queries.settings.read_only') %></p>
     <% end %>
 
     <% if @query_chat_source.present? %>

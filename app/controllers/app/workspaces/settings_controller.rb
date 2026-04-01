@@ -8,6 +8,13 @@ module App
 
       def show
         @workspace = workspace
+        @theme_library = Visualizations::ThemeLibraryService.call(workspace:)
+        @selected_theme_reference = selected_theme_reference
+        @selected_theme_entry = selected_theme_entry
+        @theme_editor_attributes_dark = build_theme_editor_attributes(mode: :dark)
+        @theme_editor_attributes_light = build_theme_editor_attributes(mode: :light)
+        @theme_preview_dark = build_theme_preview(mode: :dark)
+        @theme_preview_light = build_theme_preview(mode: :light)
       end
 
       def update
@@ -29,6 +36,47 @@ module App
 
       def workspace_params
         params.permit(:name)
+      end
+
+      def selected_theme_reference
+        params[:theme].to_s.presence
+      end
+
+      def selected_theme_entry
+        return theme_seed_for_new_record if selected_theme_reference == 'new'
+        return nil unless params[:tab].to_s == 'branding'
+
+        Visualizations::ThemeLibraryService.find_entry(
+          workspace:,
+          reference: selected_theme_reference.presence || workspace.default_visualization_theme&.reference_key || Visualizations::SystemTheme::REFERENCE_KEY
+        )
+      end
+
+      def theme_seed_for_new_record
+        workspace.default_visualization_theme || Visualizations::SystemTheme.new(workspace:)
+      end
+
+      def build_theme_editor_attributes(mode:)
+        theme_json = case mode.to_s
+                     when 'light'
+                       @selected_theme_entry&.theme_json_light
+                     else
+                       @selected_theme_entry&.theme_json_dark
+                     end
+
+        Visualizations::ThemeFormBuilder.editor_attributes(theme_json: theme_json || {})
+      end
+
+      def build_theme_preview(mode:)
+        theme_json = case mode.to_s
+                     when 'light'
+                       @selected_theme_entry&.theme_json_light
+                     else
+                       @selected_theme_entry&.theme_json_dark
+                     end
+        return nil if theme_json.blank?
+
+        Visualizations::ThemePreviewBuilder.call(theme_json:)
       end
 
       def authorize_workspace_settings_access!

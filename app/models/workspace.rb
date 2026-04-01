@@ -16,11 +16,18 @@ class Workspace < ApplicationRecord
   has_many :dashboards,
            dependent: :destroy
 
+  has_many :visualization_themes,
+           dependent: :destroy
+
   has_many :queries,
            through: :data_sources
 
   def owner
     members.find_by(role: Member::Roles::OWNER).user
+  end
+
+  def default_visualization_theme
+    visualization_themes.find_by(default: true)
   end
 
   # Placeholder until billing is in
