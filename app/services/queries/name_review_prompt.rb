@@ -25,6 +25,12 @@ module Queries
         'If the updated request changes an obvious quantity, ranking direction,',
         'timeframe, or status named in the title, treat that as strong evidence',
         'that the current title may be stale.',
+        'Example: "Top 5 longest-standing users" -> updated query for 10 longest-standing users => stale,',
+        'suggested_name should become something like "Top 10 longest-standing users".',
+        'Example: "Longest-standing users" -> updated query still showing',
+        'longest-standing users with a different LIMIT => aligned.',
+        'Example: "Workspace count" -> updated query now lists workspace rows',
+        'with dates => uncertain unless the new purpose is clearly named.',
         'Use the same language as the user when the user language is clear.',
         'Do not return markdown or commentary outside the JSON object.'
       ].join(' ')
