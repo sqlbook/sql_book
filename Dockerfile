@@ -48,7 +48,7 @@ COPY . .
 
 # Build CSS, JS, and the public script before Rails asset precompile so
 # digested assets are always present in the runtime image.
-RUN bundle exec rails dartsass:build
+RUN SECRET_KEY_BASE_DUMMY=1 SENTRY_DSN=test APP_PROTOCOL=https APP_HOST=build.sqlbook.local ./bin/rails dartsass:build
 RUN yarn build --minify
 RUN yarn build_script --minify
 
