@@ -1,4 +1,34 @@
 .app-workspaces-data_sources-queries-show {
+  .app-content-layout.split {
+    > .responsive-side-panel-layout {
+      display: contents;
+    }
+
+    > .responsive-side-panel-layout > main,
+    > .responsive-side-panel-layout > aside {
+      height: 100%;
+      margin: 0;
+      min-height: 0;
+    }
+
+    > .responsive-side-panel-layout > main {
+      background: var(--gray-800);
+      border-radius: 1.5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    > .responsive-side-panel-layout > aside {
+      background: var(--gray-900);
+      border-radius: var(--app-shell-radius);
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: var(--app-shell-padding);
+      position: relative;
+    }
+  }
+
   .responsive-side-panel-layout {
     display: contents;
 
@@ -22,7 +52,7 @@
   }
 
   .new-query-form {
-    margin: 2rem 0 0 0;
+    margin: 0;
 
     .link {
       margin: 2rem 0 0 0;

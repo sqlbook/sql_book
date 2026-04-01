@@ -1,11 +1,20 @@
 .data-source-query {
+  .data-sources-toolbar {
+    align-items: center;
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
   .data-sources-row {
     align-items: center;
     background: var(--gray-900);
     border-radius: 0.75rem;
     display: grid;
-    grid-gap: 1rem;
-    grid-template-columns: 9rem minmax(0, 1fr) auto auto auto;
+    flex: 1;
+    gap: 1rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-width: 0;
     padding: 1rem 1.5rem;
 
     .label {
@@ -19,7 +28,15 @@
     }
 
     .select {
-      flex: 1;
+      min-width: 0;
+      width: 100%;
+    }
+
+    &__actions {
+      align-items: center;
+      display: inline-flex;
+      gap: 1rem;
+      justify-self: end;
     }
 
     &__action,
@@ -35,6 +52,7 @@
       font-size: 1rem;
       height: 1rem;
       justify-content: center;
+      line-height: 1;
       margin: 0;
       padding: 0;
       text-decoration: none;
@@ -55,6 +73,7 @@
         display: block;
         fill: currentColor;
         height: 1rem;
+        line-height: 1;
         width: 1rem;
       }
     }
@@ -91,7 +110,33 @@
   }
 
   .query-panel-toggle {
-    display: none;
+    align-items: center;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--gray-500);
+    cursor: pointer;
+    display: inline-flex;
+    flex-shrink: 0;
+    height: 1rem;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+    transition: color 120ms ease;
+    width: 1rem;
+
+    &:hover {
+      color: var(--red-500);
+    }
+
+    svg {
+      color: currentColor;
+      display: block;
+      fill: currentColor;
+      height: 1rem;
+      width: 1rem;
+    }
   }
 
   .query-form {

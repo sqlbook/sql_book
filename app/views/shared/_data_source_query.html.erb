@@ -8,30 +8,35 @@
   <% form_data = { "data-data-source-query-target": "form" } %>
   <% form_data["data-action"] = "submit->query-side-panel#openPanel" if panel_toggle_enabled %>
   <%= form_with url: query_form_path(workspace: @workspace, data_source: @data_source, query: @query), method: query_form_method(query: @query), html: form_data do |form| %>
-    <div class="data-sources-row source">
-      <%= form.label :data_source_id, class: "label" do %>
-        <i class="ri-lg ri-database-2-line"></i>
-        <%= I18n.t('app.workspaces.queries.editor.data_source_label') %>
-      <% end %>
-      <div class="select">
-        <%= form.select :data_source_id, options_from_collection_for_select(@data_sources, :id, :display_name, selected: selected_data_source_id), {}, { "data-action": "data-source-query#changeSource" } %>
-        <i class="ri-arrow-drop-down-line"></i>
+    <div class="data-sources-toolbar">
+      <div class="data-sources-row source">
+        <%= form.label :data_source_id, class: "label" do %>
+          <i class="ri-lg ri-database-2-line"></i>
+          <%= I18n.t('app.workspaces.queries.editor.data_source_label') %>
+        <% end %>
+        <div class="select">
+          <%= form.select :data_source_id, options_from_collection_for_select(@data_sources, :id, :display_name, selected: selected_data_source_id), {}, { "data-action": "data-source-query#changeSource" } %>
+          <i class="ri-arrow-drop-down-line"></i>
+        </div>
+        <div class="data-sources-row__actions">
+          <%= link_to app_workspace_data_source_path(@workspace, @data_source),
+                      class: "data-sources-row__action",
+                      "aria-label": I18n.t('app.workspaces.queries.editor.view_data_source_aria') do %>
+            <i class="ri-settings-3-line"></i>
+          <% end %>
+          <% if schema_options.any? %>
+            <button class="data-sources-row__action"
+                    type="button"
+                    data-action="data-source-query#toggleSchema"
+                    aria-label="<%= I18n.t('app.workspaces.queries.editor.toggle_schema_aria') %>">
+              <i class="ri-node-tree"></i>
+            </button>
+          <% end %>
+        </div>
       </div>
-      <%= link_to app_workspace_data_source_path(@workspace, @data_source),
-                  class: "data-sources-row__action",
-                  "aria-label": I18n.t('app.workspaces.queries.editor.view_data_source_aria') do %>
-        <i class="ri-settings-3-line"></i>
-      <% end %>
-      <% if schema_options.any? %>
-        <button class="data-sources-row__action"
-                type="button"
-                data-action="data-source-query#toggleSchema"
-                aria-label="<%= I18n.t('app.workspaces.queries.editor.toggle_schema_aria') %>">
-          <i class="ri-node-tree"></i>
-        </button>
-      <% end %>
+
       <% if panel_toggle_enabled %>
-        <button class="data-sources-row__action query-panel-toggle"
+        <button class="query-panel-toggle"
                 type="button"
                 data-query-side-panel-target="toggleButton"
                 data-action="query-side-panel#togglePanel"

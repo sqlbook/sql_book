@@ -14,11 +14,16 @@
     display: flex;
     gap: 1rem;
     justify-content: space-between;
-    margin: 0 0 1rem;
+    margin: 0 0 2rem;
   }
 
   &__title {
+    flex: 1;
     margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__close {
@@ -47,6 +52,7 @@
   &__tabs {
     .tabs {
       margin: 0;
+      padding: 0 0 1.5rem;
     }
   }
 
