@@ -12,10 +12,10 @@ class Query < ApplicationRecord
              primary_key: :id,
              optional: true
 
-  has_one :visualization,
-          class_name: 'QueryVisualization',
-          dependent: :destroy,
-          inverse_of: :query
+  has_many :visualizations,
+           class_name: 'QueryVisualization',
+           dependent: :destroy,
+           inverse_of: :query
 
   has_many :chat_query_references,
            dependent: :nullify,

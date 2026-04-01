@@ -1,0 +1,59 @@
+<div class="workspace-branding__mode-card">
+  <h4 class="cream-250"><%= I18n.t("app.workspaces.settings.branding.editor.#{mode}_title") %></h4>
+  <div class="split">
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.palette') %></label>
+      <%= text_field_tag "editor_#{mode}[colors_csv]", attributes[:colors_csv], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.background_color') %></label>
+      <%= text_field_tag "editor_#{mode}[background_color]", attributes[:background_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+  </div>
+  <div class="split">
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.text_color') %></label>
+      <%= text_field_tag "editor_#{mode}[text_color]", attributes[:text_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.legend_text_color') %></label>
+      <%= text_field_tag "editor_#{mode}[legend_text_color]", attributes[:legend_text_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+  </div>
+  <div class="split">
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.title_color') %></label>
+      <%= text_field_tag "editor_#{mode}[title_color]", attributes[:title_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.subtitle_color') %></label>
+      <%= text_field_tag "editor_#{mode}[subtitle_color]", attributes[:subtitle_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+  </div>
+  <div class="split">
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.axis_line_color') %></label>
+      <%= text_field_tag "editor_#{mode}[axis_line_color]", attributes[:axis_line_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.axis_label_color') %></label>
+      <%= text_field_tag "editor_#{mode}[axis_label_color]", attributes[:axis_label_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+  </div>
+  <div class="split">
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.split_line_color') %></label>
+      <%= text_field_tag "editor_#{mode}[split_line_color]", attributes[:split_line_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+    <div>
+      <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.tooltip_background_color') %></label>
+      <%= text_field_tag "editor_#{mode}[tooltip_background_color]", attributes[:tooltip_background_color], class: 'input block fluid', disabled: read_only_theme %>
+    </div>
+  </div>
+  <div>
+    <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.tooltip_text_color') %></label>
+    <%= text_field_tag "editor_#{mode}[tooltip_text_color]", attributes[:tooltip_text_color], class: 'input block fluid', disabled: read_only_theme %>
+  </div>
+  <label class="label block"><%= I18n.t('app.workspaces.settings.branding.editor.raw_json') %></label>
+  <%= text_area_tag "raw_json_#{mode}", attributes[:raw_json], class: 'input block fluid workspace-branding__json', rows: 14, readonly: read_only_theme %>
+</div>

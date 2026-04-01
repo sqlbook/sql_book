@@ -1,0 +1,93 @@
+<% content_for :app_content_layout_class, 'split' %>
+<% panel_storage_key = @query.persisted? ? "query-side-panel:#{@workspace.id}:#{@query.id}" : "query-side-panel:#{@workspace.id}:draft" %>
+
+<div class="responsive-side-panel-layout responsive-side-panel-layout--query side-panel-layout--open query-editor-shell"
+     data-controller="query-editor query-side-panel"
+     data-action="query-editor:open-panel->query-side-panel#openPanel"
+     data-query-side-panel-storage-key-value="<%= panel_storage_key %>"
+     data-query-side-panel-default-open-value="true"
+     data-query-side-panel-mobile-breakpoint-value="1023"
+     data-query-side-panel-open-aria-value="<%= I18n.t('app.workspaces.queries.editor.open_details_aria') %>"
+     data-query-side-panel-close-aria-value="<%= I18n.t('app.workspaces.queries.editor.close_details_aria') %>"
+     data-query-editor-run-url-value="<%= app_workspace_query_editor_run_path(@workspace) %>"
+     data-query-editor-save-url-value="<%= app_workspace_query_editor_save_path(@workspace) %>"
+     data-query-editor-query-base-url-value="<%= app_workspace_data_source_queries_path(@workspace, '__DATA_SOURCE_ID__') %>"
+     data-query-editor-data-source-settings-base-url-value="<%= app_workspace_data_source_path(@workspace, '__DATA_SOURCE_ID__') %>"
+     data-query-editor-read-only-value="<%= can_write_queries?(workspace: @workspace) ? 'false' : 'true' %>">
+  <script type="application/json" data-query-editor-target="bootstrap"><%= raw json_escape(@query_editor_state.to_json) %></script>
+  <script type="application/json" data-query-editor-target="translations"><%= raw json_escape(query_editor_i18n.to_json) %></script>
+
+  <div class="query-editor-shell__content">
+    <main>
+      <%= render 'shared/data_source_query', panel_toggle_enabled: true, full_width: true %>
+    </main>
+
+    <aside class="tabbed-side-panel query-details-panel"
+           data-controller="resizeable-page"
+           data-query-side-panel-target="panel">
+      <% query_tabs = capture do %>
+        <div class="tabs">
+          <button type="button"
+                  class="nav-item"
+                  data-query-editor-target="tabButton"
+                  data-tab="query_results"
+                  data-action="query-editor#selectTab">
+            <i class="ri-table-2" aria-hidden="true"></i>
+            <span><%= I18n.t('app.workspaces.visualizations.tabs.query_results') %></span>
+          </button>
+          <button type="button"
+                  class="nav-item"
+                  data-query-editor-target="tabButton"
+                  data-tab="visualization"
+                  data-action="query-editor#selectTab">
+            <i class="ri-bar-chart-box-line" aria-hidden="true"></i>
+            <span><%= I18n.t('app.workspaces.visualizations.tabs.visualization') %></span>
+          </button>
+          <button type="button"
+                  class="nav-item"
+                  data-query-editor-target="tabButton"
+                  data-tab="settings"
+                  data-action="query-editor#selectTab">
+            <i class="ri-settings-3-line" aria-hidden="true"></i>
+            <span><%= I18n.t('common.actions.settings') %></span>
+          </button>
+        </div>
+      <% end %>
+
+      <%= render 'shared/tabbed_side_panel_header',
+                 title: query_panel_title(query: @query),
+                 title_target: 'panelTitle',
+                 close_action: 'query-side-panel#closePanel',
+                 close_aria_label: I18n.t('app.workspaces.queries.editor.close_details_aria'),
+                 tabs_content: query_tabs %>
+
+      <div class="tabbed-side-panel__body">
+        <section data-query-editor-target="resultsPane"></section>
+        <section data-query-editor-target="visualizationPane" class="hidden"></section>
+        <section data-query-editor-target="settingsPane" class="hidden"></section>
+      </div>
+
+      <%= render 'shared/grab_handle' %>
+    </aside>
+  </div>
+
+  <footer class="query-editor-footer">
+    <div class="query-editor-footer__primary">
+      <button type="button"
+              class="link primary"
+              data-query-editor-target="runButton"
+              data-action="query-editor#runQuery"></button>
+      <span class="gray-500" data-query-editor-target="runHint"></span>
+    </div>
+
+    <div class="query-editor-footer__secondary">
+      <button type="button"
+              class="link secondary"
+              data-query-editor-target="saveButton"
+              data-action="query-editor#saveQuery">
+        <span data-query-editor-target="saveLabel"></span>
+        <span class="red-500" data-query-editor-target="saveCount"></span>
+      </button>
+    </div>
+  </footer>
+</div>

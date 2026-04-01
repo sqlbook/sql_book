@@ -7,6 +7,7 @@ module Queries
       @sql = context[:sql].to_s.strip
       @data_source = context[:data_source]
       @actor = context[:actor]
+      @schema_context = Array(context[:schema_context]).filter_map { |entry| entry.to_s.strip.presence }
       @existing_names = existing_names
       @avoid_existing_names = avoid_existing_names
     end
@@ -30,6 +31,7 @@ module Queries
       [
         locale_hint,
         "Workspace data source: #{data_source.display_name}",
+        schema_context_hint,
         ("User request: #{question}" if question.present?),
         "SQL:\n#{sql}",
         existing_name_hint
@@ -38,7 +40,7 @@ module Queries
 
     private
 
-    attr_reader :question, :sql, :data_source, :actor, :existing_names, :avoid_existing_names
+    attr_reader :question, :sql, :data_source, :actor, :schema_context, :existing_names, :avoid_existing_names
 
     def locale_hint
       locale = actor&.preferred_locale.to_s.strip
@@ -51,6 +53,12 @@ module Queries
       return unless avoid_existing_names && existing_names.any?
 
       "Existing saved query names to avoid: #{existing_names.join(' | ')}"
+    end
+
+    def schema_context_hint
+      return if schema_context.empty?
+
+      "Schema context:\n- #{schema_context.join("\n- ")}"
     end
   end
 end

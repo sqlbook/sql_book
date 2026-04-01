@@ -899,7 +899,7 @@
             "$ref": "#/components/parameters/workspaceId"
           },
           {
-            "$ref": "#/components/parameters/queryId"
+            "$ref": "#/components/parameters/queryVisualizationQueryId"
           }
         ],
         "requestBody": {
@@ -964,7 +964,7 @@
             "$ref": "#/components/parameters/workspaceId"
           },
           {
-            "$ref": "#/components/parameters/queryId"
+            "$ref": "#/components/parameters/queryVisualizationQueryId"
           }
         ],
         "responses": {
@@ -993,11 +993,11 @@
         ]
       }
     },
-    "/api/v1/workspaces/{workspace_id}/queries/{query_id}/visualization": {
+    "/api/v1/workspaces/{workspace_id}/queries/{query_id}/visualizations": {
       "get": {
-        "operationId": "queryVisualizationShow",
-        "summary": "Get query visualization",
-        "description": "Returns the current query-owned visualization for the saved query, including the structured visualization payload and preview option payloads for dark and light mode when a visualization exists.",
+        "operationId": "queryVisualizationList",
+        "summary": "List query visualizations",
+        "description": "Returns every saved visualization currently configured for the saved query. Each visualization is query-owned and identified by `chart_type`.",
         "tags": [
           "Visualizations"
         ],
@@ -1006,14 +1006,46 @@
             "$ref": "#/components/parameters/workspaceId"
           },
           {
-            "name": "query_id",
-            "in": "path",
-            "required": true,
-            "description": "The saved query id that owns this visualization.",
-            "schema": {
-              "type": "integer",
-              "example": 14
-            }
+            "$ref": "#/components/parameters/queryId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/VisualizationsListed"
+          },
+          "401": {
+            "$ref": "#/components/responses/ToolUnauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/ToolForbidden"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Shell",
+            "label": "curl",
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualizations' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/queries/{query_id}/visualizations/{chart_type}": {
+      "get": {
+        "operationId": "queryVisualizationShow",
+        "summary": "Get query visualization",
+        "description": "Returns one saved query-owned visualization by `chart_type`, including the structured visualization payload plus preview option payloads for dark and light mode when it exists.",
+        "tags": [
+          "Visualizations"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/workspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/queryVisualizationQueryId"
+          },
+          {
+            "$ref": "#/components/parameters/chartType"
           }
         ],
         "responses": {
@@ -1031,14 +1063,14 @@
           {
             "lang": "Shell",
             "label": "curl",
-            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualization' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+            "source": "curl '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualizations/line' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
           }
         ]
       },
       "patch": {
         "operationId": "queryVisualizationUpsert",
         "summary": "Create or update query visualization",
-        "description": "Creates or updates the one-to-one visualization owned by the saved query. Callers send structured visualization state, not raw full ECharts option blobs.",
+        "description": "Creates or updates the saved query-owned visualization for the requested `chart_type`. Callers send structured visualization state, not raw full ECharts option blobs.",
         "tags": [
           "Visualizations"
         ],
@@ -1047,14 +1079,10 @@
             "$ref": "#/components/parameters/workspaceId"
           },
           {
-            "name": "query_id",
-            "in": "path",
-            "required": true,
-            "description": "The saved query id that owns this visualization.",
-            "schema": {
-              "type": "integer",
-              "example": 14
-            }
+            "$ref": "#/components/parameters/queryVisualizationQueryId"
+          },
+          {
+            "$ref": "#/components/parameters/chartType"
           }
         ],
         "requestBody": {
@@ -1068,7 +1096,6 @@
                 "lineVisualization": {
                   "summary": "Save a line chart visualization",
                   "value": {
-                    "chart_type": "line",
                     "theme_reference": "system.default_theming",
                     "data_config": {
                       "dimension_key": "month",
@@ -1109,14 +1136,14 @@
           {
             "lang": "Shell",
             "label": "curl",
-            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualization' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"chart_type\":\"line\",\"theme_reference\":\"system.default_theming\",\"data_config\":{\"dimension_key\":\"month\",\"value_key\":\"revenue\"},\"appearance_config_dark\":{},\"appearance_config_light\":{},\"other_config\":{\"title\":\"Revenue by month\",\"legend_enabled\":false,\"tooltip_enabled\":true}}'"
+            "source": "curl -X PATCH '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualizations/line' \\\n  -H 'Content-Type: application/json' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>' \\\n  --data '{\"theme_reference\":\"system.default_theming\",\"data_config\":{\"dimension_key\":\"month\",\"value_key\":\"revenue\"},\"appearance_config_dark\":{},\"appearance_config_light\":{},\"other_config\":{\"title\":\"Revenue by month\",\"legend_enabled\":false,\"tooltip_enabled\":true}}'"
           }
         ]
       },
       "delete": {
         "operationId": "queryVisualizationDelete",
         "summary": "Delete query visualization",
-        "description": "Deletes the query-owned visualization for the saved query without deleting the query itself.",
+        "description": "Deletes one saved query-owned visualization for the requested `chart_type` without deleting the query itself or affecting other saved visualization types.",
         "tags": [
           "Visualizations"
         ],
@@ -1125,14 +1152,10 @@
             "$ref": "#/components/parameters/workspaceId"
           },
           {
-            "name": "query_id",
-            "in": "path",
-            "required": true,
-            "description": "The saved query id that owns this visualization.",
-            "schema": {
-              "type": "integer",
-              "example": 14
-            }
+            "$ref": "#/components/parameters/queryVisualizationQueryId"
+          },
+          {
+            "$ref": "#/components/parameters/chartType"
           }
         ],
         "responses": {
@@ -1150,7 +1173,7 @@
           {
             "lang": "Shell",
             "label": "curl",
-            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualization' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
+            "source": "curl -X DELETE '{{apiUrl}}api/v1/workspaces/{{workspaceId}}/queries/{{queryId}}/visualizations/line' \\\n  -H 'Cookie: _sqlbook_session=<session-cookie>'"
           }
         ]
       }
@@ -1560,6 +1583,25 @@
         "schema": {
           "type": "integer",
           "example": 14
+        }
+      },
+      "queryVisualizationQueryId": {
+        "name": "query_id",
+        "in": "path",
+        "required": true,
+        "description": "The saved query id that owns these visualizations.",
+        "schema": {
+          "type": "integer",
+          "example": 14
+        }
+      },
+      "chartType": {
+        "name": "chart_type",
+        "in": "path",
+        "required": true,
+        "description": "The visualization type to target for this saved query, for example `line` or `pie`.",
+        "schema": {
+          "$ref": "#/components/schemas/VisualizationChartType"
         }
       },
       "threadId": {
@@ -2302,6 +2344,61 @@
           }
         }
       },
+      "VisualizationsListed": {
+        "description": "Query visualizations returned",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VisualizationsListedResponse"
+            },
+            "examples": {
+              "success": {
+                "value": {
+                  "status": "executed",
+                  "code": "visualization.loaded",
+                  "data": {
+                    "visualizations": [
+                      {
+                        "query_id": 14,
+                        "chart_type": "line",
+                        "theme_reference": "system.default_theming",
+                        "theme": {
+                          "reference": "system.default_theming",
+                          "name": "Default Theming",
+                          "read_only": true,
+                          "system_theme": true,
+                          "default": true
+                        },
+                        "data_config": {
+                          "dimension_key": "month",
+                          "value_key": "revenue",
+                          "table_page_size": 10
+                        },
+                        "appearance_config_dark": {},
+                        "appearance_config_light": {},
+                        "other_config": {
+                          "title": "Revenue by month",
+                          "legend_enabled": false,
+                          "tooltip_enabled": true
+                        },
+                        "renderer": "echarts",
+                        "preview": {
+                          "dark_option": {
+                            "series": []
+                          },
+                          "light_option": {
+                            "series": []
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "VisualizationLoaded": {
         "description": "Query visualization returned",
         "content": {
@@ -2422,7 +2519,8 @@
                   "status": "executed",
                   "code": "visualization.deleted",
                   "data": {
-                    "query_id": 14
+                    "query_id": 14,
+                    "chart_type": "line"
                   }
                 }
               }
@@ -2926,13 +3024,7 @@
       "VisualizationUpdateRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "chart_type"
-        ],
         "properties": {
-          "chart_type": {
-            "$ref": "#/components/schemas/VisualizationChartType"
-          },
           "theme_reference": {
             "type": "string",
             "description": "Workspace theme reference or the built-in system theme reference."
@@ -3006,15 +3098,34 @@
           }
         }
       },
+      "VisualizationsData": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "visualizations"
+        ],
+        "properties": {
+          "visualizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VisualizationSummary"
+            }
+          }
+        }
+      },
       "VisualizationDeletedData": {
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "query_id"
+          "query_id",
+          "chart_type"
         ],
         "properties": {
           "query_id": {
             "type": "integer"
+          },
+          "chart_type": {
+            "$ref": "#/components/schemas/VisualizationChartType"
           }
         }
       },
@@ -4271,6 +4382,32 @@
           },
           "error_code": {
             "type": "null"
+          }
+        }
+      },
+      "VisualizationsListedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status",
+          "code",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "visualization.loaded"
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/VisualizationsData"
           }
         }
       },

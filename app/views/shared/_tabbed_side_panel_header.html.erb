@@ -2,7 +2,8 @@
 
 <header class="tabbed-side-panel__header">
   <div class="tabbed-side-panel__title-row">
-    <h2 class="tabbed-side-panel__title gray-250"><%= title %></h2>
+    <h2 class="tabbed-side-panel__title gray-250"
+        <%= %(data-query-editor-target="#{local_assigns[:title_target]}").html_safe if local_assigns[:title_target].present? %>><%= title %></h2>
 
     <% if local_assigns[:close_path].present? %>
       <%= link_to close_path,

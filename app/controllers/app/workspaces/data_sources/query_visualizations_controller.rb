@@ -5,22 +5,47 @@ module App
     module DataSources
       class QueryVisualizationsController < ApplicationController
         before_action :require_authentication!
-        before_action :authorize_query_write_access!, only: %i[update destroy]
+        before_action :authorize_query_write_access!, only: %i[show update destroy]
+
+        def show
+          render json: {
+            status: 'executed',
+            code: 'visualization.loaded',
+            data: {
+              'visualization' => serialized_visualization(query.visualizations.find_by(chart_type: chart_type))
+            }
+          }
+        end
 
         def update
           result = Visualizations::UpsertService.new(
             query:,
             workspace:,
+            chart_type:,
             attributes: visualization_params
           ).call
 
-          flash[:toast] = failure_toast(result.message) unless result.success?
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
+          render json: {
+            status: result.success? ? 'executed' : 'validation_error',
+            code: result.code,
+            message: result.message,
+            data: {
+              'visualization' => serialized_visualization(result.visualization)
+            }.compact
+          }, status: result.success? ? :ok : :unprocessable_entity
         end
 
         def destroy
-          Visualizations::DestroyService.new(query:).call
-          redirect_to app_workspace_data_source_query_path(workspace, data_source, query, tab: 'visualization')
+          result = Visualizations::DestroyService.new(query:, chart_type:).call
+
+          render json: {
+            status: 'executed',
+            code: result.code,
+            data: {
+              'query_id' => query.id,
+              'chart_type' => chart_type
+            }
+          }
         end
 
         private
@@ -39,7 +64,6 @@ module App
 
         def visualization_params
           params.permit(
-            :chart_type,
             :theme_reference,
             :appearance_raw_json_dark,
             :appearance_raw_json_light,
@@ -58,12 +82,16 @@ module App
           deny_workspace_access!(workspace:)
         end
 
-        def failure_toast(message)
-          {
-            type: 'error',
-            title: I18n.t('app.workspaces.visualizations.toasts.save_failed.title'),
-            body: message.presence || I18n.t('app.workspaces.visualizations.toasts.save_failed.body')
-          }
+        def chart_type
+          params[:chart_type].to_s
+        end
+
+        def serialized_visualization(visualization)
+          Visualizations::Serializer.call(
+            query:,
+            visualization:,
+            include_preview: true
+          )
         end
       end
     end

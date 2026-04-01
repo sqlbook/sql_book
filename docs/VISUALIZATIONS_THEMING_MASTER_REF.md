@@ -13,7 +13,7 @@ Related references:
 
 ## Core principles
 - Visualizations are query-owned.
-- Each query can have zero or one saved visualization in phase 1.
+- Each query can have zero or more saved visualizations, with one saved visualization per `chart_type`.
 - Visualization state is stored as structured domain data, not raw persisted ECharts option blobs.
 - Workspace themes are reusable across query visualizations.
 - The built-in `Default Theming` theme is visible everywhere, read-only, and cannot be deleted.
@@ -21,7 +21,7 @@ Related references:
 
 ## Persistence model
 - `QueryVisualization`
-  - `query_id` unique
+  - `query_id`
   - `chart_type`
   - `theme_reference`
   - `data_config`
@@ -37,6 +37,7 @@ Related references:
 
 Important:
 - Legacy `queries.chart_type` and `queries.chart_config` are removed.
+- `QueryVisualization` uniqueness is `(query_id, chart_type)`.
 - There is no dual-write or compatibility layer for the old Chart.js implementation.
 
 ## Built-in system theme
@@ -57,6 +58,10 @@ Important:
 - Per-chart appearance overrides are stored separately for dark and light mode and deep-merge over the selected theme variant at render time.
 
 ## Editor structure
+- Query editor visualization UX:
+  - gallery-first
+  - selecting a type opens that type's draft editor
+  - nothing persists until the master query-editor save action runs
 - Query visualization editor sections:
   - `Preview`
   - `Data`
@@ -107,9 +112,10 @@ Important:
 
 ## API surface
 - Query visualization API:
-  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
 - Visualization theme API:
   - `GET /api/v1/workspaces/:workspace_id/visualization-themes`
   - `POST /api/v1/workspaces/:workspace_id/visualization-themes`
@@ -125,6 +131,7 @@ Important:
 - Future requests such as `show me this as a stacked bar chart` should build on:
   - the structured visualization schema
   - chart-registry validation
+  - stable `query_id + chart_type` targeting
   - server-side option building
 - `echarts-mcp` is not a runtime dependency in this phase, but this architecture should not block future MCP/tool-assisted visualization generation.
 

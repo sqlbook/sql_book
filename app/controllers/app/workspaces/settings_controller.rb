@@ -10,6 +10,7 @@ module App
         @workspace = workspace
         @theme_library = Visualizations::ThemeLibraryService.call(workspace:)
         @selected_theme_reference = selected_theme_reference
+        @selected_theme_tab = selected_theme_tab
         @selected_theme_entry = selected_theme_entry
         @theme_editor_attributes_dark = build_theme_editor_attributes(mode: :dark)
         @theme_editor_attributes_light = build_theme_editor_attributes(mode: :light)
@@ -45,17 +46,19 @@ module App
       def selected_theme_entry
         return theme_seed_for_new_record if selected_theme_reference == 'new'
         return nil unless params[:tab].to_s == 'branding'
+        return nil if selected_theme_reference.blank?
 
         Visualizations::ThemeLibraryService.find_entry(
           workspace:,
-          reference: selected_theme_library_reference
+          reference: selected_theme_reference
         )
       end
 
-      def selected_theme_library_reference
-        selected_theme_reference.presence ||
-          workspace.default_visualization_theme&.reference_key ||
-          Visualizations::SystemTheme::REFERENCE_KEY
+      def selected_theme_tab
+        allowed_tabs = %w[settings dark light]
+        selected_tab = params[:theme_editor_tab].to_s
+
+        allowed_tabs.include?(selected_tab) ? selected_tab : 'settings'
       end
 
       def theme_seed_for_new_record

@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe 'API v1 query visualizations', type: :request do
+RSpec.describe 'App::Workspaces::DataSources::QueryVisualizations', type: :request do
   let(:owner) { create(:user) }
   let(:workspace) { create(:workspace_with_owner, owner:) }
   let(:data_source) { create(:data_source, workspace:) }
@@ -13,29 +13,20 @@ RSpec.describe 'API v1 query visualizations', type: :request do
     stub_query_result
   end
 
-  it 'lists all configured visualization types for a query' do
-    create(:query_visualization, query:, chart_type: 'bar')
-    create(:query_visualization, query:, chart_type: 'line')
-
-    get "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}/visualizations"
-
-    expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.dig('data', 'visualizations').map { |item| item['chart_type'] }).to eq(%w[bar line])
-  end
-
-  it 'returns one visualization by chart type' do
+  it 'returns the requested visualization type' do
     create(:query_visualization, query:, chart_type: 'bar')
 
-    get "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}/visualizations/bar"
+    get app_workspace_data_source_query_visualization_path(workspace, data_source, query, 'bar')
 
     expect(response).to have_http_status(:ok)
     expect(response.parsed_body.dig('data', 'visualization', 'chart_type')).to eq('bar')
   end
 
-  it 'creates or updates a targeted visualization type without affecting others' do
+  it 'updates one visualization type without affecting other saved types' do
+    create(:query_visualization, query:, chart_type: 'line')
     create(:query_visualization, query:, chart_type: 'pie')
 
-    patch "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}/visualizations/line",
+    patch app_workspace_data_source_query_visualization_path(workspace, data_source, query, 'line'),
           params: {
             data_config: { dimension_key: 'month', value_key: 'revenue' },
             other_config: { title: 'Revenue by month' }
@@ -43,23 +34,23 @@ RSpec.describe 'API v1 query visualizations', type: :request do
           as: :json
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body['status']).to eq('executed')
-    expect(response.parsed_body.dig('data', 'visualization', 'chart_type')).to eq('line')
     line_visualization = query.reload.visualizations.find_by(chart_type: 'line')
 
     expect(line_visualization&.other_config&.fetch('title')).to eq('Revenue by month')
     expect(query.visualizations.find_by(chart_type: 'pie')).to be_present
   end
 
-  it 'deletes only the requested visualization type' do
-    create(:query_visualization, query:, chart_type: 'bar')
+  it 'deletes only the targeted visualization type' do
     create(:query_visualization, query:, chart_type: 'line')
+    create(:query_visualization, query:, chart_type: 'pie')
 
-    delete "/api/v1/workspaces/#{workspace.id}/queries/#{query.id}/visualizations/bar"
+    expect do
+      delete app_workspace_data_source_query_visualization_path(workspace, data_source, query, 'line')
+    end.to change { query.reload.visualizations.count }.from(2).to(1)
 
     expect(response).to have_http_status(:ok)
-    expect(query.reload.visualizations.find_by(chart_type: 'bar')).to be_nil
-    expect(query.visualizations.find_by(chart_type: 'line')).to be_present
+    expect(query.visualizations.find_by(chart_type: 'line')).to be_nil
+    expect(query.visualizations.find_by(chart_type: 'pie')).to be_present
   end
 
   private

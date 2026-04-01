@@ -20,6 +20,9 @@ Related references:
   - `GET /app/workspaces/:workspace_id/data_sources/:data_source_id/queries`
 - Saved query page:
   - `GET /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:id`
+- Query editor draft actions:
+  - `POST /app/workspaces/:workspace_id/query-editor/run`
+  - `POST /app/workspaces/:workspace_id/query-editor/save`
 - Saved query API:
   - `GET /api/v1/workspaces/:workspace_id/queries`
   - `POST /api/v1/workspaces/:workspace_id/queries`
@@ -27,18 +30,23 @@ Related references:
   - `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
   - `POST /api/v1/workspaces/:workspace_id/queries/run`
 - Query visualization app/editor routes:
-  - `PUT /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualization`
-  - `DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualization`
+  - `GET /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualizations/:chart_type`
+  - `PATCH /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualizations/:chart_type`
+  - `DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualizations/:chart_type`
 - Query visualization API:
-  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
 
 ## Query-owned visualization model
 - Saved query visualizations are query-owned.
-- In phase 1, each query can have zero or one saved visualization.
+- In this phase, each query can have zero or more saved visualizations, with at most one saved visualization per `chart_type`.
 - Visualization persistence lives in `QueryVisualization`, not on the `queries` row itself.
-- Query summary payloads may still expose `chart_type` for compatibility/readability, but the canonical visualization state now lives in the visualization association.
+- `chart_type` is the identity for a saved query visualization in this phase.
+- Query serialization should expose plural visualization state:
+  - `visualization_types`
+  - `visualizations`
 - Structured visualization state is intentionally domain-shaped for future API/chat generation:
   - `chart_type`
   - `theme_reference`
@@ -48,7 +56,11 @@ Related references:
   - `other_config`
 
 ## Visualization behavior
-- The query editor visualization tab now follows this section order:
+- The query editor `Visualization` tab is gallery-first:
+  - default state is the visualization gallery
+  - opening a visualization type loads that type's draft editor
+  - nothing is persisted until the footer save action runs
+- Per-type visualization editors follow this section order:
   - `Preview`
   - `Data`
   - `Appearance`
@@ -78,12 +90,23 @@ Related references:
 
 ## Draft vs saved behavior
 - Unsaved query drafts should not create a `queries` row just because the editor or chat displays them.
+- Running a query inside the query editor updates transient draft state and result state, not persisted query state.
+- The query editor footer is the canonical action surface for:
+  - `Run`
+  - `Save Query`
+  - `Save Changes`
+- The footer save action persists the full dirty draft together:
+  - SQL / datasource
+  - query name/settings
+  - every dirty visualization draft
 - Opening a draft from chat into the query editor should prefill the editor using request params or equivalent transient state.
 - If the user closes the tab or navigates away without saving, the draft should disappear.
 - A query becomes a saved-library object only when the user explicitly saves it.
-- Saving a draft from the query editor settings tab should use the same duplicate rules as chat:
-  - exact duplicate saved SQL should resolve to the existing saved query rather than surfacing a generic save failure
-  - naming a draft for the first time should promote that draft to `saved: true`
+- Exact duplicate saved SQL should resolve to the existing saved query rather than surfacing a generic save failure.
+- SQL edits on a saved query require a fresh successful run before save is allowed again.
+- Settings-only or visualization-only edits do not require rerunning SQL.
+- On the first successful run of a brand-new unsaved draft, the app may generate a first-pass saved-query name using the existing OpenAI naming stack plus datasource schema context.
+- That auto-naming is first-successful-run only; later runs must not silently regenerate the title.
 
 ## Saved query identity
 - Exact saved-query identity is app-owned, not LLM-owned.
@@ -91,7 +114,7 @@ Related references:
   - same datasource
   - same normalized SQL fingerprint
 - Exact duplicates should not create another saved query row.
-- `POST /queries` should return the existing saved query with `save_outcome: "already_saved"` for an exact duplicate.
+- `POST /queries` and query-editor draft save should return the existing saved query with `save_outcome: "already_saved"` for an exact duplicate.
 - Auto-generated names may collide with a different saved query:
   - if the SQL is not an exact duplicate, chat should ask whether to keep the generated name or choose another
   - explicit user-provided names are still respected

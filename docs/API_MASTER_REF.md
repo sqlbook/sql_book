@@ -47,9 +47,10 @@ Current OpenAPI coverage includes the workspace, team-management, datasource, an
 - `POST /api/v1/workspaces/:workspace_id/queries`
 - `PATCH /api/v1/workspaces/:workspace_id/queries/:id`
 - `DELETE /api/v1/workspaces/:workspace_id/queries/:id`
-- `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-- `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-- `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+- `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations`
+- `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+- `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+- `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
 - `GET /api/v1/workspaces/:workspace_id/visualization-themes`
 - `POST /api/v1/workspaces/:workspace_id/visualization-themes`
 - `GET /api/v1/workspaces/:workspace_id/visualization-themes/:id`
@@ -87,7 +88,7 @@ Current query API scope:
 - successful query updates may include `suggested_name` plus `current_name` when the SQL changed meaningfully and the app thinks the saved query title may now be misleading; callers may surface that as a rename suggestion, but should not silently rename the query without an explicit follow-up action
 
 Current visualization and theming API scope:
-- query visualizations are query-owned and one-to-one in this phase
+- query visualizations are query-owned and one-per-`chart_type` in this phase
 - visualization persistence is domain-shaped and server-authored:
   - `chart_type`
   - `theme_reference`
@@ -95,6 +96,9 @@ Current visualization and theming API scope:
   - `appearance_config_dark`
   - `appearance_config_light`
   - `other_config`
+- visualization collection reads list all saved types for a query
+- visualization member writes are addressed by `query_id + chart_type`
+- callers should not send `chart_type` in the visualization update body when the route already provides it
 - callers should not submit or persist raw full ECharts option blobs as the primary chart contract
 - visualization theme APIs expose workspace-owned themes plus the built-in system theme
 - the built-in `Default Theming` theme is visible in every workspace but remains read-only and undeletable
@@ -187,6 +191,7 @@ For docs to stay human and LLM friendly:
 - Visualization semantics should also stay aligned across those surfaces:
   - the same server-owned validation and option-building logic should back UI and API behavior
   - future chat/tool callers should be able to request or mutate visualizations through the same structured contracts without scraping browser UI state
+  - the stable targeting contract for saved visualizations is `query_id + chart_type`
   - future expansion to chat- or MCP-assisted chart generation should extend these contracts rather than introducing a second renderer-shaped persistence format
 
 ## Maintenance workflow

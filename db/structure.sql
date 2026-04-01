@@ -1361,10 +1361,10 @@ CREATE INDEX index_queries_on_data_source_id ON public.queries USING btree (data
 
 
 --
--- Name: index_query_visualizations_on_query_id; Type: INDEX; Schema: public; Owner: -
+-- Name: index_query_visualizations_on_query_id_and_chart_type; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_query_visualizations_on_query_id ON public.query_visualizations USING btree (query_id);
+CREATE UNIQUE INDEX index_query_visualizations_on_query_id_and_chart_type ON public.query_visualizations USING btree (query_id, chart_type);
 
 
 --
@@ -1680,6 +1680,7 @@ ALTER TABLE ONLY public.chat_pending_follow_ups
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260401193000'),
 ('20260401120000'),
 ('20260330100000'),
 ('20260322110000'),

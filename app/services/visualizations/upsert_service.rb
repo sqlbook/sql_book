@@ -4,10 +4,11 @@ module Visualizations
   class UpsertService
     Result = Struct.new(:success?, :visualization, :code, :message, keyword_init: true)
 
-    def initialize(query:, workspace:, attributes:)
+    def initialize(query:, workspace:, attributes:, chart_type: nil)
       @query = query
       @workspace = workspace
       @attributes = attributes.to_h.deep_stringify_keys
+      @chart_type = chart_type.to_s.strip
     end
 
     def call
@@ -24,10 +25,10 @@ module Visualizations
 
     private
 
-    attr_reader :query, :workspace, :attributes
+    attr_reader :query, :workspace, :attributes, :chart_type
 
     def normalized_chart_type
-      attributes['chart_type'].to_s.strip
+      chart_type.presence || attributes['chart_type'].to_s.strip
     end
 
     def normalized_hash(value)
@@ -59,7 +60,7 @@ module Visualizations
     end
 
     def persist_visualization!(chart_type:)
-      visualization = query.visualization || query.build_visualization
+      visualization = query.visualizations.find_or_initialize_by(chart_type:)
       visualization.assign_attributes(visualization_attributes(chart_type:, visualization:))
       visualization.save!
       visualization

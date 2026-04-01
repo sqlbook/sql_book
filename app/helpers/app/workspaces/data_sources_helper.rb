@@ -118,18 +118,6 @@ module App
         params[:verification_attempt].to_i >= 5
       end
 
-      def query_form_path(workspace:, data_source:, query: nil)
-        return app_workspace_data_source_queries_path(workspace, data_source) unless query&.persisted?
-
-        app_workspace_data_source_query_path(workspace, data_source, query)
-      end
-
-      def query_form_method(query: nil)
-        return :put if query&.persisted?
-
-        :post
-      end
-
       def script_base_url
         "#{Rails.application.config.x.app_protocol}://#{Rails.application.config.x.app_host}/assets/script.js?"
       end

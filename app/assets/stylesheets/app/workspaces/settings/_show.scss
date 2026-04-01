@@ -72,6 +72,75 @@
   }
 
   .workspace-branding {
+    &__layout {
+      width: 100%;
+    }
+
+    &__layout--panel-open {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    &__content {
+      min-width: 0;
+    }
+
+    &__panel {
+      background: var(--gray-900);
+      border-radius: var(--app-shell-radius);
+      min-height: 0;
+      overflow: hidden;
+      padding: var(--app-shell-padding);
+    }
+
+    &__panel .workspace-branding__editor {
+      margin: 0;
+    }
+
+    &__section {
+      margin: 0;
+    }
+
+    &__preview--single {
+      border-top: 0;
+      margin: 0;
+      padding-top: 0;
+    }
+
+    &__description {
+      margin: 0 0 2rem 0;
+    }
+
+    &__themes-header {
+      align-items: center;
+      display: flex;
+      margin: 0 0 1.5rem 0;
+    }
+
+    &__themes-title {
+      margin: 0;
+    }
+
+    &__create-theme {
+      margin: 0 0 0 1.5rem;
+      text-decoration: none;
+
+      &:hover {
+        span {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    &__table {
+      margin: 0;
+
+      table {
+        width: 100%;
+      }
+    }
+
     &__header {
       align-items: center;
       display: flex;
@@ -100,6 +169,12 @@
 
     &__actions {
       margin: 1.5rem 0 0 0;
+    }
+
+    @media (max-width: 1023px) {
+      &__layout--panel-open {
+        grid-template-columns: minmax(0, 1fr);
+      }
     }
   }
 

@@ -5,9 +5,9 @@ sqlbook lets users:
 - connect multiple data sources inside a workspace
 - capture first-party events via sqlbook tracking code
 - connect external SQL databases and query them live (without ingesting full copies in v1)
-- query data with SQL and save queries/visualizations
+- query data with SQL, keep draft state in the editor, and save queries with one visualization per chart type
 - apply reusable workspace visualization themes with dark/light variants
-- build dashboards from saved queries (MVP in progress)
+- build dashboards from saved queries and reusable saved visualization variants (MVP in progress)
 - expand over time to additional connectors (for example third-party SaaS and API-backed sources)
 
 ## Current Constraints

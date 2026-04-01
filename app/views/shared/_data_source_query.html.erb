@@ -1,117 +1,122 @@
-<div class="container md-lg data-source-query" data-controller="data-source-query">
+<% full_width = local_assigns.fetch(:full_width, false) %>
+<div class="<%= class_names('container data-source-query', ('md-lg' unless full_width)) %>">
   <% can_write_queries = can_write_queries?(workspace: @workspace) %>
   <% panel_toggle_enabled = local_assigns.fetch(:panel_toggle_enabled, false) %>
   <% selected_data_source_id = @data_source&.id || params[:data_source_id] %>
   <% schema_options = @query_schema_options || [] %>
   <% schema_groups = @query_schema_groups || [] %>
   <% default_query_schema = @default_query_schema %>
-  <% form_data = { "data-data-source-query-target": "form" } %>
-  <% form_data["data-action"] = "submit->query-side-panel#openPanel" if panel_toggle_enabled %>
-  <%= form_with url: query_form_path(workspace: @workspace, data_source: @data_source, query: @query), method: query_form_method(query: @query), html: form_data do |form| %>
-    <div class="data-sources-toolbar">
-      <div class="data-sources-row source">
-        <%= form.label :data_source_id, class: "label" do %>
-          <i class="ri-lg ri-database-2-line"></i>
-          <%= I18n.t('app.workspaces.queries.editor.data_source_label') %>
-        <% end %>
-        <div class="select">
-          <%= form.select :data_source_id, options_from_collection_for_select(@data_sources, :id, :display_name, selected: selected_data_source_id), {}, { "data-action": "data-source-query#changeSource" } %>
-          <i class="ri-arrow-drop-down-line"></i>
-        </div>
-        <div class="data-sources-row__actions">
-          <%= link_to app_workspace_data_source_path(@workspace, @data_source),
-                      class: "data-sources-row__action",
-                      "aria-label": I18n.t('app.workspaces.queries.editor.view_data_source_aria') do %>
-            <i class="ri-settings-3-line"></i>
-          <% end %>
-          <% if schema_options.any? %>
-            <button class="data-sources-row__action"
-                    type="button"
-                    data-action="data-source-query#toggleSchema"
-                    aria-label="<%= I18n.t('app.workspaces.queries.editor.toggle_schema_aria') %>">
-              <i class="ri-node-tree"></i>
-            </button>
-          <% end %>
-        </div>
+  <div class="data-sources-toolbar">
+    <div class="data-sources-row source">
+      <label class="label">
+        <i class="ri-lg ri-database-2-line"></i>
+        <%= I18n.t('app.workspaces.queries.editor.data_source_label') %>
+      </label>
+      <div class="select">
+        <select data-action="query-editor#changeSource"
+                data-query-editor-target="dataSourceSelect"
+                <%= 'disabled' unless can_write_queries %>>
+          <%= options_from_collection_for_select(@data_sources, :id, :display_name, selected: selected_data_source_id) %>
+        </select>
+        <i class="ri-arrow-drop-down-line"></i>
       </div>
-
-      <% if panel_toggle_enabled %>
-        <button class="query-panel-toggle"
-                type="button"
-                data-query-side-panel-target="toggleButton"
-                data-action="query-side-panel#togglePanel"
-                aria-label="<%= I18n.t('app.workspaces.queries.editor.open_details_aria') %>">
-          <svg class="query-panel-toggle__icon"
-               viewBox="0 0 24 24"
-               aria-hidden="true"
-               xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 5H13V19H5V5ZM19 19H15V5H19V19ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V4C21 3.44772 20.5523 3 20 3H4ZM11 12L7 8.5V15.5L11 12Z" />
-          </svg>
-        </button>
-      <% end %>
+      <div class="data-sources-row__actions">
+        <%= link_to app_workspace_data_source_path(@workspace, @data_source),
+                    class: 'data-sources-row__action',
+                    data: { query_editor_target: 'dataSourceSettingsLink' },
+                    'aria-label': I18n.t('app.workspaces.queries.editor.view_data_source_aria') do %>
+          <i class="ri-settings-3-line"></i>
+        <% end %>
+        <% if schema_options.any? %>
+          <button class="data-sources-row__action"
+                  type="button"
+                  data-action="query-editor#toggleSchema"
+                  aria-label="<%= I18n.t('app.workspaces.queries.editor.toggle_schema_aria') %>">
+            <i class="ri-node-tree"></i>
+          </button>
+        <% end %>
+      </div>
     </div>
 
-    <% if schema_options.any? %>
-      <div class="data-sources-row schema hide" data-data-source-query-target="schema">
-        <%= form.label :schema, class: "label" do %>
-          <i class="ri-node-tree"></i>
-          <%= I18n.t('app.workspaces.queries.editor.schema_label') %>
-        <% end %>
-        <div class="select">
-          <%= form.select :schema, options_for_select(schema_options, selected: default_query_schema), {}, { "data-action": "data-source-query#changeSchema" } %>
-          <i class="ri-arrow-drop-down-line"></i>
-        </div>
-      </div>
-
-      <div class="data-sources-row schema-table">
-        <div class="scroll">
-          <% schema_groups.each do |group| %>
-            <% group[:tables].each do |table| %>
-              <table class="schema-table-<%= table[:schema_key] %> <%= "hide" unless table[:schema_key] == default_query_schema %>">
-                <tr>
-                  <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.name') %></th>
-                  <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.type') %></th>
-                  <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.default') %></th>
-                </tr>
-                <% table[:columns].each do |column| %>
-                  <tr>
-                    <td><%= column[:name] %></td>
-                    <td><%= column[:data_type] %></td>
-                    <td><%= column[:default] || I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
-                  </tr>
-                <% end %>
-                <% if table[:columns].empty? %>
-                  <tr>
-                    <td colspan="3"><%= I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
-                  </tr>
-                <% end %>
-              </table>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
+    <% if panel_toggle_enabled %>
+      <button class="query-panel-toggle"
+              type="button"
+              data-query-side-panel-target="toggleButton"
+              data-action="query-side-panel#togglePanel"
+              aria-label="<%= I18n.t('app.workspaces.queries.editor.open_details_aria') %>">
+        <svg class="query-panel-toggle__icon"
+             viewBox="0 0 24 24"
+             aria-hidden="true"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 5H13V19H5V5ZM19 19H15V5H19V19ZM4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21H20C20.5523 21 21 20.5523 21 20V4C21 3.44772 20.5523 3 20 3H4ZM11 12L7 8.5V15.5L11 12Z" />
+        </svg>
+      </button>
     <% end %>
+  </div>
 
-    <div class="query-form">
-      <%= form.text_area :query, placeholder: I18n.t('app.workspaces.queries.editor.query_placeholder'), required: true, rows: 1, readonly: !can_write_queries, "data-action": "data-source-query#change keydown.meta+enter->data-source-query#submit",  "data-data-source-query-target": "input", value: @query&.query %>
-      <% if can_write_queries %>
-        <%= form.submit I18n.t('app.workspaces.queries.editor.submit_hint'), class: "link secondary submit", "data-data-source-query-target": "submit" %>
-      <% end %>
+  <% if schema_options.any? %>
+    <div class="data-sources-row schema hide" data-query-editor-target="schema">
+      <label class="label">
+        <i class="ri-node-tree"></i>
+        <%= I18n.t('app.workspaces.queries.editor.schema_label') %>
+      </label>
+      <div class="select">
+        <select data-action="query-editor#changeSchema" data-query-editor-target="schemaSelect">
+          <%= options_for_select(schema_options, selected: default_query_schema) %>
+        </select>
+        <i class="ri-arrow-drop-down-line"></i>
+      </div>
+    </div>
 
-      <div class="query-library context" data-data-source-query-target="queryLibrary">
-        <button type="button" class="link">
-          <%= I18n.t('app.workspaces.queries.editor.suggestions.average_busiest_day') %>
-        </button>
-        <button type="button" class="link">
-          <%= I18n.t('app.workspaces.queries.editor.suggestions.average_busiest_time') %>
-        </button>
-        <button type="button" class="link">
-          <%= I18n.t('app.workspaces.queries.editor.suggestions.average_quietest_day') %>
-        </button>
-        <button type="button" class="link">
-          <%= I18n.t('app.workspaces.queries.editor.suggestions.average_session_duration') %>
-        </button>
+    <div class="data-sources-row schema-table">
+      <div class="scroll">
+        <% schema_groups.each do |group| %>
+          <% group[:tables].each do |table| %>
+            <table class="schema-table-<%= table[:schema_key] %> <%= 'hide' unless table[:schema_key] == default_query_schema %>">
+              <tr>
+                <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.name') %></th>
+                <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.type') %></th>
+                <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.default') %></th>
+              </tr>
+              <% table[:columns].each do |column| %>
+                <tr>
+                  <td><%= column[:name] %></td>
+                  <td><%= column[:data_type] %></td>
+                  <td><%= column[:default] || I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
+                </tr>
+              <% end %>
+              <% if table[:columns].empty? %>
+                <tr>
+                  <td colspan="3"><%= I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
+                </tr>
+              <% end %>
+            </table>
+          <% end %>
+        <% end %>
       </div>
     </div>
   <% end %>
+
+  <div class="query-form">
+    <textarea placeholder="<%= I18n.t('app.workspaces.queries.editor.query_placeholder') %>"
+              rows="1"
+              <%= 'readonly' unless can_write_queries %>
+              data-action="input->query-editor#change keydown->query-editor#handleKeydown"
+              data-query-editor-target="input"><%= @query&.query %></textarea>
+
+    <div class="query-library context" data-query-editor-target="queryLibrary">
+      <button type="button" class="link" data-action="query-editor#applySuggestion">
+        <%= I18n.t('app.workspaces.queries.editor.suggestions.average_busiest_day') %>
+      </button>
+      <button type="button" class="link" data-action="query-editor#applySuggestion">
+        <%= I18n.t('app.workspaces.queries.editor.suggestions.average_busiest_time') %>
+      </button>
+      <button type="button" class="link" data-action="query-editor#applySuggestion">
+        <%= I18n.t('app.workspaces.queries.editor.suggestions.average_quietest_day') %>
+      </button>
+      <button type="button" class="link" data-action="query-editor#applySuggestion">
+        <%= I18n.t('app.workspaces.queries.editor.suggestions.average_session_duration') %>
+      </button>
+    </div>
+  </div>
 </div>

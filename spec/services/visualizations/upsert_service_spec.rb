@@ -25,7 +25,7 @@ RSpec.describe Visualizations::UpsertService do
     ).call
 
     expect(result.success?).to eq(true)
-    expect(query.reload.visualization.theme_reference).to eq(default_theme.reference_key)
+    expect(query.reload.visualizations.find_by(chart_type: 'line')&.theme_reference).to eq(default_theme.reference_key)
   end
 
   it 'builds appearance overrides from editor params and raw json' do
@@ -44,9 +44,27 @@ RSpec.describe Visualizations::UpsertService do
     ).call
 
     expect(result.success?).to eq(true)
-    visualization = query.reload.visualization
+    visualization = query.reload.visualizations.find_by(chart_type: 'line')
     expect(visualization.appearance_config_dark.dig('categoryAxis', 'axisLine', 'lineStyle', 'color')).to eq('#444444')
     expect(visualization.appearance_config_dark.dig('valueAxis', 'axisLine', 'lineStyle', 'color')).to eq('#444444')
     expect(visualization.appearance_config_light).to eq({ 'tooltip' => { 'backgroundColor' => '#ffffff' } })
+  end
+
+  it 'upserts the targeted chart type without overwriting another saved visualization' do
+    create(:query_visualization, query:, chart_type: 'pie')
+
+    described_class.new(
+      query:,
+      workspace:,
+      chart_type: 'line',
+      attributes: {
+        data_config: {
+          dimension_key: 'month',
+          value_key: 'revenue'
+        }
+      }
+    ).call
+
+    expect(query.reload.visualizations.order(:chart_type).pluck(:chart_type)).to eq(%w[line pie])
   end
 end

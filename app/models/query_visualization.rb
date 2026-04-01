@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class QueryVisualization < ApplicationRecord
-  belongs_to :query, inverse_of: :visualization
+  belongs_to :query, inverse_of: :visualizations
 
   normalizes :chart_type, with: ->(value) { value.to_s.strip.presence }
   normalizes :theme_reference, with: lambda { |value|
@@ -10,6 +10,7 @@ class QueryVisualization < ApplicationRecord
 
   validates :chart_type, presence: true, inclusion: { in: Visualizations::ChartRegistry.types }
   validates :theme_reference, presence: true
+  validates :chart_type, uniqueness: { scope: :query_id }
 
   before_validation :normalize_json_fields
 

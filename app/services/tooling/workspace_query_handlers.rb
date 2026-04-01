@@ -131,17 +131,21 @@ module Tooling
     end
 
     def serialize_query(query:)
+      visualizations = query.visualizations.order(:chart_type).to_a
+
       {
         'id' => query.id,
         'name' => query.name,
         'sql' => query.query,
         'saved' => query.saved,
-        'chart_type' => query.visualization&.chart_type,
-        'visualization' => query.visualization && Visualizations::Serializer.call(
-          query:,
-          visualization: query.visualization,
-          include_preview: false
-        ),
+        'visualization_types' => visualizations.map(&:chart_type),
+        'visualizations' => visualizations.map do |visualization|
+          Visualizations::Serializer.call(
+            query:,
+            visualization:,
+            include_preview: false
+          )
+        end,
         'data_source' => serialize_data_source(query:),
         'author' => serialize_author(query:),
         'chat_source' => serialize_chat_source(query:),

@@ -1,66 +1,111 @@
+<% creating_new_theme = selected_theme_reference == 'new' %>
+<% panel_title = if creating_new_theme
+                   I18n.t('app.workspaces.settings.branding.editor.untitled_name')
+                 else
+                   selected_theme_entry&.name.presence || I18n.t('app.workspaces.settings.branding.editor.untitled_name')
+                 end %>
 <div class="workspace-branding">
-  <div class="workspace-branding__header">
-    <div>
-      <h3 class="cream-250"><%= I18n.t('app.workspaces.settings.branding.title') %></h3>
-      <p class="gray-300"><%= I18n.t('app.workspaces.settings.branding.description') %></p>
+  <p class="workspace-branding__description gray-250"><%= I18n.t('app.workspaces.settings.branding.description') %></p>
+
+  <div class="workspace-branding__themes-header">
+    <h3 class="workspace-branding__themes-title cream-250"><%= I18n.t('app.workspaces.settings.branding.themes_title') %></h3>
+    <%= link_to app_workspace_settings_path(workspace, tab: 'branding', theme: 'new', theme_editor_tab: 'settings'),
+                class: 'link secondary workspace-branding__create-theme' do %>
+      <i class="ri-add-line red-500"></i>
+      <span><%= I18n.t('common.actions.create_new') %></span>
+    <% end %>
+  </div>
+
+  <div class="<%= class_names('workspace-branding__layout', 'workspace-branding__layout--panel-open' => selected_theme_entry.present?) %>">
+    <div class="workspace-branding__content">
+      <div class="members-table workspace-branding__table" data-controller="table">
+        <table class="collapsible">
+          <tr>
+            <th><%= I18n.t('app.workspaces.settings.branding.table.name') %></th>
+            <th><%= I18n.t('app.workspaces.settings.branding.table.source') %></th>
+            <th><%= I18n.t('app.workspaces.settings.branding.table.access') %></th>
+            <th><%= I18n.t('app.workspaces.settings.branding.table.default') %></th>
+            <th><%= I18n.t('app.workspaces.settings.branding.table.actions') %></th>
+          </tr>
+          <% theme_library.each do |theme_entry| %>
+            <tr>
+              <td><%= theme_entry.name %></td>
+              <td><%= theme_entry.system_theme? ? I18n.t('app.workspaces.settings.branding.table.system_source') : I18n.t('app.workspaces.settings.branding.table.workspace_source') %></td>
+              <td><%= theme_entry.read_only? ? I18n.t('app.workspaces.settings.branding.table.read_only') : I18n.t('app.workspaces.settings.branding.table.editable') %></td>
+              <td><%= theme_entry.default? ? I18n.t('app.workspaces.settings.branding.table.default_badge') : '—' %></td>
+              <td class="actions">
+                <div class="actions-inline">
+                  <%= link_to I18n.t('common.actions.open'),
+                              app_workspace_settings_path(workspace, tab: 'branding', theme: theme_entry.reference_key, theme_editor_tab: 'settings'),
+                              class: 'link secondary' %>
+                  <%= button_to I18n.t('app.workspaces.settings.branding.actions.duplicate'),
+                                app_duplicate_workspace_visualization_theme_path(workspace),
+                                params: { reference: theme_entry.reference_key },
+                                method: :post,
+                                class: 'link secondary' %>
+                  <% if theme_entry.is_a?(VisualizationTheme) %>
+                    <% unless theme_entry.default? %>
+                      <%= button_to I18n.t('app.workspaces.settings.branding.actions.set_default'),
+                                    app_default_workspace_visualization_theme_path(workspace, theme_id: theme_entry.id),
+                                    method: :patch,
+                                    class: 'link secondary' %>
+                      <%= button_to I18n.t('common.actions.delete'),
+                                    app_delete_workspace_visualization_theme_path(workspace, theme_id: theme_entry.id),
+                                    method: :delete,
+                                    class: 'link secondary' %>
+                    <% end %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </table>
+      </div>
     </div>
-    <%= link_to I18n.t('app.workspaces.settings.branding.actions.create'),
-                app_workspace_settings_path(workspace, tab: 'branding', theme: 'new'),
-                class: 'link primary' %>
-  </div>
 
-  <div class="members-table" data-controller="table">
-    <table class="collapsible">
-      <tr>
-        <th><%= I18n.t('app.workspaces.settings.branding.table.name') %></th>
-        <th><%= I18n.t('app.workspaces.settings.branding.table.source') %></th>
-        <th><%= I18n.t('app.workspaces.settings.branding.table.access') %></th>
-        <th><%= I18n.t('app.workspaces.settings.branding.table.default') %></th>
-        <th><%= I18n.t('app.workspaces.settings.branding.table.actions') %></th>
-      </tr>
-      <% theme_library.each do |theme_entry| %>
-        <tr>
-          <td><%= theme_entry.name %></td>
-          <td><%= theme_entry.system_theme? ? I18n.t('app.workspaces.settings.branding.table.system_source') : I18n.t('app.workspaces.settings.branding.table.workspace_source') %></td>
-          <td><%= theme_entry.read_only? ? I18n.t('app.workspaces.settings.branding.table.read_only') : I18n.t('app.workspaces.settings.branding.table.editable') %></td>
-          <td><%= theme_entry.default? ? I18n.t('app.workspaces.settings.branding.table.default_badge') : '—' %></td>
-          <td class="actions">
-            <div class="actions-inline">
-              <%= link_to I18n.t('common.actions.open'),
-                          app_workspace_settings_path(workspace, tab: 'branding', theme: theme_entry.reference_key),
-                          class: 'link secondary' %>
-              <%= button_to I18n.t('app.workspaces.settings.branding.actions.duplicate'),
-                            app_duplicate_workspace_visualization_theme_path(workspace),
-                            params: { reference: theme_entry.reference_key },
-                            method: :post,
-                            class: 'link secondary' %>
-              <% if theme_entry.is_a?(VisualizationTheme) %>
-                <% unless theme_entry.default? %>
-                  <%= button_to I18n.t('app.workspaces.settings.branding.actions.set_default'),
-                                app_default_workspace_visualization_theme_path(workspace, theme_id: theme_entry.id),
-                                method: :patch,
-                                class: 'link secondary' %>
-                  <%= button_to I18n.t('common.actions.delete'),
-                                app_delete_workspace_visualization_theme_path(workspace, theme_id: theme_entry.id),
-                                method: :delete,
-                                class: 'link secondary' %>
-                <% end %>
-              <% end %>
-            </div>
-          </td>
-        </tr>
+    <% if selected_theme_entry.present? %>
+      <% theme_tabs = capture do %>
+        <div class="tabs">
+          <%= link_to add_params(theme_editor_tab: 'settings'),
+                      class: class_names('nav-item', active: selected_theme_tab == 'settings'),
+                      "aria-label": I18n.t('app.workspaces.settings.branding.panel.tabs.theme_settings') do %>
+            <i class="ri-settings-3-line"></i>
+            <span><%= I18n.t('app.workspaces.settings.branding.panel.tabs.theme_settings') %></span>
+          <% end %>
+          <%= link_to add_params(theme_editor_tab: 'dark'),
+                      class: class_names('nav-item', active: selected_theme_tab == 'dark'),
+                      "aria-label": I18n.t('app.workspaces.settings.branding.panel.tabs.dark_mode') do %>
+            <i class="ri-moon-line"></i>
+            <span><%= I18n.t('app.workspaces.settings.branding.panel.tabs.dark_mode') %></span>
+          <% end %>
+          <%= link_to add_params(theme_editor_tab: 'light'),
+                      class: class_names('nav-item', active: selected_theme_tab == 'light'),
+                      "aria-label": I18n.t('app.workspaces.settings.branding.panel.tabs.light_mode') do %>
+            <i class="ri-sun-line"></i>
+            <span><%= I18n.t('app.workspaces.settings.branding.panel.tabs.light_mode') %></span>
+          <% end %>
+        </div>
       <% end %>
-    </table>
-  </div>
 
-  <% if selected_theme_entry.present? %>
-    <%= render "app/workspaces/settings/branding_editor",
-               workspace:,
-               selected_theme_entry:,
-               selected_theme_reference:,
-               theme_editor_attributes_dark:,
-               theme_editor_attributes_light:,
-               theme_preview_dark: @theme_preview_dark,
-               theme_preview_light: @theme_preview_light %>
-  <% end %>
+      <aside class="workspace-branding__panel tabbed-side-panel">
+        <%= render "shared/tabbed_side_panel_header",
+                   title: panel_title,
+                   close_path: add_params(theme: nil, theme_editor_tab: nil),
+                   close_aria_label: I18n.t('common.actions.close'),
+                   tabs_content: theme_tabs %>
+
+        <div class="tabbed-side-panel__body">
+          <%= render "app/workspaces/settings/branding_editor",
+                     workspace:,
+                     selected_theme_entry:,
+                     selected_theme_reference:,
+                     selected_theme_tab:,
+                     theme_editor_attributes_dark:,
+                     theme_editor_attributes_light:,
+                     theme_preview_dark: @theme_preview_dark,
+                     theme_preview_light: @theme_preview_light %>
+        </div>
+      </aside>
+    <% end %>
+  </div>
 </div>

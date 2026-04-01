@@ -95,6 +95,37 @@ es:
             empty: "-"
           query_placeholder: Empieza a escribir tu consulta o escribe '/' para explorar la biblioteca de consultas...
           submit_hint: Presiona CMD+Enter para ejecutar...
+          footer:
+            run: "[Run]"
+            save_query: Guardar consulta
+            save_changes: Guardar cambios
+            shortcut: "(CTRL/CMD + ENTER)"
+          results:
+            empty: Escribe y ejecuta una consulta para ver resultados.
+          errors:
+            sql_required: Escribe una consulta SQL antes de continuar.
+            name_required: Ponle un nombre a tu consulta antes de guardarla.
+            run_required: Ejecuta correctamente la consulta actual antes de guardar los cambios.
+            data_source_not_found: No hemos podido encontrar esa fuente de datos.
+            query_not_found: No hemos podido encontrar esa consulta guardada.
+            duplicate_saved_query: Ese SQL ya coincide con la consulta guardada "%{name}".
+          toasts:
+            save_created:
+              title: Consulta guardada
+              body: Tu consulta y los cambios de visualización se han guardado.
+            save_updated:
+              title: Cambios guardados
+              body: Los cambios de tu consulta se han guardado.
+            already_saved:
+              title: La consulta ya está guardada
+              body: Este SQL ya existe en tu biblioteca de consultas.
+            save_failed:
+              title: No se pudo guardar la consulta
+            run_failed:
+              title: No se pudo ejecutar la consulta
+            name_required:
+              title: Se necesita un nombre para la consulta
+              body: Ponle un nombre a tu consulta antes de guardarla.
           suggestions:
             average_busiest_day: Día medio con más actividad
             average_busiest_time: Hora media con más actividad
@@ -121,10 +152,12 @@ es:
         actions:
           remove: Quitar visualización
           save: "[Guardar visualización]"
+          back_to_gallery: Volver a la galería
         gallery:
           title: Crear una visualización
           description: Elige una visualización para esta consulta. Seguirá siendo propiedad de la consulta y se actualizará con ella con el tiempo.
           read_only: Puedes ver las visualizaciones existentes en este espacio, pero solo las personas con permisos de edición pueden crearlas o modificarlas.
+          configured_badge: Configurada
         form:
           axis_line_color: Color del eje
           axis_label_color: Color de las etiquetas del eje
@@ -508,6 +541,12 @@ es:
         branding:
           title: Branding
           description: Gestiona temas reutilizables para los gráficos del espacio y el tema del sistema que se usa cuando todavía no se ha elegido un tema propio.
+          themes_title: Temas
+          panel:
+            tabs:
+              theme_settings: Configuración del tema
+              dark_mode: Modo oscuro
+              light_mode: Modo claro
           system_theme_name: Default Theming
           copy_suffix: Copia
           actions:
@@ -534,6 +573,7 @@ es:
             legend_text_color: Color del texto de la leyenda
             light_title: JSON del tema claro
             name: Nombre del tema
+            untitled_name: Tema sin título
             palette: Paleta de series
             preview_title: Vista previa del tema
             preview_description: Revisa las variantes guardadas en modo oscuro y claro en varios tipos de gráfico antes de publicar cambios.

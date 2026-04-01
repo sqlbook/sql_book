@@ -66,9 +66,10 @@ Related references:
   - `GET /api/v1/workspaces/:workspace_id/queries`
   - `POST /api/v1/workspaces/:workspace_id/queries/run`
   - `POST /api/v1/workspaces/:workspace_id/queries`
-  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
-  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualization`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations`
+  - `GET /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+  - `PATCH /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
+  - `DELETE /api/v1/workspaces/:workspace_id/queries/:query_id/visualizations/:chart_type`
   - `GET /api/v1/workspaces/:workspace_id/visualization-themes`
   - `POST /api/v1/workspaces/:workspace_id/visualization-themes`
   - `GET /api/v1/workspaces/:workspace_id/visualization-themes/:id`

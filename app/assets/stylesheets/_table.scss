@@ -8,9 +8,10 @@ table {
   tr {
     &:hover,
     &.active {
-      background: var(--gray-850);
+      background: var(--gray-800);
 
-      th, td {
+      th,
+      td {
         &.options {
           .toggle-options {
             visibility: visible;

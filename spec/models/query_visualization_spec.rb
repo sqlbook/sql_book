@@ -28,4 +28,17 @@ RSpec.describe QueryVisualization, type: :model do
       expect(visualization.selected_theme_entry.name).to eq('Default Theming')
     end
   end
+
+  describe 'validations' do
+    it 'allows a query to have multiple visualization types but only one per chart type' do
+      query = create(:query)
+      create(:query_visualization, query:, chart_type: 'line')
+      create(:query_visualization, query:, chart_type: 'bar')
+
+      duplicate = build(:query_visualization, query:, chart_type: 'line')
+
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors[:chart_type]).to include('has already been taken')
+    end
+  end
 end

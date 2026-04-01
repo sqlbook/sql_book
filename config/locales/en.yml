@@ -126,6 +126,37 @@ en:
             empty: "-"
           query_placeholder: Start typing your query, or type '/' to browse the query library...
           submit_hint: Press CMD+Enter to run...
+          footer:
+            run: "[Run]"
+            save_query: Save Query
+            save_changes: Save Changes
+            shortcut: "(CTRL/CMD + ENTER)"
+          results:
+            empty: Write and run a query to see results.
+          errors:
+            sql_required: Please write a SQL query before continuing.
+            name_required: Please name your query before saving it.
+            run_required: Run the current query successfully before saving your changes.
+            data_source_not_found: We couldn't find that data source.
+            query_not_found: We couldn't find that saved query anymore.
+            duplicate_saved_query: That SQL already matches the saved query "%{name}".
+          toasts:
+            save_created:
+              title: Query saved
+              body: Your query and visualization changes have been saved.
+            save_updated:
+              title: Changes saved
+              body: Your query changes have been saved.
+            already_saved:
+              title: Query already saved
+              body: This SQL already exists in your query library.
+            save_failed:
+              title: Couldn't save query
+            run_failed:
+              title: Couldn't run query
+            name_required:
+              title: Query name required
+              body: Please name your query before saving it.
           suggestions:
             average_busiest_day: Average busiest day
             average_busiest_time: Average busiest time
@@ -152,10 +183,12 @@ en:
         actions:
           remove: Remove visualization
           save: "[Save Visualization]"
+          back_to_gallery: Back to gallery
         gallery:
           title: Create a visualization
           description: Choose a visualization for this query. It stays owned by the query and updates with the query over time.
           read_only: You can view existing visualizations in this workspace, but only editors can create or change them.
+          configured_badge: Configured
         form:
           axis_line_color: Axis line color
           axis_label_color: Axis label color
@@ -539,6 +572,12 @@ en:
         branding:
           title: Branding
           description: Manage reusable workspace chart themes and the built-in system theme used when a workspace theme has not been chosen yet.
+          themes_title: Themes
+          panel:
+            tabs:
+              theme_settings: Theme settings
+              dark_mode: Dark mode
+              light_mode: Light mode
           system_theme_name: Default Theming
           copy_suffix: Copy
           actions:
@@ -565,6 +604,7 @@ en:
             legend_text_color: Legend text color
             light_title: Light theme JSON
             name: Theme name
+            untitled_name: Untitled Theme
             palette: Series palette
             preview_title: Theme preview
             preview_description: Review the saved dark and light variants across a few common chart families before you publish changes.
