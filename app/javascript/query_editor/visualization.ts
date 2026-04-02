@@ -101,16 +101,29 @@ export function renderVisualizationGallery({
   const galleryTranslations = i18n.visualizations;
   const cards = availableVisualizationTypes.map((visualizationType) => {
     const configured = Boolean(visualizations[visualizationType.chart_type]);
+    const disabled = !visualizationType.enabled;
     return `
       <button
         type="button"
-        class="visualization-gallery__card"
+        class="visualization-gallery__card${disabled ? ' visualization-gallery__card--disabled' : ''}"
         data-chart-type="${escapeAttribute(visualizationType.chart_type)}"
-        data-action="query-editor#selectVisualization">
-        <i class="${escapeAttribute(visualizationType.icon)}" aria-hidden="true"></i>
-        <span class="visualization-gallery__label">${escapeHtml(visualizationType.label)}</span>
-        <span class="visualization-gallery__description">${escapeHtml(visualizationType.description)}</span>
-        ${configured ? `<span class="visualization-gallery__badge">${escapeHtml(galleryTranslations.configured_badge)}</span>` : ''}
+        data-action="${disabled ? '' : 'query-editor#selectVisualization'}"
+        ${disabled ? 'disabled aria-disabled="true"' : ''}>
+        <span class="visualization-gallery__preview">
+          <span class="visualization-gallery__artwork">
+            <img
+              src="${escapeAttribute(visualizationType.asset_path)}"
+              alt=""
+              class="visualization-gallery__image"
+              loading="lazy"
+              decoding="async">
+          </span>
+        </span>
+        <span class="visualization-gallery__meta">
+          <span class="visualization-gallery__label">${escapeHtml(visualizationType.label)}</span>
+          ${configured ? `<span class="visualization-gallery__badge">${escapeHtml(galleryTranslations.configured_badge)}</span>` : ''}
+          ${disabled ? `<span class="visualization-gallery__badge visualization-gallery__badge--disabled">${escapeHtml(galleryTranslations.coming_soon_badge)}</span>` : ''}
+        </span>
       </button>
     `;
   }).join('');
@@ -119,8 +132,7 @@ export function renderVisualizationGallery({
     return `
       <div class="visualization-gallery">
         <div class="visualization-gallery__header">
-          <h4 class="cream-250">${escapeHtml(galleryTranslations.gallery_title)}</h4>
-          <p class="gray-300">${escapeHtml(galleryTranslations.gallery_description)}</p>
+          <p class="gray-200">${escapeHtml(galleryTranslations.gallery_intro)}</p>
         </div>
         <p class="gray-300">${escapeHtml(galleryTranslations.gallery_read_only)}</p>
       </div>
@@ -130,8 +142,7 @@ export function renderVisualizationGallery({
   return `
     <div class="visualization-gallery">
       <div class="visualization-gallery__header">
-        <h4 class="cream-250">${escapeHtml(galleryTranslations.gallery_title)}</h4>
-        <p class="gray-300">${escapeHtml(galleryTranslations.gallery_description)}</p>
+        <p class="gray-200">${escapeHtml(galleryTranslations.gallery_intro)}</p>
       </div>
       <div class="visualization-gallery__grid">
         ${cards}

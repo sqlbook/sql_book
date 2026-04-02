@@ -160,8 +160,10 @@ es:
         gallery:
           title: Crear una visualización
           description: Elige una visualización para esta consulta. Seguirá siendo propiedad de la consulta y se actualizará con ella con el tiempo.
+          intro: Selecciona un tipo de visualización de la lista siguiente:
           read_only: Puedes ver las visualizaciones existentes en este espacio, pero solo las personas con permisos de edición pueden crearlas o modificarlas.
           configured_badge: Configurada
+          coming_soon_badge: Próximamente
         form:
           axis_line_color: Color del eje
           axis_label_color: Color de las etiquetas del eje
@@ -212,6 +214,9 @@ es:
           column:
             label: Columnas
             description: Compara categorías verticalmente usando una única dimensión y métrica.
+          combo:
+            label: Combo
+            description: Combina barras y líneas en una sola visualización mixta.
           donut:
             label: Donut
             description: Muestra la contribución proporcional con un gráfico de anillo.
@@ -221,6 +226,15 @@ es:
           pie:
             label: Circular
             description: Muestra la contribución proporcional con un gráfico circular.
+          stacked_area:
+            label: Área apilada
+            description: Muestra tendencias rellenas acumuladas a través de múltiples series.
+          stacked_bar:
+            label: Barras apiladas
+            description: Compara totales acumulados por categoría en horizontal.
+          stacked_column:
+            label: Columnas apiladas
+            description: Compara totales acumulados por categoría en vertical.
           table:
             label: Tabla
             description: Guarda una vista de tabla formateada para esta consulta.

@@ -19,9 +19,11 @@ export type ThemeEntry = {
 export type VisualizationType = {
   chart_type: string;
   icon: string;
+  asset_path: string;
   label: string;
   description: string;
   renderer: string;
+  enabled: boolean;
 };
 
 export type VisualizationDraft = {

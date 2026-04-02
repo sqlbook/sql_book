@@ -1,7 +1,7 @@
 <% content_for :app_content_layout_class, 'query-editor-layout' %>
 <% panel_storage_key = @query.persisted? ? "query-side-panel:#{@workspace.id}:#{@query.id}" : "query-side-panel:#{@workspace.id}:draft" %>
 
-<div class="responsive-side-panel-layout responsive-side-panel-layout--query side-panel-layout--open query-editor-shell"
+<div class="query-editor-page side-panel-layout--open"
      data-controller="query-editor query-side-panel"
      data-action="query-editor:open-panel->query-side-panel#openPanel"
      data-query-side-panel-storage-key-value="<%= panel_storage_key %>"
@@ -18,55 +18,57 @@
   <script type="application/json" data-query-editor-target="bootstrap"><%= raw json_escape(@query_editor_state.to_json) %></script>
   <script type="application/json" data-query-editor-target="translations"><%= raw json_escape(query_editor_i18n.to_json) %></script>
 
-  <div class="query-editor-shell__content">
-    <main>
-      <%= render 'shared/data_source_query', panel_toggle_enabled: true, full_width: true %>
-    </main>
+  <div class="responsive-side-panel-layout responsive-side-panel-layout--query query-editor-shell">
+    <div class="query-editor-shell__content">
+      <main>
+        <%= render 'shared/data_source_query', panel_toggle_enabled: true, full_width: true %>
+      </main>
 
-    <aside class="tabbed-side-panel query-details-panel"
-           data-query-side-panel-target="panel">
-      <% query_tabs = capture do %>
-        <div class="tabs">
-          <button type="button"
-                  class="nav-item"
-                  data-query-editor-target="tabButton"
-                  data-tab="query_results"
-                  data-action="query-editor#selectTab">
-            <i class="ri-table-2" aria-hidden="true"></i>
-            <span><%= I18n.t('app.workspaces.visualizations.tabs.query_results') %></span>
-          </button>
-          <button type="button"
-                  class="nav-item"
-                  data-query-editor-target="tabButton"
-                  data-tab="visualization"
-                  data-action="query-editor#selectTab">
-            <i class="ri-bar-chart-box-line" aria-hidden="true"></i>
-            <span><%= I18n.t('app.workspaces.visualizations.tabs.visualization') %></span>
-          </button>
-          <button type="button"
-                  class="nav-item"
-                  data-query-editor-target="tabButton"
-                  data-tab="settings"
-                  data-action="query-editor#selectTab">
-            <i class="ri-settings-3-line" aria-hidden="true"></i>
-            <span><%= I18n.t('common.actions.settings') %></span>
-          </button>
+      <aside class="tabbed-side-panel query-details-panel"
+             data-query-side-panel-target="panel">
+        <% query_tabs = capture do %>
+          <div class="tabs">
+            <button type="button"
+                    class="nav-item"
+                    data-query-editor-target="tabButton"
+                    data-tab="query_results"
+                    data-action="query-editor#selectTab">
+              <i class="ri-table-2" aria-hidden="true"></i>
+              <span><%= I18n.t('app.workspaces.visualizations.tabs.query_results') %></span>
+            </button>
+            <button type="button"
+                    class="nav-item"
+                    data-query-editor-target="tabButton"
+                    data-tab="visualization"
+                    data-action="query-editor#selectTab">
+              <i class="ri-bar-chart-box-line" aria-hidden="true"></i>
+              <span><%= I18n.t('app.workspaces.visualizations.tabs.visualization') %></span>
+            </button>
+            <button type="button"
+                    class="nav-item"
+                    data-query-editor-target="tabButton"
+                    data-tab="settings"
+                    data-action="query-editor#selectTab">
+              <i class="ri-settings-3-line" aria-hidden="true"></i>
+              <span><%= I18n.t('common.actions.settings') %></span>
+            </button>
+          </div>
+        <% end %>
+
+        <%= render 'shared/tabbed_side_panel_header',
+                   title: query_panel_title(query: @query),
+                   title_target: 'panelTitle',
+                   close_action: 'query-side-panel#closePanel',
+                   close_aria_label: I18n.t('app.workspaces.queries.editor.close_details_aria'),
+                   tabs_content: query_tabs %>
+
+        <div class="tabbed-side-panel__body">
+          <section data-query-editor-target="resultsPane"></section>
+          <section data-query-editor-target="visualizationPane" hidden></section>
+          <section data-query-editor-target="settingsPane" hidden></section>
         </div>
-      <% end %>
-
-      <%= render 'shared/tabbed_side_panel_header',
-                 title: query_panel_title(query: @query),
-                 title_target: 'panelTitle',
-                 close_action: 'query-side-panel#closePanel',
-                 close_aria_label: I18n.t('app.workspaces.queries.editor.close_details_aria'),
-                 tabs_content: query_tabs %>
-
-      <div class="tabbed-side-panel__body">
-        <section data-query-editor-target="resultsPane"></section>
-        <section data-query-editor-target="visualizationPane" hidden></section>
-        <section data-query-editor-target="settingsPane" hidden></section>
-      </div>
-    </aside>
+      </aside>
+    </div>
   </div>
 
   <footer class="query-editor-footer">

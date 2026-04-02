@@ -31,7 +31,8 @@ module QueryEditor
         'available_visualization_types' => Visualizations::ChartRegistry.available.map do |config|
           config.merge(
             label: I18n.t(config[:label_key]),
-            description: I18n.t(config[:description_key])
+            description: I18n.t(config[:description_key]),
+            asset_path: ActionController::Base.helpers.asset_path("charts/#{config[:asset_name]}")
           )
         end,
         'theme_library' => serialized_theme_library,

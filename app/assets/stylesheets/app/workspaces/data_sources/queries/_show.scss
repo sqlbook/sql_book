@@ -1,21 +1,31 @@
 .app-workspaces-data_sources-queries-index,
 .app-workspaces-data_sources-queries-show {
   .app-content-layout.query-editor-layout {
+    display: block;
     max-width: 100%;
     min-width: 0;
     overflow-x: hidden;
     width: 100%;
 
-    > .responsive-side-panel-layout {
+    > .query-editor-page {
       display: grid;
-      grid-template-columns: minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) 4rem;
       height: 100%;
-      margin: 0 var(--app-shell-spacing) var(--app-shell-spacing);
       max-width: 100%;
       min-height: 0;
       min-width: 0;
       width: 100%;
+    }
+
+    > .query-editor-page > .responsive-side-panel-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      margin: 0 var(--app-shell-spacing) var(--app-shell-spacing);
+      max-width: calc(100% - (var(--app-shell-spacing) * 2));
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+      width: auto;
     }
 
     .query-editor-shell {
@@ -37,12 +47,8 @@
       width: 100%;
     }
 
-    > .responsive-side-panel-layout {
-      overflow: hidden;
-    }
-
-    > .responsive-side-panel-layout > .query-editor-shell__content > main,
-    > .responsive-side-panel-layout > .query-editor-shell__content > aside {
+    > .query-editor-page > .responsive-side-panel-layout > .query-editor-shell__content > main,
+    > .query-editor-page > .responsive-side-panel-layout > .query-editor-shell__content > aside {
       height: 100%;
       margin: 0;
       min-height: 0;
@@ -50,7 +56,7 @@
       width: 100%;
     }
 
-    > .responsive-side-panel-layout > .query-editor-shell__content > main {
+    > .query-editor-page > .responsive-side-panel-layout > .query-editor-shell__content > main {
       background: var(--gray-800);
       border-radius: 1.5rem;
       overflow-x: hidden;
@@ -58,7 +64,7 @@
       padding: 1.5rem;
     }
 
-    > .responsive-side-panel-layout > .query-editor-shell__content > aside {
+    > .query-editor-page > .responsive-side-panel-layout > .query-editor-shell__content > aside {
       background: var(--gray-900);
       border-radius: var(--app-shell-radius);
       overflow-x: hidden;
@@ -68,17 +74,17 @@
     }
   }
 
-  .responsive-side-panel-layout {
+  .query-editor-page {
     &.side-panel-layout--closed {
       .query-editor-shell__content {
         grid-template-columns: minmax(0, 1fr);
       }
 
-      > .query-editor-shell__content > main {
+      > .responsive-side-panel-layout > .query-editor-shell__content > main {
         grid-column: 1 / -1;
       }
 
-      > .query-editor-shell__content > aside {
+      > .responsive-side-panel-layout > .query-editor-shell__content > aside {
         display: none;
       }
 
@@ -106,6 +112,7 @@
     min-width: 0;
     overflow: hidden;
     padding: 0 1.5rem;
+    width: 100%;
 
     .link.secondary {
       text-decoration: none;
@@ -130,24 +137,22 @@
 
   @media (max-width: 1023px) {
     .app-content-layout.query-editor-layout {
-      display: block;
       position: relative;
 
-      > .responsive-side-panel-layout {
+      > .query-editor-page > .responsive-side-panel-layout {
         margin-left: var(--app-shell-spacing);
         margin-right: var(--app-shell-spacing);
-        width: auto;
       }
     }
 
-    .responsive-side-panel-layout {
+    .query-editor-page {
       .query-editor-shell__content {
         display: block;
         overflow: hidden;
         position: relative;
       }
 
-      > .query-editor-shell__content > aside {
+      > .responsive-side-panel-layout > .query-editor-shell__content > aside {
         bottom: 0;
         left: 0;
         max-width: 100%;
@@ -159,13 +164,13 @@
       }
 
       &.side-panel-layout--open {
-        > .query-editor-shell__content > main {
+        > .responsive-side-panel-layout > .query-editor-shell__content > main {
           visibility: hidden;
         }
       }
 
       &.side-panel-layout--closed {
-        > .query-editor-shell__content > main {
+        > .responsive-side-panel-layout > .query-editor-shell__content > main {
           visibility: visible;
         }
       }
