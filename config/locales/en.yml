@@ -191,7 +191,7 @@ en:
         gallery:
           title: Create a visualization
           description: Choose a visualization for this query. It stays owned by the query and updates with the query over time.
-          intro: Select a visualisation type from the list below:
+          intro: "Select a visualisation type from the list below:"
           read_only: You can view existing visualizations in this workspace, but only editors can create or change them.
           configured_badge: Configured
           coming_soon_badge: Coming soon

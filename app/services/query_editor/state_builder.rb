@@ -28,13 +28,7 @@ module QueryEditor
         'result' => serialized_query_result,
         'run_token' => initial_run_token,
         'visualizations' => serialized_visualizations,
-        'available_visualization_types' => Visualizations::ChartRegistry.available.map do |config|
-          config.merge(
-            label: I18n.t(config[:label_key]),
-            description: I18n.t(config[:description_key]),
-            asset_path: ActionController::Base.helpers.asset_path("charts/#{config[:asset_name]}")
-          )
-        end,
+        'available_visualization_types' => available_visualization_types,
         'theme_library' => serialized_theme_library,
         'chat_source' => query_chat_source,
         'active_tab' => normalized_active_tab
@@ -105,6 +99,20 @@ module QueryEditor
           'theme_json_light' => theme_entry.theme_json_light
         }
       end
+    end
+
+    def available_visualization_types
+      Visualizations::ChartRegistry.available.map do |config|
+        config.merge(
+          label: I18n.t(config[:label_key]),
+          description: I18n.t(config[:description_key]),
+          asset_path: chart_asset_path(config[:asset_name])
+        )
+      end
+    end
+
+    def chart_asset_path(asset_name)
+      ActionController::Base.helpers.asset_path("charts/#{asset_name}")
     end
 
     def normalized_active_tab
