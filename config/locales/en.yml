@@ -114,6 +114,7 @@ en:
         editor:
           data_source_label: Data source
           untitled_title: Untitled Query
+          generating_name: Generating name
           view_data_source_aria: View datasource
           open_details_aria: Open query details
           close_details_aria: Close query details
@@ -157,6 +158,9 @@ en:
             name_required:
               title: Query name required
               body: Please name your query before saving it.
+            run_required:
+              title: Run query before saving
+              body: Run the current query successfully before saving your changes.
           suggestions:
             average_busiest_day: Average busiest day
             average_busiest_time: Average busiest time

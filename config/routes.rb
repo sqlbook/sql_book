@@ -115,6 +115,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
     post 'workspaces/:workspace_id/query-editor/run',
          to: 'workspaces/query_editor#run',
          as: :workspace_query_editor_run
+    post 'workspaces/:workspace_id/query-editor/generate-name',
+         to: 'workspaces/query_editor#generate_name',
+         as: :workspace_query_editor_generate_name
     post 'workspaces/:workspace_id/query-editor/save',
          to: 'workspaces/query_editor#save',
          as: :workspace_query_editor_save

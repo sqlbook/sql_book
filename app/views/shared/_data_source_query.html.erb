@@ -7,35 +7,81 @@
   <% schema_groups = @query_schema_groups || [] %>
   <% default_query_schema = @default_query_schema %>
   <div class="data-sources-toolbar">
-    <div class="data-sources-row source">
-      <label class="label">
-        <i class="ri-lg ri-database-2-line"></i>
-        <%= I18n.t('app.workspaces.queries.editor.data_source_label') %>
-      </label>
-      <div class="select">
-        <select data-action="query-editor#changeSource"
-                data-query-editor-target="dataSourceSelect"
-                <%= 'disabled' unless can_write_queries %>>
-          <%= options_from_collection_for_select(@data_sources, :id, :display_name, selected: selected_data_source_id) %>
-        </select>
-        <i class="ri-arrow-drop-down-line"></i>
+    <div class="data-sources-stack">
+      <div class="data-sources-row source">
+        <label class="label">
+          <i class="ri-lg ri-database-2-line"></i>
+          <%= I18n.t('app.workspaces.queries.editor.data_source_label') %>
+        </label>
+        <div class="select">
+          <select data-action="query-editor#changeSource"
+                  data-query-editor-target="dataSourceSelect"
+                  <%= 'disabled' unless can_write_queries %>>
+            <%= options_from_collection_for_select(@data_sources, :id, :display_name, selected: selected_data_source_id) %>
+          </select>
+          <i class="ri-arrow-drop-down-line"></i>
+        </div>
+        <div class="data-sources-row__actions">
+          <%= link_to app_workspace_data_source_path(@workspace, @data_source),
+                      class: 'data-sources-row__action',
+                      data: { query_editor_target: 'dataSourceSettingsLink' },
+                      'aria-label': I18n.t('app.workspaces.queries.editor.view_data_source_aria') do %>
+            <i class="ri-settings-3-line"></i>
+          <% end %>
+          <% if schema_options.any? %>
+            <button class="data-sources-row__action"
+                    type="button"
+                    data-action="query-editor#toggleSchema"
+                    aria-label="<%= I18n.t('app.workspaces.queries.editor.toggle_schema_aria') %>">
+              <i class="ri-node-tree"></i>
+            </button>
+          <% end %>
+        </div>
       </div>
-      <div class="data-sources-row__actions">
-        <%= link_to app_workspace_data_source_path(@workspace, @data_source),
-                    class: 'data-sources-row__action',
-                    data: { query_editor_target: 'dataSourceSettingsLink' },
-                    'aria-label': I18n.t('app.workspaces.queries.editor.view_data_source_aria') do %>
-          <i class="ri-settings-3-line"></i>
-        <% end %>
-        <% if schema_options.any? %>
-          <button class="data-sources-row__action"
-                  type="button"
-                  data-action="query-editor#toggleSchema"
-                  aria-label="<%= I18n.t('app.workspaces.queries.editor.toggle_schema_aria') %>">
+
+      <% if schema_options.any? %>
+        <div class="data-sources-row schema hide" data-query-editor-target="schema">
+          <label class="label">
             <i class="ri-node-tree"></i>
-          </button>
-        <% end %>
-      </div>
+            <%= I18n.t('app.workspaces.queries.editor.schema_label') %>
+          </label>
+          <div class="select">
+            <select data-action="query-editor#changeSchema" data-query-editor-target="schemaSelect">
+              <%= options_for_select(schema_options, selected: default_query_schema) %>
+            </select>
+            <i class="ri-arrow-drop-down-line"></i>
+          </div>
+          <div class="data-sources-row__actions data-sources-row__actions--placeholder" aria-hidden="true"></div>
+        </div>
+
+        <div class="data-sources-row schema-table">
+          <div class="scroll">
+            <% schema_groups.each do |group| %>
+              <% group[:tables].each do |table| %>
+                <table class="schema-table-<%= table[:schema_key] %> <%= 'hide' unless table[:schema_key] == default_query_schema %>">
+                  <tr>
+                    <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.name') %></th>
+                    <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.type') %></th>
+                    <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.default') %></th>
+                  </tr>
+                  <% table[:columns].each do |column| %>
+                    <tr>
+                      <td><%= column[:name] %></td>
+                      <td><%= column[:data_type] %></td>
+                      <td><%= column[:default] || I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
+                    </tr>
+                  <% end %>
+                  <% if table[:columns].empty? %>
+                    <tr>
+                      <td colspan="3"><%= I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
+                    </tr>
+                  <% end %>
+                </table>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
 
     <% if panel_toggle_enabled %>
@@ -53,49 +99,6 @@
       </button>
     <% end %>
   </div>
-
-  <% if schema_options.any? %>
-    <div class="data-sources-row schema hide" data-query-editor-target="schema">
-      <label class="label">
-        <i class="ri-node-tree"></i>
-        <%= I18n.t('app.workspaces.queries.editor.schema_label') %>
-      </label>
-      <div class="select">
-        <select data-action="query-editor#changeSchema" data-query-editor-target="schemaSelect">
-          <%= options_for_select(schema_options, selected: default_query_schema) %>
-        </select>
-        <i class="ri-arrow-drop-down-line"></i>
-      </div>
-    </div>
-
-    <div class="data-sources-row schema-table">
-      <div class="scroll">
-        <% schema_groups.each do |group| %>
-          <% group[:tables].each do |table| %>
-            <table class="schema-table-<%= table[:schema_key] %> <%= 'hide' unless table[:schema_key] == default_query_schema %>">
-              <tr>
-                <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.name') %></th>
-                <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.type') %></th>
-                <th><%= I18n.t('app.workspaces.queries.editor.schema_columns.default') %></th>
-              </tr>
-              <% table[:columns].each do |column| %>
-                <tr>
-                  <td><%= column[:name] %></td>
-                  <td><%= column[:data_type] %></td>
-                  <td><%= column[:default] || I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
-                </tr>
-              <% end %>
-              <% if table[:columns].empty? %>
-                <tr>
-                  <td colspan="3"><%= I18n.t('app.workspaces.queries.editor.schema_columns.empty') %></td>
-                </tr>
-              <% end %>
-            </table>
-          <% end %>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
 
   <div class="query-form">
     <textarea placeholder="<%= I18n.t('app.workspaces.queries.editor.query_placeholder') %>"

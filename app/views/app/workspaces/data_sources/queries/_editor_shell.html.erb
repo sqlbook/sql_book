@@ -10,6 +10,7 @@
      data-query-side-panel-open-aria-value="<%= I18n.t('app.workspaces.queries.editor.open_details_aria') %>"
      data-query-side-panel-close-aria-value="<%= I18n.t('app.workspaces.queries.editor.close_details_aria') %>"
      data-query-editor-run-url-value="<%= app_workspace_query_editor_run_path(@workspace) %>"
+     data-query-editor-generate-name-url-value="<%= app_workspace_query_editor_generate_name_path(@workspace) %>"
      data-query-editor-save-url-value="<%= app_workspace_query_editor_save_path(@workspace) %>"
      data-query-editor-query-base-url-value="<%= app_workspace_data_source_queries_path(@workspace, '__DATA_SOURCE_ID__') %>"
      data-query-editor-data-source-settings-base-url-value="<%= app_workspace_data_source_path(@workspace, '__DATA_SOURCE_ID__') %>"
@@ -23,7 +24,6 @@
     </main>
 
     <aside class="tabbed-side-panel query-details-panel"
-           data-controller="resizeable-page"
            data-query-side-panel-target="panel">
       <% query_tabs = capture do %>
         <div class="tabs">
@@ -66,8 +66,6 @@
         <section data-query-editor-target="visualizationPane" hidden></section>
         <section data-query-editor-target="settingsPane" hidden></section>
       </div>
-
-      <%= render 'shared/grab_handle' %>
     </aside>
   </div>
 

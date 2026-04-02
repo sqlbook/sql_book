@@ -26,6 +26,19 @@
     white-space: nowrap;
   }
 
+  &__title--pending {
+    color: var(--gray-400);
+
+    &::after {
+      animation: tabbed-side-panel-loading-dots 1.2s steps(4, end) infinite;
+      content: '...';
+      display: inline-block;
+      overflow: hidden;
+      vertical-align: bottom;
+      width: 1.5rem;
+    }
+  }
+
   &__close {
     align-items: center;
     appearance: none;
@@ -62,5 +75,15 @@
     overflow-x: hidden;
     overflow-y: auto;
     padding: 2rem 0 0;
+  }
+}
+
+@keyframes tabbed-side-panel-loading-dots {
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 1.5rem;
   }
 }

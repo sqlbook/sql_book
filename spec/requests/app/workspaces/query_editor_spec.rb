@@ -36,6 +36,26 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
     end
   end
 
+  describe 'POST /app/workspaces/:workspace_id/query-editor/generate-name' do
+    it 'generates a name without persisting a query' do
+      allow(Queries::GeneratedNameService).to receive(:generate).and_return('User count')
+      allow(Queries::SchemaContextBuilder).to receive(:call).with(data_source:).and_return(['public.users: id'])
+
+      expect do
+        post app_workspace_query_editor_generate_name_path(workspace),
+             params: {
+               data_source_id: data_source.id,
+               sql:
+             },
+             as: :json
+      end.not_to change(Query, :count)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body['status']).to eq('executed')
+      expect(response.parsed_body.dig('data', 'generated_name')).to eq('User count')
+    end
+  end
+
   describe 'POST /app/workspaces/:workspace_id/query-editor/save' do
     it 'creates a saved query and persists multiple visualization types in one save' do
       expect do
@@ -65,6 +85,9 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.dig('data', 'save_outcome')).to eq('created')
+      expect(response.parsed_body.dig('data', 'query', 'visualization_types')).to eq(%w[line pie])
+      saved_visualizations = response.parsed_body.dig('data', 'query', 'visualizations')
+      expect(saved_visualizations.map { |visualization| visualization['chart_type'] }).to eq(%w[line pie])
       expect(query.reload.saved).to eq(true)
       expect(query.visualizations.order(:chart_type).pluck(:chart_type)).to eq(%w[line pie])
     end

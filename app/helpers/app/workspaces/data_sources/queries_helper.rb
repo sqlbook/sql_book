@@ -46,7 +46,8 @@ module App
 
         def query_editor_query_i18n
           {
-            untitled_title: I18n.t('app.workspaces.queries.editor.untitled_title')
+            untitled_title: I18n.t('app.workspaces.queries.editor.untitled_title'),
+            generating_name: I18n.t('app.workspaces.queries.editor.generating_name')
           }
         end
 
@@ -162,7 +163,9 @@ module App
             save_failed_title: I18n.t('app.workspaces.queries.editor.toasts.save_failed.title'),
             run_failed_title: I18n.t('app.workspaces.queries.editor.toasts.run_failed.title'),
             name_required_title: I18n.t('app.workspaces.queries.editor.toasts.name_required.title'),
-            name_required_body: I18n.t('app.workspaces.queries.editor.toasts.name_required.body')
+            name_required_body: I18n.t('app.workspaces.queries.editor.toasts.name_required.body'),
+            run_required_title: I18n.t('app.workspaces.queries.editor.toasts.run_required.title'),
+            run_required_body: I18n.t('app.workspaces.queries.editor.toasts.run_required.body')
           }
         end
       end

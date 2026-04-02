@@ -219,6 +219,7 @@ Super-admin is separate from workspace roles:
 ### Query write
 - Route scope:
   - `POST /app/workspaces/:workspace_id/query-editor/run`
+  - `POST /app/workspaces/:workspace_id/query-editor/generate-name`
   - `POST /app/workspaces/:workspace_id/query-editor/save`
   - `PATCH /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualizations/:chart_type`
   - `DELETE /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:query_id/visualizations/:chart_type`

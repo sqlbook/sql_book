@@ -22,6 +22,7 @@ Related references:
   - `GET /app/workspaces/:workspace_id/data_sources/:data_source_id/queries/:id`
 - Query editor draft actions:
   - `POST /app/workspaces/:workspace_id/query-editor/run`
+  - `POST /app/workspaces/:workspace_id/query-editor/generate-name`
   - `POST /app/workspaces/:workspace_id/query-editor/save`
 - Saved query API:
   - `GET /api/v1/workspaces/:workspace_id/queries`
@@ -106,6 +107,7 @@ Related references:
 - SQL edits on a saved query require a fresh successful run before save is allowed again.
 - Settings-only or visualization-only edits do not require rerunning SQL.
 - On the first successful run of a brand-new unsaved draft, the app may generate a first-pass saved-query name using the existing OpenAI naming stack plus datasource schema context.
+- Query results should render as soon as the datasource execution finishes; name generation should happen as a follow-up editor request rather than blocking the first result paint.
 - That auto-naming is first-successful-run only; later runs must not silently regenerate the title.
 
 ## Saved query identity

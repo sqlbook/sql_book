@@ -83,6 +83,7 @@ es:
         editor:
           data_source_label: Fuente de datos
           untitled_title: Consulta sin título
+          generating_name: Generando nombre
           view_data_source_aria: Ver fuente de datos
           open_details_aria: Abrir detalles de la consulta
           close_details_aria: Cerrar detalles de la consulta
@@ -126,6 +127,9 @@ es:
             name_required:
               title: Se necesita un nombre para la consulta
               body: Ponle un nombre a tu consulta antes de guardarla.
+            run_required:
+              title: Ejecuta la consulta antes de guardar
+              body: Ejecuta correctamente la consulta actual antes de guardar los cambios.
           suggestions:
             average_busiest_day: Día medio con más actividad
             average_busiest_time: Hora media con más actividad

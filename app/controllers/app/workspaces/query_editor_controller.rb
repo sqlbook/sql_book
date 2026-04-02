@@ -2,13 +2,18 @@
 
 module App
   module Workspaces
-    class QueryEditorController < ApplicationController
+    class QueryEditorController < ApplicationController # rubocop:disable Metrics/ClassLength
       before_action :require_authentication!
       before_action :authorize_query_write_access!
 
       def run
         result = QueryEditor::RunService.new(workspace:, actor: current_user, attributes: editor_params).call
         render_editor_response(result:, data: run_response_data(result))
+      end
+
+      def generate_name
+        result = QueryEditor::GenerateNameService.new(workspace:, actor: current_user, attributes: editor_params).call
+        render_editor_response(result:, data: generate_name_response_data(result))
       end
 
       def save
@@ -77,8 +82,16 @@ module App
         }.compact
       end
 
+      def generate_name_response_data(result)
+        {
+          'generated_name' => result.generated_name
+        }.compact
+      end
+
       def serialized_query(query)
         return nil unless query
+
+        visualizations = query.visualizations.order(:chart_type).to_a
 
         {
           'id' => query.id,
@@ -87,7 +100,14 @@ module App
           'saved' => query.saved,
           'data_source_id' => query.data_source_id,
           'canonical_path' => app_workspace_data_source_query_path(workspace, query.data_source, query),
-          'visualization_types' => query.visualizations.order(:chart_type).pluck(:chart_type)
+          'visualization_types' => visualizations.map(&:chart_type),
+          'visualizations' => visualizations.map do |visualization|
+            Visualizations::Serializer.call(
+              query:,
+              visualization:,
+              include_preview: false
+            )
+          end
         }
       end
 
@@ -102,6 +122,6 @@ module App
           'row_count' => query_result.rows.length
         }
       end
-    end
+    end # rubocop:enable Metrics/ClassLength
   end
 end
