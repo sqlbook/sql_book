@@ -81,7 +81,7 @@
   &__grid {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   }
 
   &__card {
@@ -123,6 +123,7 @@
     background: var(--gray-850);
     border-radius: .5rem;
     display: flex;
+    height: 88px;
     justify-content: center;
     min-width: 0;
     padding: 1rem .75rem;
@@ -132,8 +133,8 @@
   &__artwork {
     align-items: center;
     display: flex;
+    height: 100%;
     justify-content: center;
-    min-height: 7.5rem;
     width: 100%;
   }
 

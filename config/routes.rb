@@ -140,6 +140,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       post 'chat/actions/:id/cancel', to: 'workspaces/chat_actions#cancel', as: :chat_action_cancel
 
       resources :queries, only: %i[index], controller: 'workspaces/queries'
+      patch 'queries/visible-columns',
+            to: 'workspaces/queries#update_visible_columns',
+            as: :query_library_visible_columns
       resources :dashboards, controller: 'workspaces/dashboards'
       resources :members, only: %i[create update destroy], controller: 'workspaces/members' do
         member { post 'resend' }

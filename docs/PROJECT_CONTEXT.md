@@ -20,6 +20,7 @@ sqlbook lets users:
 
 ## Reference docs
 - Query editor, query library, saved-query identity, and chat-query card behavior are documented in `docs/QUERIES_MASTER_REF.md`.
+- User-scoped UI preference storage conventions are documented in `docs/UI_PREFERENCES_MASTER_REF.md`.
 
 ## Near-Term Priorities
 1. Stable staging environment (`staging.sqlbook.com`).

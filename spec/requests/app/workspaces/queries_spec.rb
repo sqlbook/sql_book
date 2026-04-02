@@ -97,6 +97,19 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
           expect(response.body).not_to have_selector('.queries-table .name', text: query_6.name)
         end
 
+        it 'renders the stored visible columns preference for the current user' do
+          user.update!(ui_preferences: { 'query_library' => { 'visible_columns' => %w[name last_run] } })
+
+          get "/app/workspaces/#{workspace.id}/queries"
+
+          expect(response.body).to have_selector('th[data-query-library-column-key="name"]:not([hidden])')
+          expect(response.body).to have_selector('th[data-query-library-column-key="last_run"]:not([hidden])')
+          expect(response.body)
+            .to have_selector('th[data-query-library-column-key="data_source"][hidden]', visible: false)
+          expect(response.body)
+            .to have_selector('td[data-query-library-column-key="data_source"][hidden]', visible: false)
+        end
+
         context 'when a search param is provided' do
           it 'returns the results with the matching names' do
             get "/app/workspaces/#{workspace.id}/queries", params: { search: 'foo' }
@@ -111,6 +124,32 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
           end
         end
       end
+    end
+  end
+
+  describe 'PATCH /app/workspaces/:workspace_id/queries/visible-columns' do
+    let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+
+    before { sign_in(user) }
+
+    it 'stores the selected visible columns on the current user' do
+      patch app_workspace_query_library_visible_columns_path(workspace),
+            params: { visible_columns: %w[name last_run] },
+            as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq('visible_columns' => %w[name last_run])
+      expect(user.reload.query_library_visible_columns).to eq(%w[name last_run])
+    end
+
+    it 'falls back to the default columns when none are selected' do
+      patch app_workspace_query_library_visible_columns_path(workspace),
+            params: { visible_columns: [] },
+            as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.query_library_visible_columns).to eq(User::QUERY_LIBRARY_COLUMNS)
     end
   end
 end

@@ -4,6 +4,15 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   CURRENT_TERMS_VERSION = '2026-02-16'
   EMAIL_CHANGE_VERIFICATION_WINDOW = 1.hour
   SUPPORTED_LOCALES = %w[en es].freeze
+  QUERY_LIBRARY_COLUMNS = %w[
+    name
+    data_source
+    original_author
+    date_created
+    last_updated
+    last_updated_by
+    last_run
+  ].freeze
   attr_accessor :skip_terms_validation, :suppress_workspace_cleanup_notifications
 
   before_destroy :capture_workspace_ids_for_cleanup
@@ -67,6 +76,23 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   def full_name
     "#{first_name} #{last_name}"
+  end
+
+  def query_library_visible_columns
+    requested_columns = Array(ui_preferences.dig('query_library', 'visible_columns')).map(&:to_s)
+    visible_columns = requested_columns & QUERY_LIBRARY_COLUMNS
+    visible_columns.presence || QUERY_LIBRARY_COLUMNS
+  end
+
+  def update_query_library_visible_columns!(columns:)
+    visible_columns = Array(columns).map(&:to_s) & QUERY_LIBRARY_COLUMNS
+    visible_columns = QUERY_LIBRARY_COLUMNS if visible_columns.empty?
+
+    next_preferences = (ui_preferences || {}).deep_dup
+    next_preferences['query_library'] ||= {}
+    next_preferences['query_library']['visible_columns'] = visible_columns
+
+    update!(ui_preferences: next_preferences)
   end
 
   def member_of?(workspace:)

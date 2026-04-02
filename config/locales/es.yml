@@ -71,6 +71,7 @@ es:
           empty: Aquí estarán disponibles las consultas que hayas guardado.
           create_new: "[Crear nueva consulta]"
           create_aria_label: Crear nueva consulta
+          columns_toggle_aria: Elegir columnas visibles de la biblioteca de consultas
           search_placeholder: Buscar...
           columns:
             name: Nombre

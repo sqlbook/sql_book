@@ -9,68 +9,103 @@
       <%= link_to I18n.t('app.workspaces.queries.index.create_new'), app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link primary", "data-shortcut": "N", "aria-label": I18n.t('app.workspaces.queries.index.create_aria_label') %>
     <% end %>
   <% else %>
-    <div class="page-header">
-      <div class="title">
-        <h1><%= I18n.t('app.workspaces.queries.index.title') %></h1>
-        <% if can_create_queries %>
-          <%= link_to app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link secondary create-query", "data-shortcut": "N", "aria-label": I18n.t('app.workspaces.queries.index.create_aria_label') do %>
-            <i class="ri-add-line red-500"></i>
-            <span><%= I18n.t('common.actions.create_new') %></span>
+    <div class="query-library-page"
+         data-controller="query-library-columns"
+         data-query-library-columns-update-url-value="<%= app_workspace_query_library_visible_columns_path(@workspace) %>"
+         data-query-library-columns-csrf-token-value="<%= form_authenticity_token %>">
+      <div class="page-header">
+        <div class="title">
+          <h1><%= I18n.t('app.workspaces.queries.index.title') %></h1>
+          <% if can_create_queries %>
+            <%= link_to app_workspace_data_source_queries_path(@workspace, @data_sources.first), class: "link secondary create-query", "data-shortcut": "N", "aria-label": I18n.t('app.workspaces.queries.index.create_aria_label') do %>
+              <i class="ri-add-line red-500"></i>
+              <span><%= I18n.t('common.actions.create_new') %></span>
+            <% end %>
           <% end %>
-        <% end %>
-      </div>
-      <div class="controls" data-controller="search">
-        <%= form_with url: app_workspace_queries_path(@workspace), method: :get, html: { "data-search-target": "form" } do |form| %>
-          <%= form.text_field :search,
-                              type: "search",
-                              placeholder: I18n.t('app.workspaces.queries.index.search_placeholder'),
-                              value: params[:search],
-                              class: "input block search",
-                              "data-search-target": "input",
-                              "data-action": "input->search#queueSearch focus->search#rememberFocus blur->search#rememberBlur" %>
-        <% end %>
-      </div>
-    </div>
+        </div>
+        <div class="controls" data-controller="search">
+          <%= form_with url: app_workspace_queries_path(@workspace), method: :get, html: { "data-search-target": "form" } do |form| %>
+            <%= form.text_field :search,
+                                type: "search",
+                                placeholder: I18n.t('app.workspaces.queries.index.search_placeholder'),
+                                value: params[:search],
+                                class: "input block search",
+                                "data-search-target": "input",
+                                "data-action": "input->search#queueSearch focus->search#rememberFocus blur->search#rememberBlur" %>
+          <% end %>
 
-    <div class="queries-table" data-controller="table">
-      <table class="collapsible">
-        <tr>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.name') %></th>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.data_source') %></th>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.original_author') %></th>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.date_created') %></th>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.last_updated') %></th>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.last_updated_by') %></th>
-          <th><%= I18n.t('app.workspaces.queries.index.columns.last_run') %></th>
-          <th class="options"></th>
-        </tr>
-        <% @queries.each do |query| %>
-          <tr>
-            <td>
-              <%= link_to app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link name cream-250", "aria-label": "View the #{query.name} query" do %>
-                <%= query.name %>
+          <menu data-controller="menu" class="query-library-columns-menu">
+            <button type="button"
+                    class="query-library-columns-toggle"
+                    data-menu-target="button"
+                    data-action="menu#toggle"
+                    aria-label="<%= I18n.t('app.workspaces.queries.index.columns_toggle_aria') %>">
+              <i class="ri-layout-column-line" aria-hidden="true"></i>
+            </button>
+
+            <div class="dropdown query-library-columns-dropdown"
+                 data-menu-target="dropdown"
+                 data-action="keydown.esc->menu#close"
+                 tabindex="0">
+              <% User::QUERY_LIBRARY_COLUMNS.each do |column| %>
+                <label class="checkbox query-library-columns-dropdown__option">
+                  <input type="checkbox"
+                         value="<%= column %>"
+                         data-query-library-columns-target="checkbox"
+                         data-column-key="<%= column %>"
+                         data-action="change->query-library-columns#toggleColumn"
+                         <%= 'checked' if @visible_columns.include?(column) %>>
+                  <div class="check">
+                    <i class="ri-check-line"></i>
+                  </div>
+                  <span class="checkbox-text"><%= I18n.t("app.workspaces.queries.index.columns.#{column}") %></span>
+                </label>
               <% end %>
-            </td>
-            <td><%= query.data_source.display_name %></td>
-            <td><%= query.author.full_name %></td>
-            <td><%= query.created_at.strftime('%a, %e %b %Y') %></td>
-            <td><%= query.updated_at.strftime('%a, %e %b %Y') %></td>
-            <td><%= query.last_updated_by&.full_name || '-' %></td>
-            <td><%= query.last_run_at&.strftime('%a, %e %b %Y') || '-' %></td>
-            <td class="options" >
-              <button type="button" class="toggle-options" data-action="table#toggleOptions" aria-label="Open query actions for <%= query.name %>">
-                <i class="ri-more-2-fill ri-xl gray-250"></i>
-              </button>
-              <div class="dropdown-options context">
-                <%= link_to I18n.t('common.actions.open'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
-                <% if can_destroy_query?(workspace: @workspace, query:) %>
-                  <%= link_to I18n.t('common.actions.delete'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
-                <% end %>
-              </div>
-            </td>
+            </div>
+          </menu>
+        </div>
+      </div>
+
+      <div class="queries-table" data-controller="table">
+        <table class="collapsible">
+          <tr>
+            <th data-query-library-column-key="name" <%= 'hidden' unless @visible_columns.include?('name') %>><%= I18n.t('app.workspaces.queries.index.columns.name') %></th>
+            <th data-query-library-column-key="data_source" <%= 'hidden' unless @visible_columns.include?('data_source') %>><%= I18n.t('app.workspaces.queries.index.columns.data_source') %></th>
+            <th data-query-library-column-key="original_author" <%= 'hidden' unless @visible_columns.include?('original_author') %>><%= I18n.t('app.workspaces.queries.index.columns.original_author') %></th>
+            <th data-query-library-column-key="date_created" <%= 'hidden' unless @visible_columns.include?('date_created') %>><%= I18n.t('app.workspaces.queries.index.columns.date_created') %></th>
+            <th data-query-library-column-key="last_updated" <%= 'hidden' unless @visible_columns.include?('last_updated') %>><%= I18n.t('app.workspaces.queries.index.columns.last_updated') %></th>
+            <th data-query-library-column-key="last_updated_by" <%= 'hidden' unless @visible_columns.include?('last_updated_by') %>><%= I18n.t('app.workspaces.queries.index.columns.last_updated_by') %></th>
+            <th data-query-library-column-key="last_run" <%= 'hidden' unless @visible_columns.include?('last_run') %>><%= I18n.t('app.workspaces.queries.index.columns.last_run') %></th>
+            <th class="options"></th>
           </tr>
-        <% end %>
-      </table>
+          <% @queries.each do |query| %>
+            <tr>
+              <td data-query-library-column-key="name" <%= 'hidden' unless @visible_columns.include?('name') %>>
+                <%= link_to app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link name cream-250", "aria-label": "View the #{query.name} query" do %>
+                  <%= query.name %>
+                <% end %>
+              </td>
+              <td data-query-library-column-key="data_source" <%= 'hidden' unless @visible_columns.include?('data_source') %>><%= query.data_source.display_name %></td>
+              <td data-query-library-column-key="original_author" <%= 'hidden' unless @visible_columns.include?('original_author') %>><%= query.author.full_name %></td>
+              <td data-query-library-column-key="date_created" <%= 'hidden' unless @visible_columns.include?('date_created') %>><%= query.created_at.strftime('%a, %e %b %Y') %></td>
+              <td data-query-library-column-key="last_updated" <%= 'hidden' unless @visible_columns.include?('last_updated') %>><%= query.updated_at.strftime('%a, %e %b %Y') %></td>
+              <td data-query-library-column-key="last_updated_by" <%= 'hidden' unless @visible_columns.include?('last_updated_by') %>><%= query.last_updated_by&.full_name || '-' %></td>
+              <td data-query-library-column-key="last_run" <%= 'hidden' unless @visible_columns.include?('last_run') %>><%= query.last_run_at&.strftime('%a, %e %b %Y') || '-' %></td>
+              <td class="options" >
+                <button type="button" class="toggle-options" data-action="table#toggleOptions" aria-label="Open query actions for <%= query.name %>">
+                  <i class="ri-more-2-fill ri-xl gray-250"></i>
+                </button>
+                <div class="dropdown-options context">
+                  <%= link_to I18n.t('common.actions.open'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
+                  <% if can_destroy_query?(workspace: @workspace, query:) %>
+                    <%= link_to I18n.t('common.actions.delete'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </table>
+      </div>
     </div>
   <% end %>
 </main>

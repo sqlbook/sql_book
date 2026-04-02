@@ -9,6 +9,7 @@ Related references:
 - `docs/API_MASTER_REF.md`
 - `docs/CHAT_MASTER_REF.md`
 - `docs/DATA_SOURCES_MASTER_REF.md`
+- `docs/UI_PREFERENCES_MASTER_REF.md`
 - `docs/VISUALIZATIONS_THEMING_MASTER_REF.md`
 - `docs/WORKSPACES_MASTER_REF.md`
 - `docs/ROLES_RIGHTS_MASTER_REF.md`
@@ -16,6 +17,7 @@ Related references:
 ## Query surfaces
 - Query library index:
   - `GET /app/workspaces/:workspace_id/queries`
+  - `PATCH /app/workspaces/:workspace_id/queries/visible-columns`
 - Query editor draft entry:
   - `GET /app/workspaces/:workspace_id/data_sources/:data_source_id/queries`
 - Saved query page:
@@ -55,6 +57,14 @@ Related references:
   - `appearance_config_dark`
   - `appearance_config_light`
   - `other_config`
+
+## Query library personalization
+- Query Library includes a per-user columns picker beside the search field.
+- The picker controls visibility for the supported saved-query table columns only; action menus remain visible.
+- Default behavior is to show all supported columns.
+- Column visibility is persisted server-side in `users.ui_preferences.query_library.visible_columns`.
+- The preference is user-scoped and follows the user across sessions/devices.
+- Invalid or empty stored values must fall back to the full default column set.
 
 ## Visualization behavior
 - The query editor `Visualization` tab is gallery-first:

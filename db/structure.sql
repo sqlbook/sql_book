@@ -675,7 +675,8 @@ CREATE TABLE public.users (
     email_change_verification_sent_at timestamp(6) without time zone,
     super_admin boolean DEFAULT false NOT NULL,
     preferred_locale character varying,
-    last_active_at timestamp(6) without time zone
+    last_active_at timestamp(6) without time zone,
+    ui_preferences jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -1680,6 +1681,7 @@ ALTER TABLE ONLY public.chat_pending_follow_ups
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260402133000'),
 ('20260401193000'),
 ('20260401120000'),
 ('20260330100000'),
