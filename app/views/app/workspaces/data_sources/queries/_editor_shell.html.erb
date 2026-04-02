@@ -1,4 +1,4 @@
-<% content_for :app_content_layout_class, 'split' %>
+<% content_for :app_content_layout_class, 'query-editor-layout' %>
 <% panel_storage_key = @query.persisted? ? "query-side-panel:#{@workspace.id}:#{@query.id}" : "query-side-panel:#{@workspace.id}:draft" %>
 
 <div class="responsive-side-panel-layout responsive-side-panel-layout--query side-panel-layout--open query-editor-shell"
@@ -63,8 +63,8 @@
 
       <div class="tabbed-side-panel__body">
         <section data-query-editor-target="resultsPane"></section>
-        <section data-query-editor-target="visualizationPane" class="hidden"></section>
-        <section data-query-editor-target="settingsPane" class="hidden"></section>
+        <section data-query-editor-target="visualizationPane" hidden></section>
+        <section data-query-editor-target="settingsPane" hidden></section>
       </div>
 
       <%= render 'shared/grab_handle' %>

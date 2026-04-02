@@ -1,11 +1,18 @@
 .app-workspaces-data_sources-queries-index,
 .app-workspaces-data_sources-queries-show {
-  .app-content-layout.split {
+  .app-content-layout.query-editor-layout {
     > .responsive-side-panel-layout {
       display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
+      grid-template-rows: minmax(0, 1fr) 4rem;
       height: 100%;
+      margin: 0 var(--app-shell-spacing) var(--app-shell-spacing);
       min-height: 0;
+      width: calc(100% - (var(--app-shell-spacing) * 2));
+    }
+
+    .query-editor-shell {
+      min-height: 0;
+      width: 100%;
     }
 
     .query-editor-shell__content {
@@ -13,6 +20,10 @@
       gap: var(--app-shell-spacing);
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       min-height: 0;
+    }
+
+    > .responsive-side-panel-layout {
+      overflow: hidden;
     }
 
     > .responsive-side-panel-layout > .query-editor-shell__content > main,
@@ -66,13 +77,12 @@
 
   .query-editor-footer {
     align-items: center;
-    background: var(--gray-900);
-    border-radius: var(--app-shell-radius);
+    background: var(--background-color);
     display: flex;
     flex-shrink: 0;
     height: 4rem;
     justify-content: space-between;
-    margin: 1.5rem 0 0 0;
+    margin: 0;
     padding: 0 1.5rem;
 
     .link.secondary {
@@ -96,9 +106,15 @@
   }
 
   @media (max-width: 1023px) {
-    .app-content-layout.split {
+    .app-content-layout.query-editor-layout {
       display: block;
       position: relative;
+
+      > .responsive-side-panel-layout {
+        margin-left: var(--app-shell-spacing);
+        margin-right: var(--app-shell-spacing);
+        width: calc(100% - (var(--app-shell-spacing) * 2));
+      }
     }
 
     .responsive-side-panel-layout {
@@ -121,7 +137,7 @@
     }
 
     .query-editor-footer {
-      margin-top: 1rem;
+      margin-top: 0;
     }
 
     .drag-handle {

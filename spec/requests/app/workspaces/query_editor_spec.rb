@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
   let(:owner) { create(:user) }
   let(:workspace) { create(:workspace_with_owner, owner:) }
-  let(:data_source) { create(:data_source, workspace:) }
+  let(:data_source) { create(:data_source, :postgres, workspace:) }
   let(:sql) { 'SELECT COUNT(*) AS user_count FROM public.users;' }
 
   before do
@@ -166,11 +166,8 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
   end
 
   def stub_successful_query_result(columns:, rows:)
-    allow_any_instance_of(QueryService).to receive(:execute) do |service|
-      service.data = ActiveRecord::Result.new(columns, rows)
-      service.error = false
-      service.error_message = nil
-      service
-    end
+    allow_any_instance_of(DataSources::Connectors::PostgresConnector)
+      .to receive(:execute_readonly)
+      .and_return(ActiveRecord::Result.new(columns, rows))
   end
 end

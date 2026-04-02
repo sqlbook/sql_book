@@ -1,7 +1,15 @@
 # frozen_string_literal: true
 
 module QueryEditor
-  class RunService
+  class RunService # rubocop:disable Metrics/ClassLength
+    QueryResultPayload = Struct.new(
+      :error,
+      :error_message,
+      :columns,
+      :rows,
+      keyword_init: true
+    )
+
     Result = Struct.new(
       :success?,
       :code,
@@ -27,6 +35,8 @@ module QueryEditor
 
       DataSources::QuerySafetyGuard.validate!(sql:)
       build_success_result(data_source: selected_data_source)
+    rescue DataSources::Connectors::BaseConnector::ConnectionError => e
+      failure(code: 'query.connection_failed', message: e.message)
     rescue DataSources::Connectors::BaseConnector::QueryError => e
       failure(code: normalized_query_code(e.code), message: e.message)
     end
@@ -50,7 +60,7 @@ module QueryEditor
     end
 
     def build_success_result(data_source:)
-      query_result = draft_query_for(data_source:).query_result
+      query_result = execute_query_result(data_source:)
 
       Result.new(
         success?: true,
@@ -63,12 +73,14 @@ module QueryEditor
       )
     end
 
-    def draft_query_for(data_source:)
-      Query.new(
-        query: sql,
-        name: attributes['name'].to_s.strip.presence,
-        data_source:,
-        author: actor
+    def execute_query_result(data_source:)
+      result = data_source.connector.execute_readonly(sql:)
+
+      QueryResultPayload.new(
+        error: false,
+        error_message: nil,
+        columns: result.columns,
+        rows: result.rows
       )
     end
 
@@ -123,5 +135,5 @@ module QueryEditor
 
       "query.#{code}"
     end
-  end
+  end # rubocop:enable Metrics/ClassLength
 end

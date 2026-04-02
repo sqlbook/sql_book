@@ -426,9 +426,9 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private renderPaneVisibility(): void {
-    this.resultsPaneTarget.classList.toggle('hidden', this.activeTab !== 'query_results');
-    this.visualizationPaneTarget.classList.toggle('hidden', this.activeTab !== 'visualization');
-    this.settingsPaneTarget.classList.toggle('hidden', this.activeTab !== 'settings');
+    this.resultsPaneTarget.hidden = this.activeTab !== 'query_results';
+    this.visualizationPaneTarget.hidden = this.activeTab !== 'visualization';
+    this.settingsPaneTarget.hidden = this.activeTab !== 'settings';
   }
 
   private renderResultsPane(): void {
@@ -753,6 +753,12 @@ export default class extends Controller<HTMLDivElement> {
     return this.visualizations[this.activeVisualizationType] || null;
   }
 
+  private defaultThemeReference(): string {
+    return this.themeLibrary().find((theme) => theme.default)?.reference_key
+      || this.themeLibrary()[0]?.reference_key
+      || 'system.default_theming';
+  }
+
   private queryTitle(): string {
     return this.query.name?.trim() || this.translate('query.untitled_title');
   }
@@ -798,7 +804,8 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private currentDataSourceId(): number {
-    return Number(this.dataSourceSelectTarget.value || this.query.data_source_id);
+    const selectedId = Number.parseInt(this.dataSourceSelectTarget.value || '', 10);
+    return Number.isFinite(selectedId) && selectedId > 0 ? selectedId : this.query.data_source_id;
   }
 
   private runEnabled(): boolean {
