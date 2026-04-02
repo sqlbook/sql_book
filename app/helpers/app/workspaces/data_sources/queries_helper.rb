@@ -80,8 +80,10 @@ module App
           {
             gallery_title: I18n.t('app.workspaces.visualizations.gallery.title'),
             gallery_description: I18n.t('app.workspaces.visualizations.gallery.description'),
+            gallery_intro: I18n.t('app.workspaces.visualizations.gallery.intro'),
             gallery_read_only: I18n.t('app.workspaces.visualizations.gallery.read_only'),
             configured_badge: I18n.t('app.workspaces.visualizations.gallery.configured_badge'),
+            coming_soon_badge: I18n.t('app.workspaces.visualizations.gallery.coming_soon_badge'),
             sections: query_editor_visualization_sections_i18n,
             form: query_editor_visualization_form_i18n,
             sharing: query_editor_visualization_sharing_i18n,

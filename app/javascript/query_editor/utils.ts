@@ -18,8 +18,8 @@ export function deepEqual(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-export function escapeHtml(value: string): string {
-  return value
+export function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -27,7 +27,7 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-export function escapeAttribute(value: string): string {
+export function escapeAttribute(value: string | null | undefined): string {
   return escapeHtml(value);
 }
 
@@ -41,17 +41,17 @@ export function normalizeFieldValue(value: string): string | boolean {
   return value;
 }
 
-export function humanize(value: string): string {
-  return value
+export function humanize(value: string | null | undefined): string {
+  return String(value ?? '')
     .replaceAll('_', ' ')
     .trim()
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-export function interpolate(template: string, values: Record<string, string>): string {
+export function interpolate(template: string | null | undefined, values: Record<string, string>): string {
   return Object.entries(values).reduce((memo, [key, value]) => {
     return memo.replaceAll(`%{${key}}`, value);
-  }, template);
+  }, String(template ?? ''));
 }
 
 export function translate(payload: Record<string, any>, path: string): string {
