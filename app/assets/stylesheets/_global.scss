@@ -16,6 +16,18 @@ html, body {
   box-sizing: border-box;
 }
 
+i[class^='ri-'],
+i[class*=' ri-'] {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1rem;
+  height: 1rem;
+  justify-content: center;
+  line-height: 1rem;
+  width: 1rem;
+}
+
 body {
   display: flex;
   flex-direction: column;

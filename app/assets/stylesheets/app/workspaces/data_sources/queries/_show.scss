@@ -1,15 +1,21 @@
 .app-workspaces-data_sources-queries-index,
 .app-workspaces-data_sources-queries-show {
   .app-content-layout.query-editor-layout {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    width: 100%;
+
     > .responsive-side-panel-layout {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr) 4rem;
       height: 100%;
       margin: 0 var(--app-shell-spacing) var(--app-shell-spacing);
       max-width: 100%;
       min-height: 0;
       min-width: 0;
-      width: auto;
+      width: 100%;
     }
 
     .query-editor-shell {
@@ -27,6 +33,8 @@
       min-height: 0;
       min-width: 0;
       overflow-x: clip;
+      position: relative;
+      width: 100%;
     }
 
     > .responsive-side-panel-layout {
@@ -135,18 +143,30 @@
     .responsive-side-panel-layout {
       .query-editor-shell__content {
         display: block;
+        overflow: hidden;
+        position: relative;
       }
 
       > .query-editor-shell__content > aside {
-        inset: 0;
+        bottom: 0;
+        left: 0;
+        max-width: 100%;
         position: absolute;
+        right: 0;
+        top: 0;
+        width: 100%;
         z-index: 8;
       }
 
       &.side-panel-layout--open {
         > .query-editor-shell__content > main {
-          pointer-events: none;
-          user-select: none;
+          visibility: hidden;
+        }
+      }
+
+      &.side-panel-layout--closed {
+        > .query-editor-shell__content > main {
+          visibility: visible;
         }
       }
     }

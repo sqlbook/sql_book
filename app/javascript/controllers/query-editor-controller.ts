@@ -129,6 +129,7 @@ export default class extends Controller<HTMLDivElement> {
     if (pendingToast) this.showToast(pendingToast.type, pendingToast.title, pendingToast.body);
 
     this.renderAll();
+    this.focusInputOnLoad();
   }
 
   change(event: Event): void {
@@ -411,6 +412,22 @@ export default class extends Controller<HTMLDivElement> {
     this.renderSettingsPane();
     this.renderFooter();
     if (this.hasSchemaSelectTarget) this.syncSchemaTable(this.schemaSelectTarget.value);
+  }
+
+  private focusInputOnLoad(): void {
+    if (this.readOnlyValue) return;
+
+    window.requestAnimationFrame(() => {
+      if (!this.element.isConnected) return;
+
+      const activeElement = document.activeElement;
+      const canStealFocus = !activeElement || activeElement === document.body || activeElement === this.inputTarget;
+      if (!canStealFocus) return;
+
+      this.inputTarget.focus({ preventScroll: true });
+      const length = this.inputTarget.value.length;
+      this.inputTarget.setSelectionRange(length, length);
+    });
   }
 
   private renderPanelTitle(): void {
