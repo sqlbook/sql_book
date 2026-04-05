@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'field', 'saveButton', 'discardButton', 'filterForm', 'filterField'];
+  static targets = ['form', 'field', 'saveButton', 'discardButton', 'filterForm', 'filterField', 'filterSearch', 'filterSearchClear'];
 
   declare readonly formTarget: HTMLFormElement;
   declare readonly fieldTargets: Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
@@ -10,6 +10,10 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly hasFilterFormTarget: boolean;
   declare readonly filterFormTarget: HTMLFormElement;
   declare readonly filterFieldTargets: Array<HTMLInputElement | HTMLSelectElement>;
+  declare readonly hasFilterSearchClearTarget: boolean;
+  declare readonly hasFilterSearchTarget: boolean;
+  declare readonly filterSearchClearTarget: HTMLButtonElement;
+  declare readonly filterSearchTarget: HTMLInputElement;
 
   private initialState = new Map<string, string>();
   private filterDebounceTimer: number | null = null;
@@ -25,6 +29,7 @@ export default class extends Controller<HTMLDivElement> {
       field.addEventListener('input', this.onFilterInput);
       field.addEventListener('change', this.onFilterChange);
     });
+    this.toggleFilterSearchClear();
     this.updateActionState();
   }
 
@@ -53,14 +58,32 @@ export default class extends Controller<HTMLDivElement> {
     this.updateActionState();
   }
 
+  public clearFilterSearch(): void {
+    if (!this.hasFilterSearchTarget) return;
+    if (this.filterSearchTarget.value === '') return;
+
+    this.filterSearchTarget.value = '';
+    this.toggleFilterSearchClear();
+    this.filterSearchTarget.focus();
+    this.submitFilterForm();
+  }
+
+  public toggleFilterSearchClear(): void {
+    if (!this.hasFilterSearchClearTarget || !this.hasFilterSearchTarget) return;
+
+    this.filterSearchClearTarget.hidden = this.filterSearchTarget.value.trim() === '';
+  }
+
   private onInput = (): void => {
     this.updateActionState();
   }
 
   private onFilterInput = (event: Event): void => {
-    if (!(event.target instanceof HTMLInputElement) || event.target.type !== 'text') {
+    if (!(event.target instanceof HTMLInputElement) || !['text', 'search'].includes(event.target.type)) {
       return;
     }
+
+    this.toggleFilterSearchClear();
 
     const query = event.target.value.trim();
     if (query.length > 0 && query.length < this.searchMinChars) {

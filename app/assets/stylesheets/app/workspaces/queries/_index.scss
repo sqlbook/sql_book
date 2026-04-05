@@ -141,13 +141,13 @@
   .query-group-drawers {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 16px;
   }
 
   .query-group-drawer {
     background: var(--gray-900);
     border-radius: .75rem;
-    overflow: hidden;
+    overflow: visible;
 
     &__summary {
       align-items: center;
@@ -156,7 +156,9 @@
       gap: 1rem;
       justify-content: space-between;
       list-style: none;
-      padding: 1.5rem;
+      padding: 1rem;
+      padding-right: 9rem;
+      position: relative;
 
       &::-webkit-details-marker {
         display: none;
@@ -166,25 +168,14 @@
     &__summary-main {
       align-items: center;
       display: inline-flex;
-      gap: 1rem;
+      gap: .5rem;
       min-width: 0;
     }
 
     &__toggle-icon {
       color: var(--cream-250);
-      flex-shrink: 0;
-    }
-
-    &__toggle-icon--open {
-      display: none;
-    }
-
-    &[open] &__toggle-icon--closed {
-      display: none;
-    }
-
-    &[open] &__toggle-icon--open {
       display: inline-flex;
+      flex-shrink: 0;
     }
 
     &__title {
@@ -195,7 +186,13 @@
     &__delete {
       display: none;
       flex-shrink: 0;
+      margin-left: auto;
+      position: absolute;
+      right: 1rem;
       text-decoration: none;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1;
     }
 
     &[open] &__delete {
@@ -203,7 +200,7 @@
     }
 
     &__body {
-      padding: 0 1.5rem 1.5rem;
+      padding: 0 1rem 1rem;
     }
   }
 

@@ -9,11 +9,13 @@ type SearchState = {
 };
 
 export default class extends Controller<HTMLDivElement> {
-  static targets = ['form', 'input'];
+  static targets = ['clear', 'form', 'input'];
   static values = {
     minChars: { type: Number, default: 2 }
   };
 
+  declare readonly clearTarget: HTMLButtonElement;
+  declare readonly hasClearTarget: boolean;
   declare readonly formTarget: HTMLFormElement;
   declare readonly hasInputTarget: boolean;
   declare readonly inputTarget: HTMLInputElement;
@@ -23,11 +25,13 @@ export default class extends Controller<HTMLDivElement> {
 
   public connect(): void {
     this.debouncedSubmit = debounce(() => this.submit(), 500);
+    this.syncClearButton();
     this.restoreFocus();
   }
 
   public queueSearch(): void {
     this.rememberFocus();
+    this.syncClearButton();
     if (!this.shouldSubmit()) return;
 
     this.debouncedSubmit?.();
@@ -35,6 +39,37 @@ export default class extends Controller<HTMLDivElement> {
 
   public submitNow(): void {
     this.submit();
+  }
+
+  public submitWithoutFocusRestore(): void {
+    this.syncClearButton();
+    if (this.hasInputTarget) {
+      this.writeState({
+        focused: false,
+        selectionEnd: this.inputTarget.selectionEnd,
+        selectionStart: this.inputTarget.selectionStart,
+        value: this.inputTarget.value
+      });
+    }
+
+    this.formTarget.requestSubmit();
+  }
+
+  public clear(event: Event): void {
+    event.preventDefault();
+    if (!this.hasInputTarget) return;
+    if (this.inputTarget.value === '') return;
+
+    this.inputTarget.value = '';
+    this.writeState({
+      focused: true,
+      selectionEnd: 0,
+      selectionStart: 0,
+      value: ''
+    });
+    this.syncClearButton();
+    this.inputTarget.focus();
+    this.formTarget.requestSubmit();
   }
 
   public rememberBlur(): void {
@@ -67,6 +102,7 @@ export default class extends Controller<HTMLDivElement> {
 
     window.requestAnimationFrame(() => {
       this.inputTarget.focus();
+      this.syncClearButton();
 
       if (state.selectionStart === null || state.selectionEnd === null) return;
 
@@ -88,7 +124,14 @@ export default class extends Controller<HTMLDivElement> {
 
   private submit(): void {
     this.rememberFocus();
+    this.syncClearButton();
     this.formTarget.requestSubmit();
+  }
+
+  private syncClearButton(): void {
+    if (!this.hasClearTarget || !this.hasInputTarget) return;
+
+    this.clearTarget.hidden = this.inputTarget.value.trim() === '';
   }
 
   private readState(): SearchState | null {

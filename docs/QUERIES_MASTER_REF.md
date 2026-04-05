@@ -132,6 +132,9 @@ Related references:
 ## Draft vs saved behavior
 - Unsaved query drafts should not create a `queries` row just because the editor or chat displays them.
 - Running a query inside the query editor updates transient draft state and result state, not persisted query state.
+- Brand-new query drafts open with the right-hand query details panel closed by default.
+- The query details panel opens when the user successfully runs a draft query from the editor.
+- Saved query pages should auto-run the saved SQL on load and open with the right-hand query details panel visible.
 - The query editor footer is the canonical action surface for:
   - `Run`
   - `Save Query`

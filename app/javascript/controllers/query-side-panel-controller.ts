@@ -4,7 +4,6 @@ export default class extends Controller<HTMLDivElement> {
   static targets = ['panel', 'toggleButton'];
 
   static values = {
-    storageKey: String,
     defaultOpen: Boolean,
     mobileBreakpoint: Number,
     openAria: String,
@@ -17,7 +16,6 @@ export default class extends Controller<HTMLDivElement> {
   declare readonly hasPanelTarget: boolean;
   declare readonly hasToggleButtonTarget: boolean;
 
-  declare readonly storageKeyValue: string;
   declare readonly defaultOpenValue: boolean;
   declare readonly mobileBreakpointValue: number;
   declare readonly openAriaValue: string;
@@ -30,7 +28,7 @@ export default class extends Controller<HTMLDivElement> {
   };
 
   public connect(): void {
-    this.open = this.loadState();
+    this.open = this.defaultOpenValue;
     this.syncState();
 
     window.addEventListener('resize', this.handleResize);
@@ -56,7 +54,6 @@ export default class extends Controller<HTMLDivElement> {
 
   private setOpen(open: boolean): void {
     this.open = open;
-    this.persistState();
     this.syncState();
   }
 
@@ -76,20 +73,5 @@ export default class extends Controller<HTMLDivElement> {
 
   private mobileViewport(): boolean {
     return window.innerWidth <= this.mobileBreakpointValue;
-  }
-
-  private loadState(): boolean {
-    if (!this.storageKeyValue) return this.defaultOpenValue;
-
-    const storedValue = window.sessionStorage.getItem(this.storageKeyValue);
-    if (storedValue === null) return this.defaultOpenValue;
-
-    return storedValue === 'true';
-  }
-
-  private persistState(): void {
-    if (!this.storageKeyValue) return;
-
-    window.sessionStorage.setItem(this.storageKeyValue, String(this.open));
   }
 }

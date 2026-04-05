@@ -113,6 +113,7 @@ export default class extends Controller<HTMLDivElement> {
   private baselineVisualizations!: Record<string, VisualizationDraft>;
   private activeTab: QueryEditorTab = 'query_results';
   private activeVisualizationType: string | null = null;
+  private autoRunRequested = false;
   private generatedNameLocked = false;
   private generatedNameAttempted = false;
   private generatedNamePending = false;
@@ -153,6 +154,7 @@ export default class extends Controller<HTMLDivElement> {
     document.addEventListener('mousedown', this.handleDocumentMouseDown);
     this.renderAll();
     this.focusInputOnLoad();
+    this.autoRunOnLoad();
   }
 
   disconnect(): void {
@@ -520,6 +522,17 @@ export default class extends Controller<HTMLDivElement> {
     });
   }
 
+  private autoRunOnLoad(): void {
+    if (this.autoRunRequested || !this.shouldAutoRunOnLoad()) return;
+
+    this.autoRunRequested = true;
+
+    window.requestAnimationFrame(() => {
+      if (!this.element.isConnected) return;
+      this.runQuery();
+    });
+  }
+
   private renderPanelTitle(): void {
     const pending = this.generatedNamePending && !this.query.name?.trim();
     this.panelTitleTarget.classList.toggle('tabbed-side-panel__title--pending', pending);
@@ -696,6 +709,10 @@ export default class extends Controller<HTMLDivElement> {
 
   private runEnabled(): boolean {
     return runEnabled(this.readOnlyValue, this.query.sql);
+  }
+
+  private shouldAutoRunOnLoad(): boolean {
+    return Boolean(this.query.saved && this.query.sql?.trim() && !this.readOnlyValue);
   }
 
   private saveEnabled(): boolean {

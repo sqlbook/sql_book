@@ -1,11 +1,10 @@
 <% content_for :app_content_layout_class, 'query-editor-layout' %>
-<% panel_storage_key = @query.persisted? ? "query-side-panel:#{@workspace.id}:#{@query.id}" : "query-side-panel:#{@workspace.id}:draft" %>
+<% panel_default_open = @query.persisted? %>
 
-<div class="query-editor-page side-panel-layout--open"
+<div class="query-editor-page <%= panel_default_open ? 'side-panel-layout--open' : 'side-panel-layout--closed' %>"
      data-controller="query-editor query-side-panel"
      data-action="query-editor:open-panel->query-side-panel#openPanel"
-     data-query-side-panel-storage-key-value="<%= panel_storage_key %>"
-     data-query-side-panel-default-open-value="true"
+     data-query-side-panel-default-open-value="<%= panel_default_open %>"
      data-query-side-panel-mobile-breakpoint-value="1023"
      data-query-side-panel-open-aria-value="<%= I18n.t('app.workspaces.queries.editor.open_details_aria') %>"
      data-query-side-panel-close-aria-value="<%= I18n.t('app.workspaces.queries.editor.close_details_aria') %>"

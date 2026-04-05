@@ -23,6 +23,7 @@ es:
       close: Cerrar
       confirm: "[Confirmar]"
       create_new: Crear nuevo
+      clear_search: Limpiar búsqueda
       delete: Eliminar
       delete_workspace_label: Eliminar espacio de trabajo
       delete_workspace: "[Eliminar espacio de trabajo]"

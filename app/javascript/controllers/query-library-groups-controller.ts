@@ -1,11 +1,15 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller<HTMLElement> {
-  static targets = ['dialog', 'form', 'groupName'];
+  static targets = ['dialog', 'form', 'groupName', 'toggleIcon'];
 
   declare readonly dialogTarget: HTMLDivElement;
   declare readonly formTarget: HTMLFormElement;
   declare readonly groupNameTarget: HTMLElement;
+
+  public connect(): void {
+    this.syncAllDrawerToggles();
+  }
 
   public showDeleteDialog(event: Event): void {
     event.preventDefault();
@@ -32,5 +36,26 @@ export default class extends Controller<HTMLElement> {
     if (event.target !== this.dialogTarget) return;
 
     this.hideDeleteDialog();
+  }
+
+  public syncDrawerToggle(event: Event): void {
+    const drawer = event.currentTarget;
+    if (!(drawer instanceof HTMLDetailsElement)) return;
+
+    this.syncDrawerIcon(drawer);
+  }
+
+  private syncAllDrawerToggles(): void {
+    this.element.querySelectorAll<HTMLDetailsElement>('.query-group-drawer').forEach((drawer) => {
+      this.syncDrawerIcon(drawer);
+    });
+  }
+
+  private syncDrawerIcon(drawer: HTMLDetailsElement): void {
+    const icon = drawer.querySelector<HTMLElement>('.query-group-drawer__toggle-icon');
+    if (!icon) return;
+
+    icon.classList.toggle('ri-add-line', !drawer.open);
+    icon.classList.toggle('ri-subtract-line', drawer.open);
   }
 }

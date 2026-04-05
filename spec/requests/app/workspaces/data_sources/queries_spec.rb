@@ -37,6 +37,8 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       it 'renders the query form' do
         get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries"
         expect(response.body).to include('data-controller="query-editor query-side-panel"')
+        expect(response.body).to include('data-query-side-panel-default-open-value="false"')
+        expect(response.body).to include('query-editor-page side-panel-layout--closed')
         expect(response.body).to include(app_workspace_query_editor_run_path(workspace))
         expect(response.body).to include(app_workspace_query_editor_save_path(workspace))
       end
@@ -127,6 +129,8 @@ RSpec.describe 'App::Workspaces::DataSources::Queries', type: :request do
       it 'renders the query form' do
         get "/app/workspaces/#{workspace.id}/data_sources/#{data_source.id}/queries/#{query.id}"
         expect(response.body).to include('data-controller="query-editor query-side-panel"')
+        expect(response.body).to include('data-query-side-panel-default-open-value="true"')
+        expect(response.body).to include('query-editor-page side-panel-layout--open')
         expect(response.body).to include(query.name)
         expect(response.body).to include(I18n.t('app.workspaces.queries.editor.open_details_aria'))
       end

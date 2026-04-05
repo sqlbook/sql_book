@@ -10,14 +10,25 @@
                 class: 'admin-search-form',
                 html: { "data-search-target": "form", "data-controller": "search" } do %>
     <label class="label block" for="admin-users-search">Search</label>
-    <input
-      id="admin-users-search"
-      class="input block fluid"
-      type="search"
-      name="q"
-      value="<%= params[:q].to_s %>"
-      placeholder="Search name or email address"
-      data-action="search#change" />
+    <div class="search-input-group search-input-group--fluid">
+      <input
+        id="admin-users-search"
+        class="input block fluid"
+        type="search"
+        name="q"
+        value="<%= params[:q].to_s %>"
+        placeholder="Search name or email address"
+        data-search-target="input"
+        data-action="input->search#queueSearch focus->search#rememberFocus blur->search#rememberBlur" />
+      <button type="button"
+              class="search-input-clear"
+              data-search-target="clear"
+              data-action="search#clear"
+              aria-label="<%= I18n.t('common.actions.clear_search') %>"
+              <%= 'hidden' if params[:q].blank? %>>
+        <i class="ri-close-line" aria-hidden="true"></i>
+      </button>
+    </div>
   <% end %>
 
   <div class="admin-table-wrapper" data-controller="table">

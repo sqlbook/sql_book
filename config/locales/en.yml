@@ -52,6 +52,7 @@ en:
       close: Close
       confirm: "[Confirm]"
       create_new: Create New
+      clear_search: Clear search
       delete: Delete
       delete_workspace_label: Delete Workspace
       delete_workspace: "[Delete Workspace]"
