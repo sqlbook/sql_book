@@ -39,14 +39,16 @@ export function renderQuerySettingsPane({
 
   return `
     <div class="new-query-form query-settings-form">
-      <div class="message">
-        <i class="ri-information-line ri-lg red-500"></i>
-        <div class="body">
-          <p>${escapeHtml(i18n.settings.notice)}</p>
+      ${!query.saved ? `
+        <div class="message query-settings-form__notice">
+          <i class="ri-information-line ri-lg red-500"></i>
+          <div class="body">
+            <p>${escapeHtml(i18n.settings.notice)}</p>
+          </div>
         </div>
-      </div>
+      ` : ''}
 
-      <div class="mt24">
+      <div class="query-settings-form__section">
         <label class="label block">${escapeHtml(i18n.settings.name_label)}</label>
         <input
           type="text"
@@ -56,7 +58,7 @@ export function renderQuerySettingsPane({
           data-action="input->query-editor#changeName">
       </div>
 
-      <div class="mt24 query-group-picker">
+      <div class="query-settings-form__section query-group-picker">
         <label class="label block">${escapeHtml(i18n.settings.groups_label)}</label>
         <p class="gray-300 query-group-picker__description">${escapeHtml(i18n.settings.groups_description)}</p>
         <input
@@ -110,12 +112,12 @@ export function renderQuerySettingsPane({
       </div>
 
       ${chatSource?.path ? `
-        <p class="small gray-300 mt24">
-          <strong>${escapeHtml(i18n.settings.chat_source_label)}:</strong>
+        <div class="query-settings-form__section query-settings-form__chat-source">
+          <p class="label block">${escapeHtml(i18n.settings.chat_source_label)}</p>
           <a class="link secondary" href="${escapeAttribute(chatSource.path)}" target="_blank" rel="noopener noreferrer">
             ${escapeHtml(i18n.settings.chat_source_link)}
           </a>
-        </p>
+        </div>
       ` : ''}
     </div>
   `;

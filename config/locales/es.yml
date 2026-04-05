@@ -73,6 +73,18 @@ es:
           create_aria_label: Crear nueva consulta
           columns_toggle_aria: Elegir columnas visibles de la biblioteca de consultas
           search_placeholder: Buscar...
+          view_label: "Vista:"
+          views:
+            all: Todas
+            groups: Grupos
+          groups:
+            empty: Todavía no existen grupos de consultas.
+            search_empty: Ningún grupo de consultas coincide con esa búsqueda.
+            delete_action: Eliminar grupo
+            dialog:
+              title: Eliminar grupo de consultas
+              description_html: Al eliminar <b>%{group_name}</b> se quitará ese grupo de todas las consultas que lo tengan asignado. Las consultas seguirán existiendo en tu biblioteca.
+              confirm: Eliminar grupo
           columns:
             name: Nombre
             data_source: Fuente de datos

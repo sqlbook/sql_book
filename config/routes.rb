@@ -143,6 +143,9 @@ Rails.application.routes.draw do # rubocop:disable Metrics/BlockLength
       patch 'queries/visible-columns',
             to: 'workspaces/queries#update_visible_columns',
             as: :query_library_visible_columns
+      delete 'queries/groups/:group_id',
+             to: 'workspaces/queries#destroy_group',
+             as: :query_group
       resources :dashboards, controller: 'workspaces/dashboards'
       resources :members, only: %i[create update destroy], controller: 'workspaces/members' do
         member { post 'resend' }

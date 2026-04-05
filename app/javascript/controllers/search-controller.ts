@@ -33,6 +33,10 @@ export default class extends Controller<HTMLDivElement> {
     this.debouncedSubmit?.();
   }
 
+  public submitNow(): void {
+    this.submit();
+  }
+
   public rememberBlur(): void {
     if (!this.hasInputTarget) return;
 

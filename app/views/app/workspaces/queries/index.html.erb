@@ -1,8 +1,9 @@
 <main>
   <% can_write_queries = can_write_queries?(workspace: @workspace) %>
   <% can_create_queries = can_write_queries && @data_sources.any? %>
+  <% grouped_view = @view_mode == 'groups' %>
 
-  <% if @queries.empty? %>
+  <% if @queries.empty? && !grouped_view %>
     <h1><%= I18n.t('app.workspaces.queries.index.title') %></h1>
     <p><%= I18n.t('app.workspaces.queries.index.empty') %></p>
     <% if can_create_queries %>
@@ -10,7 +11,7 @@
     <% end %>
   <% else %>
     <div class="query-library-page"
-         data-controller="query-library-columns"
+         data-controller="query-library-columns query-library-groups"
          data-query-library-columns-update-url-value="<%= app_workspace_query_library_visible_columns_path(@workspace) %>"
          data-query-library-columns-csrf-token-value="<%= form_authenticity_token %>">
       <div class="page-header">
@@ -24,7 +25,7 @@
           <% end %>
         </div>
         <div class="controls" data-controller="search">
-          <%= form_with url: app_workspace_queries_path(@workspace), method: :get, html: { "data-search-target": "form" } do |form| %>
+          <%= form_with url: app_workspace_queries_path(@workspace), method: :get, html: { "data-search-target": "form", class: "query-library-controls-form" } do |form| %>
             <%= form.text_field :search,
                                 type: "search",
                                 placeholder: I18n.t('app.workspaces.queries.index.search_placeholder'),
@@ -32,6 +33,24 @@
                                 class: "input block search",
                                 "data-search-target": "input",
                                 "data-action": "input->search#queueSearch focus->search#rememberFocus blur->search#rememberBlur" %>
+
+            <div class="query-library-view-control">
+              <label for="query-library-view" class="query-library-view-control__label"><%= I18n.t('app.workspaces.queries.index.view_label') %></label>
+              <div class="select query-library-view-control__select">
+                <%= form.select :view,
+                                options_for_select(
+                                  [
+                                    [I18n.t('app.workspaces.queries.index.views.all'), 'all'],
+                                    [I18n.t('app.workspaces.queries.index.views.groups'), 'groups']
+                                  ],
+                                  @view_mode
+                                ),
+                                {},
+                                id: 'query-library-view',
+                                "data-action": "change->search#submitNow" %>
+                <i class="ri-arrow-drop-down-line"></i>
+              </div>
+            </div>
           <% end %>
 
           <menu data-controller="menu" class="query-library-columns-menu">
@@ -66,46 +85,72 @@
         </div>
       </div>
 
-      <div class="queries-table" data-controller="table">
-        <table class="collapsible">
-          <tr>
-            <th data-query-library-column-key="name" <%= 'hidden' unless @visible_columns.include?('name') %>><%= I18n.t('app.workspaces.queries.index.columns.name') %></th>
-            <th data-query-library-column-key="data_source" <%= 'hidden' unless @visible_columns.include?('data_source') %>><%= I18n.t('app.workspaces.queries.index.columns.data_source') %></th>
-            <th data-query-library-column-key="original_author" <%= 'hidden' unless @visible_columns.include?('original_author') %>><%= I18n.t('app.workspaces.queries.index.columns.original_author') %></th>
-            <th data-query-library-column-key="date_created" <%= 'hidden' unless @visible_columns.include?('date_created') %>><%= I18n.t('app.workspaces.queries.index.columns.date_created') %></th>
-            <th data-query-library-column-key="last_updated" <%= 'hidden' unless @visible_columns.include?('last_updated') %>><%= I18n.t('app.workspaces.queries.index.columns.last_updated') %></th>
-            <th data-query-library-column-key="last_updated_by" <%= 'hidden' unless @visible_columns.include?('last_updated_by') %>><%= I18n.t('app.workspaces.queries.index.columns.last_updated_by') %></th>
-            <th data-query-library-column-key="last_run" <%= 'hidden' unless @visible_columns.include?('last_run') %>><%= I18n.t('app.workspaces.queries.index.columns.last_run') %></th>
-            <th class="options"></th>
-          </tr>
-          <% @queries.each do |query| %>
-            <tr>
-              <td data-query-library-column-key="name" <%= 'hidden' unless @visible_columns.include?('name') %>>
-                <%= link_to app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link name cream-250", "aria-label": "View the #{query.name} query" do %>
-                  <%= query.name %>
-                <% end %>
-              </td>
-              <td data-query-library-column-key="data_source" <%= 'hidden' unless @visible_columns.include?('data_source') %>><%= query.data_source.display_name %></td>
-              <td data-query-library-column-key="original_author" <%= 'hidden' unless @visible_columns.include?('original_author') %>><%= query.author.full_name %></td>
-              <td data-query-library-column-key="date_created" <%= 'hidden' unless @visible_columns.include?('date_created') %>><%= query.created_at.strftime('%a, %e %b %Y') %></td>
-              <td data-query-library-column-key="last_updated" <%= 'hidden' unless @visible_columns.include?('last_updated') %>><%= query.updated_at.strftime('%a, %e %b %Y') %></td>
-              <td data-query-library-column-key="last_updated_by" <%= 'hidden' unless @visible_columns.include?('last_updated_by') %>><%= query.last_updated_by&.full_name || '-' %></td>
-              <td data-query-library-column-key="last_run" <%= 'hidden' unless @visible_columns.include?('last_run') %>><%= query.last_run_at&.strftime('%a, %e %b %Y') || '-' %></td>
-              <td class="options" >
-                <button type="button" class="toggle-options" data-action="table#toggleOptions" aria-label="Open query actions for <%= query.name %>">
-                  <i class="ri-more-2-fill ri-xl gray-250"></i>
-                </button>
-                <div class="dropdown-options context">
-                  <%= link_to I18n.t('common.actions.open'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", "aria-label": "View the #{query.name} query" %>
-                  <% if can_destroy_query?(workspace: @workspace, query:) %>
-                    <%= link_to I18n.t('common.actions.delete'), app_workspace_data_source_query_path(@workspace, query.data_source, query), class: "link", data: { turbo_method: :delete }, "aria-label": "Delete the #{query.name} query" %>
+      <% if grouped_view %>
+        <div class="query-group-drawers">
+          <% if @group_rows.present? %>
+            <% @group_rows.each do |row| %>
+              <details class="query-group-drawer" <%= 'open' if row[:open] %>>
+                <summary class="query-group-drawer__summary">
+                  <div class="query-group-drawer__summary-main">
+                    <i class="ri-add-line query-group-drawer__toggle-icon query-group-drawer__toggle-icon--closed" aria-hidden="true"></i>
+                    <i class="ri-subtract-line query-group-drawer__toggle-icon query-group-drawer__toggle-icon--open" aria-hidden="true"></i>
+                    <h4 class="query-group-drawer__title"><%= row[:group].name %></h4>
+                  </div>
+                  <% if can_write_queries %>
+                    <button type="button"
+                            class="link secondary query-group-drawer__delete"
+                            data-group-name="<%= row[:group].name %>"
+                            data-delete-path="<%= app_workspace_query_group_path(@workspace, row[:group], search: params[:search], view: 'groups') %>"
+                            data-action="click->query-library-groups#showDeleteDialog">
+                      <%= I18n.t('app.workspaces.queries.index.groups.delete_action') %>
+                    </button>
                   <% end %>
+                </summary>
+
+                <div class="query-group-drawer__body">
+                  <%= render 'queries_table',
+                             queries: row[:queries],
+                             visible_columns: @visible_columns,
+                             workspace: @workspace,
+                             table_class: 'queries-table--grouped' %>
                 </div>
-              </td>
-            </tr>
+              </details>
+            <% end %>
+          <% else %>
+            <p class="query-library-groups-empty gray-300">
+              <%= I18n.t('app.workspaces.queries.index.groups.empty') %>
+            </p>
           <% end %>
-        </table>
-      </div>
+        </div>
+      <% else %>
+        <%= render 'queries_table', queries: @queries, visible_columns: @visible_columns, workspace: @workspace %>
+      <% end %>
+
+      <% if can_write_queries %>
+        <div class="message query-group-delete-dialog"
+             data-query-library-groups-target="dialog"
+             data-action="click->query-library-groups#hideDeleteDialogIfBackdrop">
+          <div class="body">
+            <div class="query-group-delete-dialog__heading">
+              <i class="ri-error-warning-line red-500" aria-hidden="true"></i>
+              <p class="query-group-delete-dialog__title cream-250"><b><%= I18n.t('app.workspaces.queries.index.groups.dialog.title') %></b></p>
+            </div>
+            <p class="query-group-delete-dialog__description">
+              <%= I18n.t('app.workspaces.queries.index.groups.dialog.description_html', group_name: '<span data-query-library-groups-target="groupName"></span>').html_safe %>
+            </p>
+
+            <%= form_with url: '#',
+                          method: :delete,
+                          class: 'query-group-delete-dialog__actions',
+                          html: { data: { query_library_groups_target: 'form' } } do %>
+              <%= submit_tag I18n.t('app.workspaces.queries.index.groups.dialog.confirm'), class: 'link primary' %>
+              <button type="button" class="link secondary" data-action="query-library-groups#hideDeleteDialog">
+                <%= I18n.t('common.actions.cancel') %>
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
   <% end %>
 </main>

@@ -104,6 +104,18 @@ en:
           create_aria_label: Create new query
           columns_toggle_aria: Choose visible query library columns
           search_placeholder: Search...
+          view_label: "View:"
+          views:
+            all: All
+            groups: Groups
+          groups:
+            empty: No query groups exist yet.
+            search_empty: No query groups match that search.
+            delete_action: Delete group
+            dialog:
+              title: Delete query group
+              description_html: Removing <b>%{group_name}</b> will remove that group from every query currently assigned to it. The queries themselves will remain in your library.
+              confirm: Delete group
           columns:
             name: Name
             data_source: Data source

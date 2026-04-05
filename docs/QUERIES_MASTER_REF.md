@@ -65,6 +65,13 @@ Related references:
 - Column visibility is persisted server-side in `users.ui_preferences.query_library.visible_columns`.
 - The preference is user-scoped and follows the user across sessions/devices.
 - Invalid or empty stored values must fall back to the full default column set.
+- Query Library also supports two top-level render modes:
+  - `All` shows the saved-query table with each saved query listed once
+  - `Groups` shows one drawer per query group, with grouped tables reusing the same visible-column preference as the `All` view
+- A saved query may appear in more than one grouped drawer when it belongs to multiple groups.
+- In `Groups` view, search filters the queries inside each group without hiding the group drawers themselves:
+  - groups with matches auto-open
+  - groups without matches remain visible and render an empty grouped table
 
 ## Query groups
 - Query groups are a workspace-scoped organizational construct for saved queries.
@@ -84,6 +91,10 @@ Related references:
   - removing a group from one query only removes that association
   - when the final membership for a group is removed, the group record itself should be deleted
 - Future grouped Query Library views may delete a group from the library surface, but that action should remove memberships rather than deleting the underlying queries.
+- Query Library grouped view may delete a group directly:
+  - deletion removes the group from all assigned queries
+  - the queries themselves remain saved
+  - because the group is then empty, the group record is deleted
 
 ## Visualization behavior
 - The query editor `Visualization` tab is gallery-first:

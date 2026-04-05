@@ -123,6 +123,37 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
             expect(response.body).not_to have_selector('.queries-table .name', text: query_6.name)
           end
         end
+
+        context 'when grouped view is selected' do
+          let!(:group_1) { create(:query_group, workspace:, name: 'Audience') }
+          let!(:group_2) { create(:query_group, workspace:, name: 'Traffic') }
+
+          before do
+            create(:query_group_membership, query: query_1, query_group: group_1)
+            create(:query_group_membership, query: query_1, query_group: group_2)
+            create(:query_group_membership, query: query_2, query_group: group_2)
+          end
+
+          it 'renders grouped drawers and repeats queries that belong to multiple groups' do
+            get "/app/workspaces/#{workspace.id}/queries", params: { view: 'groups' }
+
+            expect(response.body).to have_selector('.query-group-drawer__title', text: group_1.name)
+            expect(response.body).to have_selector('.query-group-drawer__title', text: group_2.name)
+            expect(response.body.scan(%r{>\s*#{Regexp.escape(query_1.name)}\s*</a>}m).size).to eq(2)
+            expect(response.body.scan(%r{>\s*#{Regexp.escape(query_2.name)}\s*</a>}m).size).to eq(1)
+          end
+
+          it 'keeps all groups visible during search and opens the matching groups' do
+            get "/app/workspaces/#{workspace.id}/queries", params: { view: 'groups', search: 'bar' }
+
+            expect(response.body).to have_selector('.query-group-drawer__title', text: group_1.name)
+            expect(response.body).to have_selector('.query-group-drawer__title', text: group_2.name)
+            expect(response.body).to have_selector('details.query-group-drawer[open] .query-group-drawer__title',
+                                                   text: group_2.name)
+            expect(response.body).not_to have_selector('details.query-group-drawer[open] .query-group-drawer__title',
+                                                       text: group_1.name)
+          end
+        end
       end
     end
   end
@@ -150,6 +181,31 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(user.reload.query_library_visible_columns).to eq(User::QUERY_LIBRARY_COLUMNS)
+    end
+  end
+
+  describe 'DELETE /app/workspaces/:workspace_id/queries/groups/:group_id' do
+    let(:user) { create(:user) }
+    let(:workspace) { create(:workspace_with_owner, owner: user) }
+    let!(:data_source) { create(:data_source, workspace:) }
+    let!(:query_1) { create(:query, saved: true, name: 'Foo', data_source:) }
+    let!(:query_2) { create(:query, saved: true, name: 'Bar', data_source:) }
+    let!(:group) { create(:query_group, workspace:, name: 'Audience') }
+
+    before do
+      sign_in(user)
+      create(:query_group_membership, query: query_1, query_group: group)
+      create(:query_group_membership, query: query_2, query_group: group)
+    end
+
+    it 'removes the group from all queries and deletes the group record' do
+      delete app_workspace_query_group_path(workspace, group), params: { view: 'groups' }
+
+      expect(response).to redirect_to(app_workspace_queries_path(workspace, view: 'groups'))
+      expect(QueryGroup.exists?(group.id)).to eq(false)
+      expect(QueryGroupMembership.where(query_group_id: group.id)).to be_empty
+      expect(Query.exists?(query_1.id)).to eq(true)
+      expect(Query.exists?(query_2.id)).to eq(true)
     end
   end
 end
