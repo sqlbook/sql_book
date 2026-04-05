@@ -65,6 +65,7 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
                name: 'User count',
                sql:,
                run_token: run_token_for(data_source:, sql:),
+               group_names: ['Key Numbers', 'User Stats'],
                visualizations: [
                  {
                    chart_type: 'line',
@@ -79,16 +80,22 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
                ]
              },
              as: :json
-      end.to change(Query, :count).by(1).and change(QueryVisualization, :count).by(2)
+      end.to change(Query, :count).by(1)
+        .and change(QueryVisualization, :count).by(2)
+        .and change(QueryGroup, :count).by(2)
+        .and change(QueryGroupMembership, :count).by(2)
 
       query = Query.order(:id).last
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.dig('data', 'save_outcome')).to eq('created')
       expect(response.parsed_body.dig('data', 'query', 'visualization_types')).to eq(%w[line pie])
+      expect(response.parsed_body.dig('data', 'query', 'group_names')).to eq(['Key Numbers', 'User Stats'])
+      expect(response.parsed_body.dig('data', 'available_query_groups')).to eq(['Key Numbers', 'User Stats'])
       saved_visualizations = response.parsed_body.dig('data', 'query', 'visualizations')
       expect(saved_visualizations.map { |visualization| visualization['chart_type'] }).to eq(%w[line pie])
       expect(query.reload.saved).to eq(true)
+      expect(query.group_names).to eq(['Key Numbers', 'User Stats'])
       expect(query.visualizations.order(:chart_type).pluck(:chart_type)).to eq(%w[line pie])
     end
 
@@ -102,6 +109,8 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
         name: 'User count',
         query: sql
       )
+      traffic_group = create(:query_group, workspace:, name: 'Traffic')
+      create(:query_group_membership, query:, query_group: traffic_group)
       create(:query_visualization, query:, chart_type: 'line')
 
       expect do
@@ -111,6 +120,7 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
                data_source_id: data_source.id,
                name: 'Updated user count',
                sql:,
+               group_names: ['Key Numbers', 'Traffic'],
                visualizations: [
                  {
                    chart_type: 'line',
@@ -125,10 +135,43 @@ RSpec.describe 'App::Workspaces::QueryEditor', type: :request do
              as: :json
       end.to change { query.reload.name }.from('User count').to('Updated user count')
         .and change { query.visualizations.count }.from(1).to(2)
+        .and change(QueryGroup, :count).by(1)
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.dig('data', 'save_outcome')).to eq('updated')
+      expect(query.group_names).to eq(['Key Numbers', 'Traffic'])
       expect(query.visualizations.order(:chart_type).pluck(:chart_type)).to eq(%w[bar line])
+    end
+
+    it 'removes orphaned groups when the last query leaves them' do
+      query = create(
+        :query,
+        data_source:,
+        author: owner,
+        last_updated_by: owner,
+        saved: true,
+        name: 'User count',
+        query: sql
+      )
+      audience_group = create(:query_group, workspace:, name: 'Audience')
+      create(:query_group_membership, query:, query_group: audience_group)
+
+      expect do
+        post app_workspace_query_editor_save_path(workspace),
+             params: {
+               query_id: query.id,
+               data_source_id: data_source.id,
+               name: 'User count',
+               sql:,
+               group_names: []
+             },
+             as: :json
+      end.to change(QueryGroupMembership, :count).by(-1)
+        .and change(QueryGroup, :count).by(-1)
+
+      expect(response).to have_http_status(:ok)
+      expect(query.reload.group_names).to eq([])
+      expect(QueryGroup.exists?(audience_group.id)).to eq(false)
     end
 
     it 'rejects saving SQL changes for a saved query until the updated SQL has run successfully' do

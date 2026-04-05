@@ -152,6 +152,14 @@ module QueryEditor
       end
     end
 
+    def sync_groups!(query:)
+      QueryGroups::SyncService.new(
+        query:,
+        workspace:,
+        names: attributes['group_names']
+      ).call
+    end
+
     def configured_payloads(query:)
       payloads = Array(attributes['visualizations']).map { |entry| entry.to_h.deep_stringify_keys }
       configured_chart_types = payloads.filter_map { |entry| entry['chart_type'].to_s.strip.presence }
@@ -166,6 +174,7 @@ module QueryEditor
         persisted_query = query || Query.new(author: actor)
         assign_query_attributes!(query: persisted_query, data_source:)
         persisted_query.save!
+        sync_groups!(query: persisted_query)
         sync_visualizations!(query: persisted_query)
       end
 

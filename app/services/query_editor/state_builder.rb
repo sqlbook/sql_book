@@ -29,6 +29,7 @@ module QueryEditor
         'run_token' => initial_run_token,
         'visualizations' => serialized_visualizations,
         'available_visualization_types' => available_visualization_types,
+        'available_query_groups' => available_query_groups,
         'theme_library' => serialized_theme_library,
         'chat_source' => query_chat_source,
         'active_tab' => normalized_active_tab
@@ -46,8 +47,13 @@ module QueryEditor
         'name' => query.name,
         'sql' => query.query,
         'data_source_id' => data_source.id,
+        'group_names' => serialized_group_names,
         'canonical_path' => canonical_path
       }
+    end
+
+    def serialized_group_names
+      query.persisted? ? query.group_names : []
     end
 
     def canonical_path
@@ -99,6 +105,10 @@ module QueryEditor
           'theme_json_light' => theme_entry.theme_json_light
         }
       end
+    end
+
+    def available_query_groups
+      workspace.query_groups.alphabetical.pluck(:name)
     end
 
     def available_visualization_types

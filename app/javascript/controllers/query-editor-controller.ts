@@ -10,6 +10,12 @@ import type {
   VisualizationType
 } from '../query_editor/types';
 import {
+  hasGroupName,
+  normalizeGroupName,
+  resolveExistingGroupName,
+  sortGroupNames
+} from '../query_editor/groups';
+import {
   currentFingerprint,
   dirtyCount,
   indexVisualizations,
@@ -20,6 +26,7 @@ import {
   snapshotVisualizations,
   visualizationPayloadsForSave
 } from '../query_editor/state';
+import { renderQuerySettingsPane } from '../query_editor/settings';
 import {
   buildDefaultVisualizationDraft,
   defaultThemeReference,
@@ -109,11 +116,26 @@ export default class extends Controller<HTMLDivElement> {
   private generatedNameLocked = false;
   private generatedNameAttempted = false;
   private generatedNamePending = false;
+  private groupInputValue = '';
+  private groupMenuOpen = false;
+  private readonly handleDocumentMouseDown = (event: MouseEvent): void => {
+    if (!this.groupMenuOpen || this.activeTab !== 'settings') return;
+
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+
+    const picker = this.settingsPaneTarget.querySelector('.query-group-picker');
+    if (picker && !picker.contains(target)) {
+      this.groupMenuOpen = false;
+      this.renderSettingsPane();
+    }
+  };
 
   connect(): void {
     this.bootstrap = this.parseJsonTarget<BootstrapPayload>(this.bootstrapTarget);
     this.i18n = this.parseJsonTarget<TranslationPayload>(this.translationsTarget);
     this.query = deepClone(this.bootstrap.query);
+    this.query.group_names = sortGroupNames(this.query.group_names || []);
     this.result = deepClone(this.bootstrap.result);
     this.runToken = this.bootstrap.run_token || null;
     this.lastSuccessfulFingerprint = this.runToken ? this.currentFingerprint() : null;
@@ -128,8 +150,13 @@ export default class extends Controller<HTMLDivElement> {
     const pendingToast = restorePendingToast(PENDING_TOAST_KEY);
     if (pendingToast) this.showToast(pendingToast.type, pendingToast.title, pendingToast.body);
 
+    document.addEventListener('mousedown', this.handleDocumentMouseDown);
     this.renderAll();
     this.focusInputOnLoad();
+  }
+
+  disconnect(): void {
+    document.removeEventListener('mousedown', this.handleDocumentMouseDown);
   }
 
   change(event: Event): void {
@@ -200,6 +227,10 @@ export default class extends Controller<HTMLDivElement> {
     if (!tab) return;
 
     this.activeTab = tab;
+    if (tab !== 'settings') {
+      this.groupMenuOpen = false;
+      this.groupInputValue = '';
+    }
     this.persistTabParam();
     this.renderTabs();
     this.renderPaneVisibility();
@@ -281,6 +312,60 @@ export default class extends Controller<HTMLDivElement> {
     this.renderFooter();
   }
 
+  focusGroupInput(): void {
+    this.groupMenuOpen = this.shouldShowGroupMenu();
+    this.renderSettingsPane();
+    this.focusGroupInputField();
+  }
+
+  changeGroupInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.groupInputValue = target.value;
+    this.groupMenuOpen = this.shouldShowGroupMenu();
+    this.renderSettingsPane();
+    this.focusGroupInputField();
+  }
+
+  handleGroupInputKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.commitGroupInput();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.groupMenuOpen = false;
+      this.renderSettingsPane();
+      this.focusGroupInputField();
+    }
+  }
+
+  selectGroupOption(event: Event): void {
+    event.preventDefault();
+
+    const target = event.currentTarget as HTMLElement;
+    const groupName = target.dataset.groupName;
+    if (groupName) {
+      this.addGroupName(groupName);
+      return;
+    }
+
+    if (target.dataset.createGroup === 'true') this.commitGroupInput();
+  }
+
+  removeGroup(event: Event): void {
+    const target = event.currentTarget as HTMLElement;
+    const groupName = target.dataset.groupName;
+    if (!groupName) return;
+
+    this.query.group_names = this.query.group_names.filter((name) => {
+      return normalizeGroupName(name).toLocaleLowerCase() !== normalizeGroupName(groupName).toLocaleLowerCase();
+    });
+    this.renderSettingsPane();
+    this.renderFooter();
+  }
+
   runQuery(): void {
     if (!this.runEnabled()) return;
 
@@ -328,6 +413,7 @@ export default class extends Controller<HTMLDivElement> {
       name: this.query.name,
       sql: this.query.sql,
       run_token: this.runToken,
+      group_names: this.query.group_names,
       visualizations: visualizationPayloadsForSave(this.availableVisualizationTypes(), this.visualizations)
     }).then((payload) => {
       const data = payload.data || {};
@@ -349,7 +435,11 @@ export default class extends Controller<HTMLDivElement> {
       this.query.name = savedQuery.name;
       this.query.sql = savedQuery.sql;
       this.query.data_source_id = savedQuery.data_source_id;
+      this.query.group_names = sortGroupNames(savedQuery.group_names || []);
       this.query.canonical_path = savedQuery.canonical_path;
+      if (Array.isArray(data.available_query_groups)) {
+        this.bootstrap.available_query_groups = sortGroupNames(data.available_query_groups);
+      }
       if (Array.isArray(savedQuery.visualizations)) {
         this.visualizations = indexVisualizations(savedQuery.visualizations);
         if (this.activeVisualizationType && !this.visualizations[this.activeVisualizationType]) {
@@ -506,31 +596,15 @@ export default class extends Controller<HTMLDivElement> {
   }
 
   private renderSettingsPane(): void {
-    if (this.readOnlyValue) {
-      this.settingsPaneTarget.innerHTML = `<p>${escapeHtml(this.translate('settings.read_only'))}</p>`;
-      return;
-    }
-
-    const chatSource = this.bootstrap.chat_source;
-    this.settingsPaneTarget.innerHTML = `
-      <div class="new-query-form">
-        <label class="label block">${escapeHtml(this.translate('settings.name_label'))}</label>
-        <input
-          type="text"
-          class="input block fluid"
-          placeholder="${escapeAttribute(this.translate('settings.name_placeholder'))}"
-          value="${escapeAttribute(this.query.name || '')}"
-          data-action="input->query-editor#changeName">
-      </div>
-      ${chatSource?.path ? `
-        <p class="small gray-300 mt24">
-          <strong>${escapeHtml(this.translate('settings.chat_source_label'))}:</strong>
-          <a class="link secondary" href="${escapeAttribute(chatSource.path)}" target="_blank" rel="noopener noreferrer">
-            ${escapeHtml(this.translate('settings.chat_source_link'))}
-          </a>
-        </p>
-      ` : ''}
-    `;
+    this.settingsPaneTarget.innerHTML = renderQuerySettingsPane({
+      query: this.query,
+      readOnly: this.readOnlyValue,
+      i18n: this.i18n,
+      chatSource: this.bootstrap.chat_source,
+      availableGroups: this.availableQueryGroups(),
+      groupInputValue: this.groupInputValue,
+      groupMenuOpen: this.groupMenuOpen
+    });
   }
 
   private renderFooter(): void {
@@ -554,6 +628,10 @@ export default class extends Controller<HTMLDivElement> {
 
   private themeLibrary(): ThemeEntry[] {
     return this.bootstrap.theme_library;
+  }
+
+  private availableQueryGroups(): string[] {
+    return sortGroupNames(this.bootstrap.available_query_groups || []);
   }
 
   private currentVisualizationDraft(): VisualizationDraft | null {
@@ -708,6 +786,38 @@ export default class extends Controller<HTMLDivElement> {
 
   private parseJsonTarget<T>(target: HTMLScriptElement): T {
     return JSON.parse(target.textContent || '{}') as T;
+  }
+
+  private commitGroupInput(): void {
+    const normalizedInput = normalizeGroupName(this.groupInputValue);
+    if (!normalizedInput) return;
+
+    const existingGroup = resolveExistingGroupName(this.availableQueryGroups(), normalizedInput);
+    this.addGroupName(existingGroup || normalizedInput);
+  }
+
+  private addGroupName(value: string): void {
+    const normalizedName = normalizeGroupName(value);
+    if (!normalizedName || hasGroupName(this.query.group_names, normalizedName)) return;
+
+    this.query.group_names = sortGroupNames([...this.query.group_names, normalizedName]);
+    this.groupInputValue = '';
+    this.groupMenuOpen = false;
+    this.renderSettingsPane();
+    this.renderFooter();
+  }
+
+  private shouldShowGroupMenu(): boolean {
+    return this.availableQueryGroups().length > 0 || Boolean(normalizeGroupName(this.groupInputValue));
+  }
+
+  private focusGroupInputField(): void {
+    const input = this.settingsPaneTarget.querySelector<HTMLInputElement>('[data-query-editor-group-input]');
+    if (!input) return;
+
+    input.focus({ preventScroll: true });
+    const length = this.groupInputValue.length;
+    input.setSelectionRange(length, length);
   }
 
   private showToast(type: 'success' | 'error' | 'information', title: string, body: string): void {

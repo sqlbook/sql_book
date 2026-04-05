@@ -69,6 +69,11 @@ module App
           {
             name_label: I18n.t('app.workspaces.queries.settings.name_label'),
             name_placeholder: I18n.t('app.workspaces.queries.settings.name_placeholder'),
+            groups_label: I18n.t('app.workspaces.queries.settings.groups_label'),
+            groups_description: I18n.t('app.workspaces.queries.settings.groups_description'),
+            groups_placeholder: I18n.t('app.workspaces.queries.settings.groups_placeholder'),
+            groups_dropdown_hint: I18n.t('app.workspaces.queries.settings.groups_dropdown_hint'),
+            groups_create_hint: I18n.t('app.workspaces.queries.settings.groups_create_hint'),
             read_only: I18n.t('app.workspaces.queries.settings.read_only'),
             notice: I18n.t('app.workspaces.queries.settings.notice'),
             chat_source_label: I18n.t('app.workspaces.queries.settings.chat_source_label'),

@@ -1,6 +1,6 @@
 # Queries Master Reference
 
-Last updated: 2026-04-01
+Last updated: 2026-04-05
 
 ## Purpose
 Single source of truth for query editor behavior, query-library rules, saved-query identity, and chat/query interaction contracts.
@@ -66,6 +66,25 @@ Related references:
 - The preference is user-scoped and follows the user across sessions/devices.
 - Invalid or empty stored values must fall back to the full default column set.
 
+## Query groups
+- Query groups are a workspace-scoped organizational construct for saved queries.
+- A saved query may belong to zero or more groups.
+- A group may contain many queries.
+- Group membership is many-to-many and is modeled independently from the query name or visualization state.
+- Group names are normalized with trimmed/squished whitespace and are case-insensitively unique within a workspace.
+- Groups are managed from the query editor `Settings` tab.
+- The editor group picker behavior is:
+  - focusing the field shows the existing workspace groups sorted alphabetically when any exist
+  - typing filters the existing group list
+  - selecting an existing group adds it to the query
+  - pressing `Enter` with non-empty input creates a new group and assigns it to the query
+  - selected groups render as removable chips beneath the input
+- Group changes are part of the query settings surface and must contribute to the footer save-count in the same way as other settings changes.
+- Groups only exist while at least one query belongs to them:
+  - removing a group from one query only removes that association
+  - when the final membership for a group is removed, the group record itself should be deleted
+- Future grouped Query Library views may delete a group from the library surface, but that action should remove memberships rather than deleting the underlying queries.
+
 ## Visualization behavior
 - The query editor `Visualization` tab is gallery-first:
   - default state is the visualization gallery
@@ -109,6 +128,7 @@ Related references:
 - The footer save action persists the full dirty draft together:
   - SQL / datasource
   - query name/settings
+  - query groups
   - every dirty visualization draft
 - Opening a draft from chat into the query editor should prefill the editor using request params or equivalent transient state.
 - If the user closes the tab or navigates away without saving, the draft should disappear.

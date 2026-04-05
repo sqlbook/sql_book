@@ -19,6 +19,9 @@ class Workspace < ApplicationRecord
   has_many :visualization_themes,
            dependent: :destroy
 
+  has_many :query_groups,
+           dependent: :destroy
+
   has_many :queries,
            through: :data_sources
 

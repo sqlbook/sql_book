@@ -57,6 +57,7 @@ export type QueryPayload = {
   name: string | null;
   sql: string | null;
   data_source_id: number;
+  group_names: string[];
   canonical_path?: string | null;
 };
 
@@ -68,6 +69,7 @@ export type BootstrapPayload = {
   run_token?: string | null;
   visualizations: VisualizationDraft[];
   available_visualization_types: VisualizationType[];
+  available_query_groups: string[];
   theme_library: ThemeEntry[];
   chat_source?: { path: string } | null;
   active_tab: QueryEditorTab;

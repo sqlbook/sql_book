@@ -17,6 +17,12 @@ class Query < ApplicationRecord
            dependent: :destroy,
            inverse_of: :query
 
+  has_many :query_group_memberships,
+           dependent: :destroy
+
+  has_many :query_groups,
+           through: :query_group_memberships
+
   has_many :chat_query_references,
            dependent: :nullify,
            foreign_key: :saved_query_id,
@@ -30,6 +36,10 @@ class Query < ApplicationRecord
 
   def query_result
     @query_result ||= query_service.execute
+  end
+
+  def group_names
+    query_groups.alphabetical.pluck(:name)
   end
 
   private

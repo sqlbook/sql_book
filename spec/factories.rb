@@ -125,6 +125,16 @@ FactoryBot.define do
     end
   end
 
+  factory :query_group do
+    workspace { create(:workspace) }
+    sequence(:name) { |n| "Query Group #{n}" }
+  end
+
+  factory :query_group_membership do
+    query { create(:query) }
+    query_group { create(:query_group, workspace: query.data_source.workspace) }
+  end
+
   factory :chat_thread do
     workspace { create(:workspace) }
     created_by { create(:user) }

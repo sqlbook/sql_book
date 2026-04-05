@@ -505,6 +505,70 @@ ALTER SEQUENCE public.queries_id_seq OWNED BY public.queries.id;
 
 
 --
+-- Name: query_group_memberships; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.query_group_memberships (
+    id bigint NOT NULL,
+    query_id bigint NOT NULL,
+    query_group_id bigint NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: query_group_memberships_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.query_group_memberships_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: query_group_memberships_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.query_group_memberships_id_seq OWNED BY public.query_group_memberships.id;
+
+
+--
+-- Name: query_groups; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.query_groups (
+    id bigint NOT NULL,
+    workspace_id bigint NOT NULL,
+    name character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: query_groups_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.query_groups_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: query_groups_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.query_groups_id_seq OWNED BY public.query_groups.id;
+
+
+--
 -- Name: query_visualizations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -857,6 +921,20 @@ ALTER TABLE ONLY public.queries ALTER COLUMN id SET DEFAULT nextval('public.quer
 
 
 --
+-- Name: query_group_memberships id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_group_memberships ALTER COLUMN id SET DEFAULT nextval('public.query_group_memberships_id_seq'::regclass);
+
+
+--
+-- Name: query_groups id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_groups ALTER COLUMN id SET DEFAULT nextval('public.query_groups_id_seq'::regclass);
+
+
+--
 -- Name: query_visualizations id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1015,6 +1093,22 @@ ALTER TABLE ONLY public.one_time_passwords
 
 ALTER TABLE ONLY public.queries
     ADD CONSTRAINT queries_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: query_group_memberships query_group_memberships_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_group_memberships
+    ADD CONSTRAINT query_group_memberships_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: query_groups query_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_groups
+    ADD CONSTRAINT query_groups_pkey PRIMARY KEY (id);
 
 
 --
@@ -1362,6 +1456,41 @@ CREATE INDEX index_queries_on_data_source_id ON public.queries USING btree (data
 
 
 --
+-- Name: index_query_group_memberships_on_query_group_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_query_group_memberships_on_query_group_id ON public.query_group_memberships USING btree (query_group_id);
+
+
+--
+-- Name: index_query_group_memberships_on_query_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_query_group_memberships_on_query_id ON public.query_group_memberships USING btree (query_id);
+
+
+--
+-- Name: index_query_group_memberships_on_query_id_and_query_group_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_query_group_memberships_on_query_id_and_query_group_id ON public.query_group_memberships USING btree (query_id, query_group_id);
+
+
+--
+-- Name: index_query_groups_on_workspace_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_query_groups_on_workspace_id ON public.query_groups USING btree (workspace_id);
+
+
+--
+-- Name: index_query_groups_on_workspace_id_and_lower_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_query_groups_on_workspace_id_and_lower_name ON public.query_groups USING btree (workspace_id, lower((name)::text));
+
+
+--
 -- Name: index_query_visualizations_on_query_id_and_chart_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1467,6 +1596,14 @@ CREATE UNIQUE INDEX index_visualization_themes_on_workspace_id_where_default ON 
 
 
 --
+-- Name: query_group_memberships fk_rails_02493794f3; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_group_memberships
+    ADD CONSTRAINT fk_rails_02493794f3 FOREIGN KEY (query_id) REFERENCES public.queries(id);
+
+
+--
 -- Name: chat_query_references fk_rails_1c34be061a; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1488,6 +1625,14 @@ ALTER TABLE ONLY public.chat_pending_follow_ups
 
 ALTER TABLE ONLY public.chat_messages
     ADD CONSTRAINT fk_rails_43b6215c4f FOREIGN KEY (chat_thread_id) REFERENCES public.chat_threads(id);
+
+
+--
+-- Name: query_groups fk_rails_487af446cb; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_groups
+    ADD CONSTRAINT fk_rails_487af446cb FOREIGN KEY (workspace_id) REFERENCES public.workspaces(id);
 
 
 --
@@ -1544,6 +1689,14 @@ ALTER TABLE ONLY public.chat_query_references
 
 ALTER TABLE ONLY public.chat_pending_follow_ups
     ADD CONSTRAINT fk_rails_88d3cce4f3 FOREIGN KEY (created_by_id) REFERENCES public.users(id);
+
+
+--
+-- Name: query_group_memberships fk_rails_8d2ad89bc7; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.query_group_memberships
+    ADD CONSTRAINT fk_rails_8d2ad89bc7 FOREIGN KEY (query_group_id) REFERENCES public.query_groups(id);
 
 
 --
@@ -1681,6 +1834,7 @@ ALTER TABLE ONLY public.chat_pending_follow_ups
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20260405131500'),
 ('20260402133000'),
 ('20260401193000'),
 ('20260401120000'),

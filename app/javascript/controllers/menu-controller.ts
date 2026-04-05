@@ -3,6 +3,22 @@ import { Controller } from '@hotwired/stimulus';
 export default class extends Controller<HTMLMenuElement> {
   static targets = ['button', 'dropdown'];
 
+  private readonly handleDocumentClick = (event: MouseEvent): void => {
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (this.element.contains(target)) return;
+
+    this.close();
+  };
+
+  public connect(): void {
+    document.addEventListener('click', this.handleDocumentClick);
+  }
+
+  public disconnect(): void {
+    document.removeEventListener('click', this.handleDocumentClick);
+  }
+
   public toggle(): void {
     if (this.element.classList.contains('open')) {
       this.close();

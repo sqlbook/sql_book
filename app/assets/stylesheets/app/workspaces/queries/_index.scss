@@ -33,7 +33,7 @@
   .controls {
     align-items: center;
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
   }
 
   .search {
@@ -41,7 +41,11 @@
   }
 
   .query-library-columns-menu {
+    align-items: center;
+    display: flex;
+    list-style: none;
     margin: 0;
+    padding: 0;
     position: relative;
   }
 

@@ -142,6 +142,11 @@ es:
           notice: Guarda tu consulta para reutilizarla completando el siguiente formulario.
           name_label: Nombre de la consulta
           name_placeholder: p. ej. Nuevos visitantes
+          groups_label: Grupo(s)
+          groups_description: Crea un nuevo grupo o elige uno de tus grupos de consultas existentes. Cada consulta puede pertenecer a varios grupos.
+          groups_placeholder: p. ej. Métricas de visitantes
+          groups_dropdown_hint: Selecciona un grupo existente o crea uno nuevo
+          groups_create_hint: "Crear (Enter): %{name}"
           read_only: Tienes acceso de solo lectura en este espacio.
           save: "[Guardar consulta]"
       visualizations:

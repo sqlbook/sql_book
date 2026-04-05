@@ -5,6 +5,7 @@ import type {
   VisualizationSavePayload,
   VisualizationType
 } from './types';
+import { groupNamesEqual, sortGroupNames } from './groups';
 import { deepClone, deepEqual, fingerprintFor, normalizeSql } from './utils';
 
 type SaveEnabledParams = {
@@ -33,6 +34,7 @@ export function snapshotQuery(query: QueryPayload, dataSourceId: number): QueryP
     name: query.name,
     sql: query.sql,
     data_source_id: dataSourceId,
+    group_names: sortGroupNames(query.group_names || []),
     canonical_path: query.canonical_path
   };
 }
@@ -48,7 +50,8 @@ export function querySurfaceDirty(query: QueryPayload, baselineQuery: QueryPaylo
 }
 
 export function settingsDirty(query: QueryPayload, baselineQuery: QueryPayload): boolean {
-  return (query.name || '').trim() !== (baselineQuery.name || '').trim();
+  return (query.name || '').trim() !== (baselineQuery.name || '').trim() ||
+    !groupNamesEqual(query.group_names || [], baselineQuery.group_names || []);
 }
 
 export function dirtyVisualizationTypes(

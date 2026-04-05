@@ -173,6 +173,11 @@ en:
           notice: Save your query for future use by completing the form below.
           name_label: Query name
           name_placeholder: e.g. New Visitor Count
+          groups_label: Group(s)
+          groups_description: Create a new group or choose from your existing query groups. Each query can belong to multiple groups.
+          groups_placeholder: e.g. Visitor Metrics
+          groups_dropdown_hint: Select an existing group or create a new one
+          groups_create_hint: "Create (Enter): %{name}"
           read_only: You have read-only access in this workspace.
           save: "[Save Query]"
       visualizations:

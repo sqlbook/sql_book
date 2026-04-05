@@ -35,6 +35,7 @@ module App
           :sql,
           :run_token,
           :request_generated_name,
+          group_names: [],
           visualizations: [
             :chart_type,
             :theme_reference,
@@ -77,6 +78,7 @@ module App
       def save_response_data(result)
         {
           'query' => serialized_query(result.query),
+          'available_query_groups' => workspace.query_groups.alphabetical.pluck(:name),
           'save_outcome' => result.save_outcome,
           'conflicting_query' => serialized_query(result.conflicting_query)
         }.compact
@@ -99,6 +101,7 @@ module App
           'sql' => query.query,
           'saved' => query.saved,
           'data_source_id' => query.data_source_id,
+          'group_names' => query.group_names,
           'canonical_path' => app_workspace_data_source_query_path(workspace, query.data_source, query),
           'visualization_types' => visualizations.map(&:chart_type),
           'visualizations' => visualizations.map do |visualization|
