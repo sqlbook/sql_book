@@ -122,6 +122,19 @@ RSpec.describe 'App::Workspaces::Queries', type: :request do
             expect(response.body).not_to have_selector('.queries-table .name', text: query_5.name)
             expect(response.body).not_to have_selector('.queries-table .name', text: query_6.name)
           end
+
+          it 'keeps the library controls and table headers visible when there are no matches' do
+            get "/app/workspaces/#{workspace.id}/queries", params: { search: 'no matches here' }
+
+            expect(response.body).to have_selector('h1', text: I18n.t('app.workspaces.queries.index.title'))
+            expect(response.body).to have_selector('input[type="search"][value="no matches here"]')
+            expect(response.body).to have_selector(
+              '.queries-table th',
+              text: I18n.t('app.workspaces.queries.index.columns.name')
+            )
+            expect(response.body).not_to include(CGI.escapeHTML(I18n.t('app.workspaces.queries.index.empty')))
+            expect(response.body).not_to have_selector('.queries-table .name')
+          end
         end
 
         context 'when grouped view is selected' do

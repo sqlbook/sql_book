@@ -10,6 +10,7 @@ module App
       def index
         @workspace = workspace
         @data_sources = data_sources
+        @has_dashboards = dashboard_scope.exists?
         @dashboards = dashboards
 
         return unless data_sources.empty?
@@ -51,9 +52,13 @@ module App
       end
 
       def dashboards
-        dashboards = workspace.dashboards
+        dashboards = dashboard_scope
         dashboards = dashboards.where('LOWER(name) LIKE ?', "%#{params[:search].downcase}%") if params[:search]
         dashboards
+      end
+
+      def dashboard_scope
+        workspace.dashboards
       end
 
       def dashboard

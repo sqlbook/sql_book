@@ -107,6 +107,16 @@ RSpec.describe 'App::Workspaces::Dashboards', type: :request do
             expect(response.body).not_to have_selector('.dashboards-table .name', text: dashboard_5.name)
             expect(response.body).not_to have_selector('.dashboards-table .name', text: dashboard_6.name)
           end
+
+          it 'keeps the page chrome and table headers visible when there are no matches' do
+            get "/app/workspaces/#{workspace.id}/dashboards", params: { search: 'no matches here' }
+
+            expect(response.body).to have_selector('h1', text: 'Dashboards')
+            expect(response.body).to have_selector('input[type="search"][value="no matches here"]')
+            expect(response.body).to have_selector('.dashboards-table th', text: 'Name')
+            expect(response.body).not_to include('Any dashboards you&apos;ve created will be available here')
+            expect(response.body).not_to have_selector('.dashboards-table .name')
+          end
         end
       end
     end

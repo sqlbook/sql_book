@@ -11,6 +11,7 @@ module App
 
       def index
         @queries = queries
+        @has_saved_queries = saved_queries_scope.exists?
         @data_sources = data_sources
         @visible_columns = current_user.query_library_visible_columns
         @view_mode = view_mode
@@ -53,12 +54,15 @@ module App
       end
 
       def queries
-        data_source_id = data_sources.select(:id)
         lower_name = Arel::Nodes::NamedFunction.new('LOWER', [Query.arel_table[:name]])
-        queries = Query.includes(:data_source, :author, :last_updated_by, :query_groups)
-          .where(data_source_id:, saved: true)
+        queries = saved_queries_scope.includes(:data_source, :author, :last_updated_by, :query_groups)
         queries = queries.where('LOWER(name) LIKE ?', "%#{params[:search].downcase}%") if params[:search]
         queries.order(lower_name.asc, :id)
+      end
+
+      def saved_queries_scope
+        data_source_id = data_sources.select(:id)
+        Query.where(data_source_id:, saved: true)
       end
 
       def visible_columns_params

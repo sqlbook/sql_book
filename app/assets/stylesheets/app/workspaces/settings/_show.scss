@@ -5,6 +5,11 @@
 
   .workspace-settings-panel {
     margin: 0;
+    width: 100%;
+
+    &--branding {
+      max-width: none;
+    }
   }
 
   .members-table {
@@ -73,10 +78,13 @@
 
   .workspace-branding {
     &__layout {
+      min-width: 0;
+      position: relative;
       width: 100%;
     }
 
     &__layout--panel-open {
+      align-items: stretch;
       display: grid;
       gap: 1.5rem;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -84,6 +92,7 @@
 
     &__content {
       min-width: 0;
+      width: 100%;
     }
 
     &__panel {
@@ -92,6 +101,7 @@
       min-height: 0;
       overflow: hidden;
       padding: var(--app-shell-padding);
+      width: 100%;
     }
 
     &__panel .workspace-branding__editor {
@@ -174,6 +184,20 @@
     @media (max-width: 1023px) {
       &__layout--panel-open {
         grid-template-columns: minmax(0, 1fr);
+      }
+
+      &__layout--panel-open > .workspace-branding__content {
+        visibility: hidden;
+      }
+
+      &__layout--panel-open > .workspace-branding__panel {
+        bottom: 0;
+        left: 0;
+        max-width: 100%;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 8;
       }
     }
   }

@@ -3,7 +3,7 @@
   <% can_create_queries = can_write_queries && @data_sources.any? %>
   <% grouped_view = @view_mode == 'groups' %>
 
-  <% if @queries.empty? && !grouped_view %>
+  <% if !@has_saved_queries && !grouped_view %>
     <h1><%= I18n.t('app.workspaces.queries.index.title') %></h1>
     <p><%= I18n.t('app.workspaces.queries.index.empty') %></p>
     <% if can_create_queries %>

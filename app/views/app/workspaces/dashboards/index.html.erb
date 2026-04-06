@@ -2,7 +2,7 @@
   <% can_write_dashboards = can_write_dashboards?(workspace: @workspace) %>
   <% can_destroy_dashboards = can_destroy_dashboards?(workspace: @workspace) %>
 
-  <% if @dashboards.empty? %>
+  <% if !@has_dashboards %>
     <h1>Dashboards</h1>
     <p>Any dashboards you&apos;ve created will be available here.</p>
 

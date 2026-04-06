@@ -62,6 +62,7 @@ RSpec.describe 'App::Workspaces::Settings', type: :request do
       )
 
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include('workspace-settings-panel workspace-settings-panel--branding')
       expect(response.body).to include(I18n.t('app.workspaces.settings.branding.panel.tabs.theme_settings'))
       expect(response.body).to include(I18n.t('app.workspaces.settings.branding.panel.tabs.dark_mode'))
       expect(response.body).to include(I18n.t('app.workspaces.settings.branding.panel.tabs.light_mode'))

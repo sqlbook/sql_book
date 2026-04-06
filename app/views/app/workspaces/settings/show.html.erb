@@ -3,10 +3,11 @@
   <% can_manage_members = can_manage_workspace_members?(workspace: @workspace) %>
   <% can_delete_workspace = current_role == Member::Roles::OWNER %>
   <% editable_role_options = [Member::Roles::ADMIN, Member::Roles::USER, Member::Roles::READ_ONLY].map { |role| [Member.role_name_for(role), role] } %>
+  <% branding_tab = params[:tab].to_s == 'branding' %>
 
   <h1><%= I18n.t('app.workspaces.settings.title') %></h1>
 
-  <section class="workspace-settings-panel container lg">
+  <section class="<%= class_names('workspace-settings-panel', 'container lg' => !branding_tab, 'workspace-settings-panel--branding' => branding_tab) %>">
     <%= render "app/workspaces/settings/panel",
                current_role:,
                can_manage_members:,
